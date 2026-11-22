@@ -14,7 +14,19 @@ importers:
       '@remotion/media':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/noise':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/paths':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/renderer':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/shapes':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/transitions':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react:
@@ -320,6 +332,15 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
+  '@remotion/motion-blur@4.0.545':
+    resolution: {integrity: sha512-J1XuaSPqMMbV+vgxVwrCNwTQDv5iwwhYfrkQ4wkoHOCEQ2Og/1apEhfaC7lfwOwzLoCM2RALx5oMtCScZvmPqA==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
+  '@remotion/noise@4.0.545':
+    resolution: {integrity: sha512-/PcBVMW3gR+3YY9Ez/nIy4J7Nzc44j4wvJHKkEuL9lqrnil7BVE+1NtFxQOGi/pcfarguoAv3PflmtZgZDAlnA==}
+
   '@remotion/openai-whisper@4.0.545':
     resolution: {integrity: sha512-GiHmtclPq/JTzXKGMiapJxKHldJLK5KdF8mzr3D1sFqxk2wqb5ep9ZSPGRBRZ39RYmZOfHGyNDLQ5uaaKqkLTA==}
 
@@ -340,6 +361,12 @@ packages:
 
   '@remotion/sdk@4.0.545':
     resolution: {integrity: sha512-Y5RqB/wEWybYhHYGnqmLNtccOWB0yy+nYh/y4gCBOUXFB4WKrxH3OpVdHqyBwl6dK0jQztzLtnuNsMjjqTNRWA==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
+  '@remotion/shapes@4.0.545':
+    resolution: {integrity: sha512-Dwp1r/wUDyW+QAfwFROBKmKAH0xbwV9TjK6FjUxcyQXqZINOUHaSpLqlwT7WPj2uK00GeFB0aw2A2B0v+S72sA==}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -368,6 +395,12 @@ packages:
 
   '@remotion/timeline-utils@4.0.545':
     resolution: {integrity: sha512-CfpYEdSPHtbOLBQwrJUuuC83ULVJ8hiowPuwnIenacA2bJFQncFGf5eHlJuYmOaqJHCU5piTxdd7KqG6CG2Vpg==}
+
+  '@remotion/transitions@4.0.545':
+    resolution: {integrity: sha512-NsY+m8U9jt6+BEXhIcyu/fEMC8PWM1XVmQMop6GOlszloJHkAG9ofzQDlAQ5fnnX3SOfio5qtHh3dF2pYIUpPA==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   '@remotion/web-renderer@4.0.545':
     resolution: {integrity: sha512-OSS84BLOED+fqV+NOZEE4WF7tz4wxMYKHt27RnkUmn+jpShEmqm96WMmyB62M9WYSEjNK7wWEKLr2MMpGeY0oA==}
@@ -908,6 +941,9 @@ packages:
   signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
 
+  simplex-noise@4.0.1:
+    resolution: {integrity: sha512-zl/+bdSqW7HJOQ0oDbxrNYaF4F5ik0i7M6YOYmEoIJNtg16NpvWaTTM1Y7oV/7T0jFljawLgYPS81Uu2rsfo1A==}
+
   source-map-js@1.2.4:
     resolution: {integrity: sha512-J7ZjMvHd9O1fcT/5V09QWaaSl2BbWx3F6O08spde82Namf9UB0GxRVIPiNbVsdKkoizHiSpTodo3vp2bAy91MA==}
     engines: {node: '>=6.0.0'}
@@ -1300,6 +1336,20 @@ snapshots:
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       zod: 4.6.7
 
+  '@remotion/motion-blur@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
+  '@remotion/noise@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      simplex-noise: 4.0.1
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
   '@remotion/openai-whisper@4.0.545':
     dependencies:
       '@remotion/captions': 4.0.545
@@ -1344,6 +1394,13 @@ snapshots:
     dependencies:
       '@remotion/player': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/studio-shared': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
+  '@remotion/shapes@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@remotion/paths': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -1402,6 +1459,15 @@ snapshots:
     transitivePeerDependencies:
       - react
       - react-dom
+
+  '@remotion/transitions@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@remotion/motion-blur': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/paths': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/shapes': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
 
   '@remotion/web-renderer@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -1920,6 +1986,8 @@ snapshots:
   shebang-regex@3.0.0: {}
 
   signal-exit@3.0.7: {}
+
+  simplex-noise@4.0.1: {}
 
   source-map-js@1.2.4: {}
 

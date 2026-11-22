@@ -1,14 +1,16 @@
 // Renders fixtures/compositions with the published Remotion at the pinned version and writes
 // reference stills plus resolved composition metadata. Uses public APIs only (clean room:
-// never open files under node_modules). Run: pnpm record
+// never open files under node_modules). Run: pnpm record [fixture], fixture defaults to
+// "compositions" (any folder under fixtures/ with src/index.ts, public/ and frames.json).
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { bundle } from "@remotion/bundler";
 import { getCompositions, renderStill, selectComposition } from "@remotion/renderer";
 
 const here = import.meta.dirname;
-const fixture = resolve(here, "../../fixtures/compositions");
-const work = join(here, ".work");
+const fixtureName = process.argv[2] ?? "compositions";
+const fixture = resolve(here, "../../fixtures", fixtureName);
+const work = join(here, `.work-${fixtureName}`);
 const out = join(fixture, "__golden__/remotion");
 const version = JSON.parse(readFileSync(join(here, "package.json"), "utf8")).dependencies
 	.remotion as string;

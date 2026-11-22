@@ -1,0 +1,8 @@
+{
+	"name": "@motiojs/fixture-features",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"license": "Apache-2.0",
+	"description": "Feature-package fixtures (transitions, shapes, paths, noise) written against the Remotion API, for M2 golden comparison"
+}
