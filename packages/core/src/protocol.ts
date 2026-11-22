@@ -33,9 +33,18 @@ export interface RunContext {
 	readinessTimeoutMs: number;
 	/** True in a render, false in `dev` and the Player. */
 	isRendering: boolean;
+	/**
+	 * Seed mixed with the frame number to reseed `Math.random` on every frame in the virtual time
+	 * model. Default 0.
+	 */
+	frameSeed?: number;
 }
 
-/** A composition as registered by the project, before `calculateMetadata`. */
+/**
+ * A composition as registered by the project, before `calculateMetadata`. Dimensions, fps and
+ * duration omitted on a composition with `calculateMetadata` are reported as 0 until
+ * `setComposition` resolves them.
+ */
 export interface CompositionInfo {
 	id: string;
 	width: number;
@@ -51,6 +60,8 @@ export interface CompositionInfo {
 	defaultOutName: string | null;
 	defaultPixelFormat: string | null;
 	defaultVideoImageFormat: string | null;
+	defaultProResProfile?: string | null;
+	defaultSampleRate?: number | null;
 }
 
 /** A composition after `calculateMetadata` ran with the final props. */
@@ -107,6 +118,8 @@ export interface PageError {
 	label?: string;
 	frame?: number;
 	stack?: string;
+	/** For timeouts: the `retries` of the handle; the renderer retries the frame on a fresh page. */
+	retries?: number;
 }
 
 /** Installed by the page as `window.__motio`. */
