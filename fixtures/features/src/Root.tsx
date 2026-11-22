@@ -137,7 +137,7 @@ const Paths: React.FC = () => {
 	const evolved = evolvePath(p, A);
 	return (
 		<AbsoluteFill style={{ backgroundColor: "#fefce8" }}>
-			<svg width={640} height={360} viewBox="0 0 640 360">
+			<svg width={640} height={360} viewBox="0 0 640 360" aria-hidden="true">
 				<path
 					d={A}
 					fill="none"
