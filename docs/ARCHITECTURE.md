@@ -56,6 +56,7 @@ A pnpm monorepo, ESM-only, TypeScript strict throughout, Node 22 or later for No
 | `@motiojs/player` | browser | `Player` and `Thumbnail`, with the documented ref API and events. Drives core with a real clock; `delayRender` is a no-op there, as in Remotion. |
 | `@motiojs/bundler` | Node | Vite configuration for user projects: entry discovery, `public/` and `staticFile`, `remotion.config.ts` loading, env vars, the compat alias, React deduplication. Used by `dev` and by `bundle`. |
 | `@motiojs/audio` | Node | The audio mixer: decodes sources with FFmpeg, mixes in float with sample-accurate offsets and per-frame volume, encodes once (D-014). |
+| `@motiojs/video-frames` | Node | Source-frame selection from packet timestamps and exact extraction with FFmpeg, batched and cached (D-015). |
 | `@motiojs/renderer` | Node | `bundle`, `getCompositions`, `selectComposition`, `renderMedia`, `renderStill`, `renderFrames`, `stitchFramesToVideo`. Owns the browser pool, the frame driver, capture, the media server, the audio mixer and the encoder. |
 | `@motiojs/cli` | Node | `render`, `still`, `frames` (contact sheets), `compositions`, `dev`, `doctor`, `check determinism`, `check flicker`, `benchmark`, `browser ensure`. Positional forms and flags of the Remotion CLI; every command takes `--json`. |
 | `@motiojs/compat` | build | The alias plugin mapping `remotion` and `@remotion/*` to our packages, build-time failures for unsupported packages, `Config` for `remotion.config.ts`, and the compatibility report. |

@@ -82,3 +82,9 @@ The mixer lives in `@motiojs/audio` (Node), used by the renderer, so it is teste
 
 Against `fixtures/media`, click times match within 1 ms (offset, trim, volumes, ramp) and within 2 ms for `playbackRate` 2; constant volumes match within 0.01. Remotion applies volume changes about 1.5 frames late (up to 2.5 on the ramp); Motio applies the per-frame volume on time and does not reproduce the lag until its rule is known, because a 50 ms envelope offset is inaudible in practice and copying an unexplained artefact would be guesswork. Clicks inside that window are excluded from the peak comparison. Revisit if the rule is identified black-box.
 
+## D-015 Embedded video: extracted frames, selection rule per component (2026-11-22)
+
+`@motiojs/video-frames` selects the source frame from the packet timestamps of the stream (no decoding, so variable frame rate works) and extracts it as PNG with an accurate FFmpeg seek, batching following frames and caching them in an LRU with request deduplication. Against `fixtures/media`, the `floor` rule reproduces Remotion's `OffthreadVideo` and `@remotion/media` `Video` sequences exactly (24, 30, 59.94 and 60 fps sources, `playbackRate` 2, `trimBefore` with a `Sequence` offset).
+
+Remotion's HTML5 `Video` is not frame-exact in renders: its recording jumps back to stale frames on 7 of 60 frames and rounds inconsistently on fractional positions, agreeing with the `nearest` rule on 48 of 60. Motio renders the HTML5 `Video` through the same extraction path with the `nearest` rule, which is deterministic and matches Remotion wherever Remotion is itself consistent. Revisit if a project depends on the native element during render (for example drawing it to a canvas), which the M3 `Video` ref design must cover.
+

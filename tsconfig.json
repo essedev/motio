@@ -8,6 +8,9 @@
 			"path": "packages/renderer"
 		},
 		{
+			"path": "packages/bundler"
+		},
+		{
 			"path": "packages/cli"
 		},
 		{
@@ -24,6 +27,9 @@
 		},
 		{
 			"path": "packages/audio"
+		},
+		{
+			"path": "packages/video-frames"
 		}
 	]
 }

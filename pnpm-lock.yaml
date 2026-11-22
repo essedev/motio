@@ -364,6 +364,12 @@ importers:
 
   packages/testing: {}
 
+  packages/video-frames:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+
   spike:
     dependencies:
       puppeteer-core:
