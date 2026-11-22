@@ -56,6 +56,9 @@
 			"path": "packages/paths"
 		},
 		{
+			"path": "packages/media-utils"
+		},
+		{
 			"path": "packages/shapes"
 		}
 	]
