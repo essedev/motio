@@ -31,7 +31,9 @@ export function parseFrameRange(value: string): FrameRange {
 		return [start, end] as const;
 	});
 	if (parsed.length === 1) return parsed[0] as FrameRange;
-	return parsed;
+	// In a list every item is a range: a bare `5` becomes [5, 5], so `0,5` means frames 0 and 5,
+	// never the range 0 to 5.
+	return parsed.map((p) => (typeof p === "number" ? ([p, p] as const) : p));
 }
 
 /** `--concurrency`: a positive integer or a percentage of the CPU threads. */

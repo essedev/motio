@@ -20,7 +20,11 @@ describe("parseFrameRange", () => {
 		expect(parseFrameRange("5")).toBe(5);
 		expect(parseFrameRange("0-9")).toEqual([0, 9]);
 		expect(parseFrameRange("100-")).toEqual([100, null]);
-		expect(parseFrameRange("0,30-59,90-")).toEqual([0, [30, 59], [90, null]]);
+		expect(parseFrameRange("0,30-59,90-")).toEqual([
+			[0, 0],
+			[30, 59],
+			[90, null],
+		]);
 	});
 
 	it("rejects malformed ranges", () => {

@@ -54,12 +54,7 @@ export async function renderCommand(
 
 	const frameRangeFlag = flags.string("frames");
 	const frameRange = frameRangeFlag ? parseFrameRange(frameRangeFlag) : undefined;
-	if (
-		flags.boolean("sequence") ||
-		(Array.isArray(frameRange) &&
-			frameRange.length > 2 &&
-			frameRange.every((f) => typeof f === "number"))
-	) {
+	if (flags.boolean("sequence")) {
 		throw new MotioError(
 			"E_UNSUPPORTED_OPTION",
 			"Image sequence output is not supported yet; use `motio frames` for a contact sheet or `motio still` for single frames.",
