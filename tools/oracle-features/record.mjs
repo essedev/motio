@@ -6,10 +6,12 @@
 
 import { recordCaptions } from "./record-captions.mjs";
 import { recordNoise } from "./record-noise.mjs";
+import { recordPaths } from "./record-paths.mjs";
 
 const recorders = {
 	captions: recordCaptions,
 	noise: recordNoise,
+	paths: recordPaths,
 };
 
 const selected = process.argv.slice(2);
