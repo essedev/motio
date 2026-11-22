@@ -7,6 +7,7 @@ import {
 	type ResolvedComposition,
 	RUN_CONTEXT_GLOBAL,
 	type RunContext,
+	type SetCompositionOptions,
 } from "@motiojs/core/protocol";
 import type { Browser, CDPSession, Page } from "puppeteer-core";
 import type { ChromiumOptions } from "./browser/flags.js";
@@ -322,13 +323,21 @@ export class RenderPage {
 		);
 	}
 
-	/** Selects a composition with its final props; runs `calculateMetadata` in the page. */
-	async setComposition(id: string, props: Record<string, unknown>): Promise<ResolvedComposition> {
+	/**
+	 * Selects a composition. With input `props` the page runs `calculateMetadata`; with
+	 * `options.resolved` it uses that metadata as is, as Remotion's `renderMedia` and
+	 * `renderStill` render the composition object they are given.
+	 */
+	async setComposition(
+		id: string,
+		props: Record<string, unknown>,
+		options?: SetCompositionOptions,
+	): Promise<ResolvedComposition> {
 		this.composition = id;
 		const timeout = this.config.timeoutInMilliseconds + WATCHDOG_GRACE_MS;
 		return this.call<ResolvedComposition>(
 			"setComposition",
-			[id, props],
+			options ? [id, props, options] : [id, props],
 			timeout,
 			() =>
 				new MotioError(
