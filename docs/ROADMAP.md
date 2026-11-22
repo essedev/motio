@@ -33,7 +33,7 @@ Scope: BeginFrame capture on Linux (D-013), `Img`, fonts, Google Fonts, Tailwind
 
 Done when:
 - Every Tier 1 symbol in the manifest is supported with a test or stubbed with a build-time message.
-- Each transition presentation and the shapes match the oracle within the M1 SSIM thresholds.
+- `fixtures/features` (every transition presentation, shapes, paths, noise) matches its Remotion reference stills within the M1 SSIM thresholds.
 - Caption parsing equals the oracle output.
 - Three official Remotion templates (fetched at test time, not vendored) build through the alias with zero edits and render within the M1 thresholds.
 
@@ -42,8 +42,8 @@ Done when:
 Scope: `Video`, `OffthreadVideo`, `Audio`, `@remotion/media`, the audio pass and mixer, the Player, `motio dev`.
 
 Done when:
-- Video: a source with a burned-in frame number, converted 24 to 30, 30 to 60 and 59.94, with `playbackRate` 2 and trim, gives the oracle's source-frame sequence exactly.
-- Audio: click-track offset at most 1 ms, loudness within 0.5 LU of Remotion's output, no seams.
+- Video: every video composition of `fixtures/media` (frame-stamped sources at 24, 30, 59.94 and 60 fps, `playbackRate` 2, trim, HTML5 `Video`, `@remotion/media` `Video`) shows exactly the source-frame sequence in `fixtures/media/__golden__/remotion/media.json`. The selection rule differs per component (`OffthreadVideo` rounds down, the HTML5 `Video` rounds to nearest).
+- Audio: click times of the audio compositions within 1 ms of `media.json` and click peaks within 0.01 (offset and volume ramp; the time-stretched `playbackRate` 2 case within 2 ms), no seams.
 - Player: Playwright tests cover the ref API and events.
 
 ## M4: a real production project
