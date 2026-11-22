@@ -4,7 +4,7 @@ A milestone is done only when every criterion below holds and `make check` is gr
 
 ## Current state
 
-Spike done (D-005, D-006). M1 in progress.
+Spike done (D-005, D-006, D-007, D-013). M1 in progress. Ahead of schedule, already proven against the oracle: `@motiojs/zod-types` and `@motiojs/layout-utils` (M2), the audio mixer `@motiojs/audio` and `@motiojs/video-frames` (M3, D-014 to D-016). Oracle recordings exist for M1 (`fixtures/compositions`), M2 (`fixtures/features`, `fixtures/zod-types`, `fixtures/layout-utils`) and M3 (`fixtures/media`).
 
 ## Spike (done)
 
