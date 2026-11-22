@@ -7,8 +7,21 @@ export default defineConfig({
 				test: {
 					name: "unit",
 					include: ["packages/*/src/**/*.test.{ts,tsx}"],
-					exclude: ["**/*.integration.test.{ts,tsx}", "**/node_modules/**"],
+					exclude: [
+						"**/*.integration.test.{ts,tsx}",
+						"packages/core/src/**/*.test.tsx",
+						"**/node_modules/**",
+					],
 					environment: "node",
+				},
+			},
+			{
+				test: {
+					// Core components and the page runtime, in a simulated DOM.
+					name: "core-dom",
+					include: ["packages/core/src/**/*.test.tsx"],
+					exclude: ["**/*.integration.test.{ts,tsx}", "**/node_modules/**"],
+					environment: "jsdom",
 				},
 			},
 			{

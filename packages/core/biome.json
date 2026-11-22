@@ -4,5 +4,20 @@
 	"extends": "//",
 	"files": {
 		"includes": ["**", "!src/__oracle__/*.json"]
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["src/**/*.test.tsx", "src/testing/**"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noComponentHookFactories": "off"
+					},
+					"complexity": {
+						"noUselessFragments": "off"
+					}
+				}
+			}
+		}
+	]
 }
