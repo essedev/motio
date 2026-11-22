@@ -3,10 +3,12 @@ import { createServer, type Server } from "node:http";
 import { extname, join, resolve } from "node:path";
 import puppeteer, { type Browser } from "puppeteer-core";
 
-export const CHROME = resolve(
-	process.env.HOME ?? "",
-	".cache/motio/browsers/chrome-headless-shell/mac_arm-158.0.8127.36/chrome-headless-shell-mac-arm64/chrome-headless-shell",
-);
+export const CHROME =
+	process.env.MOTIO_BROWSER_EXECUTABLE ??
+	resolve(
+		process.env.HOME ?? "",
+		".cache/motio/browsers/chrome-headless-shell/mac_arm-158.0.8127.36/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+	);
 
 export const DETERMINISM_FLAGS = [
 	"--font-render-hinting=none",
@@ -21,6 +23,7 @@ export const DETERMINISM_FLAGS = [
 	"--enable-unsafe-swiftshader",
 	"--hide-scrollbars",
 	"--mute-audio",
+	...(process.env.MOTIO_CHROME_NO_SANDBOX === "1" ? ["--no-sandbox"] : []),
 ];
 
 const TYPES: Record<string, string> = {

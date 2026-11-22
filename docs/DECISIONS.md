@@ -69,3 +69,10 @@ A real production project almost certainly uses transitions, Google Fonts, Zod a
 - `tsc -b` with project references builds and type-checks every package: libraries emit ESM with declarations and need no bundling, and references enforce package boundaries. Revisit with tsdown if a package needs bundling.
 - Biome for lint and format, Vitest for tests (Node, jsdom and a serial integration project with the real Chrome and FFmpeg), Playwright only for the Player.
 - TypeScript 7 (native compiler), pnpm workspaces, ESM-only, Node 22 or later.
+
+## D-013 BeginFrame capture on Linux, sandbox off only inside containers (2026-11-22)
+
+Measured in the pinned image (`docker/`, linux-arm64, Debian trixie, chrome-headless-shell 158) at 1080p PNG, one page, 120 frames: `Page.captureScreenshot` 72.6 ms per frame, `HeadlessExperimental.beginFrame` with a screenshot 19.0 ms per frame (3.8 times faster), a screenshot on every frame. Decoded pixels are identical between the two paths on every deterministic fixture (frame-driven, effect state, CSS, Web Animations); only the fixtures that read the real clock differ, as expected without the shim. BeginFrame becomes the default capture path where the start-up probe succeeds (Linux), with the screenshot path as fallback and reference; scheduled in M2.
+
+Docker's default seccomp profile blocks the user namespaces Chrome's sandbox needs. Inside the image the renderer passes `--no-sandbox` (set by `MOTIO_CHROME_NO_SANDBOX=1`), the container being the isolation boundary; outside containers the sandbox stays on.
+

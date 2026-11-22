@@ -11,7 +11,8 @@ Spike done (D-005, D-006). M1 in progress.
 - [x] Time model measured on eight fixtures in five orders (D-005).
 - [x] Capture throughput per format and resolution (D-006).
 - [x] Capture throughput against concurrency (D-007).
-- Moved into M1 as integration tests: frame stamps, React fixtures, colour round trip, BeginFrame in the Linux container.
+- [x] BeginFrame against screenshot in the Linux image (D-013).
+- Moved into M1 as integration tests: frame stamps, React fixtures, colour round trip.
 
 ## M1: single-node render
 
@@ -28,7 +29,7 @@ Done when:
 
 ## M2: compatibility breadth
 
-Scope: `Img`, fonts, Google Fonts, Tailwind, `remotion.config.ts` and `Config`, env vars, static files, transitions, captions, Zod schemas, shapes, paths, noise, layout utils; the symbol manifest and `doctor`.
+Scope: BeginFrame capture on Linux (D-013), `Img`, fonts, Google Fonts, Tailwind, `remotion.config.ts` and `Config`, env vars, static files, transitions, captions, Zod schemas, shapes, paths, noise, layout utils; the symbol manifest and `doctor`.
 
 Done when:
 - Every Tier 1 symbol in the manifest is supported with a test or stubbed with a build-time message.
@@ -51,7 +52,7 @@ Done when every video of a production Remotion project renders with no source ch
 
 ## M5: scale and formats
 
-Scope: distributed rendering (local, then Lambda), BeginFrame on Linux, alpha (WebM VP9, ProRes 4444), GIF output.
+Scope: distributed rendering (local, then Lambda), alpha (WebM VP9, ProRes 4444), GIF output.
 
 Done when:
 - Decoded frame hashes of a chunked render equal the single-node render, with no dropped or duplicated frames at chunk boundaries (frame stamps).
