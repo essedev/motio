@@ -63,7 +63,7 @@ export function motioCompat(options: MotioCompatOptions = {}): Plugin {
 			if (resolution.kind === "unknown" || resolution.kind === "unsupported") {
 				const mapping = resolution.kind === "unsupported" ? resolution.mapping : undefined;
 				this.error(
-					`[motio:compat] ${describeUnavailable(source, mapping, importedSymbols(importer, source))}` +
+					`${describeUnavailable(source, mapping, importedSymbols(importer, source))}` +
 						(importer ? ` (imported by ${cleanId(importer)})` : ""),
 				);
 			}
@@ -74,7 +74,7 @@ export function motioCompat(options: MotioCompatOptions = {}): Plugin {
 			if (resolved) return resolved;
 			const mapping = resolution.kind === "mapped" ? resolution.mapping : undefined;
 			this.error(
-				`[motio:compat] "${source}" maps to "${resolution.target}", which cannot be resolved. ` +
+				`"${source}" maps to "${resolution.target}", which cannot be resolved. ` +
 					describeUnavailable(source, mapping, importedSymbols(importer, source)) +
 					` Install "${resolution.target
 						.split("/")
@@ -103,13 +103,13 @@ export function motioCompat(options: MotioCompatOptions = {}): Plugin {
 						);
 					} else if (entry.status === "stubbed") {
 						this.warn(
-							`[motio:compat] "${symbol.name}" from "${usage.specifier}" is a stub in Motio${entry.note ? `: ${entry.note}` : ""} (${where})`,
+							`"${symbol.name}" from "${usage.specifier}" is a stub in Motio${entry.note ? `: ${entry.note}` : ""} (${where})`,
 						);
 					}
 				}
 			}
 			if (problems.length === 0) return null;
-			const message = `[motio:compat] ${problems.join("; ")}.`;
+			const message = `${problems.join("; ")}.`;
 			if (mode === "error") this.error(message);
 			this.warn(message);
 			return null;

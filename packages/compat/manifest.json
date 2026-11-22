@@ -13,7 +13,7 @@
 				"AbsoluteFill": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"absoluteFillSchema": {
 					"kind": "value",
@@ -48,13 +48,13 @@
 				"CalculateMetadataFunction": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"cancelRender": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"CanvasImage": {
 					"kind": "value",
@@ -64,12 +64,12 @@
 				"Composition": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"CompositionProps": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"Config": {
@@ -81,7 +81,7 @@
 				"continueRender": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"createEffect": {
 					"kind": "value",
@@ -96,12 +96,12 @@
 				"delayRender": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Easing": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Experimental": {
 					"kind": "value",
@@ -111,7 +111,7 @@
 				"Folder": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"FolderContext": {
 					"kind": "value",
@@ -121,7 +121,7 @@
 				"Freeze": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getHtmlInCanvasUnsupportedMessage": {
 					"kind": "value",
@@ -131,17 +131,17 @@
 				"getInputProps": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getRemotionEnvironment": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getStaticFiles": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Remotion recommends importing it from @remotion/studio."
 				},
 				"HTML_IN_CANVAS_UNSUPPORTED_MESSAGE": {
@@ -172,7 +172,7 @@
 				"Img": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Interactive": {
 					"kind": "value",
@@ -182,12 +182,12 @@
 				"interpolate": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"interpolateColors": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"isHtmlInCanvasSupported": {
 					"kind": "value",
@@ -197,12 +197,12 @@
 				"Loop": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"measureSpring": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"MediaPlaybackError": {
 					"kind": "value",
@@ -217,33 +217,33 @@
 				"prefetch": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"random": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"registerRoot": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Sequence": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"SequenceProps": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"Series": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Solid": {
 					"kind": "value",
@@ -253,17 +253,17 @@
 				"spring": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"staticFile": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Still": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Track": {
 					"kind": "value",
@@ -273,22 +273,22 @@
 				"useBufferState": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"useCurrentFrame": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"useCurrentScale": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"useDelayRender": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"useIsInsideNonPremountFreeze": {
 					"kind": "value",
@@ -303,17 +303,17 @@
 				"useRemotionEnvironment": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"useVideoConfig": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"VERSION": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Video": {
 					"kind": "value",
@@ -323,7 +323,7 @@
 				"VideoConfig": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"watchStaticFile": {
@@ -459,7 +459,7 @@
 				"bundle": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"LegacyBundleOptions": {
 					"kind": "type",
@@ -499,22 +499,22 @@
 				"createTikTokStyleCaptions": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"parseSrt": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"parseVtt": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"serializeSrt": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"TikTokPage": {
 					"kind": "type",
@@ -662,22 +662,22 @@
 				"fillTextBox": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"fitText": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"fitTextOnNLines": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"measureText": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -827,17 +827,17 @@
 				"noise2D": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"noise3D": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"noise4D": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1032,7 +1032,7 @@
 				"ensureBrowser": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"ErrorWithStackFrame": {
 					"kind": "value",
@@ -1047,7 +1047,7 @@
 				"getCompositions": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getSilentParts": {
 					"kind": "value",
@@ -1068,7 +1068,7 @@
 				"makeCancelSignal": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"openBrowser": {
 					"kind": "value",
@@ -1084,12 +1084,12 @@
 				"renderFrames": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"renderMedia": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"RenderMediaOnProgress": {
 					"kind": "type",
@@ -1100,12 +1100,12 @@
 				"renderStill": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"selectComposition": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"StillImageFormat": {
 					"kind": "type",
@@ -1507,17 +1507,17 @@
 				"zColor": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"zMatrix": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"zTextarea": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1552,7 +1552,7 @@
 				"VERSION": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		}
