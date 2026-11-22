@@ -44,6 +44,54 @@
 		"./push-cut": {
 			"types": "./dist/presentations/push-cut.d.ts",
 			"default": "./dist/presentations/push-cut.js"
+		},
+		"./zoom-in-out": {
+			"types": "./dist/presentations/zoom-in-out.d.ts",
+			"default": "./dist/presentations/zoom-in-out.js"
+		},
+		"./dissolve": {
+			"types": "./dist/presentations/dissolve.d.ts",
+			"default": "./dist/presentations/dissolve.js"
+		},
+		"./swap": {
+			"types": "./dist/presentations/swap.d.ts",
+			"default": "./dist/presentations/swap.js"
+		},
+		"./blur-slide": {
+			"types": "./dist/presentations/blur-slide.d.ts",
+			"default": "./dist/presentations/blur-slide.js"
+		},
+		"./book-flip": {
+			"types": "./dist/presentations/book-flip.d.ts",
+			"default": "./dist/presentations/book-flip.js"
+		},
+		"./crosswarp": {
+			"types": "./dist/presentations/crosswarp.d.ts",
+			"default": "./dist/presentations/crosswarp.js"
+		},
+		"./cross-zoom": {
+			"types": "./dist/presentations/cross-zoom.d.ts",
+			"default": "./dist/presentations/cross-zoom.js"
+		},
+		"./dreamy-zoom": {
+			"types": "./dist/presentations/dreamy-zoom.d.ts",
+			"default": "./dist/presentations/dreamy-zoom.js"
+		},
+		"./film-burn": {
+			"types": "./dist/presentations/film-burn.d.ts",
+			"default": "./dist/presentations/film-burn.js"
+		},
+		"./linear-blur": {
+			"types": "./dist/presentations/linear-blur.d.ts",
+			"default": "./dist/presentations/linear-blur.js"
+		},
+		"./ripple": {
+			"types": "./dist/presentations/ripple.d.ts",
+			"default": "./dist/presentations/ripple.js"
+		},
+		"./zoom-blur": {
+			"types": "./dist/presentations/zoom-blur.d.ts",
+			"default": "./dist/presentations/zoom-blur.js"
 		}
 	},
 	"files": [

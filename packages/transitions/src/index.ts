@@ -1,3 +1,16 @@
+export {
+	type HtmlInCanvasPresentationOptions,
+	type HtmlInCanvasShader,
+	type HtmlInCanvasShaderDraw,
+	type HtmlInCanvasShaderDrawParams,
+	HtmlInCanvasUnsupportedError,
+	makeHtmlInCanvasPresentation,
+} from "./html-in-canvas/make-html-in-canvas-presentation.js";
+export { type BlurSlideProps, blurSlide } from "./presentations/blur-slide.js";
+export { type CrossZoomProps, crossZoom } from "./presentations/cross-zoom.js";
+export { type DreamyZoomProps, dreamyZoom } from "./presentations/dreamy-zoom.js";
+export { type FilmBurnProps, filmBurn } from "./presentations/film-burn.js";
+export { type LinearBlurProps, linearBlur } from "./presentations/linear-blur.js";
 export { type PushCutProps, pushCut } from "./presentations/push-cut.js";
 export { type LinearTimingOptions, linearTiming } from "./timings/linear-timing.js";
 export { type SpringTimingOptions, springTiming } from "./timings/spring-timing.js";
