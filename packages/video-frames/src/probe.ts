@@ -7,10 +7,12 @@ export interface VideoInfo {
 	height: number;
 	/** Presentation timestamps of every frame in seconds, from the stream start, ascending. */
 	timestamps: number[];
+	/** Codec name as FFmpeg reports it, for example "h264" or "vp9". */
+	codec: string;
 }
 
 interface ProbeJson {
-	streams?: { width?: number; height?: number; start_time?: string }[];
+	streams?: { width?: number; height?: number; start_time?: string; codec_name?: string }[];
 	packets?: { pts_time?: string }[];
 }
 
@@ -27,7 +29,7 @@ export async function probeVideo(src: string, ffprobe = "ffprobe"): Promise<Vide
 			"-select_streams",
 			"v:0",
 			"-show_entries",
-			"stream=width,height,start_time:packet=pts_time",
+			"stream=width,height,start_time,codec_name:packet=pts_time",
 			"-of",
 			"json",
 			src,
@@ -49,5 +51,5 @@ export async function probeVideo(src: string, ffprobe = "ffprobe"): Promise<Vide
 		.sort((a, b) => a - b);
 	if (timestamps.length === 0)
 		throw new VideoFramesError("E_VIDEO_NO_FRAMES", `${src} has no frames`, { src });
-	return { width: stream.width, height: stream.height, timestamps };
+	return { width: stream.width, height: stream.height, timestamps, codec: stream.codec_name ?? "" };
 }

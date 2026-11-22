@@ -13,6 +13,16 @@ export interface FrameExtractorOptions {
 }
 
 /**
+ * FFmpeg's native VP8/VP9 decoders drop the alpha plane of transparent WebM; libvpx keeps it
+ * (D-019). libvpx also decodes opaque VP8/VP9, so it is used for every such source.
+ */
+function decoderArgs(codec: string): string[] {
+	if (codec === "vp9") return ["-c:v", "libvpx-vp9"];
+	if (codec === "vp8") return ["-c:v", "libvpx"];
+	return [];
+}
+
+/**
  * Extracts exact source frames as PNG, outside the browser. Requests for the same frame are
  * deduplicated, recent frames are kept in an LRU cache, and a miss decodes a batch of
  * following frames in one FFmpeg run, since renders mostly move forward.
@@ -75,7 +85,7 @@ export class FrameExtractor {
 	}
 
 	private async decodeBatch(src: string, index: number): Promise<void> {
-		const { timestamps } = await this.info(src);
+		const { timestamps, codec } = await this.info(src);
 		if (index < 0 || index >= timestamps.length) {
 			throw new VideoFramesError(
 				"E_VIDEO_EXTRACT",
@@ -95,6 +105,7 @@ export class FrameExtractor {
 				"-loglevel",
 				"error",
 				"-nostdin",
+				...decoderArgs(codec),
 				"-ss",
 				ss.toFixed(6),
 				"-i",
