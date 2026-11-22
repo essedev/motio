@@ -7,7 +7,8 @@
 	"description": "Renders fixtures/compositions with the published Remotion (pinned) to produce reference stills. Outside the workspace; never read node_modules.",
 	"scripts": {
 		"record": "node record.ts",
-		"record:media": "node record-media.ts"
+		"record:media": "node record-media.ts",
+		"record:zod": "node record-zod.ts"
 	},
 	"dependencies": {
 		"@remotion/bundler": "4.0.545",
@@ -17,8 +18,10 @@
 		"@remotion/renderer": "4.0.545",
 		"@remotion/shapes": "4.0.545",
 		"@remotion/transitions": "4.0.545",
+		"@remotion/zod-types": "4.0.545",
 		"react": "19.3.1",
 		"react-dom": "19.3.1",
-		"remotion": "4.0.545"
+		"remotion": "4.0.545",
+		"zod": "^4.6.7"
 	}
 }
