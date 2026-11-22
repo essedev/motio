@@ -59,6 +59,9 @@
 			"path": "packages/media-utils"
 		},
 		{
+			"path": "packages/fonts"
+		},
+		{
 			"path": "packages/shapes"
 		}
 	]
