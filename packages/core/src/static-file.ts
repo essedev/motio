@@ -1,13 +1,26 @@
 import { getRemotionEnvironment } from "./environment.js";
 
 /**
- * Global the bundler sets before the user entry runs: the URL prefix under which the project's
- * `public/` folder is served. Defaults to `"/"`.
+ * Global `@motiojs/bundler` sets before the user entry runs, with `staticBase` (the URL prefix
+ * under which the project's `public/` folder is served) and `staticFiles` (its file list).
  */
+export const BUNDLE_GLOBAL = "__motioBundle";
+
+/** Fallback global for the public base when no bundle context exists. Defaults to `"/"`. */
 export const STATIC_BASE_GLOBAL = "__motioStaticBase";
 
-/** Global the bundler sets with the list of files in `public/`, for `getStaticFiles()`. */
+/** Fallback global for the file list when no bundle context exists. */
 export const STATIC_FILES_GLOBAL = "__motioStaticFiles";
+
+interface BundleContext {
+	staticBase?: unknown;
+	staticFiles?: unknown;
+}
+
+function bundleContext(): BundleContext | null {
+	const value = (globalThis as Record<string, unknown>)[BUNDLE_GLOBAL];
+	return value && typeof value === "object" ? (value as BundleContext) : null;
+}
 
 /** A file in the `public/` folder, as returned by `getStaticFiles()`. */
 export interface StaticFile {
@@ -21,7 +34,8 @@ export interface StaticFile {
 }
 
 function staticBase(): string {
-	const value = (globalThis as Record<string, unknown>)[STATIC_BASE_GLOBAL];
+	const value =
+		bundleContext()?.staticBase ?? (globalThis as Record<string, unknown>)[STATIC_BASE_GLOBAL];
 	const base = typeof value === "string" ? value : "/";
 	return base.endsWith("/") ? base : `${base}/`;
 }
@@ -60,7 +74,8 @@ export function staticFile(path: string): string {
  */
 export function getStaticFiles(): StaticFile[] {
 	if (!getRemotionEnvironment().isRendering) return [];
-	const value = (globalThis as Record<string, unknown>)[STATIC_FILES_GLOBAL];
+	const value =
+		bundleContext()?.staticFiles ?? (globalThis as Record<string, unknown>)[STATIC_FILES_GLOBAL];
 	if (!Array.isArray(value)) return [];
 	return (value as StaticFile[]).slice(0, 10_000).map((f) => ({
 		...f,

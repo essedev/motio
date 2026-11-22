@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { RUN_CONTEXT_GLOBAL } from "./protocol.js";
 import {
+	BUNDLE_GLOBAL,
 	getStaticFiles,
 	STATIC_BASE_GLOBAL,
 	STATIC_FILES_GLOBAL,
@@ -13,6 +14,7 @@ afterEach(() => {
 	delete g[STATIC_BASE_GLOBAL];
 	delete g[STATIC_FILES_GLOBAL];
 	delete g[RUN_CONTEXT_GLOBAL];
+	delete g[BUNDLE_GLOBAL];
 });
 
 describe("staticFile", () => {
@@ -22,7 +24,13 @@ describe("staticFile", () => {
 		expect(staticFile("assets/a b?.json")).toBe("/assets/a%20b%3F.json");
 	});
 
-	it("uses the base the bundler sets", () => {
+	it("uses the bundle context of @motiojs/bundler first", () => {
+		g[STATIC_BASE_GLOBAL] = "/ignored";
+		g[BUNDLE_GLOBAL] = { staticBase: "/public", staticFiles: [] };
+		expect(staticFile("photo.png")).toBe("/public/photo.png");
+	});
+
+	it("falls back to the static base global", () => {
 		g[STATIC_BASE_GLOBAL] = "/static-abc";
 		expect(staticFile("x.png")).toBe("/static-abc/x.png");
 		g[STATIC_BASE_GLOBAL] = "./";

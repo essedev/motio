@@ -36,7 +36,7 @@ export {
 	readiness,
 } from "./readiness/registry.js";
 export { getVirtualClock, type RealTimers, realTimers, type VirtualClock } from "./real-time.js";
-export { STATIC_BASE_GLOBAL, STATIC_FILES_GLOBAL } from "./static-file.js";
+export { BUNDLE_GLOBAL, STATIC_BASE_GLOBAL, STATIC_FILES_GLOBAL } from "./static-file.js";
 export {
 	CurrentScaleContext,
 	FolderContext,
