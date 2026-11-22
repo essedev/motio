@@ -1,0 +1,8 @@
+{
+	"name": "@motiojs/fixture-compositions",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"license": "Apache-2.0",
+	"description": "Compositions written against the Remotion API, rendered by Remotion (oracle) and by Motio for golden comparison"
+}
