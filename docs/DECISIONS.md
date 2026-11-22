@@ -88,3 +88,9 @@ Against `fixtures/media`, click times match within 1 ms (offset, trim, volumes, 
 
 Remotion's HTML5 `Video` is not frame-exact in renders: its recording jumps back to stale frames on 7 of 60 frames and rounds inconsistently on fractional positions, agreeing with the `nearest` rule on 48 of 60. Motio renders the HTML5 `Video` through the same extraction path with the `nearest` rule, which is deterministic and matches Remotion wherever Remotion is itself consistent. Revisit if a project depends on the native element during render (for example drawing it to a canvas), which the M3 `Video` ref design must cover.
 
+## D-016 HTML5 `Video` keeps the native element in renders (2026-11-22, supersedes the HTML5 part of D-015)
+
+Measured in chrome-headless-shell 158 with the frame-stamped sources: a native `<video>` seeked to the middle of the selected frame's interval (`(k + 0.5) / fps` for constant frame rate, the midpoint between the frame's timestamp and the next one in general), waiting for `seeked`, shows exactly frame k in 456 of 456 seeks (24, 59.94 and 30 fps, random order with backward seeks). `requestVideoFrameCallback` does not fire in headless-shell without compositor frames, so `seeked` is the readiness signal. Seeking only works when the server answers HTTP `Range` requests: without them every seek shows frame 0, so the renderer's static server must support `Range`.
+
+So the HTML5 `Video` renders the real element, seeked to the midpoint of the frame chosen by the `nearest` rule from timestamps the host provides (D-015). Refs keep pointing at an `HTMLVideoElement`, and drawing it to a canvas works. `OffthreadVideo` and `@remotion/media` `Video` keep the extraction path, which also covers codecs Chrome cannot decode (ProRes, HEVC on Linux).
+

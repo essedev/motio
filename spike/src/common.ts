@@ -42,7 +42,26 @@ export function serve(dir: string): Promise<{ server: Server; url: string }> {
 				res.writeHead(404).end();
 				return;
 			}
-			res.writeHead(200, { "content-type": TYPES[extname(file)] ?? "application/octet-stream" });
+			const type = TYPES[extname(file)] ?? "application/octet-stream";
+			const size = statSync(file).size;
+			const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? "");
+			if (range) {
+				const start = range[1] ? Number(range[1]) : 0;
+				const end = range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+				res.writeHead(206, {
+					"content-type": type,
+					"accept-ranges": "bytes",
+					"content-range": `bytes ${start}-${end}/${size}`,
+					"content-length": end - start + 1,
+				});
+				createReadStream(file, { start, end }).pipe(res);
+				return;
+			}
+			res.writeHead(200, {
+				"content-type": type,
+				"accept-ranges": "bytes",
+				"content-length": size,
+			});
 			createReadStream(file).pipe(res);
 		});
 		server.listen(0, "127.0.0.1", () => {

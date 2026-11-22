@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<style>html, body { margin: 0; background: #000; } video { display: block; width: 480px; height: 270px; }</style>
+	</head>
+	<body>
+		<video id="v" muted playsinline preload="auto"></video>
+		<script>
+			const v = document.getElementById("v");
+			window.load = (src) => new Promise((ok, ko) => { v.onloadeddata = () => ok(v.duration); v.onerror = () => ko(String(v.error && v.error.message)); v.src = src; });
+			// Seek to time t and resolve once the frame for t is presented.
+			// rVFC does not fire in headless-shell without compositor frames, so wait for "seeked".
+			window.seekTo = (t) => new Promise((ok) => {
+				if (Math.abs(v.currentTime - t) < 1e-9) { ok(); return; }
+				v.addEventListener("seeked", () => ok(), { once: true });
+				v.currentTime = t;
+			});
+		</script>
+	</body>
+</html>
