@@ -84,7 +84,11 @@ export function chromeArgs(options: ChromiumOptions = {}): string[] {
 	}
 	if (process.platform === "linux") {
 		put("--disable-dev-shm-usage");
-		if (typeof process.getuid === "function" && process.getuid() === 0) put("--no-sandbox");
+		// Chrome refuses root without --no-sandbox, and Docker's default seccomp profile blocks the
+		// user namespaces its sandbox needs: the official image sets MOTIO_CHROME_NO_SANDBOX=1, the
+		// container being the isolation boundary (D-013).
+		const isRoot = typeof process.getuid === "function" && process.getuid() === 0;
+		if (isRoot || process.env.MOTIO_CHROME_NO_SANDBOX === "1") put("--no-sandbox");
 	}
 	const enable = new Set<string>();
 	const disable = new Set<string>();

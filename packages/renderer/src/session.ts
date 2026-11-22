@@ -69,7 +69,10 @@ export async function openSession(options: BrowserSessionOptions): Promise<Brows
 	const envVariables = resolveEnvVariables(options.envVariables);
 	const timeoutInMilliseconds = resolveTimeout(options.timeoutInMilliseconds);
 	const chromiumOptions = options.chromiumOptions ?? {};
-	const executablePath = options.browserExecutable ?? (await ensureBrowser()).executablePath;
+	const executablePath =
+		options.browserExecutable ??
+		process.env.MOTIO_BROWSER_EXECUTABLE ??
+		(await ensureBrowser()).executablePath;
 	const server = await openServeUrl(options.serveUrl, options.port ?? undefined);
 	const onBrowserLog = options.onBrowserLog;
 	return {
