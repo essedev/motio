@@ -99,6 +99,8 @@ export class RenderPage {
 	private readonly waiters = new Set<(err: MotioError) => void>();
 	private closed = false;
 	private composition: string | undefined;
+	/** Frame of the page call in flight, stamped on errors that interrupt it. */
+	private inFlightFrame: number | undefined;
 
 	private constructor(
 		private readonly browser: Browser,
@@ -155,25 +157,57 @@ export class RenderPage {
 			const message = err instanceof Error ? err.message : String(err);
 			const stack = err instanceof Error ? err.stack : undefined;
 			log?.({ text: stack ?? message, type: "error", stackTrace: [] });
-			const ctx: Record<string, unknown> = {};
+			const frame = this.inFlightFrame;
+			const ctx = this.failureContext();
 			if (stack !== undefined) ctx.pageStack = stack;
-			if (this.composition !== undefined) ctx.composition = this.composition;
-			this.fail(
-				new MotioError(
-					"E_PAGE_ERROR",
-					`Uncaught error in the page: ${message}. Fix the error in the composition code; see onBrowserLog for the stack.`,
-					ctx,
-				),
+			const uncaught = new MotioError(
+				"E_PAGE_ERROR",
+				`Uncaught error in the page${frame === undefined ? "" : ` at frame ${frame}`}: ${message}. Fix the error in the composition code; see onBrowserLog for the stack.`,
+				ctx,
+			);
+			// cancelRender() throws; called from a timer or a promise callback, its error arrives
+			// here before the settle loop reports the cancellation. Ask the page which it was.
+			void this.cancellation().then(
+				(cancelled) =>
+					this.fail(cancelled ? fromPageError(cancelled, frame, this.composition) : uncaught),
+				() => this.fail(uncaught),
 			);
 		});
 		this.page.on("error", (err) => {
-			this.fail(new MotioError("E_BROWSER_CRASHED", `The page crashed: ${err.message}`, {}, err));
+			this.fail(
+				new MotioError(
+					"E_BROWSER_CRASHED",
+					`The page crashed: ${err.message}`,
+					this.failureContext(),
+					err,
+				),
+			);
 		});
 		this.browser.on("disconnected", () => {
 			if (!this.closed) {
-				this.fail(new MotioError("E_BROWSER_CRASHED", "The browser process exited unexpectedly"));
+				this.fail(
+					new MotioError(
+						"E_BROWSER_CRASHED",
+						"The browser process exited unexpectedly",
+						this.failureContext(),
+					),
+				);
 			}
 		});
+	}
+
+	/** Composition and the frame being sought, for errors raised outside a page call. */
+	private failureContext(): Record<string, unknown> {
+		const ctx: Record<string, unknown> = {};
+		if (this.inFlightFrame !== undefined) ctx.frame = this.inFlightFrame;
+		if (this.composition !== undefined) ctx.composition = this.composition;
+		return ctx;
+	}
+
+	/** The page's `cancelRender()` error, if any (absent in bundles without `cancelled()`). */
+	private async cancellation(): Promise<SerializedPageError | null> {
+		const expr = `(() => { const api = window[${JSON.stringify(PAGE_API_GLOBAL)}]; return api && typeof api.cancelled === "function" ? api.cancelled() : null; })()`;
+		return (await this.page.evaluate(expr)) as SerializedPageError | null;
 	}
 
 	private fail(err: MotioError): void {
@@ -302,11 +336,17 @@ export class RenderPage {
 		frame?: number,
 	): Promise<T> {
 		const expr = `${CALL}(${JSON.stringify(PAGE_API_GLOBAL)}, ${JSON.stringify(method)}, ${JSON.stringify(args)})`;
-		const result = await this.guard(
-			this.page.evaluate(expr) as Promise<CallResult<T>>,
-			timeoutMs,
-			onTimeout,
-		);
+		this.inFlightFrame = frame;
+		let result: CallResult<T>;
+		try {
+			result = await this.guard(
+				this.page.evaluate(expr) as Promise<CallResult<T>>,
+				timeoutMs,
+				onTimeout,
+			);
+		} finally {
+			this.inFlightFrame = undefined;
+		}
 		if (!result.ok) throw fromPageError(result.error, frame, this.composition);
 		return result.value;
 	}

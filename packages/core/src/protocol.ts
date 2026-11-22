@@ -161,4 +161,11 @@ export interface PageApi {
 	): Promise<ResolvedComposition>;
 	/** Resolves when the frame is ready to capture; rejects with a `PageError`. */
 	seek(frame: number): Promise<FrameReport>;
+	/**
+	 * The error passed to `cancelRender()`, if it was called, as an `E_CANCELLED` page error.
+	 * `cancelRender()` throws, so a call outside React's render (a timer, a promise callback)
+	 * surfaces as an uncaught page error; the renderer asks this to report it as a cancellation.
+	 * Optional: bundles built before it was added do not provide it.
+	 */
+	cancelled?(): PageError | null;
 }

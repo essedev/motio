@@ -22,6 +22,7 @@ import {
 	type FrameWarning,
 	PAGE_API_GLOBAL,
 	type PageApi,
+	type PageError,
 	type PageErrorCode,
 	PROTOCOL_VERSION,
 	type ResolvedComposition,
@@ -384,6 +385,13 @@ export function mountPage(options: MountPageOptions = {}): PageApi {
 			"E_INVALID_COMPOSITION",
 		),
 		seek: wrap(runtime, (frame: number) => runtime.seek(frame), "E_RENDER_ERROR"),
+		cancelled: () => {
+			const error = readiness.cancelled();
+			if (!error) return null;
+			const out: PageError = { code: "E_CANCELLED", message: error.message };
+			if (error.stack !== undefined) out.stack = error.stack;
+			return out;
+		},
 	};
 	if (install) {
 		Object.defineProperty(window, PAGE_API_GLOBAL, {
