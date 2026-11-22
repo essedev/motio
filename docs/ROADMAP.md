@@ -56,5 +56,5 @@ Scope: distributed rendering (local, then Lambda), alpha (WebM VP9, ProRes 4444)
 
 Done when:
 - Decoded frame hashes of a chunked render equal the single-node render, with no dropped or duplicated frames at chunk boundaries (frame stamps).
-- Alpha within 1 code value of the PNG frames.
+- Alpha: ProRes 4444 and lossless VP9 within 1 code value of the PNG frames; lossy VP9 within the error D-019 measured for its CRF.
 - The Lambda adapter passes an end-to-end test.

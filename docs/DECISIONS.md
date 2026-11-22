@@ -104,3 +104,15 @@ The generated modules (about 10 MB of source) are committed and excluded from li
 
 `@motiojs/distributed` plans contiguous chunks (optionally aligned to a GOP) and assembles video-only MPEG-TS chunks with FFmpeg's concat demuxer and stream copy, then muxes the audio rendered once (D-014). Tested with frame-stamped chunks encoded independently by libx264 with 3 B-frames: 240 frames in chunks of 37 at 30 and 29.97 fps decode to exactly frames 0 to 239, once each, in order, and audio muxes alongside. MPEG-TS is used because MP4 chunks carry edit lists for B-frame delay that the concat demuxer does not apply, which shifts or duplicates frames at boundaries. Next: the renderer gains a chunk output mode (frame range to MPEG-TS) and a local worker adapter implements `ChunkWorker`.
 
+## D-019 Alpha output recipes (2026-11-23)
+
+Measured with RGBA PNG frames (alpha gradient plus a half-transparent box) encoded and decoded back to RGBA:
+
+| Recipe | Max alpha error | Max colour error on opaque pixels |
+|---|---|---|
+| ProRes 4444: `prores_ks -profile:v 4444 -pix_fmt yuva444p10le -vendor apl0` | 1 | 0 |
+| VP9 lossless: `libvpx-vp9 -pix_fmt yuva420p -auto-alt-ref 0 -lossless 1` | 1 | 0 |
+| VP9 lossy, `-crf 4 / 10 / 15 / 20 / 31 -b:v 0` | 2 / 3 / 3 / 7 / 12 | 0 |
+
+`-auto-alt-ref 0` is required for VP9 alpha. Reading the alpha of a VP9 WebM needs the `libvpx-vp9` decoder (`-c:v libvpx-vp9` before `-i`): FFmpeg's native VP9 decoder drops the alpha plane, which also applies to `@motiojs/video-frames` when the source is a transparent WebM. The M5 alpha criterion therefore reads: ProRes 4444 and lossless VP9 within 1 code value of the PNG frames; lossy VP9 within the error measured here for its CRF.
+
