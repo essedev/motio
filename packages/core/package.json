@@ -1,22 +1,22 @@
 {
-  "name": "@motiojs/core",
-  "version": "0.0.0",
-  "description": "Timeline, hooks, components and animation primitives (browser)",
-  "license": "Apache-2.0",
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./protocol": {
-      "types": "./dist/protocol.d.ts",
-      "default": "./dist/protocol.js"
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "sideEffects": false,
-  "scripts": {}
+	"name": "@motiojs/core",
+	"version": "0.0.0",
+	"description": "Timeline, hooks, components and animation primitives (browser)",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./protocol": {
+			"types": "./dist/protocol.d.ts",
+			"default": "./dist/protocol.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {}
 }
