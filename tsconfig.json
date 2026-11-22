@@ -42,6 +42,9 @@
 		},
 		{
 			"path": "packages/google-fonts"
+		},
+		{
+			"path": "packages/distributed"
 		}
 	]
 }

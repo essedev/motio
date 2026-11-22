@@ -100,3 +100,7 @@ So the HTML5 `Video` renders the real element, seeked to the midpoint of the fra
 
 The generated modules (about 10 MB of source) are committed and excluded from lint: builds stay offline and reproducible, and a regeneration shows up as a reviewable diff. Revisit if regeneration churn makes the history heavy; the alternative is generating at publish time.
 
+## D-018 Chunk assembly: MPEG-TS chunks, concat without re-encoding (2026-11-23)
+
+`@motiojs/distributed` plans contiguous chunks (optionally aligned to a GOP) and assembles video-only MPEG-TS chunks with FFmpeg's concat demuxer and stream copy, then muxes the audio rendered once (D-014). Tested with frame-stamped chunks encoded independently by libx264 with 3 B-frames: 240 frames in chunks of 37 at 30 and 29.97 fps decode to exactly frames 0 to 239, once each, in order, and audio muxes alongside. MPEG-TS is used because MP4 chunks carry edit lists for B-frame delay that the concat demuxer does not apply, which shifts or duplicates frames at boundaries. Next: the renderer gains a chunk output mode (frame range to MPEG-TS) and a local worker adapter implements `ChunkWorker`.
+

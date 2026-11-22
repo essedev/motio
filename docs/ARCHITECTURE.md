@@ -136,7 +136,7 @@ RGB to YUV conversion is explicit, never FFmpeg's default (BT.601 for RGB input,
 ## Parallel and distributed rendering
 
 - **One machine.** A pool of pages across one or more browser processes pulling frame numbers from a shared queue (contiguous ranges in the virtual time model), all feeding one encoder. Default concurrency: half the CPU threads, capped at 8, as in Remotion.
-- **Many machines.** The planner cuts the timeline into chunks; workers encode chunks as MPEG-TS with closed GOPs; the assembler concatenates without re-encoding, remuxes to the container and muxes the audio rendered once. Workers sit behind three operations (plan, render chunk, assemble), so local processes, Lambda, Cloud Run and Kubernetes are adapters.
+- **Many machines.** The planner cuts the timeline into chunks; workers encode chunks as MPEG-TS with closed GOPs; the assembler concatenates without re-encoding (D-018), remuxes to the container and muxes the audio rendered once. Workers sit behind three operations (plan, render chunk, assemble), so local processes, Lambda, Cloud Run and Kubernetes are adapters.
 
 ## Preview
 
