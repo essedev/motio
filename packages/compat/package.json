@@ -8,11 +8,42 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
-		}
+		},
+		"./config": {
+			"types": "./dist/config/index.d.ts",
+			"default": "./dist/config/index.js"
+		},
+		"./tailwind": {
+			"types": "./dist/tailwind-v3-entry.d.ts",
+			"default": "./dist/tailwind-v3-entry.js"
+		},
+		"./tailwind-v4": {
+			"types": "./dist/tailwind-v4-entry.d.ts",
+			"default": "./dist/tailwind-v4-entry.js"
+		},
+		"./manifest.json": "./manifest.json"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"manifest.json",
+		"manifest.schema.json"
 	],
 	"sideEffects": false,
-	"scripts": {}
+	"scripts": {
+		"manifest:status": "tsc -b && node scripts/manifest-status.mjs",
+		"manifest:enumerate": "node scripts/enumerate-exports.mjs"
+	},
+	"dependencies": {
+		"oxc-parser": "^0.159.0"
+	},
+	"devDependencies": {
+		"ajv": "^8.20.0",
+		"vite": "8.3.8"
+	},
+	"peerDependencies": {
+		"vite": ">=8.0.0"
+	},
+	"engines": {
+		"node": ">=22"
+	}
 }

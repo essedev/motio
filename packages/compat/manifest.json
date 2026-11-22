@@ -1,0 +1,1560 @@
+{
+	"$schema": "./manifest.schema.json",
+	"target": "remotion@4.0.545",
+	"sources": [
+		"Export names enumerated at runtime from the published packages (scripts/enumerate-exports.mjs).",
+		"Type exports and notes from the API reference at remotion.dev/docs."
+	],
+	"excluded": "Names ending in `Internals` and CommonJS interop keys are not public API and are not listed.",
+	"modules": {
+		"remotion": {
+			"tier": 1,
+			"symbols": {
+				"AbsoluteFill": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"absoluteFillSchema": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"AnimatedImage": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Artifact": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"assertValidInterpolateEasingOption": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"assertValidInterpolatePosterizeOption": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Audio": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"CalculateMetadataFunction": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"cancelRender": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"CanvasImage": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Composition": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"CompositionProps": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"Config": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing",
+					"note": "Deprecated in remotion.config.ts in favour of @remotion/cli/config; maps to @motiojs/compat/config."
+				},
+				"continueRender": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"createEffect": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"createEffectImplementation": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"delayRender": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Easing": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Experimental": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Folder": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"FolderContext": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Freeze": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"getHtmlInCanvasUnsupportedMessage": {
+					"kind": "value",
+					"tier": 3,
+					"status": "missing"
+				},
+				"getInputProps": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"getRemotionEnvironment": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"getStaticFiles": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing",
+					"note": "Remotion recommends importing it from @remotion/studio."
+				},
+				"HTML_IN_CANVAS_UNSUPPORTED_MESSAGE": {
+					"kind": "value",
+					"tier": 3,
+					"status": "missing"
+				},
+				"Html5Audio": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Html5Video": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"HtmlInCanvas": {
+					"kind": "value",
+					"tier": 3,
+					"status": "missing"
+				},
+				"IFrame": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Img": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Interactive": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"interpolate": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"interpolateColors": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"isHtmlInCanvasSupported": {
+					"kind": "value",
+					"tier": 3,
+					"status": "missing"
+				},
+				"Loop": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"measureSpring": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"MediaPlaybackError": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"OffthreadVideo": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"prefetch": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"random": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"registerRoot": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Sequence": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"SequenceProps": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"Series": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Solid": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"spring": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"staticFile": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Still": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Track": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"useBufferState": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"useCurrentFrame": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"useCurrentScale": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"useDelayRender": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"useIsInsideNonPremountFreeze": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"usePixelDensity": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"useRemotionEnvironment": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"useVideoConfig": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"VERSION": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Video": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"VideoConfig": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"watchStaticFile": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/animation-utils": {
+			"tier": 2,
+			"symbols": {
+				"interpolateStyles": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeTransform": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"matrix": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"matrix3d": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"perspective": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"rotate": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"rotate3d": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"rotateX": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"rotateY": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"rotateZ": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"scale": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"scale3d": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"scaleX": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"scaleY": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"scaleZ": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"skew": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"skewX": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"skewY": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"translate": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"translate3d": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"translateX": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"translateY": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"translateZ": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/bundler": {
+			"tier": 1,
+			"symbols": {
+				"bundle": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"LegacyBundleOptions": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"WatchIgnoreNextChangePlugin": {
+					"kind": "value",
+					"tier": 3,
+					"status": "missing",
+					"note": "No equivalent: Motio bundles with Vite (D-003)."
+				},
+				"webpack": {
+					"kind": "value",
+					"tier": 3,
+					"status": "missing",
+					"note": "No equivalent: Motio bundles with Vite (D-003)."
+				},
+				"WebpackOverrideFn": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				}
+			}
+		},
+		"@remotion/captions": {
+			"tier": 1,
+			"symbols": {
+				"Caption": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"createTikTokStyleCaptions": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"parseSrt": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"parseVtt": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"serializeSrt": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"TikTokPage": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				}
+			}
+		},
+		"@remotion/cli/config": {
+			"tier": 1,
+			"symbols": {
+				"Config": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "Setters without an equivalent record a warning instead of throwing."
+				},
+				"WebpackOverrideFn": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				}
+			}
+		},
+		"@remotion/effects": {
+			"tier": 2,
+			"symbols": {
+				"checkerboard": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"cornerPin": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"gridlines": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"lightLeak": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"lightLeakEffectSchema": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"linearGradient": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"linearGradientTint": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"pattern": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"rings": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"starburst": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"starburstEffectSchema": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"tile": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"zigzag": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/fonts": {
+			"tier": 1,
+			"symbols": {
+				"loadFont": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/google-fonts": {
+			"tier": 1,
+			"symbols": {
+				"getAvailableFonts": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/google-fonts/*": {
+			"tier": 1,
+			"symbols": {
+				"fontFamily": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"getInfo": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"loadFont": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"loadVariableFont": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/layout-utils": {
+			"tier": 2,
+			"symbols": {
+				"fillTextBox": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"fitText": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"fitTextOnNLines": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"measureText": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/light-leaks": {
+			"tier": 2,
+			"symbols": {
+				"lightLeak": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"LightLeak": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"lightLeakEffectSchema": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/media": {
+			"tier": 1,
+			"symbols": {
+				"Audio": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"AudioForPreview": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"experimental_Audio": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"experimental_Video": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"getTargetSampleRate": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"Video": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/media-utils": {
+			"tier": 2,
+			"symbols": {
+				"audioBufferToDataUrl": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"createSmoothSvgPath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getAudioData": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getAudioDuration": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getAudioDurationInSeconds": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getImageDimensions": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getVideoMetadata": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getWaveformPortion": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"useAudioData": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"useWindowedAudioData": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"visualizeAudio": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"visualizeAudioWaveform": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/motion-blur": {
+			"tier": 2,
+			"symbols": {
+				"CameraMotionBlur": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"HtmlInCanvasMotionBlur": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Trail": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/noise": {
+			"tier": 2,
+			"symbols": {
+				"noise2D": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"noise3D": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"noise4D": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/paths": {
+			"tier": 2,
+			"symbols": {
+				"centerPath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"cutPath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"evolvePath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"extendViewBox": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getBoundingBox": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getInstructionIndexAtLength": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getLength": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getPointAtLength": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getSubpaths": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getTangentAtLength": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"interpolatePath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"interpolatePaths": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"normalizePath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"parsePath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"reduceInstructions": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"resetPath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"reversePath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"scalePath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"serializeInstructions": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"translatePath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"warpPath": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/player": {
+			"tier": 1,
+			"symbols": {
+				"CallbackListener": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"Player": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"PlayerRef": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"Thumbnail": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/renderer": {
+			"tier": 1,
+			"symbols": {
+				"CancelSignal": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"ChromiumOptions": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"Codec": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"combineChunks": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"customEditorColumnNumberPlaceholder": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"customEditorLineNumberPlaceholder": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"customEditorTargetPathPlaceholder": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"defaultCodingAgentIds": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"defaultEditorIds": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"ensureBrowser": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"ErrorWithStackFrame": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"extractAudio": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getCompositions": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"getSilentParts": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"getVideoMetadata": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"LogLevel": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"makeCancelSignal": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"openBrowser": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"PixelFormat": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"renderFrames": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"renderMedia": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"RenderMediaOnProgress": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"renderStill": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"selectComposition": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"StillImageFormat": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"stitchFramesToVideo": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"validateOutputFilename": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"validateSelectedPixelFormatAndImageFormatCombination": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"VideoImageFormat": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				}
+			}
+		},
+		"@remotion/renderer/client": {
+			"tier": 1,
+			"symbols": {
+				"customEditorColumnNumberPlaceholder": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"customEditorLineNumberPlaceholder": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"customEditorTargetPathPlaceholder": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"defaultCodingAgentIds": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"defaultEditorIds": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/shapes": {
+			"tier": 2,
+			"symbols": {
+				"Arrow": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Callout": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Circle": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Ellipse": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Heart": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeArrow": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeCallout": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeCircle": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeEllipse": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeHeart": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makePie": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makePolygon": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeRect": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeSpark": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeStar": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"makeTriangle": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Pie": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Polygon": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Rect": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Spark": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Star": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Triangle": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/starburst": {
+			"tier": 2,
+			"symbols": {
+				"starburst": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"Starburst": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"starburstEffectSchema": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/tailwind": {
+			"tier": 1,
+			"symbols": {
+				"enableTailwind": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "Recognised in Config.overrideWebpackConfig and replaced by Tailwind through PostCSS."
+				}
+			}
+		},
+		"@remotion/tailwind-v4": {
+			"tier": 1,
+			"symbols": {
+				"enableTailwind": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "Recognised in Config.overrideWebpackConfig and replaced by @tailwindcss/vite."
+				}
+			}
+		},
+		"@remotion/three": {
+			"tier": 2,
+			"symbols": {
+				"ThreeCanvas": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"useOffthreadVideoTexture": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				},
+				"useVideoTexture": {
+					"kind": "value",
+					"tier": 2,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/transitions": {
+			"tier": 1,
+			"symbols": {
+				"blurSlide": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"crossZoom": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"dreamyZoom": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"filmBurn": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"linearBlur": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"linearTiming": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"makeHtmlInCanvasPresentation": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"pushCut": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"springTiming": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"TransitionPresentation": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"TransitionPresentationComponentProps": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"TransitionSeries": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"TransitionTiming": {
+					"kind": "type",
+					"tier": 1,
+					"status": "missing",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"useTransitionProgress": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/transitions/clock-wipe": {
+			"tier": 1,
+			"symbols": {
+				"clockWipe": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/transitions/cube": {
+			"tier": 1,
+			"symbols": {
+				"cube": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/transitions/fade": {
+			"tier": 1,
+			"symbols": {
+				"fade": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/transitions/flip": {
+			"tier": 1,
+			"symbols": {
+				"flip": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/transitions/iris": {
+			"tier": 1,
+			"symbols": {
+				"iris": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/transitions/none": {
+			"tier": 1,
+			"symbols": {
+				"none": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/transitions/slide": {
+			"tier": 1,
+			"symbols": {
+				"slide": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/transitions/wipe": {
+			"tier": 1,
+			"symbols": {
+				"wipe": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"@remotion/zod-types": {
+			"tier": 1,
+			"symbols": {
+				"zColor": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"zMatrix": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"zTextarea": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"remotion/no-react": {
+			"tier": 1,
+			"symbols": {
+				"assertValidInterpolateEasingOption": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"assertValidInterpolatePosterizeOption": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"interpolate": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				},
+				"random": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		},
+		"remotion/version": {
+			"tier": 1,
+			"symbols": {
+				"VERSION": {
+					"kind": "value",
+					"tier": 1,
+					"status": "missing"
+				}
+			}
+		}
+	}
+}

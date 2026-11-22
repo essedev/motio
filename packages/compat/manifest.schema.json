@@ -1,0 +1,43 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://motio.dev/schemas/compat-manifest.json",
+	"title": "Motio compatibility manifest",
+	"description": "Every public export of the Remotion compatibility target, with its tier and Motio status.",
+	"type": "object",
+	"required": ["target", "sources", "excluded", "modules"],
+	"additionalProperties": false,
+	"properties": {
+		"$schema": { "type": "string" },
+		"target": { "type": "string", "pattern": "^remotion@\\d+\\.\\d+\\.\\d+$" },
+		"sources": { "type": "array", "items": { "type": "string" } },
+		"excluded": { "type": "string" },
+		"modules": {
+			"type": "object",
+			"additionalProperties": {
+				"type": "object",
+				"required": ["tier", "symbols"],
+				"additionalProperties": false,
+				"properties": {
+					"tier": { "$ref": "#/$defs/tier" },
+					"symbols": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "object",
+							"required": ["kind", "tier", "status"],
+							"additionalProperties": false,
+							"properties": {
+								"kind": { "enum": ["value", "type"] },
+								"tier": { "$ref": "#/$defs/tier" },
+								"status": { "enum": ["supported", "approximated", "stubbed", "missing"] },
+								"note": { "type": "string" }
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"$defs": {
+		"tier": { "enum": [1, 2, 3] }
+	}
+}
