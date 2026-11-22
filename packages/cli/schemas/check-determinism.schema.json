@@ -1,0 +1,85 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:check-determinism",
+	"title": "motio check determinism --json",
+	"description": "Decoded frame hashes compared across render orders and concurrencies. Exit code 3 when frames differ.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"ok",
+				"command",
+				"composition",
+				"frames",
+				"runs",
+				"deterministic",
+				"mismatches",
+				"warnings"
+			],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "check determinism"
+				},
+				"composition": {
+					"$ref": "urn:motio:cli:common#/$defs/composition"
+				},
+				"frames": {
+					"type": "array",
+					"items": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"minItems": 1
+				},
+				"runs": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["order", "concurrency"],
+						"additionalProperties": false,
+						"properties": {
+							"order": {
+								"enum": ["ascending", "descending"]
+							},
+							"concurrency": {
+								"type": ["integer", "string"]
+							}
+						}
+					}
+				},
+				"deterministic": {
+					"type": "boolean"
+				},
+				"mismatches": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["frame", "hashes"],
+						"additionalProperties": false,
+						"properties": {
+							"frame": {
+								"type": "integer"
+							},
+							"hashes": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

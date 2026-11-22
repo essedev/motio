@@ -1,0 +1,54 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:still",
+	"title": "motio still --json",
+	"description": "Result of rendering one frame.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"ok",
+				"command",
+				"composition",
+				"output",
+				"frame",
+				"imageFormat",
+				"durationMs",
+				"warnings"
+			],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "still"
+				},
+				"composition": {
+					"$ref": "urn:motio:cli:common#/$defs/composition"
+				},
+				"output": {
+					"type": "string",
+					"description": "Absolute path."
+				},
+				"frame": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"imageFormat": {
+					"enum": ["png", "jpeg", "pdf", "webp"]
+				},
+				"durationMs": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

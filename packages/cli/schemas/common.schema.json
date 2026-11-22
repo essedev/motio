@@ -1,0 +1,71 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:common",
+	"$defs": {
+		"warnings": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			},
+			"description": "Warnings printed during the command (config, bundler, compat)."
+		},
+		"composition": {
+			"type": "object",
+			"required": ["id", "width", "height", "fps", "durationInFrames"],
+			"additionalProperties": false,
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"width": {
+					"type": "integer",
+					"minimum": 1
+				},
+				"height": {
+					"type": "integer",
+					"minimum": 1
+				},
+				"fps": {
+					"type": "number",
+					"exclusiveMinimum": 0
+				},
+				"durationInFrames": {
+					"type": "integer",
+					"minimum": 1
+				}
+			}
+		},
+		"error": {
+			"type": "object",
+			"required": ["ok", "command", "error"],
+			"additionalProperties": false,
+			"properties": {
+				"ok": {
+					"const": false
+				},
+				"command": {
+					"type": ["string", "null"]
+				},
+				"error": {
+					"type": "object",
+					"required": ["code", "message", "context"],
+					"additionalProperties": false,
+					"properties": {
+						"code": {
+							"type": "string",
+							"pattern": "^E_[A-Z0-9_]+$",
+							"description": "Stable error code."
+						},
+						"message": {
+							"type": "string"
+						},
+						"context": {
+							"type": "object",
+							"description": "Structured details: flag, frame, label, composition, path..."
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:help",
+	"title": "motio help --json",
+	"description": "List of commands.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["ok", "command", "commands", "warnings"],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "help"
+				},
+				"commands": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

@@ -1,0 +1,88 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:frames",
+	"title": "motio frames --json",
+	"description": "Contact sheet: which frame is in which cell of the grid PNG.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["ok", "command", "composition", "output", "frames", "grid", "cells", "warnings"],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "frames"
+				},
+				"composition": {
+					"$ref": "urn:motio:cli:common#/$defs/composition"
+				},
+				"output": {
+					"type": "string",
+					"description": "Absolute path."
+				},
+				"frames": {
+					"type": "array",
+					"items": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"minItems": 1
+				},
+				"grid": {
+					"type": "object",
+					"required": ["columns", "rows", "cellWidth", "cellHeight", "padding"],
+					"additionalProperties": false,
+					"properties": {
+						"columns": {
+							"type": "integer",
+							"minimum": 0
+						},
+						"rows": {
+							"type": "integer",
+							"minimum": 0
+						},
+						"cellWidth": {
+							"type": "integer",
+							"minimum": 0
+						},
+						"cellHeight": {
+							"type": "integer",
+							"minimum": 0
+						},
+						"padding": {
+							"type": "integer",
+							"minimum": 0
+						}
+					}
+				},
+				"cells": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["frame", "row", "column"],
+						"additionalProperties": false,
+						"properties": {
+							"frame": {
+								"type": "integer"
+							},
+							"row": {
+								"type": "integer"
+							},
+							"column": {
+								"type": "integer"
+							}
+						}
+					}
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

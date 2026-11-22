@@ -1,0 +1,188 @@
+import { MotioError } from "@motiojs/compat";
+import type {
+	ColorSpace,
+	Concurrency,
+	FrameRange,
+	LogLevel,
+	PixelFormat,
+} from "@motiojs/compat/config";
+
+/**
+ * The part of `@motiojs/renderer` the CLI uses, typed here so commands can be tested with
+ * fakes and so the CLI does not break while the renderer is being written. The shapes follow
+ * Remotion's documented `@remotion/renderer` API.
+ */
+
+/** A composition as returned by `getCompositions` and `selectComposition`. */
+export interface VideoConfig {
+	id: string;
+	width: number;
+	height: number;
+	fps: number;
+	durationInFrames: number;
+	defaultProps: Record<string, unknown>;
+	props: Record<string, unknown>;
+	defaultCodec: string | null;
+	defaultOutName: string | null;
+	defaultVideoImageFormat?: string | null;
+	defaultPixelFormat?: string | null;
+}
+
+export interface ChromiumOptions {
+	gl?: string | null;
+	ignoreCertificateErrors?: boolean;
+	disableWebSecurity?: boolean;
+	headless?: boolean;
+	userAgent?: string | null;
+	darkMode?: boolean;
+	flags?: Record<string, boolean | string>;
+	features?: Record<string, boolean>;
+	blinkFeatures?: Record<string, boolean>;
+}
+
+export interface BrowserLog {
+	type: string;
+	text: string;
+}
+
+/** Options shared by every call that opens the bundle. */
+export interface SessionOptions {
+	serveUrl: string;
+	inputProps?: Record<string, unknown>;
+	envVariables?: Record<string, string>;
+	timeoutInMilliseconds?: number;
+	chromiumOptions?: ChromiumOptions;
+	browserExecutable?: string | null;
+	port?: number | null;
+	onBrowserLog?: (log: BrowserLog) => void;
+	logLevel?: LogLevel;
+}
+
+export interface CancelSignalHandle {
+	cancelSignal: unknown;
+	cancel: () => void;
+}
+
+export interface RenderMediaProgress {
+	renderedFrames: number;
+	encodedFrames: number;
+	progress: number;
+}
+
+export interface RenderMediaOptions extends SessionOptions {
+	composition: VideoConfig;
+	codec: string;
+	outputLocation: string;
+	overwrite?: boolean;
+	crf?: number | null;
+	imageFormat?: "jpeg" | "png" | "none";
+	jpegQuality?: number;
+	frameRange?: FrameRange | null;
+	everyNthFrame?: number;
+	concurrency?: Concurrency | null;
+	scale?: number;
+	pixelFormat?: PixelFormat;
+	colorSpace?: ColorSpace;
+	x264Preset?: string;
+	audioCodec?: string;
+	muted?: boolean;
+	cancelSignal?: unknown;
+	onProgress?: (progress: RenderMediaProgress) => void;
+}
+
+export interface RenderStillOptions extends SessionOptions {
+	composition: VideoConfig;
+	output: string;
+	frame?: number;
+	imageFormat?: "png" | "jpeg" | "webp" | "pdf";
+	jpegQuality?: number;
+	scale?: number;
+	overwrite?: boolean;
+	cancelSignal?: unknown;
+}
+
+export interface RenderFramesOptions extends SessionOptions {
+	composition: VideoConfig;
+	outputDir: string | null;
+	onFrameBuffer?: (buffer: Buffer, frame: number) => void | Promise<void>;
+	onFrameUpdate?: (framesRendered: number, frame: number, timeToRender: number) => void;
+	imageFormat?: "jpeg" | "png" | "none";
+	jpegQuality?: number;
+	scale?: number;
+	concurrency?: Concurrency | null;
+	frames?: number[];
+	cancelSignal?: unknown;
+	/**
+	 * Motio extension requested from the renderer: the order frames are handed to pages,
+	 * so `check determinism` can render in several orders. Ignored if unsupported.
+	 */
+	frameOrder?: (frames: number[]) => number[];
+}
+
+export interface EnsuredBrowser {
+	executablePath: string;
+	version?: string;
+	platform?: string;
+	downloaded?: boolean;
+}
+
+export interface FfmpegInfo {
+	path: string;
+	version: string;
+	encoders: ReadonlySet<string>;
+	decoders: ReadonlySet<string>;
+}
+
+export interface RendererApi {
+	getCompositions(options: SessionOptions): Promise<VideoConfig[]>;
+	selectComposition(options: SessionOptions & { id: string }): Promise<VideoConfig>;
+	renderMedia(options: RenderMediaOptions): Promise<unknown>;
+	renderStill(options: RenderStillOptions): Promise<unknown>;
+	renderFrames(options: RenderFramesOptions): Promise<{ frameCount: number }>;
+	ensureBrowser(options?: {
+		onProgress?: (progress: { downloadedBytes: number; totalBytes: number }) => void;
+	}): Promise<EnsuredBrowser>;
+	makeCancelSignal(): CancelSignalHandle;
+	/** Optional: FFmpeg probing for `doctor`. */
+	probeFfmpeg?(path: string): Promise<FfmpegInfo>;
+	/** Optional: minimum FFmpeg release, for `doctor`. */
+	MIN_FFMPEG_VERSION?: readonly [number, number];
+	/** Optional: the pinned browser version, for `doctor`. */
+	CHROME_VERSION?: string;
+	/** Optional: where browsers are cached, for `doctor`. */
+	defaultBrowserCacheDir?(): string;
+}
+
+const REQUIRED = [
+	"getCompositions",
+	"selectComposition",
+	"renderMedia",
+	"renderStill",
+	"renderFrames",
+	"ensureBrowser",
+	"makeCancelSignal",
+] as const;
+
+/** Loads `@motiojs/renderer` and checks it exposes what the CLI needs. */
+export async function loadRenderer(): Promise<RendererApi> {
+	let module: Record<string, unknown>;
+	try {
+		module = (await import("@motiojs/renderer")) as unknown as Record<string, unknown>;
+	} catch (error) {
+		throw new MotioError(
+			"E_RENDERER_UNAVAILABLE",
+			`@motiojs/renderer could not be loaded: ${error instanceof Error ? error.message : String(error)}`,
+			{},
+			{ cause: error },
+		);
+	}
+	const missing = REQUIRED.filter((name) => typeof module[name] !== "function");
+	if (missing.length > 0) {
+		throw new MotioError(
+			"E_RENDERER_UNAVAILABLE",
+			`@motiojs/renderer does not export ${missing.join(", ")} yet.`,
+			{ missing },
+		);
+	}
+	return module as unknown as RendererApi;
+}

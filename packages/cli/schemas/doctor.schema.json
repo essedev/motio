@@ -1,0 +1,208 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:doctor",
+	"title": "motio doctor --json",
+	"description": "Environment checks and the compatibility report. Exit code 3 when a check fails.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["ok", "command", "healthy", "checks", "compatibility", "warnings"],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "doctor"
+				},
+				"healthy": {
+					"type": "boolean"
+				},
+				"checks": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["name", "status", "message", "details"],
+						"additionalProperties": false,
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"status": {
+								"enum": ["pass", "warn", "fail"]
+							},
+							"message": {
+								"type": "string"
+							},
+							"details": {
+								"type": "object"
+							}
+						}
+					}
+				},
+				"compatibility": {
+					"type": "object",
+					"required": ["target", "filesScanned", "entries", "summary", "parseErrors", "ok"],
+					"additionalProperties": false,
+					"properties": {
+						"target": {
+							"type": "string"
+						},
+						"filesScanned": {
+							"type": "integer",
+							"minimum": 0
+						},
+						"entries": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"additionalProperties": false,
+								"required": [
+									"specifier",
+									"symbol",
+									"isType",
+									"status",
+									"tier",
+									"target",
+									"note",
+									"members",
+									"locations"
+								],
+								"properties": {
+									"specifier": {
+										"type": "string"
+									},
+									"symbol": {
+										"type": "string"
+									},
+									"isType": {
+										"type": "boolean"
+									},
+									"status": {
+										"enum": [
+											"supported",
+											"approximated",
+											"stubbed",
+											"missing",
+											"unknown-symbol",
+											"unsupported-package",
+											"unknown-package",
+											"opaque"
+										]
+									},
+									"tier": {
+										"enum": [1, 2, 3, null]
+									},
+									"target": {
+										"type": ["string", "null"]
+									},
+									"note": {
+										"type": ["string", "null"]
+									},
+									"members": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									},
+									"locations": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"required": ["file", "line"],
+											"additionalProperties": false,
+											"properties": {
+												"file": {
+													"type": "string"
+												},
+												"line": {
+													"type": "integer",
+													"minimum": 1
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"summary": {
+							"type": "object",
+							"required": [
+								"supported",
+								"approximated",
+								"stubbed",
+								"missing",
+								"unknown-symbol",
+								"unsupported-package",
+								"unknown-package",
+								"opaque"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"supported": {
+									"type": "integer",
+									"minimum": 0
+								},
+								"approximated": {
+									"type": "integer",
+									"minimum": 0
+								},
+								"stubbed": {
+									"type": "integer",
+									"minimum": 0
+								},
+								"missing": {
+									"type": "integer",
+									"minimum": 0
+								},
+								"unknown-symbol": {
+									"type": "integer",
+									"minimum": 0
+								},
+								"unsupported-package": {
+									"type": "integer",
+									"minimum": 0
+								},
+								"unknown-package": {
+									"type": "integer",
+									"minimum": 0
+								},
+								"opaque": {
+									"type": "integer",
+									"minimum": 0
+								}
+							}
+						},
+						"parseErrors": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"required": ["file", "errors"],
+								"properties": {
+									"file": {
+										"type": "string"
+									},
+									"errors": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						},
+						"ok": {
+							"type": "boolean"
+						}
+					}
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

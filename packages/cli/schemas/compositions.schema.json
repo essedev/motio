@@ -1,0 +1,55 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:compositions",
+	"title": "motio compositions --json",
+	"description": "Compositions registered by the project.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["ok", "command", "compositions", "warnings"],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "compositions"
+				},
+				"compositions": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["id", "width", "height", "fps", "durationInFrames", "defaultProps"],
+						"additionalProperties": false,
+						"properties": {
+							"id": {
+								"type": "string"
+							},
+							"width": {
+								"type": "integer"
+							},
+							"height": {
+								"type": "integer"
+							},
+							"fps": {
+								"type": "number"
+							},
+							"durationInFrames": {
+								"type": "integer"
+							},
+							"defaultProps": {
+								"type": "object"
+							}
+						}
+					}
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

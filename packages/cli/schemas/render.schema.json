@@ -1,0 +1,58 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:render",
+	"title": "motio render --json",
+	"description": "Result of rendering a video.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"ok",
+				"command",
+				"composition",
+				"output",
+				"codec",
+				"renderedFrames",
+				"durationMs",
+				"serveUrl",
+				"warnings"
+			],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "render"
+				},
+				"composition": {
+					"$ref": "urn:motio:cli:common#/$defs/composition"
+				},
+				"output": {
+					"type": "string",
+					"description": "Absolute path."
+				},
+				"codec": {
+					"type": "string"
+				},
+				"renderedFrames": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"durationMs": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"serveUrl": {
+					"type": "string"
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

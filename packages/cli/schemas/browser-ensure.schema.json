@@ -1,0 +1,48 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:browser-ensure",
+	"title": "motio browser ensure --json",
+	"description": "The browser used for rendering.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"ok",
+				"command",
+				"executablePath",
+				"version",
+				"downloaded",
+				"source",
+				"warnings"
+			],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "browser ensure"
+				},
+				"executablePath": {
+					"type": "string",
+					"description": "Absolute path."
+				},
+				"version": {
+					"type": ["string", "null"]
+				},
+				"downloaded": {
+					"type": "boolean"
+				},
+				"source": {
+					"enum": ["pinned", "user"]
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

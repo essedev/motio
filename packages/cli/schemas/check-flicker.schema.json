@@ -1,0 +1,73 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:check-flicker",
+	"title": "motio check flicker --json",
+	"description": "Frames that differ from both neighbours. Exit code 3 when any is flagged.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"ok",
+				"command",
+				"composition",
+				"frames",
+				"threshold",
+				"clean",
+				"flagged",
+				"warnings"
+			],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "check flicker"
+				},
+				"composition": {
+					"$ref": "urn:motio:cli:common#/$defs/composition"
+				},
+				"frames": {
+					"type": "integer",
+					"minimum": 1
+				},
+				"threshold": {
+					"type": "number",
+					"exclusiveMinimum": 0,
+					"exclusiveMaximum": 1
+				},
+				"clean": {
+					"type": "boolean"
+				},
+				"flagged": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["frame", "diffPrevious", "diffNext", "diffNeighbours"],
+						"additionalProperties": false,
+						"properties": {
+							"frame": {
+								"type": "integer"
+							},
+							"diffPrevious": {
+								"type": "number"
+							},
+							"diffNext": {
+								"type": "number"
+							},
+							"diffNeighbours": {
+								"type": "number"
+							}
+						}
+					}
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}
