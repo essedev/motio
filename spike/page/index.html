@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<script src="./clock-shim.js"></script>
+		<style>
+			html, body { margin: 0; background: #fff; }
+			#root { width: 1280px; height: 720px; position: relative; overflow: hidden; font-family: sans-serif; }
+			.tile { position: absolute; width: 320px; height: 360px; box-sizing: border-box; border: 1px solid #ccc; }
+			.dot { position: absolute; width: 40px; height: 40px; border-radius: 20px; background: #e33; }
+			@keyframes slide { from { transform: translateX(0px); } to { transform: translateX(260px); } }
+			.css-anim { animation: slide 2s linear infinite; }
+		</style>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module" src="./main.tsx"></script>
+	</body>
+</html>

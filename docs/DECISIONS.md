@@ -44,6 +44,10 @@ So the default is Remotion's model (the frame is the only source of truth, no cl
 
 On an Apple M5, chrome-headless-shell 158, software GL, the spike measured per page: `seek` 4.5 ms; `Page.captureScreenshot` about 49 to 64 ms per frame whether PNG, JPEG 90 or JPEG 80, at 720p or 1080p; piping to libx264 (`veryfast`, CRF 18) adds almost nothing. Capture latency, not encoding or format, bounds a single page, so throughput comes from concurrency (see D-007 for the measurement) and, on Linux, from BeginFrame, to be measured in the container in M1. JPEG 80 stays the default for opaque output for parity with Remotion; PNG for alpha and lossless.
 
+## D-007 Page pool: one browser process per page (2026-11-22)
+
+Measured at 1080p, JPEG 80, 240 frames, Apple M5 with 10 cores: 1 page 9.5 fps; 2 pages 19.5 (one browser) against 20.6 (two browsers); 4 pages 31.7 against 33.6; 8 pages 33.3 against 54.7. Pages sharing one browser process saturate around 33 fps (one GPU and compositor process), while separate processes keep scaling. The pool therefore gives each page its own browser process, which also confines a crash to one page. Revisit if memory per process limits concurrency on small machines.
+
 ## D-008 Compatibility target: remotion@4.0.545 (2026-11-22)
 
 The latest published version when work started. Every compatibility claim and oracle recording refers to it; moving it is an explicit change that re-records the oracle.

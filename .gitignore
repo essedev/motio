@@ -8,3 +8,4 @@ coverage/
 .motio/
 out/
 *.log
+spike/dist-page/
