@@ -2,3 +2,5 @@ packages:
   - packages/*
   - fixtures/*
   - spike
+allowBuilds:
+  esbuild: true

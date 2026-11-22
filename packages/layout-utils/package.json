@@ -1,0 +1,23 @@
+{
+	"name": "@motiojs/layout-utils",
+	"version": "0.0.0",
+	"description": "Text measurement and fitting in the browser, mirroring @remotion/layout-utils",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"esbuild": "0.28.1",
+		"puppeteer-core": "25.18.1"
+	}
+}
