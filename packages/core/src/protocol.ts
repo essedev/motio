@@ -122,11 +122,43 @@ export interface PageError {
 	retries?: number;
 }
 
+/** Metadata a composition was already resolved to, for example by `selectComposition()`. */
+export interface ResolvedMetadata {
+	width: number;
+	height: number;
+	fps: number;
+	durationInFrames: number;
+	props: Record<string, unknown>;
+	defaultCodec?: string | null;
+	defaultOutName?: string | null;
+	defaultPixelFormat?: string | null;
+	defaultVideoImageFormat?: string | null;
+	defaultProResProfile?: string | null;
+	defaultSampleRate?: number | null;
+}
+
+/** Options of `PageApi.setComposition`. */
+export interface SetCompositionOptions {
+	/**
+	 * Use this metadata as is and do not run `calculateMetadata` again (Remotion's `renderMedia`
+	 * and `renderStill` render the composition object they are given). `props` is then ignored.
+	 */
+	resolved?: ResolvedMetadata;
+}
+
 /** Installed by the page as `window.__motio`. */
 export interface PageApi {
 	protocol: number;
 	getCompositions(): Promise<CompositionInfo[]>;
-	setComposition(id: string, props: Record<string, unknown>): Promise<ResolvedComposition>;
+	/**
+	 * Selects a composition. `props` are input props, merged over the default props before
+	 * `calculateMetadata` runs; with `options.resolved` the given metadata is used instead.
+	 */
+	setComposition(
+		id: string,
+		props: Record<string, unknown>,
+		options?: SetCompositionOptions,
+	): Promise<ResolvedComposition>;
 	/** Resolves when the frame is ready to capture; rejects with a `PageError`. */
 	seek(frame: number): Promise<FrameReport>;
 }

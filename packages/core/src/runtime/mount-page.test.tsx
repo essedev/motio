@@ -95,6 +95,34 @@ describe("mountPage", () => {
 		expect(canvasText()).toBe("a 640x360 3");
 	});
 
+	it("uses already resolved metadata without running calculateMetadata again", async () => {
+		let calls = 0;
+		registerRoot(() => (
+			<Composition
+				id="meta"
+				component={FrameText}
+				width={100}
+				height={100}
+				fps={30}
+				durationInFrames={10}
+				defaultProps={{ title: "x" }}
+				calculateMetadata={({ props }) => {
+					calls++;
+					return { props: { ...props, title: `${String(props.title)} resolved` } };
+				}}
+			/>
+		));
+		const api = mountPage({ container, installGlobal: false });
+		const first = await api.setComposition("meta", {});
+		expect(first.props).toEqual({ title: "x resolved" });
+		const again = await api.setComposition("meta", first.props, { resolved: first });
+		expect(calls).toBe(1);
+		expect(again.props).toEqual({ title: "x resolved" });
+		await expect(
+			api.setComposition("meta", {}, { resolved: { ...first, width: 0 } }),
+		).rejects.toMatchObject({ code: "E_INVALID_COMPOSITION" });
+	});
+
 	it("waits for registerRoot() called later", async () => {
 		const api = mountPage({ container, installGlobal: false });
 		const pending = api.getCompositions();

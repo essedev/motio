@@ -1,4 +1,4 @@
-import type { CompositionInfo } from "../protocol.js";
+import type { CompositionInfo, ResolvedMetadata } from "../protocol.js";
 import type { VideoConfig } from "../timeline/contexts.js";
 import type { CalculateMetadataResult, RegisteredComposition } from "./types.js";
 import { validateFps, validatePositiveInteger, validatePropsObject } from "./validate.js";
@@ -136,5 +136,36 @@ export async function resolveComposition(
 			where("defaultProResProfile"),
 		),
 		defaultSampleRate: sampleRate ?? null,
+	};
+}
+
+/**
+ * The config of a composition whose metadata was already resolved (by `selectComposition()`):
+ * validated and used as is, without running `calculateMetadata` again.
+ */
+export function applyResolvedMetadata(
+	entry: RegisteredComposition,
+	resolved: ResolvedMetadata,
+): VideoConfig {
+	const where = (field: string) => `The resolved "${field}" of composition "${entry.id}"`;
+	validatePositiveInteger(resolved.width, where("width"));
+	validatePositiveInteger(resolved.height, where("height"));
+	validateFps(resolved.fps, where("fps"));
+	validatePositiveInteger(resolved.durationInFrames, where("durationInFrames"));
+	validatePropsObject(resolved.props, where("props"));
+	return {
+		id: entry.id,
+		width: resolved.width,
+		height: resolved.height,
+		fps: resolved.fps,
+		durationInFrames: resolved.durationInFrames,
+		defaultProps: entry.defaultProps,
+		props: resolved.props,
+		defaultCodec: resolved.defaultCodec ?? null,
+		defaultOutName: resolved.defaultOutName ?? null,
+		defaultVideoImageFormat: resolved.defaultVideoImageFormat ?? null,
+		defaultPixelFormat: resolved.defaultPixelFormat ?? null,
+		defaultProResProfile: resolved.defaultProResProfile ?? null,
+		defaultSampleRate: resolved.defaultSampleRate ?? null,
 	};
 }

@@ -9,6 +9,7 @@ import {
 } from "../composition/manager.js";
 import { getRoot, waitForRoot } from "../composition/register-root.js";
 import {
+	applyResolvedMetadata,
 	CalculateMetadataError,
 	resolveComposition,
 	toCompositionInfo,
@@ -24,9 +25,11 @@ import {
 	type PageErrorCode,
 	PROTOCOL_VERSION,
 	type ResolvedComposition,
+	type SetCompositionOptions,
 } from "../protocol.js";
 import { readiness } from "../readiness/registry.js";
 import { getVirtualClock, realTimers } from "../real-time.js";
+import type { VideoConfig } from "../timeline/contexts.js";
 import { seekAnimations } from "./animations.js";
 import { FontFallbackDetector } from "./fonts.js";
 import { isPageError, toPageError } from "./page-error.js";
@@ -34,7 +37,7 @@ import { ImageTracker, settle } from "./settle.js";
 
 /** Options of `mountPage()`. */
 export interface MountPageOptions {
-	/** Element the canvas is created in. Defaults to `document.body`. */
+	/** Element the canvas is created in. Defaults to `#motio-root`, else `document.body`. */
 	container?: HTMLElement;
 	/** Install the API as `window.__motio`. Default true. */
 	installGlobal?: boolean;
@@ -61,6 +64,12 @@ class RuntimeBoundary extends Component<BoundaryProps, { failed: boolean }> {
 
 const CANVAS_ID = "motio-canvas";
 
+/**
+ * Base styles of the canvas. `border-box` sizing matches the reference renders (a padded box
+ * keeps its declared width); `:where()` keeps the specificity at zero so user styles win.
+ */
+const CANVAS_CSS = `:where(#${CANVAS_ID}, #${CANVAS_ID} *, #${CANVAS_ID} *::before, #${CANVAS_ID} *::after) { box-sizing: border-box; }`;
+
 function prepareDocument(container: HTMLElement): { canvas: HTMLElement; host: HTMLElement } {
 	for (const el of [document.documentElement, document.body]) {
 		el.style.margin = "0";
@@ -68,6 +77,9 @@ function prepareDocument(container: HTMLElement): { canvas: HTMLElement; host: H
 		el.style.overflow = "hidden";
 		el.style.background = "transparent";
 	}
+	const style = document.createElement("style");
+	style.textContent = CANVAS_CSS;
+	document.head.appendChild(style);
 	const host = document.createElement("div");
 	host.id = "motio-root-host";
 	host.style.display = "none";
@@ -229,6 +241,7 @@ class PageRuntime {
 	async setComposition(
 		id: string,
 		inputProps: Record<string, unknown>,
+		options: SetCompositionOptions = {},
 	): Promise<ResolvedComposition> {
 		await this.collect();
 		const entry = this.registry.get(id);
@@ -244,19 +257,21 @@ class PageRuntime {
 		this.metadataController = controller;
 		const ms = this.timeoutMs();
 		const label = `calculateMetadata() of composition "${id}"`;
-		let config: Awaited<ReturnType<typeof resolveComposition>>;
+		let config: VideoConfig;
 		try {
-			config = await timeoutAfter(
-				resolveComposition(entry, inputProps ?? {}, {
-					signal: controller.signal,
-					isRendering: getRunContext()?.isRendering === true,
-				}),
-				ms,
-				() =>
-					toPageError("E_READINESS_TIMEOUT", `${label} did not resolve within ${ms}ms.`, {
-						label,
-					}),
-			);
+			config = options.resolved
+				? applyResolvedMetadata(entry, options.resolved)
+				: await timeoutAfter(
+						resolveComposition(entry, inputProps ?? {}, {
+							signal: controller.signal,
+							isRendering: getRunContext()?.isRendering === true,
+						}),
+						ms,
+						() =>
+							toPageError("E_READINESS_TIMEOUT", `${label} did not resolve within ${ms}ms.`, {
+								label,
+							}),
+					);
 		} catch (err) {
 			if (isPageError(err)) throw err;
 			const code =
@@ -356,13 +371,16 @@ let installed: PageApi | null = null;
 export function mountPage(options: MountPageOptions = {}): PageApi {
 	const install = options.installGlobal !== false;
 	if (install && installed) return installed;
-	const runtime = new PageRuntime(options.container ?? document.body);
+	const runtime = new PageRuntime(
+		options.container ?? document.getElementById("motio-root") ?? document.body,
+	);
 	const api: PageApi = {
 		protocol: PROTOCOL_VERSION,
 		getCompositions: wrap(runtime, () => runtime.getCompositions(), "E_INVALID_COMPOSITION"),
 		setComposition: wrap(
 			runtime,
-			(id: string, props: Record<string, unknown>) => runtime.setComposition(id, props),
+			(id: string, props: Record<string, unknown>, options?: SetCompositionOptions) =>
+				runtime.setComposition(id, props, options),
 			"E_INVALID_COMPOSITION",
 		),
 		seek: wrap(runtime, (frame: number) => runtime.seek(frame), "E_RENDER_ERROR"),
