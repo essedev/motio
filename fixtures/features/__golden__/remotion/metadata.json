@@ -1,0 +1,37 @@
+{
+	"remotion": "4.0.545",
+	"compositions": {
+		"transitions": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 148,
+			"defaultProps": {},
+			"props": {}
+		},
+		"shapes": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"paths": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"noise": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		}
+	}
+}
