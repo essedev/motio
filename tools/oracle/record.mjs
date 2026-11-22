@@ -452,6 +452,22 @@ const recordColors = () => {
 		["hwb(100grad 0% 0%)", "hwb(2turn 0% 0%)"],
 	];
 	for (const outputRange of modern) push([0, 1], outputRange);
+	// Dense random sample of modern colors, each read back exactly (input 0).
+	const crng = makeRng(99);
+	const r = (lo, hi, digits = 3) => Number((lo + (hi - lo) * crng()).toFixed(digits));
+	const randomModern = [];
+	for (let i = 0; i < 250; i++) {
+		const alpha = crng() < 0.3 ? ` / ${r(0, 1)}` : "";
+		randomModern.push(
+			`oklch(${r(0, 1)} ${r(0, 0.4)} ${r(0, 360, 1)}${alpha})`,
+			`oklab(${r(0, 1)} ${r(-0.4, 0.4)} ${r(-0.4, 0.4)}${alpha})`,
+			`lab(${r(0, 100, 2)} ${r(-125, 125, 2)} ${r(-125, 125, 2)}${alpha})`,
+			`lch(${r(0, 100, 2)} ${r(0, 150, 2)} ${r(0, 360, 1)}${alpha})`,
+			`hwb(${r(0, 360, 1)} ${r(0, 100, 1)}% ${r(0, 100, 1)}%${alpha})`,
+			`hsl(${r(-360, 720, 2)}, ${r(0, 100, 2)}%, ${r(0, 100, 2)}%)`,
+		);
+	}
+	for (const color of randomModern) push([0, 1], [color, "black"], [0]);
 	write(
 		"interpolate-colors",
 		"interpolateColors() over input grids; error is the first error thrown for any input",
@@ -486,7 +502,77 @@ const recordColors = () => {
 		"inherit",
 		"",
 		"foo",
+		"oklch(50% 0.2 240)",
+		"oklch(0.5 50% 240)",
+		"oklch(0.5 0.2 240deg)",
+		"oklch(0.5 0.2 4.1887902rad)",
+		"oklch(0.5 0.2 0.6turn)",
+		"oklch(0.5 0.2 -120)",
+		"oklch(0.5 0.2 600)",
+		"oklch(none 0.2 240)",
+		"oklch(0.5,0.2,240)",
+		"OKLCH(0.5 0.2 240)",
+		"oklch(0.5 0.2 240 / 50%)",
+		"oklch(0.5 0.2 240 / .25)",
+		"oklch( 0.5 0.2 240 )",
+		"oklch(1.2 0.5 30)",
+		"oklab(50% -0.1 0.1)",
+		"oklab(0.5 -25% 25%)",
+		"oklab(0.5 -0.1 0.1 / .3)",
+		"lab(50% 20 30)",
+		"lab(50 -50% 50%)",
+		"lab(50 20 30 / 0.5)",
+		"lab(120 0 0)",
+		"lch(50 60 -120)",
+		"lch(50% 40% 90deg)",
+		"lch(50 60 240 / 25%)",
+		"hwb(120 10 10)",
+		"hwb(90deg 20% 30% / 0.5)",
+		"hwb(0 60% 60%)",
+		"hwb(1rad 10% 10%)",
+		"color(srgb 1 0 0)",
+		"hsl(120deg 50% 50% / 0.5)",
 	];
+	const edgeCases = [
+		[0.5, [1, 0], ["red", "blue"]],
+		[0.5, [], []],
+		[0.5, [0, Number.NaN], ["red", "blue"]],
+		[0.5, [0, 1], ["red"]],
+		[0.5, [0, 1], ["red", "blue"], { posterize: 0 }],
+		[0.5, [0, 1], ["red", "blue"], { easingSegments: [] }],
+		[Number.NaN, [0, 1], ["red", "blue"]],
+		[Number.POSITIVE_INFINITY, [0, 1], ["red", "blue"]],
+		[Number.NEGATIVE_INFINITY, [0, 1], ["red", "blue"]],
+		["a", [0, 1], ["red", "blue"]],
+		[undefined, [0, 1], ["red", "blue"]],
+		[0.5, [0, 1], [123, "blue"]],
+		[2, [0, 1], ["red", "blue"], { extrapolateRight: "extend" }],
+		[-1, [0, 1], ["red", "blue"], { extrapolateLeft: "identity" }],
+		[0.3, [0, 1], ["black", "white"], { easing: ["bezier", 0.68, -0.55, 0.265, 1.55] }],
+		[0.7, [0, 1], ["black", "white"], { easing: ["bezier", 0.68, -0.55, 0.265, 1.55] }],
+		[0.5, [0, 1], ["rgba(0,0,0,0.001)", "rgba(0,0,0,0.002)"]],
+		[0.1, [0, 1], ["rgba(0,0,0,0)", "rgba(0,0,0,0.01)"]],
+		[0, [0, 1], ["rgb(12.5, 100.4, 200.6)", "red"]],
+		[0, [0, 1], ["rgb(0.5, 1.5, 2.5)", "red"]],
+		[0.5, [0, 1], ["rgb(0.5, 1.5, 2.5)", "rgb(0, 0, 0)"]],
+		[0.25, [0, 1], ["rgb(0.4, 0.4, 0.4)", "rgb(1.6, 1.6, 1.6)"]],
+		[0, [0, 1], ["rgba(0,0,0,0.3)", "red"]],
+		[0.5, [0, 1], ["rgba(0,0,0,0.3)", "rgba(0,0,0,0.3)"]],
+	];
+	write(
+		"interpolate-colors-edge",
+		"interpolateColors() edge cases: each case is [input, inputRange, outputRange, options?] with out or error",
+		edgeCases.map(([input, inputRange, outputRange, options]) => ({
+			input: input === undefined ? "undefined" : input,
+			inputType: typeof input,
+			inputRange,
+			outputRange,
+			options: options ?? {},
+			...capture(() =>
+				interpolateColors(input, inputRange, outputRange, toRemotionOptions(options)),
+			),
+		})),
+	);
 	write(
 		"interpolate-colors-parse",
 		"interpolateColors(0.5, [0, 1], [probe, 'black']): accepted or rejected color strings",
