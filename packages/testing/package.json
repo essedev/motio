@@ -8,6 +8,10 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
+		},
+		"./frame-stamp": {
+			"types": "./dist/frame-stamp.d.ts",
+			"default": "./dist/frame-stamp.js"
 		}
 	},
 	"files": [
