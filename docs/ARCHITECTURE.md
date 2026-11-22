@@ -68,6 +68,8 @@ Dependencies point one way: feature packages and `media` depend on `core`; `play
 
 The renderer serves the built bundle over HTTP from a local server (ES modules do not load from `file://`). Before any page script runs, `Page.addScriptToEvaluateOnNewDocument` injects the run context: input props, environment variables, the protocol version, the frame seed and, in the virtual time model, the clock shim. `getInputProps()` can therefore be called at module top level.
 
+**Bundle layout.** A user project has an entry file that calls `registerRoot(Root)`, where `Root` renders `<Composition>` and `<Still>` elements (the Remotion convention; the entry is found from `remotion.config.ts`, the CLI argument, or `src/index.ts(x)`). `@motiojs/bundler` builds with Vite a page whose module script imports the user entry and then calls `mountPage()` from `@motiojs/core/runtime`. `mountPage()` reads the run context, collects the registered compositions by rendering `Root` in collection mode, mounts the selected composition on `setComposition`, and installs the page API below. The output directory (`index.html`, assets, the copied `public/` folder) is the `serveUrl` the renderer serves.
+
 The page installs one versioned global:
 
 ```ts
