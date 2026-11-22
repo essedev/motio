@@ -116,3 +116,7 @@ Measured with RGBA PNG frames (alpha gradient plus a half-transparent box) encod
 
 `-auto-alt-ref 0` is required for VP9 alpha. Reading the alpha of a VP9 WebM needs the `libvpx-vp9` decoder (`-c:v libvpx-vp9` before `-i`): FFmpeg's native VP9 decoder drops the alpha plane, which also applies to `@motiojs/video-frames` when the source is a transparent WebM. The M5 alpha criterion therefore reads: ProRes 4444 and lossless VP9 within 1 code value of the PNG frames; lossy VP9 within the error measured here for its CRF.
 
+## D-020 GIF output recipe (2026-11-23)
+
+GIF output encodes the captured frames with a palette built for the clip: `-filter_complex "[0:v]split[a][b];[a]palettegen=max_colors=256:stats_mode=full[p];[b][p]paletteuse=dither=none"`. On a 2 s test signal this gives 41.3 dB PSNR against the source frames, with every frame present. `everyNthFrame` selects frames before encoding and divides the frame rate (every 3rd frame of 30 fps gives 20 frames at 10 fps for 60 inputs). Remotion's `numberOfGifLoops` maps to FFmpeg's `-loop`: `null` (loop forever) is `-loop 0`, `0` (play once) is `-loop -1`, which omits the NETSCAPE loop extension, and `n` (repeat n times) is `-loop n`, checked in the written loop extension. Dithering is off by default for deterministic, flat output; an option can enable it later.
+
