@@ -1,0 +1,611 @@
+{
+	"remotion": "4.0.545",
+	"zod": "^4.6.7",
+	"zColor": [
+		{
+			"input": "#fff",
+			"success": true,
+			"data": "#fff"
+		},
+		{
+			"input": "#FFF",
+			"success": true,
+			"data": "#FFF"
+		},
+		{
+			"input": "#ffff",
+			"success": true,
+			"data": "#ffff"
+		},
+		{
+			"input": "#ffffff",
+			"success": true,
+			"data": "#ffffff"
+		},
+		{
+			"input": "#ffffff80",
+			"success": true,
+			"data": "#ffffff80"
+		},
+		{
+			"input": "#fffff",
+			"success": false
+		},
+		{
+			"input": "#ggg",
+			"success": false
+		},
+		{
+			"input": "fff",
+			"success": false
+		},
+		{
+			"input": "#",
+			"success": false
+		},
+		{
+			"input": "",
+			"success": false
+		},
+		{
+			"input": "red",
+			"success": true,
+			"data": "red"
+		},
+		{
+			"input": "Red",
+			"success": false
+		},
+		{
+			"input": "RED",
+			"success": false
+		},
+		{
+			"input": "transparent",
+			"success": true,
+			"data": "transparent"
+		},
+		{
+			"input": "rebeccapurple",
+			"success": true,
+			"data": "rebeccapurple"
+		},
+		{
+			"input": "currentcolor",
+			"success": false
+		},
+		{
+			"input": "notacolor",
+			"success": false
+		},
+		{
+			"input": "rgb(255, 0, 0)",
+			"success": true,
+			"data": "rgb(255, 0, 0)"
+		},
+		{
+			"input": "rgb(255,0,0)",
+			"success": true,
+			"data": "rgb(255,0,0)"
+		},
+		{
+			"input": "rgba(255, 0, 0, 0.5)",
+			"success": true,
+			"data": "rgba(255, 0, 0, 0.5)"
+		},
+		{
+			"input": "rgb(255 0 0)",
+			"success": false
+		},
+		{
+			"input": "rgb(255 0 0 / 50%)",
+			"success": false
+		},
+		{
+			"input": "rgb(100%, 0%, 0%)",
+			"success": false
+		},
+		{
+			"input": "rgb(300, 0, 0)",
+			"success": true,
+			"data": "rgb(300, 0, 0)"
+		},
+		{
+			"input": "hsl(120, 100%, 50%)",
+			"success": true,
+			"data": "hsl(120, 100%, 50%)"
+		},
+		{
+			"input": "hsla(120, 100%, 50%, 0.3)",
+			"success": true,
+			"data": "hsla(120, 100%, 50%, 0.3)"
+		},
+		{
+			"input": "hsl(120 100% 50%)",
+			"success": false
+		},
+		{
+			"input": "hwb(120 0% 0%)",
+			"success": true,
+			"data": "hwb(120 0% 0%)"
+		},
+		{
+			"input": "lab(50% 40 59)",
+			"success": true,
+			"data": "lab(50% 40 59)"
+		},
+		{
+			"input": "oklch(60% 0.15 50)",
+			"success": true,
+			"data": "oklch(60% 0.15 50)"
+		},
+		{
+			"input": "color(srgb 1 0 0)",
+			"success": false
+		},
+		{
+			"input": " red",
+			"success": false
+		},
+		{
+			"input": "red ",
+			"success": false
+		},
+		{
+			"input": "#FFF ",
+			"success": false
+		},
+		{
+			"input": "inherit",
+			"success": false
+		},
+		{
+			"input": "rgb(1,2,3)",
+			"success": true,
+			"data": "rgb(1,2,3)"
+		},
+		{
+			"input": "rgb( 1 , 2 , 3 )",
+			"success": true,
+			"data": "rgb( 1 , 2 , 3 )"
+		},
+		{
+			"input": "rgb(1.5,2,3)",
+			"success": true,
+			"data": "rgb(1.5,2,3)"
+		},
+		{
+			"input": "rgb(-1,2,3)",
+			"success": true,
+			"data": "rgb(-1,2,3)"
+		},
+		{
+			"input": "RGB(1,2,3)",
+			"success": false
+		},
+		{
+			"input": "rgba(1,2,3)",
+			"success": false
+		},
+		{
+			"input": "rgb(1,2,3,0.5)",
+			"success": false
+		},
+		{
+			"input": "rgba(1,2,3,50%)",
+			"success": false
+		},
+		{
+			"input": "rgba(1,2,3,.5)",
+			"success": true,
+			"data": "rgba(1,2,3,.5)"
+		},
+		{
+			"input": "rgba(1,2,3,1.5)",
+			"success": true,
+			"data": "rgba(1,2,3,1.5)"
+		},
+		{
+			"input": "hsl(120, 100, 50)",
+			"success": false
+		},
+		{
+			"input": "hsl(120deg,100%,50%)",
+			"success": false
+		},
+		{
+			"input": "hsla(120,100%,50%)",
+			"success": false
+		},
+		{
+			"input": "hsl(120,100%,50%,0.5)",
+			"success": false
+		},
+		{
+			"input": "hsl(-30,50.5%,10%)",
+			"success": true,
+			"data": "hsl(-30,50.5%,10%)"
+		},
+		{
+			"input": "hwb(120,0%,0%)",
+			"success": false
+		},
+		{
+			"input": "hwb(120 0% 0% / 0.5)",
+			"success": true,
+			"data": "hwb(120 0% 0% / 0.5)"
+		},
+		{
+			"input": "hwb(120 0 0)",
+			"success": true,
+			"data": "hwb(120 0 0)"
+		},
+		{
+			"input": "hwb(120 0% 0% / 50%)",
+			"success": true,
+			"data": "hwb(120 0% 0% / 50%)"
+		},
+		{
+			"input": "lab(50 40 59)",
+			"success": true,
+			"data": "lab(50 40 59)"
+		},
+		{
+			"input": "lab(50%,40,59)",
+			"success": false
+		},
+		{
+			"input": "lch(50% 40 59)",
+			"success": true,
+			"data": "lch(50% 40 59)"
+		},
+		{
+			"input": "oklab(0.5 0.1 0.1)",
+			"success": true,
+			"data": "oklab(0.5 0.1 0.1)"
+		},
+		{
+			"input": "oklch(0.6 0.15 50)",
+			"success": true,
+			"data": "oklch(0.6 0.15 50)"
+		},
+		{
+			"input": "oklch(60% 0.15 50 / 0.5)",
+			"success": true,
+			"data": "oklch(60% 0.15 50 / 0.5)"
+		},
+		{
+			"input": "oklch(60% -0.15 50)",
+			"success": true,
+			"data": "oklch(60% -0.15 50)"
+		},
+		{
+			"input": "lab(foo)",
+			"success": false
+		},
+		{
+			"input": "oklch()",
+			"success": false
+		},
+		{
+			"input": "hwb()",
+			"success": false
+		},
+		{
+			"input": "lab(50% 40 59",
+			"success": false
+		},
+		{
+			"input": "xyz(1 2 3)",
+			"success": false
+		},
+		{
+			"input": "lab(50 40)",
+			"success": false
+		},
+		{
+			"input": "lab(50 40 59 1)",
+			"success": false
+		},
+		{
+			"input": "#abcdeg",
+			"success": false
+		},
+		{
+			"input": "aliceblue",
+			"success": true,
+			"data": "aliceblue"
+		},
+		{
+			"input": "AliceBlue",
+			"success": false
+		},
+		{
+			"input": "grey",
+			"success": true,
+			"data": "grey"
+		},
+		{
+			"input": "darkgrey",
+			"success": true,
+			"data": "darkgrey"
+		},
+		{
+			"input": "cyan",
+			"success": true,
+			"data": "cyan"
+		},
+		{
+			"input": "aqua",
+			"success": true,
+			"data": "aqua"
+		},
+		{
+			"input": 123,
+			"success": false
+		},
+		{
+			"input": null,
+			"success": false
+		},
+		{
+			"input": "__undefined__",
+			"success": false
+		},
+		{
+			"input": {},
+			"success": false
+		},
+		{
+			"input": [],
+			"success": false
+		}
+	],
+	"zMatrix": [
+		{
+			"input": [],
+			"success": false
+		},
+		{
+			"input": [
+				1
+			],
+			"success": true,
+			"data": [
+				1
+			]
+		},
+		{
+			"input": [
+				0,
+				1,
+				1,
+				0
+			],
+			"success": true,
+			"data": [
+				0,
+				1,
+				1,
+				0
+			]
+		},
+		{
+			"input": [
+				1,
+				0,
+				0,
+				0,
+				1,
+				0,
+				0,
+				0,
+				1
+			],
+			"success": true,
+			"data": [
+				1,
+				0,
+				0,
+				0,
+				1,
+				0,
+				0,
+				0,
+				1
+			]
+		},
+		{
+			"input": [
+				1,
+				0,
+				0,
+				0,
+				0,
+				1,
+				0,
+				0,
+				0,
+				0,
+				1,
+				0,
+				0,
+				0,
+				0,
+				1
+			],
+			"success": true,
+			"data": [
+				1,
+				0,
+				0,
+				0,
+				0,
+				1,
+				0,
+				0,
+				0,
+				0,
+				1,
+				0,
+				0,
+				0,
+				0,
+				1
+			]
+		},
+		{
+			"input": [
+				1,
+				2,
+				3
+			],
+			"success": false
+		},
+		{
+			"input": [
+				1,
+				2,
+				3,
+				4,
+				5,
+				6
+			],
+			"success": false
+		},
+		{
+			"input": [
+				[
+					1,
+					0
+				],
+				[
+					0,
+					1
+				]
+			],
+			"success": false
+		},
+		{
+			"input": [
+				"1",
+				"0",
+				"0",
+				"1"
+			],
+			"success": false
+		},
+		{
+			"input": [
+				1,
+				0,
+				0,
+				"NaN"
+			],
+			"success": false
+		},
+		{
+			"input": [
+				1,
+				0,
+				0,
+				"Infinity"
+			],
+			"success": false
+		},
+		{
+			"input": "1,0,0,1",
+			"success": false
+		},
+		{
+			"input": null,
+			"success": false
+		},
+		{
+			"input": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"success": true,
+			"data": [
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			]
+		}
+	],
+	"zTextarea": [
+		{
+			"input": "",
+			"success": true,
+			"data": ""
+		},
+		{
+			"input": "a",
+			"success": true,
+			"data": "a"
+		},
+		{
+			"input": "line1\nline2",
+			"success": true,
+			"data": "line1\nline2"
+		},
+		{
+			"input": 5,
+			"success": false
+		},
+		{
+			"input": null,
+			"success": false
+		},
+		{
+			"input": "__undefined__",
+			"success": false
+		}
+	]
+}
