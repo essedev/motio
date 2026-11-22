@@ -1,0 +1,175 @@
+{
+	"remotion": "4.0.545",
+	"chrome": "158.0.8127.36",
+	"cases": [
+		{
+			"options": {
+				"family": "Basic",
+				"url": "/f/inter-400.woff2"
+			},
+			"resolved": "undefined",
+			"faces": [
+				{
+					"family": "Basic",
+					"style": "normal",
+					"weight": "normal",
+					"stretch": "normal",
+					"unicodeRange": "U+0-10FFFF",
+					"featureSettings": "normal",
+					"display": "auto",
+					"ascentOverride": "normal",
+					"descentOverride": "normal",
+					"lineGapOverride": "normal",
+					"status": "loaded"
+				}
+			]
+		},
+		{
+			"options": {
+				"family": "All Descriptors",
+				"url": "/f/inter-700.woff2?v=1#hash",
+				"weight": "700",
+				"style": "italic",
+				"display": "swap",
+				"stretch": "condensed",
+				"unicodeRange": "U+0000-00FF",
+				"featureSettings": "\"liga\" 0",
+				"ascentOverride": "90%",
+				"descentOverride": "20%",
+				"lineGapOverride": "0%"
+			},
+			"resolved": "undefined",
+			"faces": [
+				{
+					"family": "All Descriptors",
+					"style": "italic",
+					"weight": "700",
+					"stretch": "condensed",
+					"unicodeRange": "U+0-FF",
+					"featureSettings": "\"liga\" 0",
+					"display": "swap",
+					"ascentOverride": "90%",
+					"descentOverride": "20%",
+					"lineGapOverride": "0%",
+					"status": "loaded"
+				}
+			]
+		},
+		{
+			"options": {
+				"family": "Numeric Weight",
+				"url": "/f/inter-400.woff2",
+				"weight": 500
+			},
+			"resolved": "undefined",
+			"faces": [
+				{
+					"family": "Numeric Weight",
+					"style": "normal",
+					"weight": "500",
+					"stretch": "normal",
+					"unicodeRange": "U+0-10FFFF",
+					"featureSettings": "normal",
+					"display": "auto",
+					"ascentOverride": "normal",
+					"descentOverride": "normal",
+					"lineGapOverride": "normal",
+					"status": "loaded"
+				}
+			]
+		},
+		{
+			"options": {
+				"family": "Explicit Format",
+				"url": "/f/inter-400.woff2",
+				"format": "woff2"
+			},
+			"resolved": "undefined",
+			"faces": [
+				{
+					"family": "Explicit Format",
+					"style": "normal",
+					"weight": "normal",
+					"stretch": "normal",
+					"unicodeRange": "U+0-10FFFF",
+					"featureSettings": "normal",
+					"display": "auto",
+					"ascentOverride": "normal",
+					"descentOverride": "normal",
+					"lineGapOverride": "normal",
+					"status": "loaded"
+				}
+			]
+		},
+		{
+			"options": {
+				"family": "Wrong Format",
+				"url": "/f/inter-400.woff2",
+				"format": "truetype"
+			},
+			"resolved": "undefined",
+			"faces": [
+				{
+					"family": "Wrong Format",
+					"style": "normal",
+					"weight": "normal",
+					"stretch": "normal",
+					"unicodeRange": "U+0-10FFFF",
+					"featureSettings": "normal",
+					"display": "auto",
+					"ascentOverride": "normal",
+					"descentOverride": "normal",
+					"lineGapOverride": "normal",
+					"status": "loaded"
+				}
+			]
+		},
+		{
+			"options": {
+				"family": "Missing",
+				"url": "/f/missing.woff2"
+			},
+			"error": "Failed to load font \"/f/missing.woff2\": 404 Not Found",
+			"faces": []
+		},
+		{
+			"options": {
+				"family": "Missing Ttf",
+				"url": "/f/missing.ttf"
+			},
+			"error": "Failed to load font \"/f/missing.ttf\": 404 Not Found",
+			"faces": []
+		},
+		{
+			"options": {
+				"family": "No Extension",
+				"url": "/f/inter400"
+			},
+			"error": "Could not automatically derive font format from the URL \"/f/inter400\". Pass the \"format\" parameter explicitly (\"woff2\", \"woff\", \"opentype\" or \"truetype\").",
+			"faces": []
+		},
+		{
+			"options": {
+				"family": "Unknown Extension",
+				"url": "/f/inter.eot"
+			},
+			"error": "Could not automatically derive font format from the URL \"/f/inter.eot\". Pass the \"format\" parameter explicitly (\"woff2\", \"woff\", \"opentype\" or \"truetype\").",
+			"faces": []
+		},
+		{
+			"options": {
+				"family": "Upper Case",
+				"url": "/f/INTER.WOFF2"
+			},
+			"error": "Failed to load font \"/f/INTER.WOFF2\": 404 Not Found",
+			"faces": []
+		}
+	],
+	"requests": [
+		"GET /f/inter-400.woff2",
+		"GET /f/inter-700.woff2",
+		"GET /f/missing.woff2",
+		"GET /f/missing.ttf",
+		"GET /f/INTER.WOFF2"
+	]
+}
