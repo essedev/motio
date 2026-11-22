@@ -10,3 +10,4 @@ out/
 *.log
 spike/dist-page/
 spike/video-page/*.mp4
+packages/google-fonts/generate-report.json

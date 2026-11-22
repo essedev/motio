@@ -1,0 +1,27 @@
+{
+	"name": "@motiojs/google-fonts",
+	"version": "0.0.0",
+	"description": "Type-safe Google Fonts loading for Motio, mirroring @remotion/google-fonts",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./*": {
+			"types": "./dist/fonts/*.d.ts",
+			"default": "./dist/fonts/*.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"generate": "node scripts/generate.ts"
+	},
+	"dependencies": {
+		"@motiojs/core": "workspace:*"
+	}
+}

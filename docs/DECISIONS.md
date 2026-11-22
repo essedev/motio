@@ -94,3 +94,9 @@ Measured in chrome-headless-shell 158 with the frame-stamped sources: a native `
 
 So the HTML5 `Video` renders the real element, seeked to the midpoint of the frame chosen by the `nearest` rule from timestamps the host provides (D-015). Refs keep pointing at an `HTMLVideoElement`, and drawing it to a canvas works. `OffthreadVideo` and `@remotion/media` `Video` keep the extraction path, which also covers codecs Chrome cannot decode (ProRes, HEVC on Linux).
 
+## D-017 Google Fonts: generated modules, committed (2026-11-23)
+
+`@motiojs/google-fonts` has one generated module per family (`@motiojs/google-fonts/<ImportName>`, exporting `fontFamily`, `getInfo`, `loadFont` and, for variable families, `loadVariableFont`) plus `getAvailableFonts()`. `scripts/generate.ts` reads Google's public font metadata and the CSS2 API (static and variable faces, per subset); the set of families is the one `@remotion/google-fonts` 4.0.545 lists, recorded from its public `getAvailableFonts()`, so import paths match one for one. All 1,848 families generate; the recorded samples match in exports, styles, weights, subsets, unicode-range subsets and variable axes. File URLs differ from Remotion's (Google varies them by user agent) and are not compared.
+
+The generated modules (about 10 MB of source) are committed and excluded from lint: builds stay offline and reproducible, and a regeneration shows up as a reviewable diff. Revisit if regeneration churn makes the history heavy; the alternative is generating at publish time.
+

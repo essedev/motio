@@ -39,6 +39,9 @@
 		},
 		{
 			"path": "packages/layout-utils"
+		},
+		{
+			"path": "packages/google-fonts"
 		}
 	]
 }

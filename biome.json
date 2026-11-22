@@ -7,7 +7,16 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!**/dist", "!**/fixtures/**/out", "!**/*.snap", "!**/*.md"]
+		"includes": [
+			"**",
+			"!**/dist",
+			"!**/fixtures/**/out",
+			"!**/*.snap",
+			"!**/*.md",
+			"!packages/google-fonts/src/fonts",
+			"!packages/google-fonts/src/font-list.ts",
+			"!packages/google-fonts/generate-report.json"
+		]
 	},
 	"formatter": {
 		"enabled": true,
