@@ -21,6 +21,9 @@
 		},
 		{
 			"path": "packages/noise"
+		},
+		{
+			"path": "packages/audio"
 		}
 	]
 }

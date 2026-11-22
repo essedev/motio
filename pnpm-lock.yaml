@@ -253,6 +253,28 @@ importers:
         specifier: ^26.6.6
         version: 26.6.6
 
+  packages/bundler:
+    dependencies:
+      '@motiojs/compat':
+        specifier: workspace:*
+        version: link:../compat
+      '@motiojs/core':
+        specifier: workspace:*
+        version: link:../core
+      vite:
+        specifier: 8.3.8
+        version: 8.3.8(@types/node@26.6.6)
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+
   packages/captions: {}
 
   packages/cli:

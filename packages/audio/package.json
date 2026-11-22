@@ -1,0 +1,21 @@
+{
+	"name": "@motiojs/audio",
+	"version": "0.0.0",
+	"description": "Audio mixer: decodes sources with FFmpeg, mixes with sample-accurate offsets and volume envelopes, encodes once",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"devDependencies": {
+		"@types/node": "^26.6.6"
+	}
+}

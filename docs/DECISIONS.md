@@ -76,3 +76,9 @@ Measured in the pinned image (`docker/`, linux-arm64, Debian trixie, chrome-head
 
 Docker's default seccomp profile blocks the user namespaces Chrome's sandbox needs. Inside the image the renderer passes `--no-sandbox` (set by `MOTIO_CHROME_NO_SANDBOX=1`), the container being the isolation boundary; outside containers the sandbox stays on.
 
+## D-014 Audio mixer: a separate package, volume applied on time (2026-11-22)
+
+The mixer lives in `@motiojs/audio` (Node), used by the renderer, so it is tested on its own against the media oracle. Sources are decoded by FFmpeg (trim, pitch, tempo, resampling), then placed, enveloped and summed in Node in float, and encoded once. A mono source is duplicated at full level: FFmpeg's default upmix lowers it by 3 dB, which Remotion does not do.
+
+Against `fixtures/media`, click times match within 1 ms (offset, trim, volumes, ramp) and within 2 ms for `playbackRate` 2; constant volumes match within 0.01. Remotion applies volume changes about 1.5 frames late (up to 2.5 on the ramp); Motio applies the per-frame volume on time and does not reproduce the lag until its rule is known, because a 50 ms envelope offset is inaudible in practice and copying an unexplained artefact would be guesswork. Clicks inside that window are excluded from the peak comparison. Revisit if the rule is identified black-box.
+
