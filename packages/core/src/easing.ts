@@ -24,8 +24,8 @@ const BISECTION_MAX_ITERATIONS = 10;
  * (1, 1). For a progress x it solves B_x(s) = x for the curve parameter s and
  * returns B_y(s). The solver starts from a table of 11 samples, refines with
  * Newton-Raphson where the curve is steep enough and falls back to bisection
- * where it is flat. These parameters reproduce Remotion's outputs exactly
- * (identified black-box against the oracle fixtures).
+ * where it is flat. With these parameters the results agree with Remotion's
+ * within 1.4e-14 on the oracle fixtures.
  */
 const cubicBezier = (x1: number, y1: number, x2: number, y2: number): EasingFunction => {
 	if (!(x1 >= 0 && x1 <= 1 && x2 >= 0 && x2 <= 1)) {

@@ -16,9 +16,9 @@ type EasingCase =
 
 const cases = fixture.cases as EasingCase[];
 
-// Tolerance: 1e-12 (relative above 1, absolute below). The formulas are the
-// same closed forms Remotion evaluates; the bezier solver uses the same
-// iteration scheme, so results agree to the last bits.
+// Tolerance: 1e-12 (relative above 1, absolute below). The curves are the
+// same closed forms and the bezier solver uses the same iteration scheme;
+// the worst measured difference is 1.4e-14, from operation order.
 const TOLERANCE = 1e-12;
 
 describe("Easing against the Remotion oracle", () => {
