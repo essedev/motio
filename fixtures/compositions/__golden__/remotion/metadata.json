@@ -1,0 +1,65 @@
+{
+	"remotion": "4.0.545",
+	"compositions": {
+		"basics": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {
+				"title": "Hello Motio"
+			},
+			"props": {
+				"title": "Hello Motio"
+			}
+		},
+		"timeline": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"motion": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"assets": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 30,
+			"defaultProps": {},
+			"props": {}
+		},
+		"metadata": {
+			"width": 480,
+			"height": 270,
+			"fps": 30,
+			"durationInFrames": 45,
+			"defaultProps": {
+				"title": "Metadata"
+			},
+			"props": {
+				"title": "Metadata resolved"
+			}
+		},
+		"poster": {
+			"width": 640,
+			"height": 360,
+			"fps": 1,
+			"durationInFrames": 1,
+			"defaultProps": {
+				"headline": "A still frame"
+			},
+			"props": {
+				"headline": "A still frame"
+			}
+		}
+	}
+}
