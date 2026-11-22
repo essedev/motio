@@ -14,5 +14,13 @@
 		"dist"
 	],
 	"sideEffects": false,
-	"scripts": {}
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*",
+		"@puppeteer/browsers": "^3.2.7",
+		"puppeteer-core": "^25.18.1"
+	},
+	"devDependencies": {
+		"@motiojs/testing": "workspace:*"
+	}
 }

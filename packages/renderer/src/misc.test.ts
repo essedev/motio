@@ -1,0 +1,109 @@
+import { describe, expect, it } from "vitest";
+import { chromeArgs } from "./browser/flags.js";
+import { makeCancelSignal, toAbortController } from "./cancel.js";
+import { MotioError } from "./errors.js";
+import { shouldRetry } from "./pool.js";
+import { fromPageError } from "./render-page.js";
+
+describe("chrome flags", () => {
+	it("always includes the determinism flags and software GL by default", () => {
+		const args = chromeArgs();
+		for (const f of [
+			"--font-render-hinting=none",
+			"--force-color-profile=srgb",
+			"--disable-skia-runtime-opts",
+			"--disable-checker-imaging",
+			"--use-angle=swiftshader",
+		]) {
+			expect(args).toContain(f);
+		}
+	});
+
+	it("maps chromiumOptions to flags", () => {
+		const args = chromeArgs({
+			gl: "angle",
+			ignoreCertificateErrors: true,
+			features: { Foo: true, Bar: false },
+			flags: { "hide-scrollbars": false, "custom-flag": "x" },
+		});
+		expect(args).toContain("--use-angle=default");
+		expect(args).toContain("--ignore-certificate-errors");
+		expect(args).toContain("--enable-features=Foo");
+		expect(args).toContain("--disable-features=Bar");
+		expect(args).toContain("--custom-flag=x");
+		expect(args).not.toContain("--hide-scrollbars");
+	});
+
+	it("rejects reserved flags and unknown GL backends", () => {
+		expect(() => chromeArgs({ flags: { "user-data-dir": "/tmp" } })).toThrow(/reserved/);
+		// @ts-expect-error invalid on purpose
+		expect(() => chromeArgs({ gl: "metal" })).toThrow(/chromiumOptions.gl/);
+	});
+});
+
+describe("cancel signal", () => {
+	it("fires callbacks once, including ones registered after cancel", async () => {
+		const { cancelSignal, cancel } = makeCancelSignal();
+		let calls = 0;
+		cancelSignal(() => calls++);
+		cancel();
+		cancel();
+		expect(calls).toBe(1);
+		const late = new Promise<void>((r) => cancelSignal(r));
+		await late;
+	});
+
+	it("aborts an AbortController with E_CANCELLED naming the function", () => {
+		const { cancelSignal, cancel } = makeCancelSignal();
+		const c = toAbortController(cancelSignal, "renderMedia");
+		cancel();
+		expect(c.signal.aborted).toBe(true);
+		expect(c.signal.reason).toMatchObject({
+			code: "E_CANCELLED",
+			message: "renderMedia() got cancelled",
+		});
+	});
+});
+
+describe("retry policy", () => {
+	const timeout = (retries?: number) => {
+		const e = new MotioError("E_READINESS_TIMEOUT", "t") as MotioError & { retries?: number };
+		if (retries !== undefined) e.retries = retries;
+		return e;
+	};
+
+	it("follows the readiness handle's retries, default 0", () => {
+		expect(shouldRetry(timeout(), 0, 2)).toBe(false);
+		expect(shouldRetry(timeout(2), 1, 2)).toBe(true);
+		expect(shouldRetry(timeout(2), 2, 2)).toBe(false);
+	});
+
+	it("retries crashes and watchdog timeouts, never user errors", () => {
+		expect(shouldRetry(new MotioError("E_BROWSER_CRASHED", "c"), 1, 2)).toBe(true);
+		expect(shouldRetry(new MotioError("E_SEEK_TIMEOUT", "c"), 2, 2)).toBe(false);
+		expect(shouldRetry(new MotioError("E_RENDER_ERROR", "c"), 0, 2)).toBe(false);
+		expect(shouldRetry(new Error("x"), 0, 2)).toBe(false);
+	});
+});
+
+describe("page errors", () => {
+	it("keeps code, label, frame and retries; unknown codes become E_RENDER_ERROR", () => {
+		const e = fromPageError(
+			{ code: "E_READINESS_TIMEOUT", message: "handle", label: "fetch", frame: 4, retries: 1 },
+			undefined,
+			"comp",
+		);
+		expect(e).toMatchObject({
+			code: "E_READINESS_TIMEOUT",
+			label: "fetch",
+			frame: 4,
+			composition: "comp",
+			retries: 1,
+		});
+		expect(e.message).toContain("(frame 4)");
+		expect(fromPageError({ message: "boom" }, 7, undefined)).toMatchObject({
+			code: "E_RENDER_ERROR",
+			frame: 7,
+		});
+	});
+});
