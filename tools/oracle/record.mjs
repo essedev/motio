@@ -586,6 +586,11 @@ const recordSpring = () => {
 		{ frame: 10, fps: 30, config: { damping: 0 } },
 		{ frame: 10, fps: 30, config: { stiffness: 0 } },
 		{ frame: 10, fps: Number.NaN },
+		{ frame: 10, fps: 30, config: { damping: -1 } },
+		{ frame: 10, fps: 30, config: { mass: -1 } },
+		{ frame: 10, fps: 30, config: { stiffness: -1 } },
+		{ frame: 5, fps: 30, config: { mass: 0 }, durationInFrames: 10 },
+		{ frame: 5, fps: 30, config: { mass: 0 }, reverse: true },
 	];
 	write(
 		"spring-errors",
@@ -615,6 +620,15 @@ const recordMeasureSpring = () => {
 		{ fps: 0 },
 		{ fps: -1 },
 		{ fps: 30, threshold: -0.1 },
+		{ fps: 30, threshold: Number.NaN },
+		{ fps: Number.NaN },
+		{ fps: 30, config: { mass: 0 } },
+		{ fps: 30, config: { mass: -1 } },
+		{ fps: 30, config: { damping: 0 } },
+		{ fps: 30, config: { damping: -1 } },
+		{ fps: 30, config: { stiffness: -1 } },
+		{ fps: 30, config: { stiffness: 0 }, threshold: 1 },
+		// { stiffness: 0 } with a threshold below 1 never returns in Remotion.
 	];
 	for (const params of extra) cases.push({ params, ...capture(() => measureSpring(params)) });
 	write("measure-spring", "measureSpring() for the config grid, fps and thresholds", cases);
