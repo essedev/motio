@@ -6,10 +6,12 @@
 	"license": "Apache-2.0",
 	"description": "Renders fixtures/compositions with the published Remotion (pinned) to produce reference stills. Outside the workspace; never read node_modules.",
 	"scripts": {
-		"record": "node record.ts"
+		"record": "node record.ts",
+		"record:media": "node record-media.ts"
 	},
 	"dependencies": {
 		"@remotion/bundler": "4.0.545",
+		"@remotion/media": "4.0.545",
 		"@remotion/renderer": "4.0.545",
 		"react": "19.3.1",
 		"react-dom": "19.3.1",

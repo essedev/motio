@@ -1,0 +1,11 @@
+{
+	"name": "@motiojs/fixture-media",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"license": "Apache-2.0",
+	"description": "Media fixtures: frame-stamped source videos and a click track, with compositions written against the Remotion API",
+	"scripts": {
+		"generate": "node generate.ts"
+	}
+}
