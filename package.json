@@ -5,10 +5,12 @@
 	"scripts": {
 		"build": "tsc -b",
 		"typecheck": "tsc -b --noEmit",
-		"test": "vitest run",
+		"test": "vitest run --project unit",
 		"lint": "biome check .",
 		"format": "biome check --write .",
-		"check": "pnpm format && pnpm lint && pnpm build && pnpm test"
+		"check": "pnpm format && pnpm lint && pnpm build && pnpm test:all",
+		"test:integration": "vitest run --project integration",
+		"test:all": "vitest run"
 	},
 	"license": "Apache-2.0",
 	"devEngines": {

@@ -9,7 +9,7 @@ install: ## Install dependencies
 build: ## Build every package (tsc project references)
 	pnpm build
 
-test: ## Run the unit and integration tests
+test: ## Run the unit tests
 	pnpm test
 
 lint: ## Lint and check formatting
@@ -26,3 +26,6 @@ check: ## Full quality round: format, lint, build, test
 
 clean: ## Remove build output
 	rm -rf packages/*/dist packages/*/*.tsbuildinfo
+
+test-integration: ## Run integration tests (real Chrome and FFmpeg, serial)
+	pnpm test:integration
