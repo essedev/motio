@@ -4,9 +4,11 @@
 //
 // Usage: pnpm install && pnpm record [paths|shapes|noise|captions ...]
 
+import { recordCaptions } from "./record-captions.mjs";
 import { recordNoise } from "./record-noise.mjs";
 
 const recorders = {
+	captions: recordCaptions,
 	noise: recordNoise,
 };
 
