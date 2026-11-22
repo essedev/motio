@@ -23,6 +23,10 @@
 		"@motiojs/core": "workspace:*"
 	},
 	"devDependencies": {
+		"@motiojs/bundler": "workspace:*",
+		"@motiojs/renderer": "workspace:*",
+		"@motiojs/testing": "workspace:*",
+		"@types/node": "^26.6.6",
 		"@types/react": "19.3.0",
 		"react": "19.3.1",
 		"react-dom": "19.3.1"
