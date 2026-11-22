@@ -1,0 +1,20 @@
+{
+	"name": "motio-oracle-features",
+	"version": "0.0.0",
+	"description": "Records outputs of the published @remotion/paths, shapes, noise and captions packages (public API only) as fixtures for the Motio feature packages",
+	"private": true,
+	"type": "module",
+	"license": "Apache-2.0",
+	"scripts": {
+		"record": "node record.mjs"
+	},
+	"dependencies": {
+		"@remotion/captions": "4.0.545",
+		"@remotion/noise": "4.0.545",
+		"@remotion/paths": "4.0.545",
+		"@remotion/shapes": "4.0.545",
+		"react": "19.3.1",
+		"react-dom": "19.3.1",
+		"remotion": "4.0.545"
+	}
+}
