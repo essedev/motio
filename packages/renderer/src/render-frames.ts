@@ -62,6 +62,11 @@ export interface RenderFramesOptions extends BrowserSessionOptions {
 	cancelSignal?: CancelSignal;
 	/** Motio extension: replace each page with a fresh one after this many frames. Default 500; 0 never. */
 	recycleEveryNFrames?: number;
+	/**
+	 * Motio extension: reorders the frames before they are requested, for example in descending
+	 * or random order to check determinism. Must return the same frames. Default: ascending.
+	 */
+	frameOrder?: (frames: number[]) => number[];
 }
 
 /** Result of `renderFrames()`. */
@@ -91,6 +96,17 @@ function framesToRender(options: RenderFramesOptions): number[] {
 		}
 	}
 	return sorted;
+}
+
+function orderFrames(frames: number[], frameOrder: RenderFramesOptions["frameOrder"]): number[] {
+	if (!frameOrder) return frames;
+	const order = frameOrder([...frames]);
+	const same =
+		order.length === frames.length &&
+		[...order].sort((a, b) => a - b).every((f, i) => f === frames[i]);
+	if (!same)
+		throw new MotioError("E_INVALID_OPTION", "frameOrder must return the same frames it was given");
+	return order;
 }
 
 /** Renders frames of a composition to image files or to a callback, without encoding. */
@@ -137,7 +153,7 @@ export async function renderFrames(options: RenderFramesOptions): Promise<Render
 		});
 		let rendered = 0;
 		await runPool({
-			frames,
+			frames: orderFrames(frames, options.frameOrder),
 			concurrency,
 			openPage: compositionPageFactory(session, composition, {
 				width: composition.width,

@@ -114,7 +114,7 @@ export interface RenderFramesOptions extends SessionOptions {
 	cancelSignal?: unknown;
 	/**
 	 * Motio extension requested from the renderer: the order frames are handed to pages,
-	 * so `check determinism` can render in several orders. Ignored if unsupported.
+	 * so `check determinism` can render in several orders (supported by `renderFrames`).
 	 */
 	frameOrder?: (frames: number[]) => number[];
 }

@@ -95,8 +95,13 @@ export async function checkDeterminismCommand(
 		argv,
 		DETERMINISM_FLAGS,
 	);
+	// Never above the CPU threads: the renderer rejects that (1-thread CI containers).
 	const high: Concurrency =
-		concurrency ?? Math.max(2, Math.min(4, Math.floor(availableParallelism() / 2)));
+		concurrency ??
+		Math.min(
+			availableParallelism(),
+			Math.max(2, Math.min(4, Math.floor(availableParallelism() / 2))),
+		);
 	const runs = determinismRuns(high);
 	const hashes: Array<Map<number, string>> = [];
 	for (const [index, run] of runs.entries()) {
