@@ -8,11 +8,27 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
+		},
+		"./version": {
+			"types": "./dist/version.d.ts",
+			"default": "./dist/version.js"
 		}
 	},
 	"files": [
 		"dist"
 	],
 	"sideEffects": false,
-	"scripts": {}
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/react": "19.3.0",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0"
+	}
 }
