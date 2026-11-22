@@ -1,0 +1,67 @@
+{
+	"name": "@motiojs/transitions",
+	"version": "0.0.0",
+	"description": "Transitions between scenes for Motio, mirroring @remotion/transitions",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./fade": {
+			"types": "./dist/presentations/fade.d.ts",
+			"default": "./dist/presentations/fade.js"
+		},
+		"./slide": {
+			"types": "./dist/presentations/slide.d.ts",
+			"default": "./dist/presentations/slide.js"
+		},
+		"./wipe": {
+			"types": "./dist/presentations/wipe.d.ts",
+			"default": "./dist/presentations/wipe.js"
+		},
+		"./flip": {
+			"types": "./dist/presentations/flip.d.ts",
+			"default": "./dist/presentations/flip.js"
+		},
+		"./clock-wipe": {
+			"types": "./dist/presentations/clock-wipe.d.ts",
+			"default": "./dist/presentations/clock-wipe.js"
+		},
+		"./iris": {
+			"types": "./dist/presentations/iris.d.ts",
+			"default": "./dist/presentations/iris.js"
+		},
+		"./cube": {
+			"types": "./dist/presentations/cube.d.ts",
+			"default": "./dist/presentations/cube.js"
+		},
+		"./none": {
+			"types": "./dist/presentations/none.d.ts",
+			"default": "./dist/presentations/none.js"
+		},
+		"./push-cut": {
+			"types": "./dist/presentations/push-cut.d.ts",
+			"default": "./dist/presentations/push-cut.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"jsdom": "^31.0.1",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0 || ^19.0.0"
+	}
+}
