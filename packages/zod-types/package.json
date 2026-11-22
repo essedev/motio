@@ -1,0 +1,24 @@
+{
+	"name": "@motiojs/zod-types",
+	"version": "0.0.0",
+	"description": "Zod schemas for colours, multi-line text and matrices, mirroring @remotion/zod-types",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"devDependencies": {
+		"zod": "^4.6.7"
+	},
+	"peerDependencies": {
+		"zod": "^4.0.0"
+	}
+}
