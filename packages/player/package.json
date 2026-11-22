@@ -1,0 +1,35 @@
+{
+	"name": "@motiojs/player",
+	"version": "0.0.0",
+	"description": "Embed Motio compositions in React apps: Player and Thumbnail, mirroring @remotion/player",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"esbuild": "0.28.1",
+		"jsdom": "^31.0.1",
+		"puppeteer-core": "25.18.1",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0"
+	}
+}

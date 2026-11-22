@@ -44,6 +44,9 @@
 			"path": "packages/google-fonts"
 		},
 		{
+			"path": "packages/player"
+		},
+		{
 			"path": "packages/distributed"
 		}
 	]
