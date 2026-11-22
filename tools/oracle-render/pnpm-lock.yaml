@@ -11,6 +11,9 @@ importers:
       '@remotion/bundler':
         specifier: 4.0.545
         version: 4.0.545(postcss@8.5.33)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/fonts':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/google-fonts':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -18,6 +21,9 @@ importers:
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/media':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/media-utils':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/noise':
@@ -347,6 +353,9 @@ packages:
 
   '@remotion/elevenlabs@4.0.545':
     resolution: {integrity: sha512-HFqaVEKTQgmzMiTXmtdHorK3oClaWSocC5iTBpX6kWdxByimLQDa8DCewEjNOIJhB+Zg01HFQSJRopyps3Ei8g==}
+
+  '@remotion/fonts@4.0.545':
+    resolution: {integrity: sha512-FWnLx/vTdOwK4WpW+Jzwaxw6epqYQqEOIIa9xl5w+seLMDwWbfIjYNng15tfPmvTb4pgqvPuA0V3dnBV9b+E7A==}
 
   '@remotion/google-fonts@4.0.545':
     resolution: {integrity: sha512-6Mr929E+ydjbqWVY2+3H6/V6D6uYhl3bQNLMif35INozGT2YXtHmFc5D4kWIE3RwQrP29WH10VGTq2bt4890/w==}
@@ -1449,6 +1458,13 @@ snapshots:
     dependencies:
       '@remotion/captions': 4.0.545
       zod: 4.6.7
+
+  '@remotion/fonts@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+    transitivePeerDependencies:
+      - react
+      - react-dom
 
   '@remotion/google-fonts@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:

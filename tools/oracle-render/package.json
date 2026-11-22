@@ -10,13 +10,16 @@
     "record:media": "node record-media.ts",
     "record:zod": "node record-zod.ts",
     "record:layout": "node record-layout.ts",
-    "record:google-fonts": "node record-google-fonts.ts"
+    "record:google-fonts": "node record-google-fonts.ts",
+    "record:media-utils": "node record-media-utils.ts"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.545",
+    "@remotion/fonts": "4.0.545",
     "@remotion/google-fonts": "4.0.545",
     "@remotion/layout-utils": "4.0.545",
     "@remotion/media": "4.0.545",
+    "@remotion/media-utils": "4.0.545",
     "@remotion/noise": "4.0.545",
     "@remotion/paths": "4.0.545",
     "@remotion/renderer": "4.0.545",
