@@ -2,7 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { type CancelSignal, toAbortController } from "./cancel.js";
 import { MotioError } from "./errors.js";
 import { oneOf, resolveScale } from "./options.js";
-import { checkOverwrite } from "./output.js";
+import { checkOverwrite, prepareOutput } from "./output.js";
 import { compositionPageFactory } from "./page-factory.js";
 import { DEFAULT_CRASH_RETRIES, runPool } from "./pool.js";
 import {
@@ -104,7 +104,16 @@ export async function renderStill(options: RenderStillOptions): Promise<RenderSt
 		if (!image)
 			throw new MotioError("E_CAPTURE_FAILED", `No image was captured for frame ${frame}`);
 		if (options.output) {
-			await writeFile(options.output, image);
+			// Same as renderMedia: create the directory, write to a temporary file, then rename,
+			// so a cancel or crash never leaves a truncated image at the output path.
+			const out = await prepareOutput(options.output, options.overwrite ?? true, `.${imageFormat}`);
+			try {
+				await writeFile(out.temp, image);
+				await out.commit();
+			} catch (err) {
+				await out.discard();
+				throw err;
+			}
 			return { buffer: null, contentType: CONTENT_TYPES[imageFormat] };
 		}
 		return { buffer: image, contentType: CONTENT_TYPES[imageFormat] };
