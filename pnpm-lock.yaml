@@ -494,6 +494,15 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@motiojs/bundler':
+        specifier: workspace:*
+        version: link:../bundler
+      '@motiojs/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
@@ -503,6 +512,9 @@ importers:
       jsdom:
         specifier: ^31.0.1
         version: 31.0.1
+      motio:
+        specifier: workspace:*
+        version: link:../motio
       react:
         specifier: 19.3.1
         version: 19.3.1
