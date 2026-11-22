@@ -1,0 +1,17 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"composite": false,
+		"declaration": false,
+		"declarationMap": false,
+		"lib": ["esnext", "dom", "dom.iterable"],
+		"types": [],
+		"paths": {
+			"@motiojs/core/protocol": ["../../packages/core/src/protocol.ts"],
+			"@motiojs/testing/frame-stamp": ["../../packages/testing/src/frame-stamp.ts"]
+		},
+		"allowImportingTsExtensions": true
+	},
+	"include": ["src", "vite.config.ts"]
+}
