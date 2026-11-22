@@ -1,0 +1,18 @@
+{
+	"name": "@motiojs/compat",
+	"version": "0.0.0",
+	"description": "Bundler plugin mapping remotion and @remotion/* imports to Motio",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {}
+}

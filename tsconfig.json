@@ -1,0 +1,23 @@
+{
+	"files": [],
+	"references": [
+		{
+			"path": "packages/core"
+		},
+		{
+			"path": "packages/renderer"
+		},
+		{
+			"path": "packages/cli"
+		},
+		{
+			"path": "packages/compat"
+		},
+		{
+			"path": "packages/testing"
+		},
+		{
+			"path": "packages/motio"
+		}
+	]
+}

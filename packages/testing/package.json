@@ -1,0 +1,19 @@
+{
+	"name": "@motiojs/testing",
+	"version": "0.0.0",
+	"description": "Oracle harness, golden frames and determinism hashing (dev only)",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"private": true
+}

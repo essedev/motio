@@ -1,0 +1,29 @@
+{
+	"name": "motio-monorepo",
+	"version": "0.0.0",
+	"description": "Motio monorepo: make videos with React, Remotion-compatible API, Apache-2.0",
+	"scripts": {
+		"build": "tsc -b",
+		"typecheck": "tsc -b --noEmit",
+		"test": "vitest run",
+		"lint": "biome check .",
+		"format": "biome check --write .",
+		"check": "pnpm format && pnpm lint && pnpm build && pnpm test"
+	},
+	"license": "Apache-2.0",
+	"devEngines": {
+		"packageManager": {
+			"name": "pnpm",
+			"version": "^11.17.0",
+			"onFail": "download"
+		}
+	},
+	"type": "module",
+	"private": true,
+	"devDependencies": {
+		"@biomejs/biome": "^2.6.8",
+		"@types/node": "^26.6.6",
+		"typescript": "^7.0.2",
+		"vitest": "^5.1.1"
+	}
+}
