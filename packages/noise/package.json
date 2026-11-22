@@ -1,0 +1,22 @@
+{
+	"name": "@motiojs/noise",
+	"version": "0.0.0",
+	"description": "Seeded simplex noise (browser), compatible with @remotion/noise",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*",
+		"simplex-noise": "4.0.1"
+	}
+}

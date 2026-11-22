@@ -1,0 +1,16 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"lib": ["esnext", "dom", "dom.iterable"],
+		"types": []
+	},
+	"include": ["src"],
+	"exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/__oracle__"],
+	"references": [
+		{
+			"path": "../core"
+		}
+	]
+}

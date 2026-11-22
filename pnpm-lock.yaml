@@ -218,6 +218,15 @@ importers:
 
   packages/motio: {}
 
+  packages/noise:
+    dependencies:
+      '@motiojs/core':
+        specifier: workspace:*
+        version: link:../core
+      simplex-noise:
+        specifier: 4.0.1
+        version: 4.0.1
+
   packages/renderer: {}
 
   packages/testing: {}
@@ -850,6 +859,9 @@ packages:
   scheduler@0.28.0:
     resolution: {integrity: sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw==}
 
+  simplex-noise@4.0.1:
+    resolution: {integrity: sha512-zl/+bdSqW7HJOQ0oDbxrNYaF4F5ik0i7M6YOYmEoIJNtg16NpvWaTTM1Y7oV/7T0jFljawLgYPS81Uu2rsfo1A==}
+
   source-map-js@1.2.4:
     resolution: {integrity: sha512-J7ZjMvHd9O1fcT/5V09QWaaSl2BbWx3F6O08spde82Namf9UB0GxRVIPiNbVsdKkoizHiSpTodo3vp2bAy91MA==}
     engines: {node: '>=6.0.0'}
@@ -1428,6 +1440,8 @@ snapshots:
       '@rolldown/binding-win32-x64-msvc': 1.2.19
 
   scheduler@0.28.0: {}
+
+  simplex-noise@4.0.1: {}
 
   source-map-js@1.2.4: {}
 
