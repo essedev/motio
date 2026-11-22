@@ -48,7 +48,9 @@ const Clicks: React.FC<{
 	trimBefore?: number;
 	playbackRate?: number;
 	ramp?: boolean;
-}> = ({ from = 0, trimBefore, playbackRate, ramp }) => (
+	volume?: number;
+	step?: boolean;
+}> = ({ from = 0, trimBefore, playbackRate, ramp, volume, step }) => (
 	<AbsoluteFill style={{ backgroundColor: "black" }}>
 		<Sequence from={from}>
 			<Audio
@@ -61,6 +63,8 @@ const Clicks: React.FC<{
 								interpolate(f, [0, 60], [0.1, 1], { extrapolateRight: "clamp" }),
 						}
 					: {})}
+				{...(volume === undefined ? {} : { volume })}
+				{...(step ? { volume: (f: number) => (f < 30 ? 0.2 : 0.8) } : {})}
 			/>
 		</Sequence>
 	</AbsoluteFill>
@@ -156,6 +160,30 @@ export const Root: React.FC = () => (
 			durationInFrames={90}
 			{...size}
 			defaultProps={{ ramp: true }}
+		/>
+		<Composition
+			id="audio-vol25"
+			component={Clicks}
+			fps={30}
+			durationInFrames={30}
+			{...size}
+			defaultProps={{ volume: 0.25 }}
+		/>
+		<Composition
+			id="audio-vol50"
+			component={Clicks}
+			fps={30}
+			durationInFrames={30}
+			{...size}
+			defaultProps={{ volume: 0.5 }}
+		/>
+		<Composition
+			id="audio-step"
+			component={Clicks}
+			fps={30}
+			durationInFrames={60}
+			{...size}
+			defaultProps={{ step: true }}
 		/>
 	</>
 );
