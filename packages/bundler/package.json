@@ -1,0 +1,33 @@
+{
+	"name": "@motiojs/bundler",
+	"version": "0.0.0",
+	"description": "Vite bundler for Motio projects: entry discovery, public dir, env vars, Remotion compat alias",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"engines": {
+		"node": ">=22"
+	},
+	"devDependencies": {
+		"@tailwindcss/vite": "^4.3.5",
+		"@types/node": "^26.6.6",
+		"react": "19.3.1",
+		"react-dom": "19.3.1",
+		"tailwindcss": "^4.3.5"
+	},
+	"dependencies": {
+		"@motiojs/compat": "workspace:*",
+		"@motiojs/core": "workspace:*",
+		"vite": "8.3.8"
+	}
+}
