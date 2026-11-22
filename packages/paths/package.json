@@ -1,0 +1,22 @@
+{
+	"name": "@motiojs/paths",
+	"version": "0.0.0",
+	"description": "SVG path utilities (browser), compatible with @remotion/paths",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"NOTICE"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*"
+	}
+}

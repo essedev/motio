@@ -1,0 +1,16 @@
+@motiojs/paths
+Copyright 2026 the Motio authors. Licensed under the Apache License, Version 2.0.
+
+This package includes code ported from the following projects. Each ported
+file keeps the original copyright notice and licence text in its header.
+
+- svg-path-properties, Copyright (c) 2016 Roger Veciana i Rovira, MIT License
+  (src/properties/segments.ts, src/properties/path-properties.ts)
+- svgpath, Copyright (C) 2013-2015 by Vitaly Puzrin, MIT License
+  (src/arc-to-cubic.ts)
+- svg-path-bbox, Copyright (c) 2020-2024, Álvaro Mondéjar Rubio, BSD 3-Clause License
+  (src/get-bounding-box.ts)
+- d3-interpolate-path, Copyright 2016, Peter Beshai, BSD 3-Clause License
+  (src/interpolate-path.ts, used by src/interpolate-paths.ts)
+- WarpJS, Copyright (c) 2016 Benjamin Fleming, MIT License
+  (src/warp-path.ts)
