@@ -54,6 +54,9 @@
 		},
 		{
 			"path": "packages/paths"
+		},
+		{
+			"path": "packages/shapes"
 		}
 	]
 }

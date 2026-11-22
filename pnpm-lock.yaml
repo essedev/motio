@@ -469,6 +469,9 @@ importers:
 
   packages/shapes:
     dependencies:
+      '@motiojs/core':
+        specifier: workspace:*
+        version: link:../core
       '@motiojs/paths':
         specifier: workspace:*
         version: link:../paths
