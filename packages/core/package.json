@@ -12,6 +12,18 @@
 		"./protocol": {
 			"types": "./dist/protocol.d.ts",
 			"default": "./dist/protocol.js"
+		},
+		"./runtime": {
+			"types": "./dist/runtime/index.d.ts",
+			"default": "./dist/runtime/index.js"
+		},
+		"./clock-shim": {
+			"types": "./dist/clock-shim.d.ts",
+			"default": "./dist/clock-shim.js"
+		},
+		"./internals": {
+			"types": "./dist/internals.d.ts",
+			"default": "./dist/internals.js"
 		}
 	},
 	"files": [
