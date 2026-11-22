@@ -8,7 +8,7 @@
 		<video id="v" muted playsinline preload="auto"></video>
 		<script>
 			const v = document.getElementById("v");
-			window.load = (src) => new Promise((ok, ko) => { v.onloadeddata = () => ok(v.duration); v.onerror = () => ko(String(v.error && v.error.message)); v.src = src; });
+			window.load = (src) => new Promise((ok, ko) => { v.onloadeddata = () => ok(v.duration); v.onerror = () => ko(String(v.error?.message)); v.src = src; });
 			// Seek to time t and resolve once the frame for t is presented.
 			// rVFC does not fire in headless-shell without compositor frames, so wait for "seeked".
 			window.seekTo = (t) => new Promise((ok) => {

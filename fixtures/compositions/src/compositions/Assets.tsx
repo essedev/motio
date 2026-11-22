@@ -52,7 +52,7 @@ export const Assets: React.FC = () => {
 			</div>
 			{data?.values.map((v, i) => (
 				<div
-					key={i}
+					key={`bar-${String(i)}`}
 					style={{
 						position: "absolute",
 						left: 340 + i * 50,

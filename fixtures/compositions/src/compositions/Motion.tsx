@@ -9,6 +9,8 @@ import {
 	useVideoConfig,
 } from "remotion";
 
+const DOTS = Array.from({ length: 24 }, (_, i) => i);
+
 /** spring, Easing, interpolateColors and seeded random driving geometry. */
 export const Motion: React.FC = () => {
 	const frame = useCurrentFrame();
@@ -33,9 +35,9 @@ export const Motion: React.FC = () => {
 					transform: `scale(${s}) rotate(${eased * 180}deg)`,
 				}}
 			/>
-			{Array.from({ length: 24 }, (_, i) => (
+			{DOTS.map((i) => (
 				<div
-					key={i}
+					key={`dot-${i}`}
 					style={{
 						position: "absolute",
 						left: 220 + random(`x${i}`) * 380,

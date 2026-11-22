@@ -105,7 +105,8 @@ afterAll(async () => {
 describe("layout-utils against @remotion/layout-utils 4.0.545 in the same browser", () => {
 	it("compares real measurements", () => {
 		expect(golden.measureText.length).toBeGreaterThan(5);
-		expect((got.measureText[2]?.ok as { width: number }).width).toBeGreaterThan(100);
+		const sample = got.measureText[2]?.ok as { width: number } | undefined;
+		expect(sample?.width ?? 0).toBeGreaterThan(100);
 	});
 	it("measureText", () =>
 		expect(got.measureText.map((r) => r.ok)).toEqual(golden.measureText.map((r) => r.ok)));
