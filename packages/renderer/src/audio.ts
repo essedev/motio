@@ -135,6 +135,8 @@ export interface MixSegmentsOptions {
 	sampleRate: number;
 	ffmpeg: string;
 	ffprobe: string;
+	/** Aborting stops the mixer's FFmpeg runs and rejects with the signal's reason. */
+	signal?: AbortSignal;
 }
 
 /**
@@ -159,8 +161,10 @@ export async function mixSegments(options: MixSegmentsOptions): Promise<MixedAud
 			sampleRate: options.sampleRate,
 			ffmpeg: options.ffmpeg,
 			ffprobe: options.ffprobe,
+			...(options.signal ? { signal: options.signal } : {}),
 		});
 	} catch (err) {
+		if (options.signal?.aborted) throw options.signal.reason;
 		throw new MotioError(
 			"E_AUDIO_FAILED",
 			`Mixing the audio failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -188,6 +192,8 @@ export async function writeAudioFile(
 		bitrate: string | null;
 		ffmpeg: string;
 		video?: string;
+		/** Aborting stops FFmpeg and rejects with the signal's reason. */
+		signal?: AbortSignal;
 	},
 ): Promise<void> {
 	try {
@@ -197,8 +203,10 @@ export async function writeAudioFile(
 			ffmpeg: options.ffmpeg,
 			...(options.bitrate ? { bitrate: options.bitrate } : {}),
 			...(options.video ? { video: options.video } : {}),
+			...(options.signal ? { signal: options.signal } : {}),
 		});
 	} catch (err) {
+		if (options.signal?.aborted) throw options.signal.reason;
 		throw new MotioError(
 			"E_AUDIO_FAILED",
 			`Encoding the audio failed: ${err instanceof Error ? err.message : String(err)}`,

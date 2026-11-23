@@ -46,6 +46,8 @@ export interface MixOptions {
 	ffprobe?: string;
 	/** FFmpeg processes running at once. Default half the CPU threads, between 1 and 8. */
 	concurrency?: number;
+	/** Aborting kills the running FFmpeg processes and rejects with the signal's reason. */
+	signal?: AbortSignal;
 }
 
 /**
@@ -58,15 +60,20 @@ const SEEK_PREROLL_SECONDS = 1;
 /** Decoding runs this much past the samples a segment places, for resampler and tempo latency. */
 const DURATION_MARGIN_SECONDS = 0.1;
 
-/** Runs `task` over `items` with at most `limit` running at once; rejects on the first failure. */
+/**
+ * Runs `task` over `items` with at most `limit` running at once; rejects on the first failure.
+ * No task starts after `signal` aborts.
+ */
 async function forEachLimited<T>(
 	items: readonly T[],
 	limit: number,
 	task: (item: T) => Promise<void>,
+	signal?: AbortSignal,
 ): Promise<void> {
 	let next = 0;
 	const worker = async (): Promise<void> => {
 		while (next < items.length) {
+			if (signal?.aborted) throw signal.reason;
 			const item = items[next++] as T;
 			await task(item);
 		}
@@ -132,58 +139,64 @@ export async function mixAudio(options: MixOptions): Promise<MixedAudio> {
 		}
 	}
 
-	await forEachLimited(sources, concurrency, async (source) => {
-		if (source.muted) return;
-		const offset = Math.round((source.startFrame / fps) * sampleRate);
-		const endFrame = Math.min(durationInFrames, source.startFrame + source.durationInFrames);
-		const end = Math.min(totalSamples, Math.round((endFrame / fps) * sampleRate));
-		if (end <= offset) return;
-		const stream = source.audioStreamIndex ?? 0;
-		// Fails with a clear error when the stream does not exist.
-		const probe = await once(probes, `${stream}\n${source.src}`, () =>
-			probeSource(ffprobe, source.src, stream),
-		);
-		const trimSeconds = source.trimBeforeFrames / fps;
-		const seekSeconds =
-			seeksSampleAccurately(probe.formatName) && trimSeconds > SEEK_PREROLL_SECONDS
-				? Math.floor((trimSeconds - SEEK_PREROLL_SECONDS) * 1000) / 1000
-				: 0;
-		const filter = sourceFilter({
-			trimSeconds: trimSeconds - seekSeconds,
-			playbackRate: source.playbackRate ?? 1,
-			toneFrequency: source.toneFrequency ?? 1,
-			preservePitch: source.preservePitch ?? true,
-			sampleRate,
-		});
-		const durationSeconds =
-			Math.ceil(((end - offset) / sampleRate + DURATION_MARGIN_SECONDS) * 1000) / 1000;
-		const decoded = await once(
-			decodes,
-			JSON.stringify([source.src, stream, seekSeconds, filter, durationSeconds]),
-			() =>
-				decodeToFloat({
-					ffmpeg,
-					stream,
-					src: source.src,
-					filter,
-					sampleRate,
-					channels,
-					seekSeconds,
-					durationSeconds,
-				}),
-		);
-		const frames = decoded.length / channels;
-		for (let i = offset; i < end; i++) {
-			const s = i - offset;
-			if (s >= frames) break;
-			const frame = Math.floor(((i - offset) * fps) / sampleRate);
-			const gain = volumeAt(source.volume, frame);
-			if (gain === 0) continue;
-			for (let c = 0; c < channels; c++) {
-				const k = i * channels + c;
-				out[k] = (out[k] ?? 0) + (decoded[s * channels + c] ?? 0) * gain;
+	await forEachLimited(
+		sources,
+		concurrency,
+		async (source) => {
+			if (source.muted) return;
+			const offset = Math.round((source.startFrame / fps) * sampleRate);
+			const endFrame = Math.min(durationInFrames, source.startFrame + source.durationInFrames);
+			const end = Math.min(totalSamples, Math.round((endFrame / fps) * sampleRate));
+			if (end <= offset) return;
+			const stream = source.audioStreamIndex ?? 0;
+			// Fails with a clear error when the stream does not exist.
+			const probe = await once(probes, `${stream}\n${source.src}`, () =>
+				probeSource(ffprobe, source.src, stream, options.signal),
+			);
+			const trimSeconds = source.trimBeforeFrames / fps;
+			const seekSeconds =
+				seeksSampleAccurately(probe.formatName) && trimSeconds > SEEK_PREROLL_SECONDS
+					? Math.floor((trimSeconds - SEEK_PREROLL_SECONDS) * 1000) / 1000
+					: 0;
+			const filter = sourceFilter({
+				trimSeconds: trimSeconds - seekSeconds,
+				playbackRate: source.playbackRate ?? 1,
+				toneFrequency: source.toneFrequency ?? 1,
+				preservePitch: source.preservePitch ?? true,
+				sampleRate,
+			});
+			const durationSeconds =
+				Math.ceil(((end - offset) / sampleRate + DURATION_MARGIN_SECONDS) * 1000) / 1000;
+			const decoded = await once(
+				decodes,
+				JSON.stringify([source.src, stream, seekSeconds, filter, durationSeconds]),
+				() =>
+					decodeToFloat({
+						ffmpeg,
+						stream,
+						src: source.src,
+						filter,
+						sampleRate,
+						channels,
+						seekSeconds,
+						durationSeconds,
+						...(options.signal ? { signal: options.signal } : {}),
+					}),
+			);
+			const frames = decoded.length / channels;
+			for (let i = offset; i < end; i++) {
+				const s = i - offset;
+				if (s >= frames) break;
+				const frame = Math.floor(((i - offset) * fps) / sampleRate);
+				const gain = volumeAt(source.volume, frame);
+				if (gain === 0) continue;
+				for (let c = 0; c < channels; c++) {
+					const k = i * channels + c;
+					out[k] = (out[k] ?? 0) + (decoded[s * channels + c] ?? 0) * gain;
+				}
 			}
-		}
-	});
+		},
+		options.signal,
+	);
 	return { samples: out, sampleRate, channels };
 }

@@ -153,6 +153,7 @@ export async function mixTimelineAudio(job: TimelineAudioJob): Promise<MixedAudi
 		sampleRate: job.sampleRate,
 		ffmpeg: job.session.ffmpeg,
 		ffprobe: job.session.ffprobe,
+		signal: job.signal,
 	});
 	if (job.signal.aborted) throw job.signal.reason;
 	return mixed;

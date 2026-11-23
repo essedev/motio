@@ -428,10 +428,23 @@ export function gifEncodeArgs(options: {
 	];
 }
 
-/** Runs FFmpeg to completion; throws `E_FFMPEG_FAILED` with its stderr. */
-export function runFfmpeg(ffmpeg: string, args: string[]): Promise<void> {
+/**
+ * Runs FFmpeg to completion; throws `E_FFMPEG_FAILED` with its stderr. Aborting `signal` kills
+ * FFmpeg and rejects with the signal's reason.
+ */
+export function runFfmpeg(ffmpeg: string, args: string[], signal?: AbortSignal): Promise<void> {
 	return new Promise((resolve, reject) => {
+		if (signal?.aborted) {
+			reject(signal.reason);
+			return;
+		}
 		const child = spawn(ffmpeg, args, { stdio: ["ignore", "ignore", "pipe"] });
+		const onAbort = () => {
+			child.kill("SIGKILL");
+			reject(signal?.reason);
+		};
+		signal?.addEventListener("abort", onAbort, { once: true });
+		child.on("close", () => signal?.removeEventListener("abort", onAbort));
 		let stderr = "";
 		child.stderr.on("data", (c: Buffer) => {
 			stderr = (stderr + c.toString()).slice(-8_000);

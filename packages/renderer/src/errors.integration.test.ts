@@ -12,6 +12,7 @@ import {
 	selectComposition,
 } from "./index.js";
 import { childPids, fixturePageDir } from "./test-support/fixture-page.js";
+import { hangingFfmpeg } from "./test-support/hanging-ffmpeg.js";
 
 const serveUrl = fixturePageDir();
 const dir = mkdtempSync(join(tmpdir(), "motio-errors-"));
@@ -148,5 +149,33 @@ describe("errors", () => {
 		expect(childPids().filter((pid) => !before.has(pid))).toEqual([]);
 		expect(existsSync(out)).toBe(false);
 		expect(readdirSync(dir).filter((f) => f.includes("cancelled"))).toEqual([]);
+	}, 60_000);
+
+	it("stops a GIF render cancelled during its palette pass", async () => {
+		const composition = await selectComposition({ serveUrl, id: "stamp" });
+		const before = new Set(childPids());
+		const { cancelSignal, cancel } = makeCancelSignal();
+		const { ffmpeg, hanging } = hangingFfmpeg(dir, "palettegen");
+		let cancelledAt = 0;
+		void hanging.then(() => {
+			cancelledAt = performance.now();
+			cancel();
+		});
+		const err = await rejection(
+			renderMedia({
+				serveUrl,
+				composition,
+				codec: "gif",
+				frameRange: [0, 9],
+				outputLocation: join(dir, "cancelled-palette.gif"),
+				ffmpegExecutable: ffmpeg,
+				cancelSignal,
+			}),
+		);
+		expect(cancelledAt).toBeGreaterThan(0);
+		expect(err.code).toBe("E_CANCELLED");
+		// The palette pass hangs for 60 s unless the cancel kills it.
+		expect(performance.now() - cancelledAt).toBeLessThan(10_000);
+		expect(childPids().filter((pid) => !before.has(pid))).toEqual([]);
 	}, 60_000);
 });

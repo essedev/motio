@@ -397,7 +397,11 @@ export async function renderMediaInternal(
 			renderedDoneIn = captured.renderedDoneIn;
 			if (isGif) {
 				report(total, "muxing");
-				await runFfmpeg(ffmpeg, gifPaletteArgs(videoTemp, video.captureFormat, paletteTemp));
+				await runFfmpeg(
+					ffmpeg,
+					gifPaletteArgs(videoTemp, video.captureFormat, paletteTemp),
+					controller.signal,
+				);
 				await runFfmpeg(
 					ffmpeg,
 					gifEncodeArgs({
@@ -408,6 +412,7 @@ export async function renderMediaInternal(
 						loop: video.encoding.gifLoop ?? 0,
 						output: output.temp,
 					}),
+					controller.signal,
 				);
 				if (controller.signal.aborted) throw controller.signal.reason;
 			}
@@ -431,7 +436,12 @@ export async function renderMediaInternal(
 			if (!mixed && (audioOnly || options.enforceAudioTrack || separateAudioTo)) {
 				mixed = silence(composition.fps, audioFrames.length, sampleRate);
 			}
-			const encode = { codec: audioCodec, bitrate: audioBitrate, ffmpeg: session.ffmpeg };
+			const encode = {
+				codec: audioCodec,
+				bitrate: audioBitrate,
+				ffmpeg: session.ffmpeg,
+				signal: controller.signal,
+			};
 			if (audioOnly) {
 				await writeAudioFile(mixed as NonNullable<typeof mixed>, {
 					...encode,

@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import { AudioError } from "./errors.js";
 
 /**
@@ -33,10 +33,36 @@ export function seeksSampleAccurately(formatName: string): boolean {
 }
 
 /**
- * Channels of audio stream `stream` (default the first) of `src` and its container, read with
- * one ffprobe run.
+ * Kills `child` when `signal` aborts (or has aborted) and calls `reject` with the signal's
+ * reason.
  */
-export function probeSource(ffprobe: string, src: string, stream = 0): Promise<SourceProbe> {
+function killOnAbort(
+	child: ChildProcess,
+	signal: AbortSignal | undefined,
+	reject: (reason: unknown) => void,
+): void {
+	if (!signal) return;
+	const onAbort = () => {
+		child.kill("SIGKILL");
+		reject(signal.reason);
+	};
+	if (signal.aborted) onAbort();
+	else {
+		signal.addEventListener("abort", onAbort, { once: true });
+		child.on("close", () => signal.removeEventListener("abort", onAbort));
+	}
+}
+
+/**
+ * Channels of audio stream `stream` (default the first) of `src` and its container, read with
+ * one ffprobe run. Aborting `signal` kills ffprobe and rejects with the signal's reason.
+ */
+export function probeSource(
+	ffprobe: string,
+	src: string,
+	stream = 0,
+	signal?: AbortSignal,
+): Promise<SourceProbe> {
 	return new Promise((resolve, reject) => {
 		const args = [
 			...networkInputArgs(src),
@@ -51,6 +77,7 @@ export function probeSource(ffprobe: string, src: string, stream = 0): Promise<S
 			src,
 		];
 		const child = spawn(ffprobe, args, { stdio: ["ignore", "pipe", "pipe"] });
+		killOnAbort(child, signal, reject);
 		let out = "";
 		let err = "";
 		child.stdout.on("data", (c: Buffer) => {
@@ -107,6 +134,8 @@ export function decodeToFloat(options: {
 	seekSeconds?: number;
 	/** Output duration in seconds (`-t`): decoding stops there. Default: to the end. */
 	durationSeconds?: number;
+	/** Aborting kills FFmpeg and rejects with the signal's reason. */
+	signal?: AbortSignal;
 }): Promise<Float32Array> {
 	const { ffmpeg, src, sampleRate, channels, filter } = options;
 	const args = ["-hide_banner", "-loglevel", "error", "-nostdin"];
@@ -127,6 +156,7 @@ export function decodeToFloat(options: {
 	args.push("-ac", String(channels), "-ar", String(sampleRate), "-f", "f32le", "-");
 	return new Promise((resolve, reject) => {
 		const child = spawn(ffmpeg, args, { stdio: ["ignore", "pipe", "pipe"] });
+		killOnAbort(child, options.signal, reject);
 		const chunks: Buffer[] = [];
 		let stderr = "";
 		child.stdout.on("data", (c: Buffer) => chunks.push(c));

@@ -307,7 +307,11 @@ export async function stitchFramesToVideo(
 			await enc.kill();
 		}
 		if (isGif) {
-			await runFfmpeg(ffmpeg, gifPaletteArgs(videoTemp, images.imageFormat, paletteTemp));
+			await runFfmpeg(
+				ffmpeg,
+				gifPaletteArgs(videoTemp, images.imageFormat, paletteTemp),
+				controller.signal,
+			);
 			await runFfmpeg(
 				ffmpeg,
 				gifEncodeArgs({
@@ -318,6 +322,7 @@ export async function stitchFramesToVideo(
 					loop: video.encoding.gifLoop ?? 0,
 					output: output.temp,
 				}),
+				controller.signal,
 			);
 		}
 		if (controller.signal.aborted) throw controller.signal.reason;
@@ -338,12 +343,18 @@ export async function stitchFramesToVideo(
 							sampleRate,
 							ffmpeg,
 							ffprobe,
+							signal: controller.signal,
 						});
 			if (controller.signal.aborted) throw controller.signal.reason;
 			if (!mixed && (options.enforceAudioTrack || separateAudioTo)) {
 				mixed = silence(options.fps, total, sampleRate);
 			}
-			const encode = { codec: audioCodec, bitrate: audioBitrate, ffmpeg };
+			const encode = {
+				codec: audioCodec,
+				bitrate: audioBitrate,
+				ffmpeg,
+				signal: controller.signal,
+			};
 			if (separateAudioTo && mixed) {
 				const part = `${separateAudioTo}.${process.pid}.part${AUDIO_EXTENSIONS[audioCodec]}`;
 				try {

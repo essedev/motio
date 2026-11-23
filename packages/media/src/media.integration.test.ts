@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createBundle } from "@motiojs/bundler";
 import {
+	makeCancelSignal,
 	renderFrames,
 	renderMedia,
 	selectComposition,
@@ -18,6 +19,7 @@ import {
 import { decodeFrameStamp, decodeVideoFrames } from "@motiojs/testing";
 import { probeVideo, selectFrame } from "@motiojs/video-frames";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { hangingFfmpeg } from "../../renderer/src/test-support/hanging-ffmpeg.js";
 
 const FIXTURE = resolve(import.meta.dirname, "../../../fixtures/media");
 const golden = JSON.parse(
@@ -300,6 +302,35 @@ describe("audio compositions match Remotion's clicks", () => {
 		);
 		expect(probe.stdout.trim().split("\n")).toEqual(["video"]);
 	});
+
+	// The audio mix decodes with "-af" and the encoder reads samples from "-i -".
+	for (const [step, pattern] of [
+		["decoding", "-af"],
+		["encoding", "-i -"],
+	] as const) {
+		it(`stops when cancelled while ${step} the audio`, async () => {
+			const composition = await selectComposition({ serveUrl, id: "audio-offset", inputProps: {} });
+			const { cancelSignal, cancel } = makeCancelSignal();
+			const { ffmpeg, hanging } = hangingFfmpeg(outDir, pattern);
+			let cancelledAt = 0;
+			void hanging.then(() => {
+				cancelledAt = performance.now();
+				cancel();
+			});
+			const render = renderMedia({
+				serveUrl,
+				composition,
+				codec: "wav",
+				outputLocation: join(outDir, `cancelled-${step}.wav`),
+				ffmpegExecutable: ffmpeg,
+				cancelSignal,
+			});
+			await expect(render).rejects.toMatchObject({ code: "E_CANCELLED" });
+			expect(cancelledAt).toBeGreaterThan(0);
+			// The hanging step lasts 60 s unless the cancel kills it.
+			expect(performance.now() - cancelledAt).toBeLessThan(10_000);
+		}, 60_000);
+	}
 
 	it("writes no audio track when muted", async () => {
 		const out = await renderAudio("audio-offset", { codec: "h264", muted: true });

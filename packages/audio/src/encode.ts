@@ -48,7 +48,15 @@ export function floatWav(audio: MixedAudio): Buffer {
  */
 export function encodeAudio(
 	audio: MixedAudio,
-	options: { output: string; codec: AudioCodec; bitrate?: string; ffmpeg?: string; video?: string },
+	options: {
+		output: string;
+		codec: AudioCodec;
+		bitrate?: string;
+		ffmpeg?: string;
+		video?: string;
+		/** Aborting kills FFmpeg and rejects with the signal's reason. */
+		signal?: AbortSignal;
+	},
 ): Promise<void> {
 	const ffmpeg = options.ffmpeg ?? "ffmpeg";
 	const args = ["-hide_banner", "-loglevel", "error", "-y"];
@@ -61,8 +69,19 @@ export function encodeAudio(
 		args.push("-movflags", "+faststart");
 	}
 	args.push(options.output);
+	const { signal } = options;
 	return new Promise((resolve, reject) => {
+		if (signal?.aborted) {
+			reject(signal.reason);
+			return;
+		}
 		const child = spawn(ffmpeg, args, { stdio: ["pipe", "ignore", "pipe"] });
+		const onAbort = () => {
+			child.kill("SIGKILL");
+			reject(signal?.reason);
+		};
+		signal?.addEventListener("abort", onAbort, { once: true });
+		child.on("close", () => signal?.removeEventListener("abort", onAbort));
 		let stderr = "";
 		child.stderr.on("data", (c: Buffer) => {
 			stderr += c.toString();
