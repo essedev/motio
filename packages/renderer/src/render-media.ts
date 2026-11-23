@@ -72,6 +72,9 @@ export interface RenderMediaProgress {
 	progress: number;
 }
 
+/** The `onProgress` callback of `renderMedia()`. */
+export type RenderMediaOnProgress = (progress: RenderMediaProgress) => void;
+
 /** Options of `renderMedia()`. */
 export interface RenderMediaOptions extends BrowserSessionOptions {
 	composition: VideoConfig;
@@ -137,7 +140,7 @@ export interface RenderMediaOptions extends BrowserSessionOptions {
 	forSeamlessAacConcatenation?: boolean;
 	cancelSignal?: CancelSignal;
 	onStart?: (data: OnStartData) => void;
-	onProgress?: (progress: RenderMediaProgress) => void;
+	onProgress?: RenderMediaOnProgress;
 	/** Motio extension: replace each page with a fresh one after this many frames. Default 500; 0 never. */
 	recycleEveryNFrames?: number;
 }

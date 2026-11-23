@@ -12,6 +12,7 @@ import { MotioError } from "./errors.js";
 import { resolveFfmpegPath, resolveFfprobePath } from "./ffmpeg.js";
 import { type MediaServer, startMediaServer } from "./media-server.js";
 import {
+	type LogLevel,
 	resolveEnvVariables,
 	resolveInputProps,
 	resolvePagesPerBrowser,
@@ -37,7 +38,7 @@ export interface BrowserSessionOptions {
 	port?: number | null;
 	onBrowserLog?: (log: BrowserLog) => void;
 	/** Accepted for compatibility; the renderer logs through `onBrowserLog` and errors. */
-	logLevel?: "trace" | "verbose" | "info" | "warn" | "error";
+	logLevel?: LogLevel;
 	/** Motio extension: FFmpeg executable. Default `$MOTIO_FFMPEG`, else `ffmpeg` on PATH. */
 	ffmpegExecutable?: string | null;
 	/**

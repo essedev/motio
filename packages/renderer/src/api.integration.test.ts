@@ -17,6 +17,7 @@ import {
 	renderMedia,
 	renderStill,
 	selectComposition,
+	stitchFramesToVideo,
 } from "./index.js";
 import {
 	childPids,
@@ -168,6 +169,68 @@ describe("renderFrames", () => {
 			ok: true,
 			frame: 16,
 		});
+	}, 60_000);
+});
+
+describe("stitchFramesToVideo", () => {
+	it("encodes the images of renderFrames: every frame stamp, in order", async () => {
+		const composition = await selectComposition({
+			serveUrl,
+			id: "stamp",
+			inputProps: { durationInFrames: 45 },
+		});
+		const { assetsInfo } = await renderFrames({
+			serveUrl,
+			composition,
+			outputDir: join(dir, "stitch-frames"),
+			imageFormat: "png",
+			concurrency: 4,
+		});
+		expect(assetsInfo.imageSequence?.imageFormat).toBe("png");
+		const buffer = await stitchFramesToVideo({
+			fps: composition.fps,
+			width: composition.width,
+			height: composition.height,
+			assetsInfo,
+			crf: 1,
+		});
+		const file = join(dir, "stitched.mp4");
+		writeFileSync(file, buffer as Buffer);
+		const probe = await probeVideo(file);
+		expect([probe.width, probe.height, probe.frameCount]).toEqual([512, 288, 45]);
+		const stamps = await stampMismatches(
+			file,
+			(index) => index,
+			composition.props.stamp as FrameStampOptions,
+		);
+		expect(stamps).toEqual({ frames: 45, mismatches: [] });
+	}, 60_000);
+
+	it("rejects frames of another size and assetsInfo without images", async () => {
+		const composition = await selectComposition({
+			serveUrl,
+			id: "stamp",
+			inputProps: { durationInFrames: 5 },
+		});
+		const { assetsInfo } = await renderFrames({
+			serveUrl,
+			composition,
+			outputDir: join(dir, "stitch-size"),
+		});
+		await expect(
+			stitchFramesToVideo({ fps: 30, width: 640, height: 360, assetsInfo }),
+		).rejects.toMatchObject({ code: "E_INVALID_OPTION" });
+		await expect(
+			stitchFramesToVideo({
+				fps: 30,
+				width: 512,
+				height: 288,
+				assetsInfo: { ...assetsInfo, imageSequence: null },
+			}),
+		).rejects.toThrow(/wrote its images/);
+		await expect(
+			stitchFramesToVideo({ fps: 30, width: 512, height: 288, assetsInfo, videoBitrate: "1M" }),
+		).rejects.toThrow(/videoBitrate is not supported/);
 	}, 60_000);
 });
 

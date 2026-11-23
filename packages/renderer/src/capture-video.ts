@@ -91,10 +91,8 @@ export async function captureVideo(job: CaptureVideoJob): Promise<CaptureVideoRe
 	}
 }
 
-/** Work for `mixTimelineAudio()`. */
-export interface TimelineAudioJob {
-	session: BrowserSession;
-	composition: VideoConfig;
+/** Work for `collectAudioIntents()`. */
+export interface AudioIntentsJob {
 	/** Composition frames of the output timeline, in order. */
 	audioFrames: readonly number[];
 	/** Intents already collected by the capture; completed in place. */
@@ -102,8 +100,42 @@ export interface TimelineAudioJob {
 	openPage: () => Promise<RenderPage>;
 	concurrency: number;
 	recycleEveryNFrames: number;
-	sampleRate: number;
 	signal: AbortSignal;
+}
+
+/**
+ * Seeks the frames of `audioFrames` the capture did not visit, without capturing them, and adds
+ * their audio intents to `job.intents`.
+ */
+export async function collectAudioIntents(job: AudioIntentsJob): Promise<void> {
+	const missing = job.audioFrames.filter((f) => !job.intents.has(f));
+	if (missing.length === 0) return;
+	try {
+		await runPool({
+			frames: missing,
+			concurrency: job.concurrency,
+			openPage: job.openPage,
+			format: "jpeg",
+			quality: 80,
+			capture: false,
+			recycleEveryNFrames: job.recycleEveryNFrames,
+			crashRetries: DEFAULT_CRASH_RETRIES,
+			signal: job.signal,
+			onFrame: async ({ frame, report }) => {
+				job.intents.set(frame, report.audio);
+			},
+		});
+	} catch (err) {
+		throw job.signal.aborted ? job.signal.reason : err;
+	}
+	if (job.signal.aborted) throw job.signal.reason;
+}
+
+/** Work for `mixTimelineAudio()`. */
+export interface TimelineAudioJob extends AudioIntentsJob {
+	session: BrowserSession;
+	composition: VideoConfig;
+	sampleRate: number;
 }
 
 /**
@@ -112,28 +144,7 @@ export interface TimelineAudioJob {
  * Returns null when nothing is audible.
  */
 export async function mixTimelineAudio(job: TimelineAudioJob): Promise<MixedAudio | null> {
-	const missing = job.audioFrames.filter((f) => !job.intents.has(f));
-	if (missing.length > 0) {
-		try {
-			await runPool({
-				frames: missing,
-				concurrency: job.concurrency,
-				openPage: job.openPage,
-				format: "jpeg",
-				quality: 80,
-				capture: false,
-				recycleEveryNFrames: job.recycleEveryNFrames,
-				crashRetries: DEFAULT_CRASH_RETRIES,
-				signal: job.signal,
-				onFrame: async ({ frame, report }) => {
-					job.intents.set(frame, report.audio);
-				},
-			});
-		} catch (err) {
-			throw job.signal.aborted ? job.signal.reason : err;
-		}
-		if (job.signal.aborted) throw job.signal.reason;
-	}
+	await collectAudioIntents(job);
 	const mixed = await mixSegments({
 		segments: buildAudioSegments(job.audioFrames, job.intents),
 		media: job.session.media,

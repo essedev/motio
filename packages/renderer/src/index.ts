@@ -41,6 +41,7 @@ export type {
 	Codec,
 	ColorSpace,
 	FrameRange,
+	LogLevel,
 	PixelFormat,
 	StillImageFormat,
 	VideoImageFormat,
@@ -61,13 +62,16 @@ export {
 	renderChunk,
 } from "./render-chunk.js";
 export {
+	type FrameAudio,
 	type OnStartData,
 	type RenderAssetInfo,
+	type RenderedImageSequence,
 	type RenderFramesOptions,
 	type RenderFramesResult,
 	renderFrames,
 } from "./render-frames.js";
 export {
+	type RenderMediaOnProgress,
 	type RenderMediaOptions,
 	type RenderMediaProgress,
 	type RenderMediaResult,
@@ -75,3 +79,4 @@ export {
 } from "./render-media.js";
 export { type RenderStillOptions, type RenderStillResult, renderStill } from "./render-still.js";
 export type { BrowserSessionOptions, VideoConfig } from "./session.js";
+export { type StitchFramesToVideoOptions, stitchFramesToVideo } from "./stitch-frames-to-video.js";

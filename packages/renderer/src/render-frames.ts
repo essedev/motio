@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { AudioIntent } from "@motiojs/core/protocol";
 import { type CancelSignal, toAbortController } from "./cancel.js";
+import { collectAudioIntents } from "./capture-video.js";
 import { MotioError } from "./errors.js";
 import {
 	type FrameRange,
@@ -27,11 +28,40 @@ export interface OnStartData {
 	resolvedConcurrency: number;
 }
 
-/** What the render collected for later stitching; the audio part is filled in M3. */
+/** Where `renderFrames()` wrote its images. */
+export interface RenderedImageSequence {
+	/** Absolute directory of the images. */
+	directory: string;
+	/** File name pattern with `[frame]` and `[ext]`. */
+	pattern: string;
+	imageFormat: "jpeg" | "png";
+	/** Digits `[frame]` is zero-padded to. */
+	padding: number;
+}
+
+/** Audio a frame plays, as the page reported it. */
+export interface FrameAudio {
+	frame: number;
+	intents: AudioIntent[];
+}
+
+/**
+ * What `renderFrames()` collected for `stitchFramesToVideo()`. Like Remotion's, the shape is not
+ * stable between versions: pass it on as is.
+ */
 export interface RenderAssetInfo {
 	/** Composition frames rendered, in output order. */
 	frames: number[];
-	audio: AudioIntent[];
+	/** The images on disk, or null when they went to `onFrameBuffer` only. */
+	imageSequence: RenderedImageSequence | null;
+	/** Frame rate of the composition, which the audio positions are counted in. */
+	fps: number;
+	/** Composition frames the audio covers, in order; empty when muted. */
+	audioFrames: number[];
+	/** The frames of `audioFrames` that play audio. */
+	audio: FrameAudio[];
+	/** The bundle the frames came from, so local media sources resolve after the render. */
+	bundle: { url: string; directory: string | null };
 }
 
 /** Options of `renderFrames()`. */
@@ -152,22 +182,27 @@ export async function renderFrames(options: RenderFramesOptions): Promise<Render
 			resolvedConcurrency: concurrency,
 		});
 		let rendered = 0;
+		const muted = options.muted === true;
+		const intents = new Map<number, AudioIntent[]>();
+		const openPage = compositionPageFactory(session, composition, {
+			width: composition.width,
+			height: composition.height,
+			scale,
+			transparent: imageFormat === "png",
+			concurrency,
+		});
+		const recycleEveryNFrames = options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES;
 		await runPool({
 			frames: orderFrames(frames, options.frameOrder),
 			concurrency,
-			openPage: compositionPageFactory(session, composition, {
-				width: composition.width,
-				height: composition.height,
-				scale,
-				transparent: imageFormat === "png",
-				concurrency,
-			}),
+			openPage,
 			format: imageFormat,
 			quality,
-			recycleEveryNFrames: options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES,
+			recycleEveryNFrames,
 			crashRetries: DEFAULT_CRASH_RETRIES,
 			signal: controller.signal,
-			onFrame: async ({ frame, image, timeMs }) => {
+			onFrame: async ({ frame, image, report, timeMs }) => {
+				if (!muted) intents.set(frame, report.audio);
 				if (outputDir) {
 					const name = pattern
 						.replaceAll("[frame]", String(frame).padStart(padding, "0"))
@@ -179,7 +214,36 @@ export async function renderFrames(options: RenderFramesOptions): Promise<Render
 				options.onFrameUpdate?.(rendered, frame, timeMs);
 			},
 		});
-		return { frameCount: frames.length, assetsInfo: { frames, audio: [] } };
+		// The audio covers every frame of the range, also those `everyNthFrame` skips (D-030).
+		const audioFrames = muted
+			? []
+			: options.frames === undefined
+				? resolveFrames(options.frameRange, 1, composition.durationInFrames)
+				: frames;
+		await collectAudioIntents({
+			audioFrames,
+			intents,
+			openPage,
+			concurrency,
+			recycleEveryNFrames,
+			signal: controller.signal,
+		});
+		return {
+			frameCount: frames.length,
+			assetsInfo: {
+				frames,
+				imageSequence: outputDir ? { directory: outputDir, pattern, imageFormat, padding } : null,
+				fps: composition.fps,
+				audioFrames,
+				audio: audioFrames
+					.map((frame) => ({ frame, intents: intents.get(frame) ?? [] }))
+					.filter((entry) => entry.intents.length > 0),
+				bundle: {
+					url: session.server.url,
+					directory: /^https?:\/\//i.test(options.serveUrl) ? null : resolve(options.serveUrl),
+				},
+			},
+		};
 	} finally {
 		await session.close();
 	}

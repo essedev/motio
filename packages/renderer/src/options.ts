@@ -28,6 +28,9 @@ export const X264_PRESETS = [
 /** libx264 speed preset. */
 export type X264Preset = (typeof X264_PRESETS)[number];
 
+/** Verbosity of the renderer's logs, as in Remotion's `logLevel` option. Default `info`. */
+export type LogLevel = "trace" | "verbose" | "info" | "warn" | "error";
+
 export const PIXEL_FORMATS = [
 	"yuv420p",
 	"yuva420p",

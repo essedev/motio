@@ -9,7 +9,12 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createBundle } from "@motiojs/bundler";
-import { renderMedia, selectComposition } from "@motiojs/renderer";
+import {
+	renderFrames,
+	renderMedia,
+	selectComposition,
+	stitchFramesToVideo,
+} from "@motiojs/renderer";
 import { decodeFrameStamp, decodeVideoFrames } from "@motiojs/testing";
 import { probeVideo, selectFrame } from "@motiojs/video-frames";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -291,4 +296,54 @@ describe("audio compositions match Remotion's clicks", () => {
 		);
 		expect(probe.stdout.trim().split("\n")).toEqual(["video"]);
 	});
+});
+
+/** Every sample of the first audio stream, as 32-bit floats. */
+function audioSamples(file: string): Buffer {
+	const r = spawnSync("ffmpeg", ["-v", "error", "-i", file, "-map", "0:a:0", "-f", "f32le", "-"], {
+		maxBuffer: 1 << 28,
+	});
+	if (r.status !== 0) throw new Error(String(r.stderr));
+	return r.stdout;
+}
+
+describe("stitchFramesToVideo", () => {
+	for (const frameRange of [null, [30, 89] as [number, number]]) {
+		it(`muxes the audio renderMedia muxes (frame range ${JSON.stringify(frameRange)})`, async () => {
+			const id = "audio-offset";
+			const composition = await selectComposition({ serveUrl, id, inputProps: {} });
+			const name = `stitch-${frameRange ? "range" : "full"}`;
+			const direct = join(outDir, `${name}-direct.mp4`);
+			await renderMedia({
+				serveUrl,
+				composition,
+				codec: "h264",
+				frameRange,
+				outputLocation: direct,
+			});
+			const { assetsInfo } = await renderFrames({
+				serveUrl,
+				composition,
+				outputDir: join(outDir, `${name}-frames`),
+				frameRange,
+			});
+			const stitched = join(outDir, `${name}-stitched.mp4`);
+			const encoded: number[] = [];
+			const result = await stitchFramesToVideo({
+				fps: composition.fps,
+				width: composition.width,
+				height: composition.height,
+				assetsInfo,
+				outputLocation: stitched,
+				onProgress: (n) => encoded.push(n),
+			});
+			expect(result).toBeNull();
+			expect(encoded.at(-1)).toBe(assetsInfo.frames.length);
+			expect((await probeVideo(stitched)).timestamps).toHaveLength(assetsInfo.frames.length);
+			const a = audioSamples(direct);
+			const b = audioSamples(stitched);
+			expect(a.length).toBeGreaterThan(0);
+			expect(b.equals(a)).toBe(true);
+		});
+	}
 });
