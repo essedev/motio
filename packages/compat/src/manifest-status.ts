@@ -17,9 +17,18 @@ export interface StatusUpdate {
 	changes: StatusChange[];
 	/** Motio modules that could not be found; their symbols count as not exported. */
 	unavailable: string[];
-	/** Wildcard modules, which cannot be checked by name. */
+	/** Wildcard modules without a sample in {@link WILDCARD_SAMPLES}, which cannot be checked. */
 	skipped: string[];
 }
+
+/**
+ * Concrete module each wildcard module is checked against. Every module under the wildcard
+ * is generated with the same exports (`@motiojs/google-fonts` writes one module per font from
+ * one template), so one sample stands for all of them.
+ */
+export const WILDCARD_SAMPLES: Readonly<Record<string, string>> = {
+	"@remotion/google-fonts/*": "@remotion/google-fonts/Roboto",
+};
 
 /** Export names of a Motio module, or `null` when the module does not exist. */
 export type ExportLoader = (specifier: string) => Promise<ReadonlySet<string> | null>;
@@ -39,11 +48,12 @@ export async function updateManifestStatuses(
 	const unavailable: string[] = [];
 	const skipped: string[] = [];
 	for (const [specifier, module] of Object.entries(next.modules)) {
-		if (specifier.endsWith("/*")) {
+		const sample = specifier.endsWith("/*") ? WILDCARD_SAMPLES[specifier] : specifier;
+		if (!sample) {
 			skipped.push(specifier);
 			continue;
 		}
-		const resolution = mapSpecifier(specifier);
+		const resolution = mapSpecifier(sample);
 		if (resolution.kind !== "mapped") continue;
 		const exported = await loadExports(resolution.target);
 		if (!exported) unavailable.push(resolution.target);

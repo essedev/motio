@@ -637,22 +637,22 @@
 				"fontFamily": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getInfo": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"loadFont": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"loadVariableFont": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},

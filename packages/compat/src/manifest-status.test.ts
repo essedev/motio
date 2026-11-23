@@ -24,23 +24,37 @@ const manifest: Manifest = {
 			tier: 1,
 			symbols: { loadFont: { kind: "value", tier: 1, status: "missing" } },
 		},
+		"@remotion/unknown-wildcard/*": {
+			tier: 2,
+			symbols: { thing: { kind: "value", tier: 2, status: "missing" } },
+		},
 	},
 };
 
 describe("updateManifestStatuses", () => {
 	it("promotes exported symbols, demotes removed ones and keeps manual statuses", async () => {
-		const exports: Record<string, string[]> = { motio: ["interpolate", "watchStaticFile"] };
+		const exports: Record<string, string[]> = {
+			motio: ["interpolate", "watchStaticFile"],
+			"@motiojs/google-fonts/Roboto": ["loadFont", "getInfo"],
+		};
 		const result = await updateManifestStatuses(manifest, async (s) =>
 			exports[s] ? new Set(exports[s]) : null,
 		);
 		expect(result.changes).toEqual([
 			{ specifier: "remotion", symbol: "interpolate", from: "missing", to: "supported" },
 			{ specifier: "remotion", symbol: "random", from: "supported", to: "missing" },
+			{
+				specifier: "@remotion/google-fonts/*",
+				symbol: "loadFont",
+				from: "missing",
+				to: "supported",
+			},
 		]);
 		expect(result.manifest.modules.remotion?.symbols.watchStaticFile?.status).toBe("stubbed");
 		expect(result.manifest.modules.remotion?.symbols.VideoConfig?.status).toBe("missing");
 		expect(result.unavailable).toEqual(["@motiojs/paths"]);
-		expect(result.skipped).toEqual(["@remotion/google-fonts/*"]);
+		// Wildcards are checked through their sample module; one without a sample is skipped.
+		expect(result.skipped).toEqual(["@remotion/unknown-wildcard/*"]);
 		// The input is not mutated.
 		expect(manifest.modules.remotion?.symbols.interpolate?.status).toBe("missing");
 	});
