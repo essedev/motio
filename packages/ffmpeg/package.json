@@ -1,0 +1,27 @@
+{
+	"name": "@motiojs/ffmpeg",
+	"version": "0.0.0",
+	"description": "Optional pinned FFmpeg and ffprobe for Motio: downloaded on first use, verified by SHA-256",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"NOTICE"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"devDependencies": {
+		"@motiojs/renderer": "workspace:*",
+		"@motiojs/testing": "workspace:*",
+		"@types/node": "^26.6.6"
+	},
+	"engines": {
+		"node": ">=22"
+	}
+}

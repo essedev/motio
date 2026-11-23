@@ -1,0 +1,30 @@
+@motiojs/ffmpeg
+Copyright 2026 The Motio authors
+
+The JavaScript code of this package is licensed under the Apache License, Version 2.0.
+
+This package contains no FFmpeg binary. On first use it downloads, from the GitHub Release named
+in src/manifest.ts (or from MOTIO_FFMPEG_BASE_URL), an archive with FFmpeg and ffprobe built by
+the scripts in tools/ffmpeg-build/ of the Motio repository, and checks it against the SHA-256
+digest in src/manifest.ts.
+
+Those binaries are licensed under the GNU General Public License, version 3 or later, because
+they include x264 and x265 (GPL-2.0-or-later) and are configured with --enable-gpl and
+--enable-version3 (Mbed TLS). They statically link:
+
+- FFmpeg (https://ffmpeg.org), LGPL-2.1-or-later, GPL as configured
+- x264 (https://www.videolan.org/developers/x264.html), GPL-2.0-or-later
+- x265 (https://www.x265.org), GPL-2.0-or-later
+- SVT-AV1 (https://gitlab.com/AOMediaCodec/SVT-AV1), BSD-3-Clause-Clear and the Alliance for
+  Open Media Patent License 1.0
+- libvpx (https://chromium.googlesource.com/webm/libvpx), BSD-3-Clause and the WebM patent grant
+- dav1d (https://code.videolan.org/videolan/dav1d), BSD-2-Clause
+- Opus (https://opus-codec.org), BSD-3-Clause
+- LAME (https://lame.sourceforge.io), LGPL-2.0-or-later
+- Mbed TLS (https://www.trustedfirmware.org/projects/mbed-tls/), Apache-2.0 OR GPL-2.0-or-later
+- Linux builds only: zlib (https://zlib.net), zlib licence; musl libc (https://musl.libc.org), MIT
+
+Every archive contains LICENSE.md, the licence text of each library in licenses/, and
+BUILDINFO.json, which lists each source with its SHA-256 and the configure flags. The release
+that publishes the archives also publishes the exact source tarballs, their digests and the
+build scripts.
