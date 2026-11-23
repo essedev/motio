@@ -45,10 +45,13 @@ describe("delayRender / continueRender", () => {
 	});
 
 	it("reports expiry on real time", () => {
-		delayRender("slow", { timeoutInMilliseconds: 10 });
-		const opened = readiness.openHandles()[0]?.openedAt ?? 0;
-		expect(readiness.expired(opened + 9)).toBeNull();
-		expect(readiness.expired(opened + 10)).toMatchObject({ label: "slow", timeoutMs: 10 });
+		// A long timeout, so a slow machine cannot reach it before the assertions run.
+		delayRender("slow", { timeoutInMilliseconds: 60_000 });
+		const handle = readiness.openHandles().find((h) => h.label === "slow");
+		expect(handle).toBeDefined();
+		const opened = handle?.openedAt ?? 0;
+		expect(readiness.expired(opened + 59_999)).toBeNull();
+		expect(readiness.expired(opened + 60_000)).toMatchObject({ label: "slow", timeoutMs: 60_000 });
 	});
 
 	it("records how long closed handles stayed open", () => {
