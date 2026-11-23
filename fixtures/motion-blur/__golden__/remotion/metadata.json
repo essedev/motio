@@ -1,0 +1,29 @@
+{
+	"remotion": "4.0.545",
+	"compositions": {
+		"camera": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"camera-wide": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"trail": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		}
+	}
+}

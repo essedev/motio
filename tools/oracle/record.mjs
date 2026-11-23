@@ -13,6 +13,7 @@ import { recordEasingSpring } from "./record-easing-spring.mjs";
 import { recordExports } from "./record-exports.mjs";
 import { recordInteractive } from "./record-interactive.mjs";
 import { recordInterpolateOutputs } from "./record-interpolate-outputs.mjs";
+import { recordMotionBlur } from "./record-motion-blur.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outDir = join(here, "../../packages/core/src/__oracle__");
@@ -811,5 +812,7 @@ recordRandom();
 recordInterpolateOutputs({ write, linspace, toRemotionOptions });
 recordInteractive({ write });
 recordExports({ write });
-// Last: some configs in it leave Remotion's spring code in a failing state.
+// Late: some configs in it leave Remotion's spring code in a failing state.
 recordEasingSpring({ write, linspace, here });
+// Last: it installs jsdom's globals.
+await recordMotionBlur();
