@@ -19,7 +19,8 @@
 		"record:light-leaks-starburst": "node record-light-leaks-starburst.ts",
 		"record:rive": "node record-rive.ts",
 		"record:node-api": "node record-node-api.ts",
-		"record:preload": "node record-preload.ts"
+		"record:preload": "node record-preload.ts",
+		"record:animated-image": "node record-animated-image.ts"
 	},
 	"dependencies": {
 		"@react-three/fiber": "9.2.0",
