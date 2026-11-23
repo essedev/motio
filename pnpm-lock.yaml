@@ -933,6 +933,18 @@ importers:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
 
+  packages/preload:
+    devDependencies:
+      esbuild:
+        specifier: 0.28.1
+        version: 0.28.1
+      jsdom:
+        specifier: ^31.0.1
+        version: 31.0.1
+      puppeteer-core:
+        specifier: 25.18.1
+        version: 25.18.1
+
   packages/preview:
     dependencies:
       '@motiojs/core':

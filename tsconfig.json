@@ -83,6 +83,9 @@
 			"path": "packages/text"
 		},
 		{
+			"path": "packages/preload"
+		},
+		{
 			"path": "packages/media"
 		},
 		{

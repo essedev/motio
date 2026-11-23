@@ -1,0 +1,23 @@
+{
+	"name": "@motiojs/preload",
+	"version": "0.0.0",
+	"description": "Preload videos, audio, images and fonts so a Motio Player shows them without loading, mirroring @remotion/preload",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"devDependencies": {
+		"esbuild": "0.28.1",
+		"jsdom": "^31.0.1",
+		"puppeteer-core": "25.18.1"
+	}
+}
