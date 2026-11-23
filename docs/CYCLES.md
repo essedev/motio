@@ -2,6 +2,13 @@
 
 Progress log, newest first. One entry per unit of work: what changed, what was measured, what is next.
 
+## 2026-11-23: performance criterion met
+
+- Committed benchmark against the pinned Remotion (`make bench`, D-044). Profiled the full pipeline: FFmpeg probed the image pipe until stdin closed, Chrome throttled captures to its frame rate, SwiftShader composited every frame on the CPU, the exact JPEG colour path halved x264's speed.
+- Fixed with measurements (D-040 to D-043): no probe, unthrottled frames, software compositing for opaque captures and CPU raster for transparent ones, JPEG colour converted in YUV, browsers shared by pages (two by default), screenshots instead of BeginFrame on Linux. Motio now renders the benchmark in 0.27 to 0.83 of Remotion's time on macOS and 0.28 to 0.68 in the pinned image.
+- Side effect: every template still and `fixtures/compositions` golden is identical to Remotion's render; the transparent-edge mismatch (D-031, D-038) is closed.
+- Next: M2's manifest statuses, the TikTok and Three templates' packages, the Lambda adapter (M5).
+
 ## 2026-11-23: BeginFrame, codecs, chunked rendering, performance baseline
 
 - BeginFrame capture on Linux with a start-up probe (D-033); every documented codec but AV1, with alpha and GIF (D-037); chunked rendering with local workers, frame-exact for lossless codecs and without dropped or duplicated frames for H.264 (D-039).

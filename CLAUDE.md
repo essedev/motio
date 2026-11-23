@@ -9,6 +9,7 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 - `make check`: format, lint, build (`tsc -b`), tests. Must be green before every commit.
 - `make build`, `make test`, `make lint`, `make format`, `make typecheck`.
 - `pnpm test:integration`: tests against the real Chrome and FFmpeg (serial, slower).
+- `make bench`: throughput against the pinned Remotion (`BENCH_ARGS="--assert"` checks the performance criterion; needs `pnpm install` in `tools/oracle-render`, which the target runs).
 - `pnpm --dir tools/oracle record`: re-record oracle fixtures from the published Remotion package (separate commit, state why).
 
 ## Layout

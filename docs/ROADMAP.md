@@ -6,8 +6,9 @@ A milestone is done only when every criterion below holds and `make check` is gr
 
 M1 done (D-024). M3 done: every criterion has a committed test (see below). In progress or left:
 
-- M2: transitions (SSIM at least 0.9994 on the fixture), captions, shapes, paths, noise, layout-utils, zod-types, google-fonts, fonts; the compat alias, `Config`, Tailwind setup and the symbol manifest. BeginFrame capture on Linux (D-033: 3.2 to 3.6 times faster per page, identical pixels). Five official templates build unmodified with Remotion's metadata (D-025), including Hello World after `Interactive`, `Easing.spring` and non-numeric `interpolate` outputs landed (D-034 to D-036). Left: three template stills that differ only at transparent edges of scaled elements (D-031, D-038, open), the TikTok and Three templates (packages not provided yet), and manifest statuses for every Tier 1 symbol.
+- M2: transitions (SSIM at least 0.9994 on the fixture), captions, shapes, paths, noise, layout-utils, zod-types, google-fonts, fonts; the compat alias, `Config`, Tailwind setup and the symbol manifest. BeginFrame capture on Linux (D-033, identical pixels), opt-in since screenshots caught up (D-043). Five official templates build unmodified with Remotion's metadata (D-025), including Hello World after `Interactive`, `Easing.spring` and non-numeric `interpolate` outputs landed (D-034 to D-036). Every template still is identical to Remotion's render since D-041 closed the transparent-edge mismatch (D-031, D-038). Left: the TikTok and Three templates (packages not provided yet), and manifest statuses for every Tier 1 symbol.
 - M3: every criterion has a committed test. The media components (`@motiojs/media`, D-029), the renderer's media service, audio pass, audio muxing and audio-only codecs (D-030), the Player's media playback with shared audio tags, `motio dev` (D-026), media-utils. Measured: every `fixtures/media` video composition shows the expected source frames exactly; audio clicks land within 0.000 ms of Remotion's with peaks within 0.004 outside the volume-lag window (the time-stretched case within 2 ms); a Video in the Player follows the real clock with at most 0.044 s of drift.
+- Performance: done (D-044). Motio renders the benchmark in 0.27 to 0.83 of Remotion's wall time on macOS and 0.28 to 0.68 in the pinned Linux image.
 - M5: chunk planning and assembly (`@motiojs/distributed`), every documented codec but AV1 in the renderer with alpha (ProRes 4444, VP8, VP9) and GIF output, image sequences in the CLI (D-018 to D-020, D-037). Chunked rendering with a local worker (`renderDistributed`, `motio render --chunks`, D-039). Left: the Lambda and Cloud Run adapters, which need cloud spending the author has to approve; the `ChunkWorker` seam is ready for them.
 
 ## Spike (done)
@@ -50,9 +51,18 @@ Done when:
 - Audio: click times of the audio compositions within 1 ms of `media.json` and click peaks within 0.01 (offset and volume ramp; the time-stretched `playbackRate` 2 case within 2 ms), no seams.
 - Player: Playwright tests cover the ref API and events.
 
-## Performance (cross-cutting)
+## Performance (cross-cutting, done)
 
-Done when a committed benchmark renders the `fixtures/compositions` motion and timeline compositions at 1920x1080 with Motio and with the pinned Remotion on the same machine, and Motio's wall time is at most Remotion's at concurrency 1, 4 and 8, with the colour and determinism criteria of M1 still met. Measured gap and plan: D-{n:03d}.
+Done when a committed benchmark renders the `fixtures/compositions` motion and timeline compositions at 1920x1080 with Motio and with the pinned Remotion on the same machine, and Motio's wall time is at most Remotion's at concurrency 1, 4 and 8, with the colour and determinism criteria of M1 still met. Measured gap and plan: D-032; changes: D-040 to D-043.
+
+- [x] `make bench` (`tools/benchmark`; `--assert` checks the criterion). Medians, both compositions summed, H.264 CRF 18, muted (D-044):
+
+| Platform | Concurrency 1 | 4 | 8 |
+|---|---|---|---|
+| macOS, Apple M5: Remotion / Motio | 6.54 / 1.75 s | 2.13 / 1.21 s | 1.58 / 1.31 s |
+| Pinned image, linux-arm64: Remotion / Motio | 7.56 / 2.11 s | 2.54 / 1.32 s | 1.91 / 1.30 s |
+
+- [x] Colour (palette within 1 code value, BT.709 tags), determinism, frame stamps and goldens still pass.
 
 ## M4: a real production project
 
