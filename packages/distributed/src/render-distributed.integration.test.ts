@@ -129,6 +129,7 @@ describe("chunked render against the single-node render", () => {
 	for (const [codec, options] of [
 		["prores", { codec: "prores" }],
 		["vp9 lossless", { codec: "vp9", crf: 0 }],
+		["av1 lossless", { codec: "av1", crf: 0 }],
 	] as const) {
 		it(`${codec}: decoded frame hashes equal the single-node render`, async () => {
 			const { single, chunked, composition } = await both(

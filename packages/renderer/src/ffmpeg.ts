@@ -113,11 +113,17 @@ export function probeFfmpeg(path: string): Promise<FfmpegInfo> {
 	return p;
 }
 
+/**
+ * What a render needs from FFmpeg. An entry of `encoders` that is a list is satisfied by any one
+ * of its encoders (a codec with alternative encoders, such as AV1).
+ */
+export interface FfmpegNeeds {
+	encoders: ReadonlyArray<string | readonly string[]>;
+	decoders: readonly string[];
+}
+
 /** Throws a clear `E_FFMPEG_*` error unless FFmpeg is recent enough and has the codecs. */
-export function assertFfmpegSupports(
-	info: FfmpegInfo,
-	needs: { encoders: string[]; decoders: string[] },
-): void {
+export function assertFfmpegSupports(info: FfmpegInfo, needs: FfmpegNeeds): void {
 	const [minMajor, minMinor] = MIN_FFMPEG_VERSION;
 	if (info.release) {
 		const [major, minor] = info.release;
@@ -129,12 +135,21 @@ export function assertFfmpegSupports(
 			);
 		}
 	}
-	for (const e of needs.encoders) {
-		if (!info.encoders.has(e)) {
+	for (const need of needs.encoders) {
+		const choices = typeof need === "string" ? [need] : need;
+		if (!choices.some((e) => info.encoders.has(e))) {
+			const names = choices.join(" or ");
 			throw new MotioError(
 				"E_FFMPEG_ENCODER_MISSING",
-				`FFmpeg at "${info.path}" has no ${e} encoder. Install a build with ${e} (most distribution packages include it).`,
-				{ details: { path: info.path, version: info.version, encoder: e } },
+				`FFmpeg at "${info.path}" has no ${names} encoder. Install a build with ${names}${choices.length > 1 ? "" : " (most distribution packages include it)"}, or install @motiojs/ffmpeg, which has every encoder Motio uses.`,
+				{
+					details: {
+						path: info.path,
+						version: info.version,
+						encoder: choices[0],
+						...(choices.length > 1 ? { alternatives: choices } : {}),
+					},
+				},
 			);
 		}
 	}
@@ -147,6 +162,11 @@ export function assertFfmpegSupports(
 			);
 		}
 	}
+}
+
+/** The first of `encoders` that FFmpeg has (call after `assertFfmpegSupports`). */
+export function pickEncoder(info: FfmpegInfo, encoders: readonly [string, ...string[]]): string {
+	return encoders.find((e) => info.encoders.has(e)) ?? encoders[0];
 }
 
 /** Colour tags and conversion matrix for a `colorSpace`. */
@@ -212,6 +232,8 @@ export interface VideoEncodeSettings {
 	frameCount: number;
 	/** Muxer instead of the codec's own, for chunks (D-018). */
 	muxer?: string;
+	/** The encoder `pickEncoder` chose; default the codec's first encoder. */
+	encoder?: string;
 }
 
 const SWS = "flags=accurate_rnd+full_chroma_int";
@@ -283,8 +305,21 @@ export function pipeInput(fps: number, imageFormat: "jpeg" | "png"): string[] {
 	];
 }
 
-/** Encoder arguments of a YUV codec (everything but GIF). */
-export function codecArgs(encoding: ResolvedVideoEncoding, preset: X264Preset): string[] {
+/**
+ * libaom's speed setting for AV1 (`-cpu-used`): its default (1) encodes a 1080p frame in seconds;
+ * 6 with row multithreading keeps a fallback render usable (D-064).
+ */
+export const LIBAOM_CPU_USED = "6";
+
+/**
+ * Encoder arguments of a YUV codec (everything but GIF). `encoder` selects between alternative
+ * encoders of a codec (AV1); default the codec's first.
+ */
+export function codecArgs(
+	encoding: ResolvedVideoEncoding,
+	preset: X264Preset,
+	encoder: string = encoding.spec.encoders[0],
+): string[] {
 	const crf = String(encoding.crf);
 	switch (encoding.codec) {
 		case "h264":
@@ -313,6 +348,27 @@ export function codecArgs(encoding: ResolvedVideoEncoding, preset: X264Preset): 
 				"0",
 				// Required for VP9 alpha (D-019).
 				...(encoding.alpha ? ["-auto-alt-ref", "0"] : []),
+			];
+		case "av1":
+			// D-064: CRF 0, the best quality, encodes losslessly, as for VP9. SVT-AV1 reads a CRF of
+			// 0 as "not set" and would fall back to its own default.
+			if (encoder === "libaom-av1") {
+				return [
+					"-c:v",
+					"libaom-av1",
+					...(encoding.crf === 0 ? ["-lossless", "1"] : ["-crf", crf]),
+					"-b:v",
+					"0",
+					"-cpu-used",
+					LIBAOM_CPU_USED,
+					"-row-mt",
+					"1",
+				];
+			}
+			return [
+				"-c:v",
+				"libsvtav1",
+				...(encoding.crf === 0 ? ["-svtav1-params", "lossless=1"] : ["-crf", crf]),
 			];
 		case "prores":
 			return [
@@ -350,7 +406,7 @@ export function videoArgs(s: VideoEncodeSettings): string[] {
 		...input,
 		"-vf",
 		colorFilter({ imageFormat: s.imageFormat, pixelFormat, colorSpace: s.colorSpace }),
-		...codecArgs(s.encoding, s.preset),
+		...codecArgs(s.encoding, s.preset, s.encoder),
 		"-pix_fmt",
 		pixelFormat,
 		"-colorspace",
@@ -466,6 +522,14 @@ export function runFfmpeg(ffmpeg: string, args: string[], signal?: AbortSignal):
 	});
 }
 
+/**
+ * Environment of an encode. SVT-AV1 prints its configuration to stderr at its default log level,
+ * which would bury FFmpeg's own error in a failure message; warnings and errors still show.
+ */
+function encoderEnv(): NodeJS.ProcessEnv {
+	return { ...process.env, SVT_LOG: process.env.SVT_LOG ?? "2" };
+}
+
 /** A running FFmpeg encode fed through stdin. */
 export class Encoder {
 	private stderr = "";
@@ -514,7 +578,7 @@ export class Encoder {
 		args: string[],
 		onEncoded: (frames: number) => void = () => {},
 	): Encoder {
-		const child = spawn(ffmpeg, args, { stdio: ["pipe", "pipe", "pipe"] });
+		const child = spawn(ffmpeg, args, { stdio: ["pipe", "pipe", "pipe"], env: encoderEnv() });
 		return new Encoder(child, onEncoded);
 	}
 

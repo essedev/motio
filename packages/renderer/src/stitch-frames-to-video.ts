@@ -19,6 +19,7 @@ import {
 	Encoder,
 	gifEncodeArgs,
 	gifPaletteArgs,
+	pickEncoder,
 	probeFfmpeg,
 	resolveFfmpegPath,
 	resolveFfprobePath,
@@ -236,10 +237,12 @@ export async function stitchFramesToVideo(
 		? { aac: "aac", mp3: "libmp3lame", "pcm-16": "pcm_s16le", opus: "libopus" }[audioCodec]
 		: null;
 	const needs = videoCodecNeeds(video);
-	assertFfmpegSupports(await probeFfmpeg(ffmpeg), {
+	const ffmpegInfo = await probeFfmpeg(ffmpeg);
+	assertFfmpegSupports(ffmpegInfo, {
 		encoders: [...needs.encoders, ...(audioEncoder ? [audioEncoder] : [])],
 		decoders: needs.decoders,
 	});
+	const videoEncoder = pickEncoder(ffmpegInfo, video.encoding.spec.encoders);
 	if (separateAudioTo) await checkOverwrite(separateAudioTo, options.force ?? true);
 
 	const imagePath = (frame: number) =>
@@ -287,6 +290,7 @@ export async function stitchFramesToVideo(
 				preset: video.preset,
 				colorSpace: video.colorSpace,
 				frameCount: total,
+				encoder: videoEncoder,
 			}),
 			(n) => options.onProgress?.(n),
 		);

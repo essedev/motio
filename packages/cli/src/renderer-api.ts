@@ -158,6 +158,8 @@ export interface RendererApi {
 	makeCancelSignal(): CancelSignalHandle;
 	/** Optional: FFmpeg probing for `doctor`. */
 	probeFfmpeg?(path: string): Promise<FfmpegInfo>;
+	/** Optional: the encoders of each video codec, in order of preference, for `doctor`. */
+	VIDEO_CODEC_SPECS?: Readonly<Record<string, { encoders: readonly string[] }>>;
 	/** Optional: minimum FFmpeg release, for `doctor`. */
 	MIN_FFMPEG_VERSION?: readonly [number, number];
 	/** Optional: the pinned browser version, for `doctor`. */

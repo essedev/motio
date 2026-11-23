@@ -25,6 +25,7 @@ import {
 	assertFfmpegSupports,
 	gifEncodeArgs,
 	gifPaletteArgs,
+	pickEncoder,
 	probeFfmpeg,
 	resolveFfmpegPath,
 	runFfmpeg,
@@ -79,8 +80,8 @@ export type RenderMediaOnProgress = (progress: RenderMediaProgress) => void;
 export interface RenderMediaOptions extends BrowserSessionOptions {
 	composition: VideoConfig;
 	/**
-	 * `h264` (MP4), `h264-mkv`, `h264-ts`, `h265`, `vp8`, `vp9` (WebM), `prores` (MOV), `gif`, or
-	 * `mp3`, `aac` and `wav` for audio only; `av1` fails with `E_UNSUPPORTED_CODEC`.
+	 * `h264` (MP4), `h264-mkv`, `h264-ts`, `h265`, `vp8`, `vp9` (WebM), `av1` (MP4), `prores`
+	 * (MOV), `gif`, or `mp3`, `aac` and `wav` for audio only.
 	 */
 	codec: Codec;
 	/** Output file; null or unset returns the video as a buffer. */
@@ -89,7 +90,8 @@ export interface RenderMediaOptions extends BrowserSessionOptions {
 	overwrite?: boolean;
 	/**
 	 * Constant rate factor; range and default depend on the codec (h264 1 to 51, default 18;
-	 * h265 0 to 51, 23; vp8 4 to 63, 9; vp9 0 to 63, 28, where 0 is lossless). Not allowed with
+	 * h265 0 to 51, 23; vp8 4 to 63, 9; vp9 0 to 63, 28 and av1 0 to 63, 30, where 0 is
+	 * lossless). Not allowed with
 	 * `prores` and `gif`.
 	 */
 	crf?: number | null;
@@ -187,10 +189,16 @@ export interface VideoPlan {
 	size: { width: number; height: number };
 }
 
-/** The FFmpeg encoders and decoders a video plan needs. */
-export function videoCodecNeeds(plan: VideoPlan): { encoders: string[]; decoders: string[] } {
+/**
+ * The FFmpeg encoders and decoders a video plan needs; the video encoder is the list of the
+ * codec's alternative encoders (`pickEncoder` chooses among them).
+ */
+export function videoCodecNeeds(plan: VideoPlan): {
+	encoders: Array<string | readonly string[]>;
+	decoders: string[];
+} {
 	return {
-		encoders: [plan.encoding.spec.encoder],
+		encoders: [plan.encoding.spec.encoders],
 		decoders: [plan.captureFormat === "png" ? "png" : "mjpeg"],
 	};
 }
@@ -201,7 +209,7 @@ export function planVideo(options: VideoPlanOptions): VideoPlan {
 	if (!isVideoCodec(codec)) {
 		throw new MotioError(
 			"E_UNSUPPORTED_CODEC",
-			`Codec "${codec}" is not supported yet; Motio renders h264, h264-mkv, h264-ts, h265, vp8, vp9, prores and gif video, and mp3, aac and wav audio.`,
+			`Codec "${codec}" has no video; Motio renders h264, h264-mkv, h264-ts, h265, vp8, vp9, av1, prores and gif video, and mp3, aac and wav audio.`,
 			{ composition: composition.id },
 		);
 	}
@@ -306,10 +314,12 @@ export async function renderMediaInternal(
 		? { aac: "aac", mp3: "libmp3lame", "pcm-16": "pcm_s16le", opus: "libopus" }[audioCodec]
 		: null;
 	const needs = video ? videoCodecNeeds(video) : { encoders: [], decoders: [] };
-	assertFfmpegSupports(await probeFfmpeg(ffmpeg), {
+	const ffmpegInfo = await probeFfmpeg(ffmpeg);
+	assertFfmpegSupports(ffmpegInfo, {
 		encoders: [...needs.encoders, ...(audioEncoder ? [audioEncoder] : [])],
 		decoders: needs.decoders,
 	});
+	const videoEncoder = video ? pickEncoder(ffmpegInfo, video.encoding.spec.encoders) : undefined;
 	if (separateAudioTo) {
 		await checkOverwrite(separateAudioTo, options.overwrite ?? true);
 		// Created like the directory of the output location.
@@ -376,6 +386,7 @@ export async function renderMediaInternal(
 					preset: video.preset,
 					colorSpace: video.colorSpace,
 					frameCount: total,
+					...(videoEncoder ? { encoder: videoEncoder } : {}),
 				}),
 				frames,
 				...(internals.frameOrder ? { order: internals.frameOrder([...frames]) } : {}),

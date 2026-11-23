@@ -157,7 +157,7 @@ describe("audio options", () => {
 			() => resolveAudioCodec("h264", "flac", false),
 			() => resolveAudioCodec("vp9", "aac", false),
 			() => resolveAudioCodec("gif", undefined, false),
-			() => resolveAudioCodec("av1", undefined, false),
+			() => resolveAudioCodec("av1", "opus", false),
 			() => assertSampleRateFits("opus", 44100),
 		]) {
 			let error: unknown;

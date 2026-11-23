@@ -24,6 +24,20 @@ describe("resolveVideoEncoding", () => {
 		}
 	});
 
+	it("validates AV1: CRF 0 to 63, default 30, 4:2:0 only, no alpha (D-064)", () => {
+		const av1 = (extra: object = {}) =>
+			resolveVideoEncoding({ codec: "av1", imageFormat: "jpeg", ...extra });
+		expect(av1()).toMatchObject({ crf: 30, pixelFormat: "yuv420p", alpha: false });
+		expect([av1({ crf: 0 }).crf, av1({ crf: 63 }).crf]).toEqual([0, 63]);
+		expect(av1({ pixelFormat: "yuv420p10le" }).pixelFormat).toBe("yuv420p10le");
+		expect(() => av1({ crf: 64 })).toThrow(code("E_INVALID_OPTION"));
+		expect(() => av1({ crf: -1 })).toThrow(code("E_INVALID_OPTION"));
+		expect(() => av1({ pixelFormat: "yuv444p" })).toThrow(/cannot be used with av1/);
+		expect(() =>
+			resolveVideoEncoding({ codec: "av1", imageFormat: "png", pixelFormat: "yuva420p" }),
+		).toThrow(/alpha channel, which av1 cannot store/);
+	});
+
 	it("rejects a CRF for ProRes and GIF", () => {
 		expect(() => resolveVideoEncoding({ codec: "prores", imageFormat: "jpeg", crf: 10 })).toThrow(
 			/no CRF option/,
@@ -106,6 +120,6 @@ describe("audio codecs per container (D-037)", () => {
 		expect(supportedAudioCodecs("vp9")).toEqual(["opus"]);
 		expect(supportedAudioCodecs("prores")).toEqual(["pcm-16", "aac"]);
 		expect(supportedAudioCodecs("gif")).toEqual([]);
-		expect(supportedAudioCodecs("av1")).toBeUndefined();
+		expect(supportedAudioCodecs("av1")).toEqual(["aac", "mp3"]);
 	});
 });

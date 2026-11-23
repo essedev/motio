@@ -62,7 +62,7 @@ export const CODECS = [
 	"wav",
 	"aac",
 ] as const;
-/** Codec names accepted by Remotion's `renderMedia`; Motio encodes all but `av1` (D-037). */
+/** Codec names accepted by Remotion's `renderMedia`; Motio encodes all of them (D-037, D-064). */
 export type Codec = (typeof CODECS)[number];
 
 function invalid(message: string): MotioError {

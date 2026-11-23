@@ -13,7 +13,13 @@ import {
 import { type CancelSignal, toAbortController } from "./cancel.js";
 import { captureVideo, mixTimelineAudio } from "./capture-video.js";
 import { MotioError } from "./errors.js";
-import { assertFfmpegSupports, probeFfmpeg, resolveFfmpegPath, videoArgs } from "./ffmpeg.js";
+import {
+	assertFfmpegSupports,
+	pickEncoder,
+	probeFfmpeg,
+	resolveFfmpegPath,
+	videoArgs,
+} from "./ffmpeg.js";
 import { type Codec, type FrameRange, resolveConcurrency, resolveFrames } from "./options.js";
 import { compositionPageFactory } from "./page-factory.js";
 import { DEFAULT_RECYCLE_EVERY_N_FRAMES, type SlowFrame } from "./pool.js";
@@ -34,8 +40,9 @@ export interface ChunkContainer {
 
 /**
  * Chunks are MPEG-TS for H.264 and H.265 (B-frame timestamps survive concatenation, D-018), WebM
- * for VP8 and VP9 and MOV for ProRes, which have no reordered frames. GIF has one palette for the
- * whole clip and cannot be chunked; audio-only codecs have no frames.
+ * for VP8, VP9 and AV1 and MOV for ProRes, which have no reordered frames. GIF has one palette for
+ * the whole clip and cannot be chunked; audio-only codecs have no frames. Every worker of an AV1
+ * render needs the same encoder (SVT-AV1 or libaom), or the chunks' stream headers differ.
  */
 export function chunkContainer(codec: Codec): ChunkContainer {
 	switch (codec) {
@@ -46,6 +53,7 @@ export function chunkContainer(codec: Codec): ChunkContainer {
 			return { muxer: "mpegts", extension: ".ts" };
 		case "vp8":
 		case "vp9":
+		case "av1":
 			return { muxer: "webm", extension: ".webm" };
 		case "prores":
 			return { muxer: "mov", extension: ".mov" };
@@ -166,7 +174,9 @@ export async function renderChunk(options: RenderChunkOptions): Promise<RenderCh
 	const frames = resolveFrames(options.frameRange, 1, composition.durationInFrames);
 	const concurrency = resolveConcurrency(options.concurrency ?? 1);
 	const ffmpeg = resolveFfmpegPath(options.ffmpegExecutable);
-	assertFfmpegSupports(await probeFfmpeg(ffmpeg), videoCodecNeeds(video));
+	const ffmpegInfo = await probeFfmpeg(ffmpeg);
+	assertFfmpegSupports(ffmpegInfo, videoCodecNeeds(video));
+	const encoder = pickEncoder(ffmpegInfo, video.encoding.spec.encoders);
 	const output = resolvePath(options.outputLocation);
 	await mkdir(dirname(output), { recursive: true });
 	const part = `${output}.${process.pid}.part${container.extension}`;
@@ -184,6 +194,7 @@ export async function renderChunk(options: RenderChunkOptions): Promise<RenderCh
 				colorSpace: video.colorSpace,
 				frameCount: frames.length,
 				muxer: container.muxer,
+				encoder,
 			}),
 			frames,
 			openPage: compositionPageFactory(session, composition, {

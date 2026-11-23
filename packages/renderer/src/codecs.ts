@@ -25,6 +25,7 @@ export const VIDEO_CODECS = [
 	"h265",
 	"vp8",
 	"vp9",
+	"av1",
 	"prores",
 	"gif",
 ] as const;
@@ -33,8 +34,11 @@ export type VideoCodec = (typeof VIDEO_CODECS)[number];
 
 /** How one video codec is encoded and stored. */
 export interface VideoCodecSpec {
-	/** FFmpeg encoder. */
-	encoder: string;
+	/**
+	 * FFmpeg encoders that produce the codec, in order of preference: the render uses the first
+	 * one the FFmpeg build has and fails early when it has none.
+	 */
+	encoders: readonly [string, ...string[]];
 	/** FFmpeg muxer of the output. */
 	muxer: string;
 	/** Extension of the output file, with the dot. */
@@ -62,7 +66,7 @@ const YUV_8_10: readonly PixelFormat[] = [
 ];
 
 const H264 = {
-	encoder: "libx264",
+	encoders: ["libx264"],
 	crf: { min: 1, max: 51, default: 18 },
 	pixelFormats: YUV_8_10,
 	alphaPixelFormats: [],
@@ -93,7 +97,7 @@ export const VIDEO_CODEC_SPECS: Readonly<Record<VideoCodec, VideoCodecSpec>> = {
 		audioCodecs: ["aac", "mp3"],
 	},
 	h265: {
-		encoder: "libx265",
+		encoders: ["libx265"],
 		muxer: "mp4",
 		extension: ".mp4",
 		contentType: "video/mp4",
@@ -104,7 +108,7 @@ export const VIDEO_CODEC_SPECS: Readonly<Record<VideoCodec, VideoCodecSpec>> = {
 		x264: false,
 	},
 	vp8: {
-		encoder: "libvpx",
+		encoders: ["libvpx"],
 		muxer: "webm",
 		extension: ".webm",
 		contentType: "video/webm",
@@ -115,7 +119,7 @@ export const VIDEO_CODEC_SPECS: Readonly<Record<VideoCodec, VideoCodecSpec>> = {
 		x264: false,
 	},
 	vp9: {
-		encoder: "libvpx-vp9",
+		encoders: ["libvpx-vp9"],
 		muxer: "webm",
 		extension: ".webm",
 		contentType: "video/webm",
@@ -125,8 +129,21 @@ export const VIDEO_CODEC_SPECS: Readonly<Record<VideoCodec, VideoCodecSpec>> = {
 		audioCodecs: ["opus"],
 		x264: false,
 	},
+	// SVT-AV1 first (BSD licence with a patent grant, fast); libaom when a build has only that.
+	// Both encoders take 8- and 10-bit 4:2:0 and neither stores alpha (D-064).
+	av1: {
+		encoders: ["libsvtav1", "libaom-av1"],
+		muxer: "mp4",
+		extension: ".mp4",
+		contentType: "video/mp4",
+		crf: { min: 0, max: 63, default: 30 },
+		pixelFormats: ["yuv420p", "yuv420p10le"],
+		alphaPixelFormats: [],
+		audioCodecs: ["aac", "mp3"],
+		x264: false,
+	},
 	prores: {
-		encoder: "prores_ks",
+		encoders: ["prores_ks"],
 		muxer: "mov",
 		extension: ".mov",
 		contentType: "video/quicktime",
@@ -137,7 +154,7 @@ export const VIDEO_CODEC_SPECS: Readonly<Record<VideoCodec, VideoCodecSpec>> = {
 		x264: false,
 	},
 	gif: {
-		encoder: "gif",
+		encoders: ["gif"],
 		muxer: "gif",
 		extension: ".gif",
 		contentType: "image/gif",

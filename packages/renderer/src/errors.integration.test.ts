@@ -111,13 +111,6 @@ describe("errors", () => {
 		expect(err.message).toContain('"stamp"');
 	}, 60_000);
 
-	it("rejects av1, the one codec Motio does not encode (D-037)", async () => {
-		const composition = await selectComposition({ serveUrl, id: "stamp" });
-		await expect(renderMedia({ serveUrl, composition, codec: "av1" })).rejects.toMatchObject({
-			code: "E_UNSUPPORTED_CODEC",
-		});
-	}, 60_000);
-
 	it("stops a render on cancel and cleans up processes and partial output", async () => {
 		const composition = await selectComposition({
 			serveUrl,

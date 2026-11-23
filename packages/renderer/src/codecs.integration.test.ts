@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { RenderMediaOptions } from "./index.js";
 import { renderFrames, renderMedia, selectComposition } from "./index.js";
 import { fixturePageDir } from "./test-support/fixture-page.js";
+import { ffmpegWithoutEncoders, systemEncoders } from "./test-support/limited-ffmpeg.js";
 import {
 	alphaErrors,
 	decodeRgba,
@@ -99,6 +100,27 @@ describe("video codecs", () => {
 			audio: "opus",
 		},
 		{
+			name: "av1",
+			file: "av1.mp4",
+			options: { codec: "av1" },
+			video: { codec_name: "av1", pix_fmt: "yuv420p" },
+			audio: "aac",
+		},
+		{
+			name: "av1 10-bit, JPEG capture",
+			file: "av1-10.mp4",
+			options: { codec: "av1", pixelFormat: "yuv420p10le", imageFormat: "jpeg" },
+			video: { codec_name: "av1", pix_fmt: "yuv420p10le" },
+			audio: "aac",
+		},
+		{
+			name: "av1 lossless (CRF 0)",
+			file: "av1-0.mp4",
+			options: { codec: "av1", crf: 0, audioCodec: "mp3" },
+			video: { codec_name: "av1", pix_fmt: "yuv420p" },
+			audio: "mp3",
+		},
+		{
 			name: "prores hq",
 			file: "hq.mov",
 			options: { codec: "prores" },
@@ -169,8 +191,55 @@ describe("video codecs", () => {
 		await expect(attempt({ codec: "gif", separateAudioTo: join(dir, "x.aac") })).rejects.toThrow(
 			/separateAudioTo/,
 		);
-		await expect(attempt({ codec: "av1" })).rejects.toMatchObject({ code: "E_UNSUPPORTED_CODEC" });
+		await expect(attempt({ codec: "av1", pixelFormat: "yuv444p" })).rejects.toThrow(
+			/cannot be used with av1/,
+		);
+		await expect(attempt({ codec: "av1", audioCodec: "opus" })).rejects.toThrow(
+			/cannot be used with codec "av1"/,
+		);
 	});
+});
+
+describe("AV1 encoders (D-064)", () => {
+	it("fails before rendering when FFmpeg has neither SVT-AV1 nor libaom, naming both", async () => {
+		const composition = await selectComposition({ serveUrl, id: "stamp" });
+		const ffmpeg = ffmpegWithoutEncoders(dir, ["libsvtav1", "libaom-av1"]);
+		const started = performance.now();
+		await expect(
+			renderMedia({
+				serveUrl,
+				composition,
+				codec: "av1",
+				outputLocation: join(dir, "never.mp4"),
+				ffmpegExecutable: ffmpeg,
+			}),
+		).rejects.toMatchObject({
+			code: "E_FFMPEG_ENCODER_MISSING",
+			message: expect.stringContaining("libsvtav1 or libaom-av1"),
+		});
+		expect(performance.now() - started).toBeLessThan(10_000);
+	});
+
+	it.skipIf(!systemEncoders().has("libaom-av1"))(
+		"falls back to libaom when SVT-AV1 is missing",
+		async () => {
+			const ffmpeg = ffmpegWithoutEncoders(dir, ["libsvtav1"]);
+			const { output, composition } = await render("stamp", "aom.mp4", {
+				codec: "av1",
+				frameRange: [0, 14],
+				muted: true,
+				ffmpegExecutable: ffmpeg,
+			});
+			const { frames, mismatches } = await stampMismatches(
+				output,
+				(i) => i,
+				composition.props.stamp as FrameStampOptions,
+			);
+			expect(mismatches).toEqual([]);
+			expect(frames).toBe(15);
+			expect(probeStream(output, "v", "codec_name").codec_name).toBe("av1");
+		},
+	);
 });
 
 describe("GIF", () => {

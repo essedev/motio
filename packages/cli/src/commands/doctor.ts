@@ -29,8 +29,41 @@ export interface DoctorCheck {
 
 /** Minimum FFmpeg release, used when the renderer does not export its own. */
 const FALLBACK_MIN_FFMPEG: readonly [number, number] = [5, 1];
-/** Encoders the M1 renderer needs. */
+/** Encoders every render needs (the default codec); a missing one fails the check. */
 const REQUIRED_ENCODERS = ["libx264"];
+
+/** Encoders of each video codec, used when the renderer does not load. */
+const FALLBACK_CODEC_ENCODERS: Readonly<Record<string, readonly string[]>> = {
+	h264: ["libx264"],
+	h265: ["libx265"],
+	vp8: ["libvpx"],
+	vp9: ["libvpx-vp9"],
+	av1: ["libsvtav1", "libaom-av1"],
+	prores: ["prores_ks"],
+	gif: ["gif"],
+};
+
+/**
+ * Which encoder FFmpeg would use for each video codec (the first one it has), or null when it has
+ * none of the codec's encoders.
+ */
+export function codecEncoders(
+	available: ReadonlySet<string>,
+	table: Readonly<Record<string, readonly string[]>>,
+): Record<string, string | null> {
+	const result: Record<string, string | null> = {};
+	for (const [codec, encoders] of Object.entries(table)) {
+		if (codec === "h264-mkv" || codec === "h264-ts") continue;
+		result[codec] = encoders.find((e) => available.has(e)) ?? null;
+	}
+	return result;
+}
+
+/** Parses the codec list printed by `ffmpeg -encoders`: the names after the `------` line. */
+export function parseEncoderList(text: string): Set<string> {
+	const body = text.split(/^\s*-{6}\s*$/m)[1] ?? "";
+	return new Set([...body.matchAll(/^\s*[A-Z.]{6}\s+(\S+)/gm)].map((m) => m[1] as string));
+}
 
 function run(command: string, args: string[]): Promise<{ code: number | null; output: string }> {
 	return new Promise((resolve) => {
@@ -69,27 +102,38 @@ async function checkFfmpeg(ctx: CommandContext): Promise<DoctorCheck[]> {
 		});
 	} else {
 		const { version, release } = parseFfmpegRelease(ffmpeg.output);
-		const fromRenderer = await ctx.renderer().then(
-			(renderer) => renderer.MIN_FFMPEG_VERSION,
-			() => undefined,
-		);
-		const [minMajor, minMinor] = fromRenderer ?? FALLBACK_MIN_FFMPEG;
+		const renderer = await ctx.renderer().catch(() => undefined);
+		const [minMajor, minMinor] = renderer?.MIN_FFMPEG_VERSION ?? FALLBACK_MIN_FFMPEG;
 		const tooOld =
 			release !== null &&
 			(release[0] < minMajor || (release[0] === minMajor && release[1] < minMinor));
-		const encoders = await run(ctx.ffmpegPath, ["-hide_banner", "-encoders"]);
-		const missing = REQUIRED_ENCODERS.filter(
-			(name) => !new RegExp(`\\s${name}\\s`).test(encoders.output),
+		const available = parseEncoderList(
+			(await run(ctx.ffmpegPath, ["-hide_banner", "-encoders"])).output,
 		);
+		const missing = REQUIRED_ENCODERS.filter((name) => !available.has(name));
+		const table = renderer?.VIDEO_CODEC_SPECS
+			? Object.fromEntries(
+					Object.entries(renderer.VIDEO_CODEC_SPECS).map(([c, spec]) => [c, spec.encoders]),
+				)
+			: FALLBACK_CODEC_ENCODERS;
+		const codecs = codecEncoders(available, table);
+		const unavailable = Object.entries(codecs)
+			.filter(([, encoder]) => encoder === null)
+			.map(([codec]) => `${codec} (${(table[codec] ?? []).join(" or ")})`);
+		const using = Object.entries(codecs)
+			.filter(([, encoder]) => encoder !== null)
+			.map(([codec, encoder]) => `${codec}: ${encoder}`);
 		checks.push({
 			name: "ffmpeg",
-			status: tooOld || missing.length > 0 ? "fail" : "pass",
+			status: tooOld || missing.length > 0 ? "fail" : unavailable.length > 0 ? "warn" : "pass",
 			message: tooOld
 				? `FFmpeg ${version} is too old; Motio needs ${minMajor}.${minMinor} or later.`
 				: missing.length > 0
 					? `FFmpeg ${version} lacks the ${missing.join(", ")} encoder(s).`
-					: `FFmpeg ${version} with ${REQUIRED_ENCODERS.join(", ")}.`,
-			details: { path: ctx.ffmpegPath, version, missingEncoders: missing },
+					: unavailable.length > 0
+						? `FFmpeg ${version}; no encoder for ${unavailable.join(", ")}: those codecs fail until FFmpeg has one (or install @motiojs/ffmpeg). Encoders: ${using.join(", ")}.`
+						: `FFmpeg ${version}. Encoders: ${using.join(", ")}.`,
+			details: { path: ctx.ffmpegPath, version, missingEncoders: missing, codecs },
 		});
 	}
 	const ffprobePath = ctx.ffmpegPath.replace(/ffmpeg(\.exe)?$/, "ffprobe$1");

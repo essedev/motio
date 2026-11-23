@@ -8,8 +8,10 @@ import {
 	frameRateArg,
 	gifEncodeArgs,
 	gifPaletteArgs,
+	LIBAOM_CPU_USED,
 	parseCodecList,
 	parseFfmpegVersion,
+	pickEncoder,
 	VP8_BITRATE_CAP,
 	videoArgs,
 } from "./ffmpeg.js";
@@ -66,6 +68,27 @@ describe("ffmpeg probing", () => {
 		expect(() =>
 			assertFfmpegSupports(info({ release: null, version: "N-1" }), needs),
 		).not.toThrow();
+	});
+
+	it("accepts any one of a codec's alternative encoders and names them all when none exists", () => {
+		const av1 = ["libsvtav1", "libaom-av1"] as const;
+		const needs = { encoders: [av1], decoders: [] };
+		const svt = info({ encoders: new Set(["libsvtav1", "libaom-av1"]) });
+		const aom = info({ encoders: new Set(["libaom-av1"]) });
+		expect(() => assertFfmpegSupports(aom, needs)).not.toThrow();
+		expect(pickEncoder(svt, av1)).toBe("libsvtav1");
+		expect(pickEncoder(aom, av1)).toBe("libaom-av1");
+		let error: unknown;
+		try {
+			assertFfmpegSupports(info(), needs);
+		} catch (e) {
+			error = e;
+		}
+		expect(error).toMatchObject({
+			code: "E_FFMPEG_ENCODER_MISSING",
+			details: { encoder: "libsvtav1", alternatives: ["libsvtav1", "libaom-av1"] },
+		});
+		expect((error as Error).message).toContain("libsvtav1 or libaom-av1");
 	});
 });
 
@@ -181,6 +204,30 @@ describe("encoder arguments", () => {
 			}),
 		).toContain("-profile:v 5 -vendor apl0 -bits_per_mb 2000 -pix_fmt yuva444p10le");
 		expect(encode("prores")).toMatch(/-f mov -y/);
+	});
+
+	it("encodes AV1 with SVT-AV1, or libaom when chosen; CRF 0 is lossless (D-064)", () => {
+		const av1 = (crf: number | undefined, encoder?: string) =>
+			videoArgs({
+				output: "/tmp/out.mp4",
+				fps: 30,
+				imageFormat: "png",
+				encoding: resolveVideoEncoding({ codec: "av1", imageFormat: "png", crf }),
+				preset: "medium",
+				colorSpace: "default",
+				frameCount: 10,
+				...(encoder ? { encoder } : {}),
+			}).join(" ");
+		expect(av1(undefined)).toMatch(
+			/-c:v libsvtav1 -crf 30 -pix_fmt yuv420p -colorspace bt709 .*-color_range tv .*-movflags \+faststart -f mp4/,
+		);
+		expect(av1(0)).toContain("-c:v libsvtav1 -svtav1-params lossless=1 -pix_fmt");
+		expect(av1(undefined)).toContain("setparams=colorspace=bt709");
+		expect(av1(40, "libaom-av1")).toContain(
+			`-c:v libaom-av1 -crf 40 -b:v 0 -cpu-used ${LIBAOM_CPU_USED} -row-mt 1 -pix_fmt yuv420p`,
+		);
+		expect(av1(0, "libaom-av1")).toContain("-c:v libaom-av1 -lossless 1 -b:v 0");
+		expect(av1(undefined)).not.toContain("-tag:v");
 	});
 
 	it("writes chunks to the requested muxer", () => {

@@ -255,7 +255,7 @@ Choices beyond the docs:
 - **Alpha** needs `imageFormat: "png"` and an alpha pixel format; anything else fails before rendering.
 - **GIF** is encoded in three FFmpeg runs: the captured images are copied to an intermediate file, the D-020 palette is built from all of it, then every frame is mapped to it, so long GIFs never hold their frames in memory. PNG capture keeps transparency. `numberOfGifLoops` follows D-020 and is ignored by other codecs.
 - **Image sequences** are a CLI output, as Remotion documents (`--sequence`, `setImageSequence()`, a `--frames` list of single frames, `--image-sequence-pattern`, JPEG by default) into a folder, by default `out/<name>`: `renderMedia`'s output must be a file. The JSON result has `codec: null` and `sequence: true`.
-- **`av1`** fails with `E_UNSUPPORTED_CODEC`: common FFmpeg builds (Homebrew's) carry no AV1 encoder, and Remotion itself does not offer AV1 on Linux arm64.
+- **`av1`** fails with `E_UNSUPPORTED_CODEC`: common FFmpeg builds (Homebrew's) carry no AV1 encoder, and Remotion itself does not offer AV1 on Linux arm64. (Wrong about Homebrew; AV1 is encoded since D-064.)
 - **Matroska and AAC.** The AAC priming makes the audio of an MKV start at -21 ms; FFmpeg 7 decoding at a constant rate then duplicates the first video frame, so the tests decode frames as stored.
 
 Measured in the pinned image and on macOS (same numbers): frame stamps decode exactly from every codec (60 frames each, GIF every 3rd frame at 10 fps), with the expected codec, pixel format, BT.709 tags, frame count and default audio codec. Alpha against the PNG frames of a fixture with an alpha ramp, a moving half-transparent box and an opaque frame stamp: ProRes 4444 and 4444 XQ and lossless VP9 within 1 code value in alpha and 0 in opaque colour; VP8 at its default CRF within 2. 4:2:0 chroma subsampling mixes the colour of transparent neighbours into opaque pixels next to them (up to 50 code values at the end of the red ramp), so opaque colour is compared at least 2 px from transparency. Lossy VP9 stays within D-019's bounds on the ramp (2 at CRF 4 and 20, 3 at 31), but the moving box's hard alpha edges ring more than D-019's static signal showed (3, 16, 16; 18 at the default CRF 28). The M5 alpha criterion therefore applies D-019's bounds to smooth alpha, and the tests bound the whole frame at the measured values plus headroom (4, 18, 20).
@@ -511,3 +511,23 @@ The docs give `<SkiaCanvas>` (React Native Skia's `<Canvas>` with Remotion's con
 - Pixels: CanvasKit draws with WebGL, so references need `--gl=swangle` as for `@motiojs/three` (D-046); not measured.
 
 Decision: not implemented now. The compatibility table keeps `@remotion/skia` mapped to the future `@motiojs/skia` with an alternative that names this decision, so importing it (or `/enable`) fails the build with that message, and the manifest lists `SkiaCanvas` and `enableSkia` as stubbed. Revisit when the bundler hook for `enableSkia()` and a readiness rule for React Native Skia's resources are designed; the estimate is about a day once that rule is agreed.
+
+## D-064 AV1 output with SVT-AV1, libaom as the fallback (2026-11-23, corrects D-037)
+
+D-037 left `av1` out because "common FFmpeg builds (Homebrew's) carry no AV1 encoder". That was wrong: Homebrew's FFmpeg 8.1.2 has `libsvtav1` (SVT-AV1 4.2.0), and Debian trixie's 7.1.5 (the pinned image) has `libsvtav1`, `libaom-av1` and `librav1e`, with `libdav1d` to decode. `av1` now goes through the codec table like every other codec:
+
+| Codec | Encoders, in order | Container | CRF (Remotion's table) | Pixel formats | Audio codecs |
+|---|---|---|---|---|---|
+| `av1` | libsvtav1, else libaom-av1 | MP4 | 0 to 63, 30 | `yuv420p`, `yuv420p10le` | aac, mp3 |
+
+- **Encoder choice.** A codec now lists its encoders in order of preference (`encoders` in the table); a render probes FFmpeg once, uses the first encoder it has and, when it has none, fails before any page opens with `E_FFMPEG_ENCODER_MISSING` naming both (`libsvtav1 or libaom-av1`). SVT-AV1 comes first: BSD licence with the AOM patent grant, and far faster than libaom at a usable quality. libaom runs at `-cpu-used 6 -row-mt 1`, because its default speed (1) takes seconds per 1080p frame. `doctor` lists the encoder each codec would use and warns about codecs with none.
+- **CRF 0 is lossless**, as for VP9 (D-037): SVT-AV1 reads a CRF of 0 as "not set" and falls back to its own default (35; measured: CRF 0 gave 41.7 dB on `testsrc2`, CRF 1 62.4 dB), so CRF 0 passes `-svtav1-params lossless=1` (infinite PSNR) and, with libaom, `-lossless 1`. Other values pass `-crf`.
+- **Pixel formats.** The two encoders share 8- and 10-bit 4:2:0 (SVT-AV1 takes nothing else), so the table offers those; there is no alpha in either encoder, and Remotion's docs mention none for AV1.
+- **Container and audio.** Remotion's docs give `.mp4`, `.webm` or `.mkv` for AV1 and the CLI's default extension is `.mp4`; Motio's container follows the codec, so `av1` writes MP4 with the audio MP4 carries elsewhere in the table (aac by default, mp3). `x264Preset` does not apply, as documented.
+- **Colour.** The same filter and tags as every YUV codec (BT.709, limited range): SVT-AV1 takes its colour metadata from the frames, so the `setparams` tagging of D-040 is what writes primaries and transfer (without it they came out `unknown`).
+- **Chunks** are WebM, like VP8 and VP9: AV1 has no reordered frames at the container level. Every worker of a chunked AV1 render must have the same encoder, or the chunks' sequence headers differ.
+- SVT-AV1 prints its configuration to stderr at its default log level, which would bury FFmpeg's error in a failure message; encodes run with `SVT_LOG=2` (warnings and errors) unless the variable is set.
+
+Remotion notes that its own builds offer no AV1 on Linux arm64 or Lambda; Motio has no such gap because it uses whatever FFmpeg it is given (and `@motiojs/ffmpeg`, D-065, has SVT-AV1 on every platform).
+
+Measured on macOS (FFmpeg 8.1.2, SVT-AV1 4.2.0): frame stamps decode exactly from all 60 frames at the default CRF with PNG capture, at `yuv420p10le` with JPEG capture, and losslessly at CRF 0; ffprobe reports `av1`, the pixel format, BT.709 primaries, transfer and matrix, `tv` range and 60 frames; a lossless chunked render (4 chunks) decodes to the same frame hashes as the single-node render; `motio render --codec=av1` writes a tagged AV1 MP4.

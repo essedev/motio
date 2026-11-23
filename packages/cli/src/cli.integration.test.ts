@@ -68,6 +68,37 @@ describe("motio CLI end to end", () => {
 		});
 	});
 
+	it("renders AV1 with --codec=av1 (D-064)", async () => {
+		const output = join(out, "av1.mp4");
+		const { code, result } = await motio(
+			["render", "Hello", output, "--codec=av1", "--crf=40"],
+			"render",
+		);
+		expect(code, JSON.stringify(result)).toBe(0);
+		expect(result.codec).toBe("av1");
+		const probe = execFileSync(
+			process.env.MOTIO_FFPROBE ?? "ffprobe",
+			[
+				"-v",
+				"error",
+				"-show_entries",
+				"stream=codec_name,pix_fmt,nb_frames,color_primaries",
+				"-select_streams",
+				"v",
+				"-of",
+				"json",
+				output,
+			],
+			{ encoding: "utf8" },
+		);
+		expect(JSON.parse(probe).streams[0]).toMatchObject({
+			codec_name: "av1",
+			pix_fmt: "yuv420p",
+			nb_frames: "30",
+			color_primaries: "bt709",
+		});
+	});
+
 	it("renders in chunks in child processes and assembles them (--chunks)", async () => {
 		const output = join(out, "chunked.mp4");
 		const { code, result } = await motio(
