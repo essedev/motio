@@ -12,6 +12,10 @@
 		"./frame-stamp": {
 			"types": "./dist/frame-stamp.d.ts",
 			"default": "./dist/frame-stamp.js"
+		},
+		"./oracle-errors": {
+			"types": "./dist/oracle-errors.d.ts",
+			"default": "./dist/oracle-errors.js"
 		}
 	},
 	"files": [
