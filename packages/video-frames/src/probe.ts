@@ -1,5 +1,5 @@
 import { VideoFramesError } from "./errors.js";
-import { run } from "./run.js";
+import { networkInputArgs, type RunOptions, run } from "./run.js";
 
 /** What frame selection needs to know about a video stream. */
 export interface VideoInfo {
@@ -20,20 +20,29 @@ interface ProbeJson {
  * Reads the frame timestamps of the first video stream from its packets (no decoding), so
  * selection works for variable frame rate sources too.
  */
-export async function probeVideo(src: string, ffprobe = "ffprobe"): Promise<VideoInfo> {
+export async function probeVideo(
+	src: string,
+	ffprobe = "ffprobe",
+	options: RunOptions = {},
+): Promise<VideoInfo> {
 	let json: ProbeJson;
 	try {
-		const out = await run(ffprobe, [
-			"-v",
-			"error",
-			"-select_streams",
-			"v:0",
-			"-show_entries",
-			"stream=width,height,start_time,codec_name:packet=pts_time",
-			"-of",
-			"json",
-			src,
-		]);
+		const out = await run(
+			ffprobe,
+			[
+				...networkInputArgs(src),
+				"-v",
+				"error",
+				"-select_streams",
+				"v:0",
+				"-show_entries",
+				"stream=width,height,start_time,codec_name:packet=pts_time",
+				"-of",
+				"json",
+				src,
+			],
+			options,
+		);
 		json = JSON.parse(out.toString()) as ProbeJson;
 	} catch (e) {
 		throw new VideoFramesError("E_VIDEO_PROBE", `could not probe ${src}: ${(e as Error).message}`, {

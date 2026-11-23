@@ -1,6 +1,16 @@
 import { spawn } from "node:child_process";
 import { AudioError } from "./errors.js";
 
+/**
+ * Input options for a network source: FFmpeg fails a read that stalls for 30 s
+ * (`-rw_timeout`, in microseconds) instead of blocking the render forever.
+ */
+function networkInputArgs(src: string): string[] {
+	return /^[a-z][a-z0-9+.-]*:\/\//i.test(src) && !/^file:/i.test(src)
+		? ["-rw_timeout", "30000000"]
+		: [];
+}
+
 /** What the mixer needs to know about one audio stream of a source. */
 export interface SourceProbe {
 	/** Channels of the stream. */
@@ -29,6 +39,7 @@ export function seeksSampleAccurately(formatName: string): boolean {
 export function probeSource(ffprobe: string, src: string, stream = 0): Promise<SourceProbe> {
 	return new Promise((resolve, reject) => {
 		const args = [
+			...networkInputArgs(src),
 			"-v",
 			"error",
 			"-select_streams",
@@ -102,7 +113,16 @@ export function decodeToFloat(options: {
 	if (options.seekSeconds !== undefined && options.seekSeconds > 0) {
 		args.push("-ss", String(options.seekSeconds));
 	}
-	args.push("-i", src, "-vn", "-map", `0:a:${options.stream ?? 0}`, "-af", filter);
+	args.push(
+		...networkInputArgs(src),
+		"-i",
+		src,
+		"-vn",
+		"-map",
+		`0:a:${options.stream ?? 0}`,
+		"-af",
+		filter,
+	);
 	if (options.durationSeconds !== undefined) args.push("-t", String(options.durationSeconds));
 	args.push("-ac", String(channels), "-ar", String(sampleRate), "-f", "f32le", "-");
 	return new Promise((resolve, reject) => {

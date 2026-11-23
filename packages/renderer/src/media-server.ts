@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import { stat } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { join, normalize, resolve, sep } from "node:path";
@@ -8,7 +8,13 @@ import {
 	type MediaInfo,
 	type MediaServiceError,
 } from "@motiojs/core/protocol";
-import { FrameExtractor, type FrameSelection, selectFrame } from "@motiojs/video-frames";
+import {
+	FrameExtractor,
+	type FrameSelection,
+	networkInputArgs,
+	run,
+	selectFrame,
+} from "@motiojs/video-frames";
 import { MotioError } from "./errors.js";
 import { assertFfmpegSupports, probeFfmpeg } from "./ffmpeg.js";
 
@@ -34,6 +40,7 @@ export interface MediaServer {
 	resolveSource(src: string): Promise<string>;
 	/** Media information of a resolved source, probed once. */
 	info(input: string): Promise<MediaInfo>;
+	/** Stops listening and kills every FFmpeg and FFprobe process the service started. */
 	close(): Promise<void>;
 }
 
@@ -48,40 +55,29 @@ interface ProbeJson {
 	}[];
 }
 
-function runProbe(ffprobe: string, input: string): Promise<ProbeJson> {
-	return new Promise((ok, fail) => {
-		const child = spawn(
-			ffprobe,
-			[
-				"-v",
-				"error",
-				"-show_entries",
-				"format=duration:stream=codec_type,width,height,duration",
-				"-of",
-				"json",
-				input,
-			],
-			{ stdio: ["ignore", "pipe", "pipe"] },
-		);
-		const out: Buffer[] = [];
-		let err = "";
-		child.stdout.on("data", (c: Buffer) => out.push(c));
-		child.stderr.on("data", (c: Buffer) => {
-			err += c.toString();
-		});
-		child.on("error", (e) => fail(e));
-		child.on("close", (code) => {
-			if (code !== 0) {
-				fail(new Error(err.trim() || `ffprobe exited with ${code}`));
-				return;
-			}
-			try {
-				ok(JSON.parse(Buffer.concat(out).toString()) as ProbeJson);
-			} catch (e) {
-				fail(e);
-			}
-		});
-	});
+/** A media service FFprobe or FFmpeg run is killed after this many milliseconds. */
+const MEDIA_PROCESS_TIMEOUT_MS = 120_000;
+
+async function runProbe(
+	ffprobe: string,
+	input: string,
+	children: Set<ChildProcess>,
+): Promise<ProbeJson> {
+	const out = await run(
+		ffprobe,
+		[
+			...networkInputArgs(input),
+			"-v",
+			"error",
+			"-show_entries",
+			"format=duration:stream=codec_type,width,height,duration",
+			"-of",
+			"json",
+			input,
+		],
+		{ timeoutMs: MEDIA_PROCESS_TIMEOUT_MS, track: children },
+	);
+	return JSON.parse(out.toString()) as ProbeJson;
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -112,7 +108,14 @@ function parseMode(value: string | null): FrameSelection | null {
 
 /** Starts the media service. */
 export async function startMediaServer(options: MediaServerOptions): Promise<MediaServer> {
-	const extractor = new FrameExtractor({ ffmpeg: options.ffmpeg, ffprobe: options.ffprobe });
+	const extractor = new FrameExtractor({
+		ffmpeg: options.ffmpeg,
+		ffprobe: options.ffprobe,
+		timeoutMs: MEDIA_PROCESS_TIMEOUT_MS,
+	});
+	/** FFprobe runs of `info()`; the extractor tracks its own processes. */
+	const children = new Set<ChildProcess>();
+	let closed = false;
 	const bundleOrigin = new URL(options.bundleUrl).origin;
 	const root = options.bundleDir === null ? null : resolve(options.bundleDir);
 	const infos = new Map<string, Promise<MediaInfo>>();
@@ -164,7 +167,14 @@ export async function startMediaServer(options: MediaServerOptions): Promise<Med
 	const info = (input: string): Promise<MediaInfo> => {
 		let p = infos.get(input);
 		if (!p) {
-			p = runProbe(options.ffprobe, input).then(
+			if (closed) {
+				return Promise.reject(
+					new MotioError("E_MEDIA_SOURCE", `The media service is closed (${input}).`, {
+						details: { src: input },
+					}),
+				);
+			}
+			p = runProbe(options.ffprobe, input, children).then(
 				(json) => {
 					const streams = json.streams ?? [];
 					const video = streams.find((s) => s.codec_type === "video" && s.width && s.height);
@@ -292,6 +302,10 @@ export async function startMediaServer(options: MediaServerOptions): Promise<Med
 		info,
 		close: () =>
 			new Promise<void>((ok) => {
+				closed = true;
+				extractor.close();
+				for (const child of children) child.kill("SIGKILL");
+				children.clear();
 				server.closeAllConnections();
 				server.close(() => ok());
 			}),

@@ -1,7 +1,8 @@
+import type { ChildProcess } from "node:child_process";
 import { VideoFramesError } from "./errors.js";
 import { splitPngStream, stripColourChunks } from "./png-stream.js";
 import { probeVideo, type VideoInfo } from "./probe.js";
-import { run } from "./run.js";
+import { networkInputArgs, run } from "./run.js";
 
 export interface FrameExtractorOptions {
 	ffmpeg?: string;
@@ -10,6 +11,8 @@ export interface FrameExtractorOptions {
 	cacheSize?: number;
 	/** Frames decoded per FFmpeg run, starting at the requested one. Default 24. */
 	batchSize?: number;
+	/** An FFmpeg or FFprobe run is killed after this many milliseconds. Default 120000. */
+	timeoutMs?: number;
 }
 
 /**
@@ -35,19 +38,48 @@ export class FrameExtractor {
 	private readonly cache = new Map<string, Buffer>();
 	private readonly inFlight = new Map<string, Promise<void>>();
 	private readonly infos = new Map<string, Promise<VideoInfo>>();
+	private readonly timeoutMs: number;
+	/** FFmpeg and FFprobe processes running for this extractor. */
+	private readonly children = new Set<ChildProcess>();
+	private closed = false;
 
 	constructor(options: FrameExtractorOptions = {}) {
 		this.ffmpeg = options.ffmpeg ?? "ffmpeg";
 		this.ffprobe = options.ffprobe ?? "ffprobe";
 		this.cacheSize = options.cacheSize ?? 256;
 		this.batchSize = options.batchSize ?? 24;
+		this.timeoutMs = options.timeoutMs ?? 120_000;
+	}
+
+	/**
+	 * Kills every FFmpeg and FFprobe process still running (their requests reject) and refuses
+	 * new requests. Call it when the render session ends.
+	 */
+	close(): void {
+		this.closed = true;
+		for (const child of this.children) child.kill("SIGKILL");
+		this.children.clear();
+		this.cache.clear();
+	}
+
+	private assertOpen(src: string): void {
+		if (this.closed) {
+			throw new VideoFramesError("E_VIDEO_EXTRACT", `the frame extractor is closed (${src})`, {
+				src,
+			});
+		}
 	}
 
 	/** Stream information, probed once per source. */
 	info(src: string): Promise<VideoInfo> {
 		let p = this.infos.get(src);
 		if (!p) {
-			p = probeVideo(src, this.ffprobe);
+			if (this.closed) {
+				return Promise.reject(
+					new VideoFramesError("E_VIDEO_PROBE", `the frame extractor is closed (${src})`, { src }),
+				);
+			}
+			p = probeVideo(src, this.ffprobe, { timeoutMs: this.timeoutMs, track: this.children });
 			p.catch(() => this.infos.delete(src));
 			this.infos.set(src, p);
 		}
@@ -90,7 +122,9 @@ export class FrameExtractor {
 	}
 
 	private async decodeBatch(src: string, index: number, alpha: boolean): Promise<void> {
+		this.assertOpen(src);
 		const { timestamps, codec } = await this.info(src);
+		this.assertOpen(src);
 		if (index < 0 || index >= timestamps.length) {
 			throw new VideoFramesError(
 				"E_VIDEO_EXTRACT",
@@ -105,28 +139,33 @@ export class FrameExtractor {
 		const ss = Math.max(0, t - Math.min(0.0005, (t - prev) / 2));
 		let data: Buffer;
 		try {
-			data = await run(this.ffmpeg, [
-				"-hide_banner",
-				"-loglevel",
-				"error",
-				"-nostdin",
-				...(alpha ? decoderArgs(codec) : []),
-				"-ss",
-				ss.toFixed(6),
-				"-i",
-				src,
-				"-an",
-				"-frames:v",
-				String(count),
-				"-fps_mode",
-				"passthrough",
-				"-f",
-				"image2pipe",
-				...(alpha ? [] : ["-pix_fmt", "rgb24"]),
-				"-c:v",
-				"png",
-				"-",
-			]);
+			data = await run(
+				this.ffmpeg,
+				[
+					"-hide_banner",
+					"-loglevel",
+					"error",
+					"-nostdin",
+					...(alpha ? decoderArgs(codec) : []),
+					...networkInputArgs(src),
+					"-ss",
+					ss.toFixed(6),
+					"-i",
+					src,
+					"-an",
+					"-frames:v",
+					String(count),
+					"-fps_mode",
+					"passthrough",
+					"-f",
+					"image2pipe",
+					...(alpha ? [] : ["-pix_fmt", "rgb24"]),
+					"-c:v",
+					"png",
+					"-",
+				],
+				{ timeoutMs: this.timeoutMs, track: this.children },
+			);
 		} catch (e) {
 			throw new VideoFramesError(
 				"E_VIDEO_EXTRACT",
