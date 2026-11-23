@@ -19,20 +19,22 @@ const BUILT_IN_ERRORS = [
 	URIError,
 ] as const;
 
+const isBuiltIn = (name: string) =>
+	name === "Error" || BUILT_IN_ERRORS.some((c) => c.name === name);
+
 /**
- * The built-in error class `value` derives from: `"TypeError"`, `"RangeError"`, ..., `"Error"`
- * for any other `Error`, or `undefined` for a value that is not an error. Subclasses report their
- * built-in base, so `class Mine extends TypeError` is a `"TypeError"`.
+ * The class of the error `value`: the built-in class it derives from (`"TypeError"`,
+ * `"RangeError"`, ..., `"Error"`; `class Mine extends TypeError` is a `"TypeError"`), the name of a
+ * platform error (a `DOMException` such as `"EncodingError"`), the `name` of an error serialized
+ * as `{ name, message }` (from a page), or `undefined` for a value that is not an error.
  */
 export function errorClassOf(value: unknown): string | undefined {
 	for (const ctor of BUILT_IN_ERRORS) if (value instanceof ctor) return ctor.name;
+	if (typeof value !== "object" || value === null) return undefined;
+	const { name, message } = value as { name?: unknown; message?: unknown };
+	if (typeof DOMException !== "undefined" && value instanceof DOMException) return String(name);
 	if (value instanceof Error) return "Error";
-	// Errors from another realm (a DOMException, an error from a page) are matched by name.
-	if (typeof value === "object" && value !== null && typeof (value as Error).name === "string") {
-		const name = (value as Error).name;
-		if (name === "Error" || BUILT_IN_ERRORS.some((c) => c.name === name)) return name;
-	}
-	return undefined;
+	return typeof name === "string" && typeof message === "string" ? name : undefined;
 }
 
 /** Runs `call` and returns what it threw, or `undefined` with `threw: false` if it returned. */
@@ -46,6 +48,7 @@ export function failureOf(call: () => unknown): { threw: boolean; error: unknown
 }
 
 // Messages written by the JavaScript engine, not by either library: identical by construction.
+// Platform errors (DOMException names such as "EncodingError") carry the browser's message too.
 const ENGINE_MESSAGES = [/^Cannot read properties of /, /^Cannot convert /, / is not a function$/];
 
 const mentions = (message: string, name: string): boolean =>
@@ -54,8 +57,8 @@ const mentions = (message: string, name: string): boolean =>
 	).test(message);
 
 /**
- * Compares `thrown` with a recorded failure: same built-in class (when recorded), a non-empty
- * message of Motio's own wording (engine messages excepted), and every name in `names` that the
+ * Compares `thrown` with a recorded failure: same class (when recorded), a non-empty message of
+ * Motio's own wording (the engine's and the platform's messages excepted), and every name in `names` that the
  * recorded message mentions is mentioned by Motio's too, so the user is pointed at the same option.
  * Returns a description of the first difference, or `undefined` when the failures match.
  */
@@ -71,7 +74,11 @@ export function compareFailure(
 	}
 	const message = String((thrown as Error).message ?? "");
 	if (message.trim() === "") return "threw an error with an empty message";
-	if (message === recorded.error && !ENGINE_MESSAGES.some((re) => re.test(message))) {
+	if (
+		message === recorded.error &&
+		isBuiltIn(type) &&
+		!ENGINE_MESSAGES.some((re) => re.test(message))
+	) {
 		return `the message is the recorded wording, not Motio's own: ${message}`;
 	}
 	for (const name of names) {

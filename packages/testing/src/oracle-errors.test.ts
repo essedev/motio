@@ -8,6 +8,8 @@ describe("errorClassOf", () => {
 		expect(errorClassOf(new RangeError("x"))).toBe("RangeError");
 		expect(errorClassOf(new Error("x"))).toBe("Error");
 		expect(errorClassOf("x")).toBeUndefined();
+		expect(errorClassOf(new DOMException("x", "EncodingError"))).toBe("EncodingError");
+		expect(errorClassOf({ name: "TypeError", message: "x" })).toBe("TypeError");
 	});
 });
 
@@ -27,6 +29,12 @@ describe("compareFailure", () => {
 		expect(compareFailure(new Error("the range is empty"), recorded, ["inputRange"])).toMatch(
 			/inputRange/,
 		);
+	});
+
+	it("allows the platform's own messages to be identical", () => {
+		const decode = { error: "Unable to decode audio data", errorType: "EncodingError" };
+		const error = { name: "EncodingError", message: decode.error };
+		expect(compareFailure(error, decode)).toBeUndefined();
 	});
 
 	it("allows the engine's own messages to be identical", () => {
