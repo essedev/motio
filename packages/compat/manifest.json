@@ -1230,7 +1230,8 @@
 				"extractAudio": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Copies the first audio stream with FFmpeg; decoded samples equal the oracle's for AAC, MP3, PCM and Opus in WebM. Also writes .m4a, which Remotion 4.0.545 rejects; Opus into .opus keeps FFmpeg's Ogg pre-skip (96024 samples, Remotion 96648)."
 				},
 				"getCompositions": {
 					"kind": "value",
@@ -1240,12 +1241,14 @@
 				"getSilentParts": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "FFmpeg's silencedetect; equal to the oracle except the MP3 duration (container duration, Remotion adds the encoder padding) and a 0.5 ms start on Opus. Works on PCM WAV files, which Remotion 4.0.545 fails on."
 				},
 				"getVideoMetadata": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Through ffprobe; equal to the oracle on every Remotion field for H.264 (MP4, MKV), H.265, VP9 and ProRes files. Motio adds rotation. Local files only, as documented."
 				},
 				"LogLevel": {
 					"kind": "type",

@@ -36,6 +36,7 @@ export {
 	selectComposition,
 } from "./compositions.js";
 export { isMotioError, MotioError, type MotioErrorCode, type MotioErrorContext } from "./errors.js";
+export { type ExtractAudioOptions, extractAudio } from "./extract-audio.js";
 export { type FfmpegInfo, MIN_FFMPEG_VERSION, probeFfmpeg } from "./ffmpeg.js";
 export {
 	type FfmpegExecutableOptions,
@@ -45,6 +46,20 @@ export {
 	type ResolvedFfmpeg,
 	resolveFfmpeg,
 } from "./ffmpeg-resolve.js";
+export {
+	type GetSilentPartsOptions,
+	type GetSilentPartsResult,
+	getSilentParts,
+	type SilentPart,
+} from "./get-silent-parts.js";
+export {
+	type GetVideoMetadataOptions,
+	getVideoMetadata,
+	type VideoMetadata,
+	type VideoMetadataAudioCodec,
+	type VideoMetadataCodec,
+	type VideoMetadataColorSpace,
+} from "./get-video-metadata.js";
 export type {
 	Codec,
 	ColorSpace,

@@ -171,3 +171,20 @@ export async function resolveRenderFfmpeg(
 	}
 	return resolved;
 }
+
+/**
+ * The FFmpeg and ffprobe of a Node API function that takes Remotion's `binariesDirectory`: that
+ * directory when given (`ffmpeg` and `ffprobe` inside it), else the renderer's resolution (D-065).
+ */
+export async function resolveMediaBinaries(
+	options: FfmpegExecutableOptions & { binariesDirectory?: string | null | undefined } = {},
+): Promise<{ ffmpeg: string; ffprobe: string }> {
+	if (options.binariesDirectory && !options.ffmpegExecutable) {
+		const suffix = process.platform === "win32" ? ".exe" : "";
+		return {
+			ffmpeg: join(options.binariesDirectory, `ffmpeg${suffix}`),
+			ffprobe: options.ffprobeExecutable || join(options.binariesDirectory, `ffprobe${suffix}`),
+		};
+	}
+	return resolveRenderFfmpeg(options);
+}
