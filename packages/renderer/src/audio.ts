@@ -25,6 +25,11 @@ function sameNumber(a: number, b: number): boolean {
  * `frames[i]`). A segment continues while the next output frame is the next composition frame
  * and the source position advanced by exactly the playback rate; a seek, a loop restart or a
  * gap starts a new segment. Volumes are kept per frame.
+ *
+ * Intents carry no component identity (D-030), so each intent continues the open segment of the
+ * same source, rate, pitch and stream whose next source position is the intent's: overlapping
+ * copies of one source at different offsets stay one segment each. Copies at the same position
+ * play the same samples and are told apart by their registry id (volume order).
  */
 export function buildAudioSegments(
 	frames: readonly number[],
@@ -32,14 +37,17 @@ export function buildAudioSegments(
 ): AudioSegment[] {
 	interface Open {
 		segment: AudioSegment;
+		id: string;
 		volumes: number[];
 		lastIndex: number;
 		lastFrame: number;
 		lastSourceFrame: number;
 	}
 	const done: Open[] = [];
-	const open = new Map<string, Open>();
+	/** Segments that took an intent on the previous output frame, per source key. */
+	let open = new Map<string, Open[]>();
 	frames.forEach((frame, index) => {
+		const next = new Map<string, Open[]>();
 		for (const intent of intents.get(frame) ?? []) {
 			const key = JSON.stringify([
 				intent.src,
@@ -47,44 +55,54 @@ export function buildAudioSegments(
 				intent.toneFrequency,
 				intent.preservePitch,
 				intent.audioStreamIndex,
-				intent.id,
 			]);
-			const current = open.get(key);
-			if (
-				current &&
-				current.lastIndex === index - 1 &&
-				current.lastFrame === frame - 1 &&
-				sameNumber(intent.sourceFrame, current.lastSourceFrame + intent.playbackRate)
-			) {
+			const candidates = (open.get(key) ?? []).filter(
+				(c) =>
+					c.lastIndex === index - 1 &&
+					c.lastFrame === frame - 1 &&
+					sameNumber(intent.sourceFrame, c.lastSourceFrame + intent.playbackRate),
+			);
+			const current = candidates.find((c) => c.id === intent.id) ?? candidates[0];
+			let target: Open;
+			if (current) {
 				current.volumes.push(intent.volume);
 				current.lastIndex = index;
 				current.lastFrame = frame;
 				current.lastSourceFrame = intent.sourceFrame;
-				continue;
+				current.id = intent.id;
+				const list = open.get(key) ?? [];
+				list.splice(list.indexOf(current), 1);
+				target = current;
+			} else {
+				const segment: AudioSegment = {
+					src: intent.src,
+					startFrame: index,
+					trimBeforeFrames: intent.sourceFrame,
+					durationInFrames: 0,
+					playbackRate: intent.playbackRate,
+					toneFrequency: intent.toneFrequency,
+					preservePitch: intent.preservePitch,
+					volume: [],
+				};
+				if (intent.audioStreamIndex !== null) segment.audioStreamIndex = intent.audioStreamIndex;
+				target = {
+					segment,
+					id: intent.id,
+					volumes: [intent.volume],
+					lastIndex: index,
+					lastFrame: frame,
+					lastSourceFrame: intent.sourceFrame,
+				};
 			}
-			const segment: AudioSegment = {
-				src: intent.src,
-				startFrame: index,
-				trimBeforeFrames: intent.sourceFrame,
-				durationInFrames: 0,
-				playbackRate: intent.playbackRate,
-				toneFrequency: intent.toneFrequency,
-				preservePitch: intent.preservePitch,
-				volume: [],
-			};
-			if (intent.audioStreamIndex !== null) segment.audioStreamIndex = intent.audioStreamIndex;
-			const next: Open = {
-				segment,
-				volumes: [intent.volume],
-				lastIndex: index,
-				lastFrame: frame,
-				lastSourceFrame: intent.sourceFrame,
-			};
-			if (current) done.push(current);
-			open.set(key, next);
+			const list = next.get(key);
+			if (list) list.push(target);
+			else next.set(key, [target]);
 		}
+		// Segments nothing continued on this frame are finished.
+		for (const list of open.values()) done.push(...list);
+		open = next;
 	});
-	done.push(...open.values());
+	for (const list of open.values()) done.push(...list);
 	return done
 		.map(({ segment, volumes }) => {
 			const constant = volumes.every((v) => v === volumes[0]);
@@ -94,7 +112,17 @@ export function buildAudioSegments(
 				volume: constant ? (volumes[0] ?? 1) : volumes,
 			};
 		})
-		.sort((a, b) => a.startFrame - b.startFrame || (a.src < b.src ? -1 : a.src > b.src ? 1 : 0));
+		.sort(
+			(a, b) =>
+				a.startFrame - b.startFrame ||
+				(a.src < b.src ? -1 : a.src > b.src ? 1 : 0) ||
+				a.trimBeforeFrames - b.trimBeforeFrames ||
+				volumeOrder(a.volume) - volumeOrder(b.volume),
+		);
+}
+
+function volumeOrder(volume: number | readonly number[]): number {
+	return typeof volume === "number" ? volume : (volume[0] ?? 0);
 }
 
 /** Options of `mixSegments()`. */

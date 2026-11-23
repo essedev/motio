@@ -81,6 +81,57 @@ describe("buildAudioSegments", () => {
 		expect(segments.find((s) => s.volume === 1)?.audioStreamIndex).toBe(1);
 	});
 
+	it("follows overlapping copies of one source by their source position", () => {
+		// Two <Audio src="a.wav"> at offsets 0 and 3: the registry gives both id "0", because their
+		// source positions differ. Each must stay one segment.
+		const intents = new Map(
+			frames(0, 5).map((f) => [
+				f,
+				[
+					intent({ id: "0", sourceFrame: f }),
+					...(f >= 3 ? [intent({ id: "0", sourceFrame: f - 3, volume: 0.6 })] : []),
+				],
+			]),
+		);
+		const segments = buildAudioSegments(frames(0, 5), intents);
+		expect(
+			segments.map((s) => [s.startFrame, s.trimBeforeFrames, s.durationInFrames, s.volume]),
+		).toEqual([
+			[0, 0, 6, 1],
+			[3, 0, 3, 0.6],
+		]);
+	});
+
+	it("keeps copies at the same position apart across frames, by volume order", () => {
+		const intents = new Map(
+			frames(0, 3).map((f) => [
+				f,
+				[intent({ id: "0", sourceFrame: f, volume: 0.2 }), intent({ id: "1", sourceFrame: f })],
+			]),
+		);
+		const segments = buildAudioSegments(frames(0, 3), intents);
+		expect(segments.map((s) => [s.startFrame, s.durationInFrames, s.volume])).toEqual([
+			[0, 4, 0.2],
+			[0, 4, 1],
+		]);
+	});
+
+	it("restarts every iteration of a looped copy next to a continuous one", () => {
+		const intents = new Map(
+			frames(0, 11).map((f) => [
+				f,
+				[intent({ sourceFrame: f }), intent({ sourceFrame: 10 + (f % 4), volume: 0.6 })],
+			]),
+		);
+		const segments = buildAudioSegments(frames(0, 11), intents);
+		expect(segments.map((s) => [s.startFrame, s.trimBeforeFrames, s.durationInFrames])).toEqual([
+			[0, 0, 12],
+			[0, 10, 4],
+			[4, 10, 4],
+			[8, 10, 4],
+		]);
+	});
+
 	it("separates a gap in the source from a pause in the output", () => {
 		const intents = new Map([
 			[0, [intent({ sourceFrame: 0 })]],

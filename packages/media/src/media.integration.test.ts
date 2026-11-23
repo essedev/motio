@@ -239,6 +239,10 @@ describe("audio compositions match Remotion's clicks", () => {
 		{ id: "audio-step", lag: (t) => t >= 1 && t < 1 + LAG_WINDOW_S },
 		// The ramp changes the volume on every frame up to frame 60 (2 s).
 		{ id: "audio-ramp", lag: (t) => t < 2 + LAG_WINDOW_S },
+		// Two copies of one source at different offsets and volumes.
+		{ id: "audio-overlap", lag: () => false },
+		// A trimmed source restarted by a Loop every 20 frames.
+		{ id: "audio-loop", lag: () => false },
 	];
 	for (const c of cases) {
 		it(`${c.id}: click times within 1 ms, peaks within 0.01`, async () => {
@@ -296,6 +300,60 @@ describe("audio compositions match Remotion's clicks", () => {
 		);
 		expect(probe.stdout.trim().split("\n")).toEqual(["video"]);
 	});
+});
+
+describe("audio segments join without seams", () => {
+	// fixtures/media/public/tone.wav is a 997 Hz sine at 0.4: a gap, a repeated sample or a fade
+	// where segments join shows as an error against the exact signal built from the source.
+	const frame = 48000 / 30;
+	let tone = new Float32Array(0);
+	beforeAll(() => {
+		tone = mono(join(FIXTURE, "public/tone.wav"));
+	});
+	const cases: { id: string; expected: (n: number) => number; joins: number[] }[] = [
+		{
+			id: "audio-overlap",
+			expected: (n) => (tone[n] ?? 0) + (n >= 4 * frame ? 0.6 * (tone[n - 4 * frame] ?? 0) : 0),
+			joins: [4 * frame],
+		},
+		{
+			id: "audio-loop",
+			expected: (n) => tone[3 * frame + (n % (20 * frame))] ?? 0,
+			joins: [20 * frame, 40 * frame],
+		},
+	];
+	for (const c of cases) {
+		it(`${c.id}: every sample equals the source placed exactly`, async () => {
+			const inputProps = { src: "tone.wav" };
+			const composition = await selectComposition({ serveUrl, id: c.id, inputProps });
+			const output = join(outDir, `${c.id}-tone.wav`);
+			await renderMedia({
+				serveUrl,
+				composition,
+				codec: "wav",
+				concurrency: 4,
+				inputProps,
+				outputLocation: output,
+			});
+			const got = mono(output);
+			expect(got.length).toBe(composition.durationInFrames * frame);
+			let worst = 0;
+			let worstAt = -1;
+			for (let n = 0; n < got.length; n++) {
+				const e = Math.abs((got[n] ?? 0) - c.expected(n));
+				if (e > worst) {
+					worst = e;
+					worstAt = n;
+				}
+			}
+			const nearJoin = Math.min(...c.joins.map((j) => Math.abs(worstAt - j)));
+			console.log(
+				`${c.id} with a tone: max error ${worst.toExponential(2)} at sample ${worstAt} (${nearJoin} from a join)`,
+			);
+			// 16-bit output: a few quantisation steps; one sample of slip on the tone is about 0.05.
+			expect(worst).toBeLessThan(2e-4);
+		});
+	}
 });
 
 /** Every sample of the first audio stream, as 32-bit floats. */
