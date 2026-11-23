@@ -2,6 +2,12 @@
 
 Progress log, newest first. One entry per unit of work: what changed, what was measured, what is next.
 
+## 2026-11-23: AV1 output and the optional pinned FFmpeg
+
+- `av1` renders (D-064): SVT-AV1 3.0 or later, else libaom, else an older SVT-AV1; CRF 0 to 63 (30), 8- and 10-bit 4:2:0, CRF 0 lossless, chunks in WebM. Frame stamps exact on macOS (SVT-AV1 4.2.0) and in the pinned image (libaom 3.12.1, because its SVT-AV1 2.3.0 mis-encodes blocks of the fixture and has no lossless mode). D-037's claim that Homebrew's FFmpeg has no AV1 encoder corrected.
+- `@motiojs/ffmpeg` (D-065): a pinned FFmpeg 8.1.3 with x264, x265, SVT-AV1, libvpx, dav1d, Opus, LAME and Mbed TLS, downloaded on first use or with `motio ffmpeg ensure`, verified by size, SHA-256 and a run of both binaries, installed with one atomic rename. Resolution order everywhere: option, `MOTIO_FFMPEG`, the package, `PATH`; `doctor` and `motio render --json` name the source.
+- `tools/ffmpeg-build/` and `.github/workflows/ffmpeg-build.yml`: pinned, verified sources; static Linux builds in a pinned Alpine image; macOS arm64 native and x86_64 cross-compiled; archives built here for darwin-arm64, darwin-x64, linux-arm64 and linux-x64 (under emulation). Nothing published: the author creates the repository, sets the release owner, runs the workflow, updates the manifest digests, and has the GPL setup reviewed.
+
 ## 2026-11-23: Rive, transcription, Skia assessed; autonomous work done
 
 - `@motiojs/rive` (D-061): 26 of 26 fixture stills identical to Remotion's, frame-exact independently of render order.

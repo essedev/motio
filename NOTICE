@@ -21,3 +21,7 @@ Third-party assets included in this repository, unchanged:
 - fixtures/rive/public/truck.riv and look.riv: example files of the Rive web runtime, from
   https://github.com/rive-app/rive-wasm (wasm/examples/parcel_example), Copyright (c) 2020-2021
   Rive, MIT licence.
+
+FFmpeg binaries: this repository contains no FFmpeg binary. The optional @motiojs/ffmpeg package
+downloads GPL-licensed FFmpeg builds produced by tools/ffmpeg-build/ and published with their
+complete sources and licence texts; see packages/ffmpeg/NOTICE.

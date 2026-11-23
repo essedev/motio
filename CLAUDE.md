@@ -1,6 +1,6 @@
 # Motio
 
-Open-source (Apache-2.0) framework for making videos with React, compatible with Remotion's documented API. Renders in a pinned headless Chrome, captures frame by frame, encodes with the system FFmpeg. Public repository: all prose in English.
+Open-source (Apache-2.0) framework for making videos with React, compatible with Remotion's documented API. Renders in a pinned headless Chrome, captures frame by frame, encodes with the system FFmpeg or the optional pinned build of `@motiojs/ffmpeg` (D-065). Public repository: all prose in English.
 
 Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md` (milestones and done criteria), `docs/DECISIONS.md`, `docs/CONVENTIONS.md`.
 
@@ -30,4 +30,6 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 
 - `chrome-headless-shell` is pinned (158.0.8127.36) and cached in `~/.cache/motio/browsers`.
 - React must be deduplicated in user bundles (`resolve.dedupe`), or aliased packages load a second React.
+- FFmpeg resolution: option, `MOTIO_FFMPEG`, `@motiojs/ffmpeg` if installed, `PATH`. The package is found by walking `node_modules`, never `require.resolve`: `pnpm exec` sets `NODE_PATH` to the hoisted store, where this workspace's own `@motiojs/ffmpeg` is visible.
+- `tools/ffmpeg-build/` builds the GPL FFmpeg archives (not part of `make check`); archives go to its ignored `out/`, never into git. Do not edit `build.sh` while a build runs: `sh` reads it as it goes.
 - The clock shim never patches `MessageChannel`, `queueMicrotask` or `Promise`: React's scheduler depends on them.

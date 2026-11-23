@@ -59,7 +59,8 @@ A pnpm monorepo, ESM-only, TypeScript strict throughout, Node 22 or later for No
 | `@motiojs/audio` | Node | The audio mixer: decodes sources with FFmpeg, mixes in float with sample-accurate offsets and per-frame volume, encodes once (D-014). |
 | `@motiojs/video-frames` | Node | Source-frame selection from packet timestamps and exact extraction with FFmpeg, batched and cached (D-015). |
 | `@motiojs/renderer` | Node | `bundle`, `getCompositions`, `selectComposition`, `renderMedia`, `renderStill`, `renderFrames`, `stitchFramesToVideo`. Owns the browser pool, the frame driver, capture, the media server, the audio mixer and the encoder. |
-| `@motiojs/cli` | Node | `render`, `still`, `frames` (contact sheets), `compositions`, `dev`, `doctor`, `check determinism`, `check flicker`, `benchmark`, `browser ensure`. Positional forms and flags of the Remotion CLI; every command takes `--json`. Exit codes: 0 success, 1 error, 2 invalid arguments, 3 a check found problems. |
+| `@motiojs/cli` | Node | `render`, `still`, `frames` (contact sheets), `compositions`, `dev`, `doctor`, `check determinism`, `check flicker`, `benchmark`, `browser ensure`, `ffmpeg ensure`. Positional forms and flags of the Remotion CLI; every command takes `--json`. Exit codes: 0 success, 1 error, 2 invalid arguments, 3 a check found problems. |
+| `@motiojs/ffmpeg` | Node, optional | A pinned FFmpeg and ffprobe per platform, downloaded on first use and verified by SHA-256; GPL binaries published with their sources (D-065). Never a dependency of the renderer, which finds it when the project installs it. |
 | `@motiojs/compat` | build | The alias plugin mapping `remotion` and `@remotion/*` to our packages, build-time failures for unsupported packages, `Config` for `remotion.config.ts`, and the compatibility report. |
 | `@motiojs/distributed` | Node | Chunk planning, `renderDistributed()`, assembly, behind the `ChunkWorker` interface. `LocalChunkWorker` (child processes) today, adapters for AWS Lambda, Cloud Run and Kubernetes later. |
 | Feature packages | browser | `transitions`, `captions`, `shapes`, `paths`, `noise`, `motion-blur`, `layout-utils`, `three`, `google-fonts`, `zod-types`, `tailwind`, later `lottie`, `gif`, `skia`, `rive`. Each mirrors the Remotion package of the same name. |
@@ -116,6 +117,7 @@ Shim rules: installed before any page script; never patches `MessageChannel`, `q
 - **Format.** PNG for alpha and for lossless output; JPEG for opaque output. The default (`jpeg`, quality 80, as in Remotion) is confirmed by the capture benchmark.
 - **Background.** `Emulation.setDefaultBackgroundColorOverride`: transparent black for PNG captures with alpha, opaque black for JPEG, so what a composition leaves undrawn is black in an opaque video, as in Remotion (D-050).
 - **Codecs.** One table maps each `codec` to its encoder, container, CRF range, pixel formats and audio codecs (D-037): H.264 (MP4, MKV, TS), H.265, VP8 and VP9 (WebM, alpha with `yuva420p`), AV1 (MP4, SVT-AV1 or libaom, D-064), ProRes (MOV, alpha with 4444), GIF (palette built from the whole clip in a separate pass). Image sequences are written by `renderFrames`.
+- **FFmpeg.** The `ffmpegExecutable` option, else `MOTIO_FFMPEG`, else the pinned build of `@motiojs/ffmpeg` when installed, else `ffmpeg` on `PATH` (D-065). Every render checks the version (5.1 or later, D-051) and the encoders its output needs before any page opens.
 - **Transport.** Frames stream to FFmpeg's stdin (`image2pipe`) through a reorder buffer, with backpressure. No frame files on disk except for `renderFrames`.
 - **Pages.** A session keeps a pool of browsers; by default a render's pages are spread over two browsers (more above concurrency 8, four pages each), `pagesPerBrowser` chooses another layout (D-042). A page is recycled every N frames (a new tab on the same browser) and on crash; a crashed page's frames are retried on a fresh page, on a new browser if the browser crashed.
 
@@ -176,4 +178,4 @@ Milestones, with measurable done criteria, live in `ROADMAP.md`. Order: spike, M
 
 ## Decisions
 
-Recorded with their reasons in `DECISIONS.md`: licence (Apache-2.0), FFmpeg as a system dependency, Vite as bundler, the name, the time model, the capture defaults, the tooling.
+Recorded with their reasons in `DECISIONS.md`: licence (Apache-2.0), FFmpeg as a system dependency with an optional pinned build (D-002, D-065), Vite as bundler, the name, the time model, the capture defaults, the tooling.
