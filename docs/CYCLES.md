@@ -2,6 +2,13 @@
 
 Progress log, newest first. One entry per unit of work: what changed, what was measured, what is next.
 
+## 2026-11-23: Rive, transcription, Skia assessed; autonomous work done
+
+- `@motiojs/rive` (D-061): 26 of 26 fixture stills identical to Remotion's, frame-exact independently of render order.
+- Transcription (D-062): `@motiojs/install-whisper-cpp`, `@motiojs/openai-whisper`, `@motiojs/elevenlabs`; pure conversions equal to the published packages on 2,188 inputs; whisper.cpp end to end identical on 13 option sets (opt-in test, `MOTIO_WHISPER_CPP=1`). No paid API called.
+- `@remotion/skia` assessed (D-063): bundling works with three bundler changes, but deterministic capture needs a readiness rule for React Native Skia resources that Remotion does not define; stubbed until the author decides.
+- `make check` green with 1440 tests. What remains needs the author: M4 project, cloud spending for Lambda and Cloud Run, the Skia readiness rule, the effect pipeline scope (D-057), D-009 confirmation, the history rewrite and a legal review before publishing.
+
 ## 2026-11-23: second review, legal hygiene, Tier 2 and Tier 3 packages
 
 - Second adversarial review (M2, M3, performance): ten defects confirmed and fixed with tests, among them overlapping copies of one audio source split into one-frame segments, unbounded audio decoding, an uncaught EPIPE, and opaque captures that were white where Remotion's are black (D-050); FFmpeg minimum raised to 5.1 (D-051).
