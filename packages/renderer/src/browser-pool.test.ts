@@ -34,8 +34,10 @@ function launcher() {
 }
 
 describe("defaultPagesPerBrowser", () => {
-	it("gives each page its own browser up to concurrency 4, then two pages per browser", () => {
-		expect([1, 2, 4, 5, 8, 16].map(defaultPagesPerBrowser)).toEqual([1, 1, 1, 2, 2, 2]);
+	it("spreads the pages over two browsers, then over browsers of four pages", () => {
+		expect([1, 2, 3, 4, 5, 8, 12, 16].map(defaultPagesPerBrowser)).toEqual([
+			1, 1, 2, 2, 3, 4, 4, 4,
+		]);
 	});
 });
 

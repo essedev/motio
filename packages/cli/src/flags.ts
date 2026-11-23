@@ -34,7 +34,7 @@ export const PROJECT_FLAGS = {
 	"pages-per-browser": {
 		type: "string",
 		description:
-			"Motio: pages sharing one browser process (default 1 up to concurrency 4, else 2).",
+			"Motio: pages sharing one browser process (default: the pages spread over two browsers).",
 	},
 	width: { type: "string", description: "Override the composition width." },
 	height: { type: "string", description: "Override the composition height." },

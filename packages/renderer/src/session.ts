@@ -52,9 +52,9 @@ export interface BrowserSessionOptions {
 	 */
 	captureMethod?: CaptureMethodOption | null;
 	/**
-	 * Motio extension: pages sharing one browser process (D-042). Default one up to concurrency 4
-	 * and two above, which measures fastest; 1 gives every page its own process, which confines a
-	 * browser crash to one page.
+	 * Motio extension: pages sharing one browser process (D-042). By default the pages are spread
+	 * over two browsers (more above concurrency 8, four pages each), which measures fastest; 1
+	 * gives every page its own process, which confines a browser crash to one page.
 	 */
 	pagesPerBrowser?: number | null;
 }

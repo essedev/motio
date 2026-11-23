@@ -143,8 +143,8 @@ describe("errors", () => {
 		);
 		expect(err.code).toBe("E_CANCELLED");
 		expect(err.message).toBe("renderMedia() got cancelled");
-		// Four browsers and FFmpeg were running.
-		expect(peak).toBeGreaterThanOrEqual(5);
+		// Two browsers (four pages, D-042) and FFmpeg were running.
+		expect(peak).toBeGreaterThanOrEqual(3);
 		expect(childPids().filter((pid) => !before.has(pid))).toEqual([]);
 		expect(existsSync(out)).toBe(false);
 		expect(readdirSync(dir).filter((f) => f.includes("cancelled"))).toEqual([]);

@@ -230,10 +230,10 @@ describe("renderMedia", () => {
 		});
 		expect(killed).toBe(true);
 		// A recycled page is a new tab, with its own renderer process, on the same browser (D-042):
-		// 240 frames on 3 pages recycled every 25 frames open at least 9 pages, and the crash
-		// replaced one of the 3 browsers.
+		// 240 frames on 3 pages recycled every 25 frames open at least 9 pages. The 3 pages share 2
+		// browsers; the crash took the pages of one with it, and a third browser replaced it.
 		expect(renderers.size).toBeGreaterThanOrEqual(9);
-		expect(browsers.size).toBe(4);
+		expect(browsers.size).toBe(3);
 		const { frames, mismatches } = await stampMismatches(
 			out,
 			(i) => i,
@@ -272,12 +272,13 @@ describe("browser pool layout (D-042)", () => {
 		return peak;
 	}
 
-	it("gives each page its own browser up to concurrency 4", async () => {
-		expect(await peakBrowsers({ concurrency: 4 })).toBe(4);
+	it("spreads the pages over two browsers by default", async () => {
+		expect(await peakBrowsers({ concurrency: 4 })).toBe(2);
+		expect(await peakBrowsers({ concurrency: 1 })).toBe(1);
 	});
 
 	it("shares browsers between pages as pagesPerBrowser asks", async () => {
-		expect(await peakBrowsers({ concurrency: 4, pagesPerBrowser: 2 })).toBe(2);
+		expect(await peakBrowsers({ concurrency: 4, pagesPerBrowser: 1 })).toBe(4);
 		expect(await peakBrowsers({ concurrency: 3, pagesPerBrowser: 4 })).toBe(1);
 	});
 });

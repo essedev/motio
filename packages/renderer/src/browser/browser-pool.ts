@@ -1,14 +1,15 @@
 import type { Browser } from "puppeteer-core";
 
 /**
- * Pages sharing one browser process when the caller does not choose (D-042): one up to
- * concurrency 4, two above. Measured at 1080p on 10 CPU threads: at 4 pages, 4 browsers capture
- * about 265 fps against 230 for 2 browsers of 2 and 140 for 1 browser of 4; at 8 pages, 4 browsers
- * of 2 about 330 fps against 165 for 8 browsers and 153 for 1 browser of 8. A browser serialises
- * its pages' frames through one compositor, and every extra browser process costs CPU.
+ * Pages sharing one browser process when the caller does not choose (D-042): the pages are spread
+ * over two browsers, and over more of four pages each above concurrency 8. One browser draws its
+ * pages' frames through one compositor, which saturates; every further browser process costs CPU
+ * the encoder needs. Measured end to end at 1080p on 10 CPU threads, two browsers render fastest at
+ * concurrency 2, 4, 6 and 8 (at 8: 0.73 s against 0.83 s with four browsers of two and 1.09 s with
+ * eight browsers).
  */
 export function defaultPagesPerBrowser(concurrency: number): number {
-	return concurrency <= 4 ? 1 : 2;
+	return Math.max(1, Math.min(4, Math.ceil(concurrency / 2)));
 }
 
 /** A page slot on a pooled browser. */
