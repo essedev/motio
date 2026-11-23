@@ -65,6 +65,9 @@
 			"path": "packages/shapes"
 		},
 		{
+			"path": "packages/media"
+		},
+		{
 			"path": "packages/preview"
 		}
 	]

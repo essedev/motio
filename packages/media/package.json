@@ -1,0 +1,37 @@
+{
+	"name": "@motiojs/media",
+	"version": "0.0.0",
+	"description": "Video and audio components: the media of remotion and @remotion/media, frame-exact in renders",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@motiojs/bundler": "workspace:*",
+		"@motiojs/renderer": "workspace:*",
+		"@motiojs/testing": "workspace:*",
+		"@motiojs/video-frames": "workspace:*",
+		"@types/node": "^26.6.6",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"jsdom": "^31.0.1",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0"
+	}
+}
