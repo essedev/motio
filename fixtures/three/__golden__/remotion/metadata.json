@@ -1,0 +1,22 @@
+{
+	"remotion": "4.0.545",
+	"gl": "swangle",
+	"compositions": {
+		"three": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"three-timing": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 30,
+			"defaultProps": {},
+			"props": {}
+		}
+	}
+}

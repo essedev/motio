@@ -1,14 +1,19 @@
 // Renders fixtures/compositions with the published Remotion at the pinned version and writes
 // reference stills plus resolved composition metadata. Uses public APIs only (clean room:
-// never open files under node_modules). Run: pnpm record [fixture], fixture defaults to
-// "compositions" (any folder under fixtures/ with src/index.ts, public/ and frames.json).
+// never open files under node_modules). Run: pnpm record [fixture] [--gl=<renderer>], fixture
+// defaults to "compositions" (any folder under fixtures/ with src/index.ts, public/ and
+// frames.json). --gl sets chromiumOptions.gl: WebGL fixtures record with --gl=swangle, the
+// software renderer Motio uses by default, so both sides rasterise WebGL the same way.
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { bundle } from "@remotion/bundler";
 import { getCompositions, renderStill, selectComposition } from "@remotion/renderer";
 
 const here = import.meta.dirname;
-const fixtureName = process.argv[2] ?? "compositions";
+const args = process.argv.slice(2);
+const fixtureName = args.find((a) => !a.startsWith("--")) ?? "compositions";
+const gl = args.find((a) => a.startsWith("--gl="))?.slice("--gl=".length);
+const chromiumOptions = gl ? { gl: gl as "swangle" } : {};
 const fixture = resolve(here, "../../fixtures", fixtureName);
 const work = join(here, `.work-${fixtureName}`);
 const out = join(fixture, "__golden__/remotion");
@@ -27,12 +32,16 @@ const serveUrl = await bundle({
 	entryPoint: join(work, "src/index.ts"),
 	publicDir: join(work, "public"),
 });
-const comps = await getCompositions(serveUrl, { inputProps: {} });
-const metadata: Record<string, unknown> = { remotion: version, compositions: {} };
+const comps = await getCompositions(serveUrl, { inputProps: {}, chromiumOptions });
+const metadata: Record<string, unknown> = {
+	remotion: version,
+	...(gl ? { gl } : {}),
+	compositions: {},
+};
 rmSync(out, { recursive: true, force: true });
 
 for (const { id } of comps) {
-	const composition = await selectComposition({ serveUrl, id, inputProps: {} });
+	const composition = await selectComposition({ serveUrl, id, inputProps: {}, chromiumOptions });
 	(metadata.compositions as Record<string, unknown>)[id] = {
 		width: composition.width,
 		height: composition.height,
@@ -52,6 +61,7 @@ for (const { id } of comps) {
 			imageFormat: "png",
 			output: join(out, id, `${String(frame).padStart(4, "0")}.png`),
 			inputProps: {},
+			chromiumOptions,
 		});
 	}
 	console.log(`${id}: ${list.length} stills`);

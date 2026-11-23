@@ -49,17 +49,19 @@ for (const name of names) {
 		entryPoint: join(work, entry),
 		...(hasPublic ? { publicDir: join(work, "public") } : {}),
 	});
-	const comps = await getCompositions(serveUrl, { inputProps: {} });
+	const chromiumOptions = template.gl ? { gl: template.gl as "swangle" } : {};
+	const comps = await getCompositions(serveUrl, { inputProps: {}, chromiumOptions });
 	const out = join(goldenRoot, name);
 	rmSync(out, { recursive: true, force: true });
 	const metadata = {
 		remotion: version,
 		template: { repository: template.repository, commit: template.commit },
 		scale: SCALE,
+		...(template.gl ? { gl: template.gl } : {}),
 		compositions: {} as Record<string, unknown>,
 	};
 	for (const { id } of comps) {
-		const composition = await selectComposition({ serveUrl, id, inputProps: {} });
+		const composition = await selectComposition({ serveUrl, id, inputProps: {}, chromiumOptions });
 		metadata.compositions[id] = {
 			width: composition.width,
 			height: composition.height,
@@ -79,6 +81,7 @@ for (const name of names) {
 				imageFormat: "png",
 				output: join(out, id, `${String(frame).padStart(4, "0")}.png`),
 				inputProps: {},
+				chromiumOptions,
 			});
 		}
 		console.log(`${name} ${id}: ${frames.length} stills`);

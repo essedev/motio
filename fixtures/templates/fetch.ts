@@ -16,6 +16,8 @@ export interface TemplateEntry {
 	stills?: Record<string, number[]>;
 	/** The template loads fonts from the internet while rendering. */
 	network?: boolean;
+	/** `chromiumOptions.gl` both renderers use (WebGL templates: `swangle`, Motio's default). */
+	gl?: string;
 	/** Motio symbols the template needs that are not implemented yet. */
 	blockedBy?: string[];
 	/** `<composition>/<frame>` to the reason that still does not match Remotion's yet. */

@@ -16,6 +16,7 @@
 		"record:exports": "node record-exports.ts"
 	},
 	"dependencies": {
+		"@react-three/fiber": "9.2.0",
 		"@remotion/bundler": "4.0.545",
 		"@remotion/fonts": "4.0.545",
 		"@remotion/google-fonts": "4.0.545",
@@ -26,13 +27,16 @@
 		"@remotion/paths": "4.0.545",
 		"@remotion/renderer": "4.0.545",
 		"@remotion/shapes": "4.0.545",
+		"@remotion/three": "4.0.545",
 		"@remotion/transitions": "4.0.545",
 		"@remotion/zod-types": "4.0.545",
 		"esbuild": "0.28.1",
+		"mediabunny": "1.66.0",
 		"puppeteer-core": "25.18.1",
 		"react": "19.3.1",
 		"react-dom": "19.3.1",
 		"remotion": "4.0.545",
+		"three": "0.178.0",
 		"zod": "^4.6.7"
 	}
 }
