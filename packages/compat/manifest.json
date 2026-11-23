@@ -342,117 +342,140 @@
 				"interpolateStyles": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"makeTransform": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"matrix": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"matrix3d": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"perspective": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"rotate": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"rotate3d": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"rotateX": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"rotateY": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"rotateZ": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"scale": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"scale3d": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"scaleX": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"scaleY": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"scaleZ": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"skew": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"skewX": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"skewY": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"translate": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"translate3d": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"translateX": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"translateY": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				},
 				"translateZ": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Equal to the oracle over the recorded grids (D-047)."
 				}
 			}
 		},

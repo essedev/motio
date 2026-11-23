@@ -26,6 +26,9 @@
 			"path": "packages/noise"
 		},
 		{
+			"path": "packages/animation-utils"
+		},
+		{
 			"path": "packages/audio"
 		},
 		{

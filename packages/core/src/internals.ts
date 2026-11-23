@@ -37,6 +37,7 @@ export {
 	type SharedAudioPool,
 	useMediaPlayback,
 } from "./media/playback-context.js";
+export { parseColor, type Rgba8 } from "./parse-color.js";
 export { getPrefetchedUrl } from "./prefetch.js";
 export {
 	type ClosedHandle,

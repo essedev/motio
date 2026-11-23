@@ -243,6 +243,8 @@ importers:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
 
+  fixtures/motion-blur: {}
+
   fixtures/protocol-page:
     dependencies:
       react:
@@ -276,6 +278,9 @@ importers:
 
   fixtures/templates:
     dependencies:
+      '@motiojs/animation-utils':
+        specifier: workspace:*
+        version: link:../../packages/animation-utils
       '@motiojs/captions':
         specifier: workspace:*
         version: link:../../packages/captions
@@ -320,6 +325,19 @@ importers:
         version: 4.6.7
 
   fixtures/three: {}
+
+  packages/animation-utils:
+    dependencies:
+      '@motiojs/core':
+        specifier: workspace:*
+        version: link:../core
+      react:
+        specifier: ^18.0.0 || ^19.0.0
+        version: 19.3.1
+    devDependencies:
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
 
   packages/audio:
     devDependencies:
@@ -582,6 +600,37 @@ importers:
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+
+  packages/motion-blur:
+    dependencies:
+      '@motiojs/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@motiojs/bundler':
+        specifier: workspace:*
+        version: link:../bundler
+      '@motiojs/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      motio:
+        specifier: workspace:*
+        version: link:../motio
       react:
         specifier: 19.3.1
         version: 19.3.1
