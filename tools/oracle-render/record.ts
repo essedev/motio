@@ -4,6 +4,8 @@
 // defaults to "compositions" (any folder under fixtures/ with src/index.ts, public/ and
 // frames.json). --gl sets chromiumOptions.gl: WebGL fixtures record with --gl=swangle, the
 // software renderer Motio uses by default, so both sides rasterise WebGL the same way.
+// --image-format=jpeg records the stills as JPEG (quality 80, the video default) into
+// __golden__/remotion-jpeg instead, without metadata: the reference for the default capture path.
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { bundle } from "@remotion/bundler";
@@ -14,9 +16,10 @@ const args = process.argv.slice(2);
 const fixtureName = args.find((a) => !a.startsWith("--")) ?? "compositions";
 const gl = args.find((a) => a.startsWith("--gl="))?.slice("--gl=".length);
 const chromiumOptions = gl ? { gl: gl as "swangle" } : {};
+const imageFormat = args.includes("--image-format=jpeg") ? "jpeg" : "png";
 const fixture = resolve(here, "../../fixtures", fixtureName);
 const work = join(here, `.work-${fixtureName}`);
-const out = join(fixture, "__golden__/remotion");
+const out = join(fixture, imageFormat === "jpeg" ? "__golden__/remotion-jpeg" : "__golden__/remotion");
 const version = JSON.parse(readFileSync(join(here, "package.json"), "utf8")).dependencies
 	.remotion as string;
 const frames = JSON.parse(readFileSync(join(fixture, "frames.json"), "utf8")) as Record<
@@ -58,13 +61,16 @@ for (const { id } of comps) {
 			composition,
 			serveUrl,
 			frame,
-			imageFormat: "png",
-			output: join(out, id, `${String(frame).padStart(4, "0")}.png`),
+			imageFormat,
+			...(imageFormat === "jpeg" ? { jpegQuality: 80 } : {}),
+			output: join(out, id, `${String(frame).padStart(4, "0")}.${imageFormat}`),
 			inputProps: {},
 			chromiumOptions,
 		});
 	}
 	console.log(`${id}: ${list.length} stills`);
 }
-writeFileSync(join(out, "metadata.json"), `${JSON.stringify(metadata, null, "\t")}\n`);
+if (imageFormat === "png") {
+	writeFileSync(join(out, "metadata.json"), `${JSON.stringify(metadata, null, "\t")}\n`);
+}
 rmSync(work, { recursive: true, force: true });
