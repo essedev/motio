@@ -651,6 +651,23 @@
 				}
 			}
 		},
+		"@remotion/elevenlabs": {
+			"tier": 3,
+			"symbols": {
+				"detectElevenLabsTranscriptFormat": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Equal to the oracle over 99 key combinations (D-062)."
+				},
+				"elevenLabsTranscriptToCaptions": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Equal to the oracle over 555 inputs (captions with key order, failing inputs, class, field named); never calls the API (D-062)."
+				}
+			}
+		},
 		"@remotion/fonts": {
 			"tier": 1,
 			"symbols": {
@@ -715,6 +732,61 @@
 				"loadVariableFont": {
 					"kind": "value",
 					"tier": 1,
+					"status": "supported"
+				}
+			}
+		},
+		"@remotion/install-whisper-cpp": {
+			"tier": 3,
+			"symbols": {
+				"convertToCaptions": {
+					"kind": "value",
+					"tier": 3,
+					"status": "stubbed",
+					"note": "Deprecated, reference page gone: throws, pointing to toCaptions() (D-062)."
+				},
+				"downloadWhisperModel": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Same Hugging Face URL and file name as recorded; downloads to a temporary name first (D-062)."
+				},
+				"installWhisperCpp": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Same git and make commands as recorded; Windows (where Remotion downloads a binary) throws (D-062)."
+				},
+				"OnProgress": {
+					"kind": "type",
+					"tier": 3,
+					"status": "supported"
+				},
+				"toCaptions": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Equal to the oracle over 83 outputs, a real jfk.wav transcription included (D-062)."
+				},
+				"ToCaptionsOutput": {
+					"kind": "type",
+					"tier": 3,
+					"status": "supported"
+				},
+				"transcribe": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Same whisper.cpp arguments as recorded for 13 option sets and the same JSON end to end (1.5.5, tiny.en); the WAVE sample rate is checked before running; output goes to a temporary folder, not the working directory (D-062)."
+				},
+				"TranscribeOnProgress": {
+					"kind": "type",
+					"tier": 3,
+					"status": "supported"
+				},
+				"TranscriptionJson": {
+					"kind": "type",
+					"tier": 3,
 					"status": "supported"
 				}
 			}
@@ -931,6 +1003,28 @@
 				"noise4D": {
 					"kind": "value",
 					"tier": 2,
+					"status": "supported"
+				}
+			}
+		},
+		"@remotion/openai-whisper": {
+			"tier": 3,
+			"symbols": {
+				"isOpenAiWhisperTranscript": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Equal to the oracle over 407 inputs (D-062)."
+				},
+				"openAiWhisperApiToCaptions": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Equal to the oracle over 1,044 inputs, punctuation matching and segment fallback included; never calls the API (D-062)."
+				},
+				"OpenAiToCaptionsOutput": {
+					"kind": "type",
+					"tier": 3,
 					"status": "supported"
 				}
 			}
@@ -1395,6 +1489,28 @@
 					"kind": "value",
 					"tier": 2,
 					"status": "supported"
+				}
+			}
+		},
+		"@remotion/skia": {
+			"tier": 3,
+			"symbols": {
+				"SkiaCanvas": {
+					"kind": "value",
+					"tier": 3,
+					"status": "stubbed",
+					"note": "Not implemented: @motiojs/skia does not exist yet, so the compat plugin fails the build with a message pointing to D-063."
+				}
+			}
+		},
+		"@remotion/skia/enable": {
+			"tier": 3,
+			"symbols": {
+				"enableSkia": {
+					"kind": "value",
+					"tier": 3,
+					"status": "stubbed",
+					"note": "Not implemented: @motiojs/skia does not exist yet, so the compat plugin fails the build with a message pointing to D-063."
 				}
 			}
 		},

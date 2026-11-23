@@ -80,10 +80,15 @@ export const PACKAGE_MAPPINGS: readonly PackageMapping[] = [
 	},
 	featurePackage("lottie", 3, "after v1"),
 	featurePackage("gif", 3, "after v1"),
-	featurePackage("skia", 3, "after v1"),
+	{
+		...featurePackage("skia", 3, "after v1"),
+		alternative:
+			"not implemented yet: React Native Skia needs bundler support and a readiness rule Motio does not have (docs/DECISIONS.md D-063); draw with a <canvas> or @motiojs/three meanwhile",
+	},
 	featurePackage("rive", 3, "after v1"),
 	featurePackage("install-whisper-cpp", 3, "after v1"),
 	featurePackage("openai-whisper", 3, "after v1"),
+	featurePackage("elevenlabs", 3, "after v1"),
 	featurePackage("whisper-web", 3, "after v1"),
 	featurePackage("web-renderer", 3, "after v1"),
 	featurePackage("preload", 3, "after v1"),

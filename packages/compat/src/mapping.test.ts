@@ -74,4 +74,11 @@ describe("helpers", () => {
 		expect(message).toContain("@motiojs/distributed");
 		expect(message).toContain("Tier 2");
 	});
+
+	it("points @remotion/skia, mapped to a package that does not exist yet, to its decision", () => {
+		const resolution = mapSpecifier("@remotion/skia/enable");
+		if (resolution.kind !== "mapped") throw new Error("expected mapped");
+		expect(resolution.target).toBe("@motiojs/skia/enable");
+		expect(describeUnavailable("@remotion/skia/enable", resolution.mapping)).toContain("D-063");
+	});
 });
