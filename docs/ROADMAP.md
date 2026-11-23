@@ -4,7 +4,7 @@ A milestone is done only when every criterion below holds and `make check` is gr
 
 ## Current state
 
-M1 done (D-024), M2 done (D-049), M3 done, performance done (D-044); a second adversarial review's ten findings are fixed (D-050, D-051). Since D-066 work is chosen by what makes Motio complete on its own, not by the gap with Remotion: compatibility is pinned at the 4.0.545 API, guarded by the existing tests and updated on a schedule. Next: M6 (a standalone tool). Left and waiting on the author: M4 (a production project), the cloud adapters of M5 (a use case and approved spending). Before publishing: rewrite the history that still contains Remotion's template renders, removed from the tree on 2026-11-23.
+M1 done (D-024), M2 done (D-049), M3 done, performance done (D-044); a second adversarial review's ten findings are fixed (D-050, D-051). Since D-066 work is chosen by what makes Motio complete on its own, not by the gap with Remotion: compatibility is pinned at the 4.0.545 API, guarded by the existing tests and updated on a schedule. M6 (a standalone tool) done. Left and waiting on the author: M4 (a production project), the cloud adapters of M5 (a use case and approved spending). Before publishing: rewrite the history that still contains Remotion's template renders, removed from the tree on 2026-11-23.
 
 - M2: transitions (SSIM at least 0.9994 on the fixture), captions, shapes, paths, noise, layout-utils, zod-types, google-fonts, fonts; the compat alias, `Config`, Tailwind setup and the symbol manifest. BeginFrame capture on Linux (D-033, identical pixels), opt-in since screenshots caught up (D-043). Five official templates build unmodified with Remotion's metadata (D-025), including Hello World after `Interactive`, `Easing.spring` and non-numeric `interpolate` outputs landed (D-034 to D-036). Every template still is identical to Remotion's render since D-041 closed the transparent-edge mismatch (D-031, D-038). Every Tier 1 symbol of the manifest is supported or stubbed (D-045). All seven official templates build unmodified and every still is identical to Remotion's, Three with `@motiojs/three` (D-046) and TikTok with `@motiojs/animation-utils` (D-047). `fixtures/features` is compared in full: shapes, paths and noise are pixel-identical to Remotion's stills, transitions above 44 dB. The twelve HTML-in-canvas presentations and `makeHtmlInCanvasPresentation()` draw through Chrome's HTML-in-canvas API on Remotion's lifecycle (D-058): against `fixtures/transitions-canvas` all within the M1 thresholds, nine identical on every frame, blurSlide at least 50 dB; `motionBlur` on transitions is not applied yet.
 - M3: every criterion has a committed test. The media components (`@motiojs/media`, D-029), the renderer's media service, audio pass, audio muxing and audio-only codecs (D-030), the Player's media playback with shared audio tags, `motio dev` (D-026), media-utils. Measured: every `fixtures/media` video composition shows the expected source frames exactly; audio clicks land within 0.000 ms of Remotion's with peaks within 0.004 outside the volume-lag window (the time-stretched case within 2 ms); a Video in the Player follows the real clock with at most 0.044 s of drift.
@@ -29,7 +29,7 @@ Done when:
 - Pure functions equal the oracle: strings and integers exact, floats within 1e-9 relative, or listed as approximated in `packages/core/COMPAT.md` with the measured error.
 - Frame stamps: zero mismatches over 3,000 frames at concurrency 1, 4 and 8 in random order.
 - React fixtures pass: `delayRender` in an effect, `setState` in an effect, `useDeferredValue`, lazy plus `Suspense`.
-- Determinism: identical decoded frame hashes across 2 runs, 2 orders and 3 concurrencies on the same machine.
+- Determinism: every frame of every run has the decoded hash of a reference rendered with a new page per frame (D-074; until then runs were only compared with each other, which missed D-072). Runs: descending at concurrency 1, ascending and random at concurrency 1, 4 and 8. Image formats: PNG and JPEG. Compositions: ones that move below Blink's raster tolerance (a settling spring, scale from 0, steps below 1e-4, subpixel translation, `will-change: transform`). In the pinned image the BeginFrame path is held to the same reference at concurrency 1.
 - Colour: palette round trip within 2 code values; `ffprobe` shows bt709 and tv range, the exact frame count and fps.
 - Oracle stills: the fixture compositions match Remotion's render of the same code with mean SSIM at least 0.99 and PSNR at least 40 dB, worst frame SSIM at least 0.97, on each capture path: PNG stills against Remotion's PNG stills, and JPEG stills (the default video capture) against Remotion's JPEG stills (D-050).
 - Errors: a readiness timeout reports its code, label and frame; every `--json` output validates against its schema.
@@ -80,7 +80,7 @@ Done when:
 - [x] Alpha: ProRes 4444 and lossless VP9 within 1 code value of the PNG frames; lossy VP9 within the error D-019 measured for its CRF on smooth alpha (hard moving edges bounded as measured, D-037).
 - The Lambda adapter passes an end-to-end test. Not started: it needs cloud spending; the `ChunkWorker` seam is ready (D-039).
 
-## M6: a standalone tool (D-066)
+## M6: a standalone tool (done, D-066)
 
 Scope: what someone needs to make videos with Motio without knowing Remotion.
 

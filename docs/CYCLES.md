@@ -2,6 +2,15 @@
 
 Progress log, newest first. One entry per unit of work: what changed, what was measured, what is next.
 
+## 2026-11-24: M6, a standalone tool; deterministic pixels for real
+
+- Direction (D-066): Motio stops chasing parity with Remotion; compatibility is pinned at 4.0.545, guarded by the existing tests and updated on a schedule, and only people entitled to run Remotion record the oracle.
+- M6 done: `motio init` with Motio's own starters and `create-motio` (D-069), the user guide in `docs/guide/` with every sample type-checked, `@motiojs/preload` and `@motiojs/text` with a general `<TextBackground>` that the rounded-text-box preset equals byte for byte on 1,009 inputs (D-070), Node media functions and `openBrowser` (D-068), `<AnimatedImage>` (D-071).
+- A clean-room breach (a research subagent read Remotion's source for `<AnimatedImage>`) led to removing that implementation and rewriting it with an agent that never saw it (D-067, D-071); every brief now repeats the rule.
+- Determinism: a raster reset before each capture fixes pixels that depended on the tab's history (D-072), M1's check now compares every run with a new page per frame and would have caught it (D-074), BeginFrame waits until the page is on screen and runs one page at a time (D-075), a pooled browser that died unnoticed is replaced (D-076), the output extension must fit the codec (D-073). Benchmark criterion still met.
+- Brand: three concepts (Frame, Terminal, Kinetic) in `docs/concepts/` for the site and the logo, waiting for the author's choice.
+- Next: the site in Astro on the chosen direction, promotional material made with Motio, M4 on a production project, a decision on deprecating BeginFrame.
+
 ## 2026-11-23: AV1 output and the optional pinned FFmpeg
 
 - `av1` renders (D-064): SVT-AV1 3.0 or later, else libaom, else an older SVT-AV1; CRF 0 to 63 (30), 8- and 10-bit 4:2:0, CRF 0 lossless, chunks in WebM. Frame stamps exact on macOS (SVT-AV1 4.2.0) and in the pinned image (libaom 3.12.1, because its SVT-AV1 2.3.0 mis-encodes blocks of the fixture and has no lossless mode). D-037's claim that Homebrew's FFmpeg has no AV1 encoder corrected.
