@@ -15,3 +15,9 @@ and licence text in its header:
   Details in packages/paths/NOTICE.
 - @motiojs/transitions: fragment shaders of ten presentations ported from gl-transitions
   (c) 2017-present gl-transitions contributors, MIT. Details in packages/transitions/NOTICE.
+
+Third-party assets included in this repository, unchanged:
+
+- fixtures/rive/public/truck.riv and look.riv: example files of the Rive web runtime, from
+  https://github.com/rive-app/rive-wasm (wasm/examples/parcel_example), Copyright (c) 2020-2021
+  Rive, MIT licence.

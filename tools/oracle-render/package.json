@@ -16,7 +16,8 @@
 		"record:exports": "node record-exports.ts",
 		"record:lottie": "node record-lottie.ts",
 		"record:gif": "node record-gif.ts",
-		"record:light-leaks-starburst": "node record-light-leaks-starburst.ts"
+		"record:light-leaks-starburst": "node record-light-leaks-starburst.ts",
+		"record:rive": "node record-rive.ts"
 	},
 	"dependencies": {
 		"@react-three/fiber": "9.2.0",
@@ -35,6 +36,7 @@
 		"@remotion/noise": "4.0.545",
 		"@remotion/paths": "4.0.545",
 		"@remotion/player": "4.0.545",
+		"@remotion/rive": "4.0.545",
 		"@remotion/renderer": "4.0.545",
 		"@remotion/shapes": "4.0.545",
 		"@remotion/starburst": "4.0.545",

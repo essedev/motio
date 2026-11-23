@@ -1,0 +1,30 @@
+{
+	"remotion": "4.0.545",
+	"gl": "swangle",
+	"compositions": {
+		"rive-truck": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 150,
+			"defaultProps": {},
+			"props": {}
+		},
+		"rive-options": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 150,
+			"defaultProps": {},
+			"props": {}
+		},
+		"rive-artboards": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 150,
+			"defaultProps": {},
+			"props": {}
+		}
+	}
+}

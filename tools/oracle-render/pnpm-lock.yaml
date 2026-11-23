@@ -59,6 +59,9 @@ importers:
       '@remotion/renderer':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/rive':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/shapes':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -498,6 +501,12 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
+  '@remotion/rive@4.0.545':
+    resolution: {integrity: sha512-aI5rhg9XMlwKmjueMYsrdNB5Ab04ntRlHOrjay3JLHGPGUxXf2ddunZUv61p09sSvTICOs5Y4bommIS0aEbUZQ==}
+    peerDependencies:
+      react: '>=18.2.0'
+      react-dom: '>=18.2.0'
+
   '@remotion/sdk@4.0.545':
     resolution: {integrity: sha512-Y5RqB/wEWybYhHYGnqmLNtccOWB0yy+nYh/y4gCBOUXFB4WKrxH3OpVdHqyBwl6dK0jQztzLtnuNsMjjqTNRWA==}
     peerDependencies:
@@ -564,6 +573,9 @@ packages:
 
   '@remotion/zod-types@4.0.545':
     resolution: {integrity: sha512-kr8m0hlWJC9255NuAybZRSGqRUOngjHDc4KwgNZMcg4pe7AhNX/RJPWMRFuzbGXFHfxNWSEoFTvzqZVyX8ovsA==}
+
+  '@rive-app/canvas-advanced@2.31.5':
+    resolution: {integrity: sha512-zwqLIc5wRF+zFKgDSTJn21+r4N4KWqAe6iVrjDGFzfxxeKDoESrwK7GQ9qVyS6UH2W4SsDRzO6q6jrlw33+yIg==}
 
   '@rspack/binding-darwin-arm64@2.3.0':
     resolution: {integrity: sha512-raUm1V29xRm1fPaS2R2qK4Yw5PGo3xooK6Fz2rt74pjJ+UhEUT4ED/8A9Qyf/YW16aMUl58eS5prtth8+UaJSQ==}
@@ -1790,6 +1802,13 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@remotion/rive@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@rive-app/canvas-advanced': 2.31.5
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
   '@remotion/sdk@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@remotion/player': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -1902,6 +1921,8 @@ snapshots:
     transitivePeerDependencies:
       - react
       - react-dom
+
+  '@rive-app/canvas-advanced@2.31.5': {}
 
   '@rspack/binding-darwin-arm64@2.3.0':
     optional: true
