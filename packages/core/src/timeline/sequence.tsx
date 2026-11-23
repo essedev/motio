@@ -76,8 +76,8 @@ function isNumber(v: unknown): v is number {
 	return typeof v === "number" && !Number.isNaN(v);
 }
 
-function fail(component: string, message: string): never {
-	throw new Error(`<${component}>: ${message}`);
+function fail(component: string, message: string, type: ErrorConstructor = Error): never {
+	throw new type(`<${component}>: ${message}`);
 }
 
 /** Throws a descriptive error for invalid timing props. */
@@ -116,9 +116,11 @@ export function validateTimingProps(props: SequenceTimingProps, component = "Seq
 		playbackRate !== undefined &&
 		(!isNumber(playbackRate) || !Number.isFinite(playbackRate) || playbackRate <= 0)
 	) {
+		// A TypeError, as the published package throws (recorded by @remotion/gif and @remotion/rive).
 		fail(
 			component,
 			`"playbackRate" must be a positive finite number, got ${String(playbackRate)}.`,
+			TypeError,
 		);
 	}
 	if (loop && !Number.isFinite(durationInFrames ?? Number.POSITIVE_INFINITY)) {

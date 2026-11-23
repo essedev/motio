@@ -292,6 +292,10 @@ describe("Sequence", () => {
 		expect(() => renderAtFrame(<Sequence {...(props as object)} />, 0)).toThrow(message);
 	});
 
+	it("throws a TypeError for an invalid playbackRate, as Remotion does", () => {
+		expect(() => renderAtFrame(<Sequence playbackRate={-1} />, 0)).toThrow(TypeError);
+	});
+
 	it("throws outside a composition", () => {
 		const Probe = () => <>{useCurrentFrame()}</>;
 		expect(() => renderToStaticMarkup(<Probe />)).toThrow(/useCurrentFrame\(\) can only be called/);
