@@ -334,8 +334,11 @@ export const SequenceBase = forwardRef<HTMLDivElement, SequenceInternalProps>(
 		if (loop) content = <LoopContext.Provider value={loop}>{content}</LoopContext.Provider>;
 		if (layout === "none") return content;
 
+		// Remotion's Sequence container is an absolute fill without `flex-direction: column`
+		// (recorded markup of <Sequence>, <Series.Sequence> and <Loop>): children flow in a row.
+		const { flexDirection: _column, ...fill } = absoluteFillStyle(className);
 		const merged: CSSProperties = {
-			...absoluteFillStyle(className),
+			...fill,
 			...(width !== undefined ? { width } : null),
 			...(height !== undefined ? { height } : null),
 			...style,
