@@ -32,9 +32,12 @@ describe("the deprecated Config of remotion", () => {
 		expect(setCodec === Config.setCodec).toBe(recorded.sameFunction);
 	});
 
-	it("fails every setter with the message Remotion prints", () => {
-		const message = recorded.calls["Config.setCodec('h264')"]?.stderr.trimEnd();
-		expect(CONFIG_MOVED_MESSAGE).toBe(message);
+	it("fails every setter where Remotion exits, naming the import that replaces it", () => {
+		const call = recorded.calls["Config.setCodec('h264')"];
+		// Remotion prints its message and exits with status 1; Motio throws instead (D-045).
+		expect(call?.status).toBe(1);
+		expect(call?.stderr).toContain("@remotion/cli/config");
+		expect(CONFIG_MOVED_MESSAGE).toContain('import { Config } from "@remotion/cli/config"');
 		expect(() => Config.setCodec("h264")).toThrow(CONFIG_MOVED_MESSAGE);
 		expect(() => Config.Rendering.setImageFormat("png")).toThrow(CONFIG_MOVED_MESSAGE);
 	});

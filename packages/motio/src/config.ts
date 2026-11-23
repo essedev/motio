@@ -1,8 +1,8 @@
 // `import { Config } from "remotion"` is the configuration API of Remotion 3, which moved to
 // `@remotion/cli/config` in 4.0. The published package still exports `Config`: any setter
 // prints a migration message and exits the process. Motio keeps the same shape (recorded in
-// packages/core/src/__oracle__/exports.json) and throws the same message instead of exiting
-// (docs/DECISIONS.md, D-045).
+// packages/core/src/__oracle__/exports.json) and throws an Error with its own message instead of
+// exiting (docs/DECISIONS.md, D-045 and D-054).
 
 /** A setter of the deprecated `Config`: calling it throws the migration message. */
 export type DeprecatedConfigSetter = (...args: unknown[]) => never;
@@ -15,18 +15,9 @@ export type DeprecatedConfig = { readonly [setter: string]: DeprecatedConfigSett
 	readonly [namespace in DeprecatedConfigNamespace]: DeprecatedConfig;
 };
 
-/** The message Remotion prints, pointing to the import that replaces it. */
-export const CONFIG_MOVED_MESSAGE = [
-	"⚠️  The CLI configuration has been extracted from Remotion Core.",
-	"Update the import from the config file:",
-	"",
-	"- Delete:",
-	'import {Config} from "remotion";',
-	"+ Replace:",
-	'import {Config} from "@remotion/cli/config";',
-	"",
-	"For more information, see https://www.remotion.dev/docs/4-0-migration.",
-].join("\n");
+/** The message of every setter, pointing to the import that replaces it. */
+export const CONFIG_MOVED_MESSAGE =
+	'Config from "remotion" is the configuration API of Remotion 3 and does nothing in Motio. In the config file, import it from "@remotion/cli/config" instead: import { Config } from "@remotion/cli/config";';
 
 const NAMESPACES: ReadonlySet<PropertyKey> = new Set<DeprecatedConfigNamespace>([
 	"Rendering",
