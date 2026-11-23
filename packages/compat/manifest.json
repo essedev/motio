@@ -836,17 +836,20 @@
 				"CameraMotionBlur": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Markup and rendered stills equal Remotion's (D-048)."
 				},
 				"HtmlInCanvasMotionBlur": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Not provided: needs Chrome's experimental HTML-in-canvas API (D-048)."
 				},
 				"Trail": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Markup and rendered stills equal Remotion's (D-048)."
 				}
 			}
 		},
