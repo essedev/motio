@@ -19,6 +19,7 @@ import { DEV_FLAGS, devCommand } from "./commands/dev.js";
 import { DOCTOR_FLAGS, doctorCommand } from "./commands/doctor.js";
 import { FFMPEG_ENSURE_FLAGS, ffmpegEnsureCommand } from "./commands/ffmpeg-ensure.js";
 import { FRAMES_FLAGS, framesCommand } from "./commands/frames.js";
+import { INIT_FLAGS, initCommand } from "./commands/init.js";
 import { RENDER_FLAGS, renderCommand } from "./commands/render.js";
 import { STILL_FLAGS, stillCommand } from "./commands/still.js";
 import type { CliDeps, CommandContext, CommandResult } from "./context.js";
@@ -37,6 +38,13 @@ interface CommandDefinition {
 
 /** Every command, in help order. */
 export const COMMANDS: readonly CommandDefinition[] = [
+	{
+		words: ["init"],
+		usage: "motio init [dir]",
+		summary: "Create a new project from a starter.",
+		flags: INIT_FLAGS,
+		run: initCommand,
+	},
 	{
 		words: ["render"],
 		usage: "motio render [entry-point|serve-url] <composition-id> [output]",

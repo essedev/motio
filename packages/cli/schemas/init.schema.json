@@ -1,0 +1,70 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:init",
+	"title": "motio init --json",
+	"description": "The project created from a starter.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"ok",
+				"command",
+				"dir",
+				"name",
+				"template",
+				"packageManager",
+				"installed",
+				"files",
+				"nextSteps",
+				"warnings"
+			],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "init"
+				},
+				"dir": {
+					"type": "string",
+					"description": "Absolute path of the project."
+				},
+				"name": {
+					"type": "string",
+					"description": "Package name written to package.json."
+				},
+				"template": {
+					"enum": ["basic", "blank", "captions"]
+				},
+				"packageManager": {
+					"enum": ["pnpm", "npm", "yarn", "bun"]
+				},
+				"installed": {
+					"type": "boolean",
+					"description": "True when the dependencies were installed."
+				},
+				"files": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"description": "Files written, relative to dir, sorted."
+				},
+				"nextSteps": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"description": "Shell commands to run next, in order."
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

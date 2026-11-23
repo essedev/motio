@@ -1,0 +1,142 @@
+[
+	{
+		"text": "Motio",
+		"startMs": 300,
+		"endMs": 685,
+		"timestampMs": 493,
+		"confidence": 1
+	},
+	{
+		"text": " turns",
+		"startMs": 725,
+		"endMs": 1110,
+		"timestampMs": 918,
+		"confidence": 1
+	},
+	{
+		"text": " React",
+		"startMs": 1150,
+		"endMs": 1535,
+		"timestampMs": 1343,
+		"confidence": 1
+	},
+	{
+		"text": " components",
+		"startMs": 1575,
+		"endMs": 2085,
+		"timestampMs": 1830,
+		"confidence": 1
+	},
+	{
+		"text": " into",
+		"startMs": 2125,
+		"endMs": 2485,
+		"timestampMs": 2305,
+		"confidence": 1
+	},
+	{
+		"text": " videos.",
+		"startMs": 2525,
+		"endMs": 2960,
+		"timestampMs": 2743,
+		"confidence": 1
+	},
+	{
+		"text": " Every",
+		"startMs": 3500,
+		"endMs": 3885,
+		"timestampMs": 3693,
+		"confidence": 1
+	},
+	{
+		"text": " frame",
+		"startMs": 3925,
+		"endMs": 4310,
+		"timestampMs": 4118,
+		"confidence": 1
+	},
+	{
+		"text": " is",
+		"startMs": 4350,
+		"endMs": 4660,
+		"timestampMs": 4505,
+		"confidence": 1
+	},
+	{
+		"text": " a",
+		"startMs": 4700,
+		"endMs": 4985,
+		"timestampMs": 4843,
+		"confidence": 1
+	},
+	{
+		"text": " function",
+		"startMs": 5025,
+		"endMs": 5485,
+		"timestampMs": 5255,
+		"confidence": 1
+	},
+	{
+		"text": " of",
+		"startMs": 5525,
+		"endMs": 5835,
+		"timestampMs": 5680,
+		"confidence": 1
+	},
+	{
+		"text": " time.",
+		"startMs": 5875,
+		"endMs": 6260,
+		"timestampMs": 6068,
+		"confidence": 1
+	},
+	{
+		"text": " Replace",
+		"startMs": 6800,
+		"endMs": 7235,
+		"timestampMs": 7018,
+		"confidence": 1
+	},
+	{
+		"text": " these",
+		"startMs": 7275,
+		"endMs": 7660,
+		"timestampMs": 7468,
+		"confidence": 1
+	},
+	{
+		"text": " words",
+		"startMs": 7700,
+		"endMs": 8085,
+		"timestampMs": 7893,
+		"confidence": 1
+	},
+	{
+		"text": " with",
+		"startMs": 8125,
+		"endMs": 8485,
+		"timestampMs": 8305,
+		"confidence": 1
+	},
+	{
+		"text": " your",
+		"startMs": 8525,
+		"endMs": 8885,
+		"timestampMs": 8705,
+		"confidence": 1
+	},
+	{
+		"text": " own",
+		"startMs": 8925,
+		"endMs": 9260,
+		"timestampMs": 9093,
+		"confidence": 1
+	},
+	{
+		"text": " transcript.",
+		"startMs": 9300,
+		"endMs": 9835,
+		"timestampMs": 9568,
+		"confidence": 1
+	}
+]

@@ -13,7 +13,8 @@
 	},
 	"files": [
 		"dist",
-		"schemas"
+		"schemas",
+		"starters"
 	],
 	"sideEffects": false,
 	"scripts": {},
