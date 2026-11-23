@@ -62,6 +62,7 @@ export {
 export { type BufferHandle, BufferStateContext, useTimeline } from "./timeline/hooks.js";
 export {
 	computeSequence,
+	cropClipPath,
 	SEQUENCE_RATE_ATTRIBUTE,
 	SequenceBase,
 	type SequenceComputation,

@@ -648,6 +648,29 @@
 				}
 			}
 		},
+		"@remotion/gif": {
+			"tier": 3,
+			"symbols": {
+				"Gif": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Decoded frames, frame timing and canvas pixels equal Remotion's; stills identical with swangle. effects throws (D-053)."
+				},
+				"getGifDurationInSeconds": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Equal to the oracle, content-type check and broken files included (D-053)."
+				},
+				"preloadGif": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Shares one decode with <Gif>; waitUntilDone and free as the oracle (D-053)."
+				}
+			}
+		},
 		"@remotion/google-fonts": {
 			"tier": 1,
 			"symbols": {
