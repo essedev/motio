@@ -3,13 +3,21 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { parseManifest } from "../dist/manifest.js";
-import { updateManifestStatuses, workspaceExportLoader } from "../dist/manifest-status.js";
+import {
+	updateManifestStatuses,
+	workspaceExportLoader,
+	workspaceTypeExportLoader,
+} from "../dist/manifest-status.js";
 
 const manifestPath = fileURLToPath(new URL("../manifest.json", import.meta.url));
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
 const manifest = parseManifest(readFileSync(manifestPath, "utf8"));
-const result = await updateManifestStatuses(manifest, workspaceExportLoader(repositoryRoot));
+const result = await updateManifestStatuses(
+	manifest,
+	workspaceExportLoader(repositoryRoot),
+	workspaceTypeExportLoader(repositoryRoot),
+);
 writeFileSync(manifestPath, `${JSON.stringify(result.manifest, null, "\t")}\n`);
 
 for (const change of result.changes) {

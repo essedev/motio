@@ -464,7 +464,7 @@
 				"LegacyBundleOptions": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"WatchIgnoreNextChangePlugin": {
@@ -493,7 +493,7 @@
 				"Caption": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"createTikTokStyleCaptions": {
@@ -519,7 +519,7 @@
 				"TikTokPage": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				}
 			}
@@ -536,7 +536,7 @@
 				"WebpackOverrideFn": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				}
 			}
@@ -957,7 +957,7 @@
 				"CallbackListener": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"Player": {
@@ -968,7 +968,7 @@
 				"PlayerRef": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"Thumbnail": {
@@ -984,19 +984,19 @@
 				"CancelSignal": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"ChromiumOptions": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"Codec": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"combineChunks": {
@@ -1078,7 +1078,7 @@
 				"PixelFormat": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"renderFrames": {
@@ -1110,7 +1110,7 @@
 				"StillImageFormat": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"stitchFramesToVideo": {
@@ -1131,7 +1131,7 @@
 				"VideoImageFormat": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				}
 			}
@@ -1394,13 +1394,13 @@
 				"TransitionPresentation": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"TransitionPresentationComponentProps": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"TransitionSeries": {
@@ -1411,7 +1411,7 @@
 				"TransitionTiming": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"useTransitionProgress": {
