@@ -339,6 +339,9 @@ importers:
         specifier: workspace:*
         version: link:../renderer
     devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
       ajv:
         specifier: ^8.20.0
         version: 8.20.0
