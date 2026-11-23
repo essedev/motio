@@ -72,6 +72,8 @@ export {
 	useRemotionEnvironment,
 	useVideoConfig,
 	type VideoConfig,
+	type WatchStaticFileHandle,
+	watchStaticFile,
 } from "@motiojs/core";
 export {
 	Html5Audio as Audio,

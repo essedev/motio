@@ -62,7 +62,13 @@ export {
 	useDelayRender,
 } from "./readiness/delay-render.js";
 export { measureSpring, type SpringConfig, spring } from "./spring.js";
-export { getStaticFiles, type StaticFile, staticFile } from "./static-file.js";
+export {
+	getStaticFiles,
+	type StaticFile,
+	staticFile,
+	type WatchStaticFileHandle,
+	watchStaticFile,
+} from "./static-file.js";
 export { AbsoluteFill, type AbsoluteFillProps } from "./timeline/absolute-fill.js";
 export type { LoopInfo, VideoConfig } from "./timeline/contexts.js";
 export { Freeze, type FreezeProps } from "./timeline/freeze.js";

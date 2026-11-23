@@ -332,7 +332,8 @@
 				"watchStaticFile": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "stubbed",
+					"note": "Works only in the Remotion Studio: warns and never calls back, as the published package does outside it (D-047)."
 				}
 			}
 		},

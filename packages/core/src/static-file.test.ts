@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { RUN_CONTEXT_GLOBAL } from "./protocol.js";
 import {
 	BUNDLE_GLOBAL,
@@ -6,6 +6,7 @@ import {
 	STATIC_BASE_GLOBAL,
 	STATIC_FILES_GLOBAL,
 	staticFile,
+	watchStaticFile,
 } from "./static-file.js";
 
 const g = globalThis as Record<string, unknown>;
@@ -62,5 +63,21 @@ describe("getStaticFiles", () => {
 		expect(getStaticFiles()).toEqual([
 			{ name: "assets/data.json", src: "/assets/data.json", sizeInBytes: 12, lastModified: 5 },
 		]);
+	});
+});
+
+describe("watchStaticFile", () => {
+	// Recorded from the published package in Node: the same warning, a handle with cancel().
+	it("warns that it needs the Remotion Studio and never calls back", () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const callback = vi.fn();
+		const handle = watchStaticFile("data.json", callback);
+		expect(warn).toHaveBeenCalledWith(
+			"The watchStaticFile() API is only available while using the Remotion Studio.",
+		);
+		expect(Object.keys(handle)).toEqual(["cancel"]);
+		expect(handle.cancel()).toBeUndefined();
+		expect(callback).not.toHaveBeenCalled();
+		warn.mockRestore();
 	});
 });

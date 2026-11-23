@@ -82,3 +82,24 @@ export function getStaticFiles(): StaticFile[] {
 		src: staticFile(f.name),
 	}));
 }
+
+/** Stops a `watchStaticFile()` subscription. */
+export interface WatchStaticFileHandle {
+	cancel: () => void;
+}
+
+/**
+ * Calls `callback` when a file of the public folder changes, with its new `StaticFile` entry or
+ * `null` once deleted. Remotion documents it as working only in the Remotion Studio, which Motio
+ * does not have: as Remotion does outside the Studio, it warns once per call and the callback
+ * never fires. Returns a handle whose `cancel()` does nothing.
+ */
+export function watchStaticFile(
+	fileName: string,
+	callback: (newData: StaticFile | null) => void,
+): WatchStaticFileHandle {
+	void fileName;
+	void callback;
+	console.warn("The watchStaticFile() API is only available while using the Remotion Studio.");
+	return { cancel: () => {} };
+}
