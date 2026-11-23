@@ -106,11 +106,11 @@ interface Segment {
 
 const sameType = (s: Segment) =>
 	new TypeError(
-		`The start and end values must be of the same type. Start value: ${s.start}, end value: ${s.end}`,
+		`"${s.start}" and "${s.end}" hold different kinds of value at the same position, so they cannot be interpolated: give both the same form.`,
 	);
 const nonAnimatable = (s: Segment) =>
 	new TypeError(
-		`Non-animatable values cannot be interpolated. Start value: ${s.start}, end value: ${s.end}`,
+		`"${s.start}" and "${s.end}" differ in a keyword, which cannot be animated: only numbers, lengths and colors change between keyframes.`,
 	);
 
 function interpolateNumber(segment: Segment, from: number, to: number): number {
@@ -134,7 +134,7 @@ function interpolateNumberToken(
 			: { value: Number.NaN, unit: b.kind === "text" ? b.text : "" };
 	if (a.unit !== end.unit && a.value !== 0 && end.value !== 0) {
 		throw new TypeError(
-			`The units of the start and end values must match. Start value: ${segment.start}, end value: ${segment.end}`,
+			`"${segment.start}" and "${segment.end}" use different units at the same position: use the same unit in both, or 0.`,
 		);
 	}
 	const to = Number.isNaN(end.value) ? 0 : end.value;
@@ -186,7 +186,7 @@ function interpolateValue(segment: Segment, start: unknown, end: unknown): unkno
 	const to = tokens(end);
 	if (from.length !== to.length) {
 		throw new TypeError(
-			`The start and end values must have the same structure. Start value: ${segment.start}, end value: ${segment.end}`,
+			`"${segment.start}" and "${segment.end}" have a different number of parts: give both values the same structure.`,
 		);
 	}
 	return numericOrString(
@@ -209,17 +209,21 @@ export function interpolateStyles(
 	outputStylesRange: readonly CSSProperties[],
 	options?: InterpolateStylesOptions,
 ): CSSProperties {
-	if (input === undefined) throw new Error("input can not be undefined");
-	if (inputRange.length < 2) throw new Error("inputRange must have at least 2 elements");
+	if (input === undefined) {
+		throw new Error("input is undefined: pass the number to map, such as the current frame.");
+	}
+	if (inputRange.length < 2) {
+		throw new Error(`inputRange has ${inputRange.length} values: pass at least 2.`);
+	}
 	if (inputRange.length !== outputStylesRange.length) {
 		throw new Error(
-			`inputRange (${inputRange.length}) and outputStylesRange (${outputStylesRange.length}) must have the same length`,
+			`inputRange has ${inputRange.length} values and outputStylesRange ${outputStylesRange.length}: give both one value per keyframe.`,
 		);
 	}
 	for (let i = 1; i < inputRange.length; i++) {
 		if (!((inputRange[i] as number) > (inputRange[i - 1] as number))) {
 			throw new Error(
-				`inputRange must be strictly monotonically non-decreasing but got [${inputRange.join(",")}]`,
+				`inputRange [${inputRange.join(",")}] is not strictly increasing: each value must be greater than the one before it.`,
 			);
 		}
 	}

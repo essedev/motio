@@ -18,26 +18,14 @@ import {
 	signatureError,
 } from "./units.js";
 
-const TRANSLATE_SIGNATURES = [
-	"translate(x: LengthPercentageUnitString)",
-	"translate(x: number)",
-	"translate(x: number, y: number)",
-	"translate(translation: number, unit: LengthPercentageUnit)",
-	"translate(x: number, unitX: LengthPercentageUnit, y: number, unitY: LengthPercentageUnit): string;",
-];
+const TRANSLATE_FORMS =
+	'one length (a string such as "10px", or a number of pixels), two of them, a number and its unit, or two numbers each followed by its unit';
 
-const SKEW_SIGNATURES = [
-	"skew(angle: AngleUnitString): string;",
-	"skew(angle: AngleUnitString, angle2: AngleUnitString): string;",
-	"skew(angle: number, unit: AngleUnit): string;",
-	"skew(angleX: number, angleY: number): string;",
-	"skew(angleX: number, unitX: AngleUnit, angleY: number, unitY: AngleUnit): string;",
-];
+const SKEW_FORMS =
+	'one or two angles (strings such as "10deg"), a number and its angle unit, two numbers, or two numbers each followed by its angle unit';
 
-const TRANSLATE_3D_SIGNATURES = [
-	"translate3d(x: LengthPercentageUnitString, y: LengthPercentageUnitString, z: LengthPercentageUnitString)",
-	"translate3d(x: number, unitX: LengthPercentageUnit, y: number, unitY: LengthPercentageUnit, z: number, unitZ: LengthUnit)",
-];
+const TRANSLATE_3D_FORMS =
+	'three lengths (strings such as "10px", or numbers of pixels), or three numbers each followed by its unit';
 
 const MATRIX_PARAMS = ["a", "b", "c", "d", "tx", "ty"] as const;
 
@@ -243,7 +231,7 @@ export function skew(...args: unknown[]): string {
 		checkNumber("skew", "angle", c);
 		return `skew(${a}${b}, ${c}${d})`;
 	}
-	throw signatureError("skew", SKEW_SIGNATURES);
+	throw signatureError("skew", SKEW_FORMS);
 }
 
 /**
@@ -293,7 +281,7 @@ export function translate(...args: unknown[]): string {
 		checkNumber("translate", "y", c);
 		return `translate(${a}${String(b)}, ${c}${String(d)})`;
 	}
-	throw signatureError("translate", TRANSLATE_SIGNATURES);
+	throw signatureError("translate", TRANSLATE_FORMS);
 }
 
 /** `translate3d()`: three lengths (strings or numbers in pixels), or three numbers with units. */
@@ -331,7 +319,7 @@ export function translate3d(...args: unknown[]): string {
 		checkNumber("translate3d", "z", z);
 		return `translate3d(${x}${String(unitX)}, ${y}${String(unitY)}, ${z}${String(unitZ)})`;
 	}
-	throw signatureError("translate3d", TRANSLATE_3D_SIGNATURES);
+	throw signatureError("translate3d", TRANSLATE_3D_FORMS);
 }
 
 const lengthFunction =

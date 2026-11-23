@@ -1,5 +1,6 @@
 // The transform builders, makeTransform() and interpolateStyles() against the outputs of the
 // published @remotion/animation-utils (tools/oracle-features/record-animation-utils.mjs).
+import { compareFailure, failureOf } from "@motiojs/testing/oracle-errors";
 import { describe, expect, it } from "vitest";
 import styleFixture from "./__oracle__/interpolate-styles.json" with { type: "json" };
 import transformFixture from "./__oracle__/transforms.json" with { type: "json" };
@@ -26,20 +27,39 @@ const untag = (value: unknown): unknown => {
 	return value;
 };
 
-/** Runs fn and describes the result as the recorder did. */
-const outcome = (fn: () => unknown): { out: unknown } | { error: Message } => {
-	try {
-		return { out: fn() };
-	} catch (e) {
-		const error = e as Error;
-		return { error: { type: error.constructor.name, message: error.message } };
-	}
-};
+/** Options of interpolateStyles() that a failure message should name when the recorded one does. */
+const STYLE_OPTIONS = [
+	"input",
+	"inputRange",
+	"outputRange",
+	"outputStylesRange",
+	"easing",
+	"posterize",
+];
 
-const expected = (recorded: Outcome, messages: Message[]) =>
-	recorded.error === undefined
-		? { out: untag(recorded.out) }
-		: { error: messages[recorded.error] as Message };
+/**
+ * Asserts that `fn` does what the recorded call did: returns a strictly equal value, or fails with
+ * the same error class and a message of Motio's own that names the same options.
+ */
+const expectRecorded = (
+	fn: () => unknown,
+	recorded: Outcome,
+	messages: Message[],
+	label: string,
+	names: readonly string[] = [],
+) => {
+	if (recorded.error === undefined) {
+		expect({ out: fn() }, label).toStrictEqual({ out: untag(recorded.out) });
+		return;
+	}
+	const message = messages[recorded.error] as Message;
+	const { threw, error } = failureOf(fn);
+	expect(threw, `${label}: should throw`).toBe(true);
+	expect(
+		compareFailure(error, { error: message.message, errorType: message.type }, names),
+		label,
+	).toBeUndefined();
+};
 
 const callable = api as unknown as Record<string, (...args: unknown[]) => unknown>;
 
@@ -57,10 +77,7 @@ describe("transform builders equal @remotion/animation-utils", () => {
 			for (const [args, recorded] of list) {
 				const values = untag(args) as unknown[];
 				const label = `${fn}(${JSON.stringify(args)})`;
-				expect(
-					outcome(() => callable[fn]?.(...values)),
-					label,
-				).toStrictEqual(expected(recorded, header.messages));
+				expectRecorded(() => callable[fn]?.(...values), recorded, header.messages, label);
 			}
 		});
 	}
@@ -74,10 +91,13 @@ describe("interpolateStyles equals @remotion/animation-utils", () => {
 	it(`over ${cases.length} calls`, () => {
 		for (const [args, recorded] of cases) {
 			const values = untag(args) as Parameters<typeof api.interpolateStyles>;
-			expect(
-				outcome(() => api.interpolateStyles(...values)),
+			expectRecorded(
+				() => api.interpolateStyles(...values),
+				recorded,
+				header.messages,
 				JSON.stringify(args),
-			).toStrictEqual(expected(recorded, header.messages));
+				STYLE_OPTIONS,
+			);
 		}
 	});
 

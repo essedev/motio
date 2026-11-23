@@ -55,31 +55,27 @@ export type AngleUnitString = `${number}${AngleUnit}`;
 /** Throws unless `value` is a finite number; names the function and the parameter. */
 export function checkNumber(fn: string, param: string, value: unknown): asserts value is number {
 	if (typeof value !== "number") {
-		throw new TypeError(
-			`Argument passed to "${fn}" for param "${param}" is ${JSON.stringify(value)}`,
-		);
+		throw new TypeError(`${fn}(): ${param} is ${JSON.stringify(value)}, not a number.`);
 	}
 	if (!Number.isFinite(value)) {
-		throw new TypeError(
-			`Argument passed to "${fn}" for param "${param}" is ${JSON.stringify(value)} (must be finite)`,
-		);
+		throw new TypeError(`${fn}(): ${param} is ${value}: it must be a finite number.`);
 	}
 }
 
 /**
  * Throws unless `value` ends with one of `units` and contains a digit or a dot directly followed
  * by a lowercase letter or `%` (anywhere: `"x10px"` and `"1eQ"` pass, `"10Q"` and `"10 px"` do
- * not). The second message lists the length units whatever the expected kind, as Remotion's.
+ * not).
  */
 export function checkUnitString(value: string, units: readonly string[]): void {
 	if (!units.some((unit) => value.endsWith(unit))) {
 		throw new Error(
-			`input ${value} does not end with a valid unit. Valid units are: ${units.join(", ")}`,
+			`"${value}" does not end with an accepted unit: use one of ${units.join(", ")}.`,
 		);
 	}
 	if (!/[0-9.][a-z%]/.test(value)) {
 		throw new Error(
-			`input ${value} is not a valid transform. Must be a number or a string ending in one of the following units: ${LENGTH_UNITS.join(", ")}`,
+			`"${value}" has no number before its unit: write a number followed by the unit, such as "10px" or "45deg".`,
 		);
 	}
 }
@@ -95,7 +91,7 @@ export function checkValue(
 	else checkNumber(fn, param, value);
 }
 
-/** The error of a call that matches none of a function's signatures. */
-export function signatureError(fn: string, signatures: readonly string[]): TypeError {
-	return new TypeError(`${fn}() supports only the following signatures:\n${signatures.join("\n")}`);
+/** The error of a call that matches none of a function's forms, described by `forms`. */
+export function signatureError(fn: string, forms: string): TypeError {
+	return new TypeError(`${fn}() does not accept these arguments. Call it with ${forms}.`);
 }
