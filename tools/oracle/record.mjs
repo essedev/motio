@@ -9,6 +9,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Easing, interpolate, interpolateColors, measureSpring, random, spring } from "remotion";
 import { CSS_NAMED_COLORS } from "./named-colors.mjs";
+import { recordEasingSpring } from "./record-easing-spring.mjs";
+import { recordInteractive } from "./record-interactive.mjs";
+import { recordInterpolateOutputs } from "./record-interpolate-outputs.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outDir = join(here, "../../packages/core/src/__oracle__");
@@ -72,11 +75,19 @@ const linspace = (from, to, steps) =>
 //   "linear" | "quad" | ...           a constant easing
 //   ["poly", n] | ["elastic", b?] | ["back", s?] | ["bezier", x1, y1, x2, y2]
 //   ["in" | "out" | "inOut", spec]
+//   ["spring", config]                Easing.spring(config)
+//   ["tail", spec]                    spec, flagged to keep moving past its segment
 const buildEasing = (spec) => {
 	if (typeof spec === "string") return Easing[spec];
 	const [name, ...args] = spec;
 	if (name === "in" || name === "out" || name === "inOut")
 		return Easing[name](buildEasing(args[0]));
+	if (name === "tail") {
+		const inner = buildEasing(args[0]);
+		const fn = (t) => inner(t);
+		fn.remotionShouldExtendRight = true;
+		return fn;
+	}
 	return Easing[name](...args);
 };
 
@@ -796,3 +807,7 @@ recordColors();
 recordSpring();
 recordMeasureSpring();
 recordRandom();
+recordInterpolateOutputs({ write, linspace, toRemotionOptions });
+recordInteractive({ write });
+// Last: some configs in it leave Remotion's spring code in a failing state.
+recordEasingSpring({ write, linspace, here });
