@@ -20,6 +20,7 @@ import { BUNDLE_GLOBAL, PROCESS_ENV_GLOBAL, type ViteOverrideFn } from "./bundle
 import { compatAliases } from "./compat-aliases.js";
 import { type EntryPointReason, resolveEntryPoint } from "./entry-point.js";
 import { loadEnvVariables } from "./env.js";
+import { motioOptimizeDeps } from "./optimize-deps.js";
 import { resolveOwnDependency } from "./resolve.js";
 import { listStaticFiles } from "./static-files.js";
 import { serveStaticFiles } from "./static-server.js";
@@ -524,6 +525,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
 		...(tailwind?.plugins ?? []),
 	];
 
+	const motioDeps = motioOptimizeDeps(rootDir);
 	// The preview package may live outside the workspace of the project (a global install).
 	const previewPackageDir = dirname(dirname(previewModule));
 	let viteConfig: InlineConfig = {
@@ -553,7 +555,9 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
 				"react-dom/client",
 				"react/jsx-runtime",
 				"react/jsx-dev-runtime",
+				...motioDeps.include,
 			],
+			exclude: motioDeps.exclude,
 		},
 		server: {
 			port: options.port ?? config.studioPort ?? DEFAULT_DEV_PORT,
