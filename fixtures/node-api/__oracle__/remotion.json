@@ -1,0 +1,607 @@
+{
+	"remotionVersion": "4.0.545",
+	"description": "@remotion/renderer getVideoMetadata, getSilentParts and extractAudio on fixtures/node-api/media",
+	"getVideoMetadata": {
+		"gaps.mp4": {
+			"out": {
+				"fps": 25,
+				"width": 64,
+				"height": 36,
+				"durationInSeconds": 6.5,
+				"codec": "h264",
+				"canPlayInVideoTag": true,
+				"supportsSeeking": false,
+				"colorSpace": "bt709",
+				"audioCodec": "aac",
+				"audioFileExtension": "aac",
+				"pixelFormat": "yuv420p"
+			}
+		},
+		"faststart.mp4": {
+			"out": {
+				"fps": 29.97003,
+				"width": 64,
+				"height": 36,
+				"durationInSeconds": 6.006,
+				"codec": "h264",
+				"canPlayInVideoTag": true,
+				"supportsSeeking": true,
+				"colorSpace": "bt709",
+				"audioCodec": null,
+				"audioFileExtension": null,
+				"pixelFormat": "yuv420p"
+			}
+		},
+		"h264.mkv": {
+			"out": {
+				"fps": 25,
+				"width": 64,
+				"height": 36,
+				"durationInSeconds": 6,
+				"codec": "h264",
+				"canPlayInVideoTag": true,
+				"supportsSeeking": false,
+				"colorSpace": "bt601",
+				"audioCodec": null,
+				"audioFileExtension": null,
+				"pixelFormat": "yuv420p"
+			}
+		},
+		"vp9-opus.webm": {
+			"out": {
+				"fps": 30,
+				"width": 64,
+				"height": 36,
+				"durationInSeconds": 2.008,
+				"codec": "vp9",
+				"canPlayInVideoTag": true,
+				"supportsSeeking": true,
+				"colorSpace": "bt709",
+				"audioCodec": "opus",
+				"audioFileExtension": "opus",
+				"pixelFormat": "yuv420p"
+			}
+		},
+		"rotated.mp4": {
+			"out": {
+				"fps": 24,
+				"width": 64,
+				"height": 36,
+				"durationInSeconds": 2,
+				"codec": "h264",
+				"canPlayInVideoTag": true,
+				"supportsSeeking": true,
+				"colorSpace": "bt601",
+				"audioCodec": null,
+				"audioFileExtension": null,
+				"pixelFormat": "yuv420p"
+			}
+		},
+		"hevc-10bit.mp4": {
+			"out": {
+				"fps": 25,
+				"width": 64,
+				"height": 36,
+				"durationInSeconds": 2,
+				"codec": "h265",
+				"canPlayInVideoTag": true,
+				"supportsSeeking": true,
+				"colorSpace": "bt2020-ncl",
+				"audioCodec": null,
+				"audioFileExtension": null,
+				"pixelFormat": "yuv420p10le"
+			}
+		},
+		"prores.mov": {
+			"out": {
+				"fps": 25,
+				"width": 32,
+				"height": 18,
+				"durationInSeconds": 1,
+				"codec": "prores",
+				"canPlayInVideoTag": false,
+				"supportsSeeking": false,
+				"colorSpace": "bt601",
+				"audioCodec": "pcm-s16le",
+				"audioFileExtension": "wav",
+				"pixelFormat": "yuva444p12le"
+			}
+		},
+		"tone.mp3": {
+			"error": "Compositor error: No video stream found in <media>/tone.mp3. Is this a video file?\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<std::io::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		"gaps.wav": {
+			"error": "Compositor error: No video stream found in <media>/gaps.wav. Is this a video file?\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<std::io::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		"relative:gaps.mp4": {
+			"out": {
+				"fps": 25,
+				"width": 64,
+				"height": 36,
+				"durationInSeconds": 6.5,
+				"codec": "h264",
+				"canPlayInVideoTag": true,
+				"supportsSeeking": false,
+				"colorSpace": "bt709",
+				"audioCodec": "aac",
+				"audioFileExtension": "aac",
+				"pixelFormat": "yuv420p"
+			}
+		},
+		"missing.mp4": {
+			"error": "Compositor error: No such file or directory\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<ffmpeg_next::util::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		}
+	},
+	"getSilentParts": [
+		{
+			"input": {
+				"src": "gaps.wav"
+			},
+			"error": "Compositor error: Invalid argument\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<ffmpeg_next::util::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"src": "gaps.wav",
+				"minDurationInSeconds": 0.5
+			},
+			"error": "Compositor error: Invalid argument\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<ffmpeg_next::util::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"src": "gaps.wav",
+				"noiseThresholdInDecibels": -30
+			},
+			"error": "Compositor error: Invalid argument\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<ffmpeg_next::util::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"src": "gaps.wav",
+				"noiseThresholdInDecibels": -30,
+				"minDurationInSeconds": 0.5
+			},
+			"error": "Compositor error: Invalid argument\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<ffmpeg_next::util::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"src": "gaps.wav",
+				"minDurationInSeconds": 0.1
+			},
+			"error": "Compositor error: Invalid argument\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<ffmpeg_next::util::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"src": "gaps.mp4"
+			},
+			"out": {
+				"silentParts": [
+					{
+						"startInSeconds": 1.699937,
+						"endInSeconds": 4.800083
+					},
+					{
+						"startInSeconds": 5.199937,
+						"endInSeconds": 6.5
+					}
+				],
+				"audibleParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 1.699937
+					},
+					{
+						"startInSeconds": 4.800083,
+						"endInSeconds": 5.199937
+					}
+				],
+				"durationInSeconds": 6.5
+			}
+		},
+		{
+			"input": {
+				"src": "gaps.mp4",
+				"noiseThresholdInDecibels": -30,
+				"minDurationInSeconds": 0.5
+			},
+			"out": {
+				"silentParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 0.700042
+					},
+					{
+						"startInSeconds": 1.699979,
+						"endInSeconds": 3.20025
+					},
+					{
+						"startInSeconds": 4.199792,
+						"endInSeconds": 4.800042
+					},
+					{
+						"startInSeconds": 5.199979,
+						"endInSeconds": 6.5
+					}
+				],
+				"audibleParts": [
+					{
+						"startInSeconds": 0.700042,
+						"endInSeconds": 1.699979
+					},
+					{
+						"startInSeconds": 3.20025,
+						"endInSeconds": 4.199792
+					},
+					{
+						"startInSeconds": 4.800042,
+						"endInSeconds": 5.199979
+					}
+				],
+				"durationInSeconds": 6.5
+			}
+		},
+		{
+			"input": {
+				"src": "tone.mp3"
+			},
+			"out": {
+				"silentParts": [],
+				"audibleParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 2.037551
+					}
+				],
+				"durationInSeconds": 2.037551
+			}
+		},
+		{
+			"input": {
+				"src": "silence.wav"
+			},
+			"error": "Compositor error: Invalid argument\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<ffmpeg_next::util::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"src": "faststart.mp4"
+			},
+			"error": "Compositor error: Could not find audio stream in <media>/faststart.mp4\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<std::io::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"src": "gaps.wav",
+				"noiseThresholdInDecibels": 30
+			},
+			"error": "noiseThresholdInDecibels must be less than 30, but was 30"
+		},
+		{
+			"input": {
+				"src": "gaps.wav",
+				"noiseThresholdInDecibels": 0
+			},
+			"error": "Compositor error: Invalid argument\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<ffmpeg_next::util::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"src": "gaps.wav",
+				"minDurationInSeconds": 0
+			},
+			"error": "minDurationInSeconds must be greater than 0, but was 0"
+		},
+		{
+			"input": {
+				"src": "gaps.wav",
+				"minDurationInSeconds": -1
+			},
+			"error": "minDurationInSeconds must be greater than 0, but was -1"
+		},
+		{
+			"input": {
+				"src": "gaps.mp4",
+				"noiseThresholdInDecibels": 0
+			},
+			"out": {
+				"silentParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 6.5
+					}
+				],
+				"audibleParts": [],
+				"durationInSeconds": 6.5
+			}
+		},
+		{
+			"input": {
+				"src": "gaps.mp4",
+				"noiseThresholdInDecibels": 10
+			},
+			"out": {
+				"silentParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 6.5
+					}
+				],
+				"audibleParts": [],
+				"durationInSeconds": 6.5
+			}
+		},
+		{
+			"input": {
+				"src": "gaps.mp4",
+				"noiseThresholdInDecibels": -60
+			},
+			"out": {
+				"silentParts": [
+					{
+						"startInSeconds": 1.701396,
+						"endInSeconds": 3.200021
+					},
+					{
+						"startInSeconds": 5.20225,
+						"endInSeconds": 6.5
+					}
+				],
+				"audibleParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 1.701396
+					},
+					{
+						"startInSeconds": 3.200021,
+						"endInSeconds": 5.20225
+					}
+				],
+				"durationInSeconds": 6.5
+			}
+		},
+		{
+			"input": {
+				"src": "gaps.mp4",
+				"minDurationInSeconds": 0.1
+			},
+			"out": {
+				"silentParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 0.700083
+					},
+					{
+						"startInSeconds": 1.699937,
+						"endInSeconds": 4.800083
+					},
+					{
+						"startInSeconds": 5.199937,
+						"endInSeconds": 6.5
+					}
+				],
+				"audibleParts": [
+					{
+						"startInSeconds": 0.700083,
+						"endInSeconds": 1.699937
+					},
+					{
+						"startInSeconds": 4.800083,
+						"endInSeconds": 5.199937
+					}
+				],
+				"durationInSeconds": 6.5
+			}
+		},
+		{
+			"input": {
+				"src": "gaps.mp4",
+				"minDurationInSeconds": 3
+			},
+			"out": {
+				"silentParts": [
+					{
+						"startInSeconds": 1.699937,
+						"endInSeconds": 4.800083
+					}
+				],
+				"audibleParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 1.699937
+					},
+					{
+						"startInSeconds": 4.800083,
+						"endInSeconds": 6.5
+					}
+				],
+				"durationInSeconds": 6.5
+			}
+		},
+		{
+			"input": {
+				"src": "prores.mov"
+			},
+			"out": {
+				"silentParts": [],
+				"audibleParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 1
+					}
+				],
+				"durationInSeconds": 1
+			}
+		},
+		{
+			"input": {
+				"src": "prores.mov",
+				"noiseThresholdInDecibels": 0
+			},
+			"out": {
+				"silentParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 1
+					}
+				],
+				"audibleParts": [],
+				"durationInSeconds": 1
+			}
+		},
+		{
+			"input": {
+				"src": "vp9-opus.webm"
+			},
+			"out": {
+				"silentParts": [],
+				"audibleParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 2.008
+					}
+				],
+				"durationInSeconds": 2.008
+			}
+		},
+		{
+			"input": {
+				"src": "vp9-opus.webm",
+				"noiseThresholdInDecibels": 0
+			},
+			"out": {
+				"silentParts": [
+					{
+						"startInSeconds": 0.0005,
+						"endInSeconds": 2.008
+					}
+				],
+				"audibleParts": [
+					{
+						"startInSeconds": 0,
+						"endInSeconds": 0.0005
+					}
+				],
+				"durationInSeconds": 2.008
+			}
+		},
+		{
+			"input": {
+				"src": "missing.mp4"
+			},
+			"error": "Compositor error: No such file or directory\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<ffmpeg_next::util::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		}
+	],
+	"extractAudio": [
+		{
+			"input": {
+				"videoSource": "gaps.mp4",
+				"ext": "aac"
+			},
+			"out": {
+				"format": "aac",
+				"streams": [
+					{
+						"codec_name": "aac",
+						"codec_type": "audio",
+						"sample_rate": "48000",
+						"channels": 1
+					}
+				],
+				"samples": 313344,
+				"pcmSha256": "9c9d26574421d707f0b3d5e6694e64f41fc5307de1e5149d378ef2f1c8271574"
+			}
+		},
+		{
+			"input": {
+				"videoSource": "gaps.mp4",
+				"ext": "m4a"
+			},
+			"error": "Compositor error: Error setting up output to '<tmp>/gaps.mp4.m4a': Invalid argument\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<alloc::string::String>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"videoSource": "gaps.mp4",
+				"ext": "mp3"
+			},
+			"error": "Compositor error: Error writing header to '<tmp>/gaps.mp4.mp3'. Input audio codec: 'AV_CODEC_ID_AAC'. Error: Invalid argument\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<alloc::string::String>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		},
+		{
+			"input": {
+				"videoSource": "vp9-opus.webm",
+				"ext": "opus"
+			},
+			"out": {
+				"format": "ogg",
+				"streams": [
+					{
+						"codec_name": "opus",
+						"codec_type": "audio",
+						"sample_rate": "48000",
+						"channels": 1
+					}
+				],
+				"samples": 96648,
+				"pcmSha256": "062388758e84203e08fe2fc9418d2b3d80ac81266910c4e5cb05e994e1a9fc42"
+			}
+		},
+		{
+			"input": {
+				"videoSource": "vp9-opus.webm",
+				"ext": "webm"
+			},
+			"out": {
+				"format": "matroska,webm",
+				"streams": [
+					{
+						"codec_name": "opus",
+						"codec_type": "audio",
+						"sample_rate": "48000",
+						"channels": 1
+					}
+				],
+				"samples": 96000,
+				"pcmSha256": "f0c0e86cb63bdddd8f310519e172ef782e0cfed9252d4773836c7b21510e8fe5"
+			}
+		},
+		{
+			"input": {
+				"videoSource": "prores.mov",
+				"ext": "wav"
+			},
+			"out": {
+				"format": "wav",
+				"streams": [
+					{
+						"codec_name": "pcm_s16le",
+						"codec_type": "audio",
+						"sample_rate": "8000",
+						"channels": 1
+					}
+				],
+				"samples": 8000,
+				"pcmSha256": "2690b18ac2783b546a7c97033437664b8119e70b56e92de3cb2f6f3670502af4"
+			}
+		},
+		{
+			"input": {
+				"videoSource": "tone.mp3",
+				"ext": "mp3"
+			},
+			"out": {
+				"format": "mp3",
+				"streams": [
+					{
+						"codec_name": "mp3",
+						"codec_type": "audio",
+						"sample_rate": "44100",
+						"channels": 1
+					}
+				],
+				"samples": 88200,
+				"pcmSha256": "55a2bd08f603b28d82233282c35732ea10595235f2f9185138dcec4b80bc879e"
+			}
+		},
+		{
+			"input": {
+				"videoSource": "faststart.mp4",
+				"ext": "aac"
+			},
+			"error": "Compositor error: No audio stream found in '<media>/faststart.mp4'. Ensure the video contains an audio track.\n   0: std::backtrace::Backtrace::force_capture\n   1: <remotion::errors::ErrorWithBacktrace as core::convert::From<std::io::error::Error>>::from\n   2: remotion::commands::execute_command_and_print\n   3: remotion::long_running_process::LongRunningProcess::start\n   4: remotion::main\n   5: std::sys::backtrace::__rust_begin_short_backtrace\n   6: _main\n"
+		}
+	]
+}

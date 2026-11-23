@@ -17,7 +17,8 @@
 		"record:lottie": "node record-lottie.ts",
 		"record:gif": "node record-gif.ts",
 		"record:light-leaks-starburst": "node record-light-leaks-starburst.ts",
-		"record:rive": "node record-rive.ts"
+		"record:rive": "node record-rive.ts",
+		"record:node-api": "node record-node-api.ts"
 	},
 	"dependencies": {
 		"@react-three/fiber": "9.2.0",
