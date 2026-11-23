@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { stripVTControlCharacters } from "node:util";
 import { type MotioCompatOptions, MotioError, motioCompat, scanSource } from "@motiojs/compat";
 import { analyzeWebpackOverrides, type ConfigValues } from "@motiojs/compat/config";
 import { build, type InlineConfig, type Logger, type Plugin, type PluginOption } from "vite";
@@ -428,7 +429,8 @@ export async function createBundle(options: BundleOptions): Promise<BundleResult
 	} catch (error) {
 		throw new MotioError(
 			"E_BUNDLE",
-			`Bundling ${relative(rootDir, entry.path) || entry.path} failed: ${error instanceof Error ? error.message : String(error)}`,
+			// Rolldown colours its code frames; the message also goes to --json output and logs.
+			`Bundling ${relative(rootDir, entry.path) || entry.path} failed: ${stripVTControlCharacters(error instanceof Error ? error.message : String(error))}`,
 			{ entryPoint: entry.path },
 			{ cause: error },
 		);

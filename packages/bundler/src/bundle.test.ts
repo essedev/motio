@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -225,6 +225,22 @@ describe("bundle errors", () => {
 				compat: { symbols: "off", aliases: { remotion: join(fixtures, "does-not-exist.js") } },
 			}),
 		).rejects.toMatchObject({ code: "E_BUNDLE" });
+	});
+
+	it("reports a missing export without terminal colour codes", async () => {
+		const dir = await newOutDir();
+		const empty = join(dir, "empty-motio.js");
+		await writeFile(empty, "export const unrelated = 1;\n");
+		const error = await bundle({
+			...testOptions({ entryPoint: "src/index.ts" }),
+			rootDir: root,
+			outDir: await newOutDir(),
+			envVariables: {},
+			compat: { symbols: "off", aliases: { remotion: empty } },
+		}).catch((caught: unknown) => caught as Error);
+		expect(error).toMatchObject({ code: "E_BUNDLE" });
+		expect(error.message).toMatch(/registerRoot/);
+		expect(error.message.includes("\u001b[")).toBe(false);
 	});
 });
 
