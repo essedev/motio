@@ -177,7 +177,7 @@
 				"Interactive": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"interpolate": {
 					"kind": "value",
