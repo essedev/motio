@@ -85,8 +85,8 @@ Done when:
 Scope: what someone needs to make videos with Motio without knowing Remotion.
 
 Done when:
-- `motio init` creates a project from Motio's own starters that installs, previews with `motio dev` and renders with no edits; an integration test covers every starter.
-- `docs/guide/` covers getting started, the core concepts (frames and time, sequences, animation, media, fonts, readiness), rendering from the CLI and from Node, FFmpeg, testing renders in CI, and coming from Remotion; every code sample in it is type-checked.
-- `@motiojs/preload` and `<AnimatedImage>` work in the Player and in renders, with real-browser tests.
-- The Node API offers video metadata, audio extraction, silence detection and a browser reused across renders, each with an integration test.
-- `@motiojs/text` ships a configurable `<TextBackground>` (radius, padding, line joins, colour, border, shadow); `@remotion/rounded-text-box` maps onto it as a preset and equals the published function on its oracle.
+- [x] `motio init` creates a project from Motio's own starters that installs, previews with `motio dev` and renders with no edits; an integration test covers every starter.
+- [x] `docs/guide/` covers getting started, the core concepts (frames and time, sequences, animation, media, fonts, readiness), rendering from the CLI and from Node, FFmpeg, testing renders in CI, and coming from Remotion; every code sample in it is type-checked.
+- `@motiojs/preload` (done, D-070) and `<AnimatedImage>` (being rewritten, D-067) work in the Player and in renders, with real-browser tests.
+- [x] The Node API offers video metadata, audio extraction, silence detection and a browser reused across renders, each with an integration test.
+- [x] `@motiojs/text` ships a configurable `<TextBackground>` (radius, padding, line joins, colour, border, shadow); `@remotion/rounded-text-box` maps onto it as a preset and equals the published function on its oracle.
