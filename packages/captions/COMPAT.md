@@ -5,10 +5,12 @@ Target: `@remotion/captions@4.0.545`. Proof: the fixtures in `src/__oracle__/`, 
 | Export | Status | Tolerance |
 |---|---|---|
 | `Caption` (type) | exact | n/a |
-| `parseSrt` (tolerant and `strict`) | exact | identical output and error messages |
-| `parseVtt` | exact | identical output and error messages |
+| `parseSrt` (tolerant and `strict`) | exact | identical output; fails on the same files (strict: at the same cue and line) |
+| `parseVtt` | exact | identical output; fails on the same files |
 | `serializeSrt` | exact | identical strings |
 | `createTikTokStyleCaptions` | exact | identical pages, tokens and durations |
+
+Failures are compared on behaviour, not wording: the same inputs throw an `Error`, and a strict SRT error names the same cue and line. The messages are Motio's own (D-054).
 
 Behaviours reproduced on purpose, because Remotion has them:
 

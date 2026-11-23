@@ -28,7 +28,7 @@ const parseLooseTimestamp = (raw: string): number => {
 	const [clock = "", millis] = timestamp.split(/[,.]/);
 	const parts = clock.split(":");
 	if (millis === undefined || millis === "" || parts.length !== 3 || parts.includes("")) {
-		throw new Error(`Invalid timestamp:${timestamp}`);
+		throw new Error(`"${timestamp}" is not an SRT timestamp: write it as HH:MM:SS,mmm.`);
 	}
 	const [hours = "", minutes = "", seconds = ""] = parts;
 	return (
@@ -91,7 +91,7 @@ const parseStrictTimestamp = (timestamp: string, where: string): number => {
 	const minutes = Number(match?.[2]);
 	const seconds = Number(match?.[3]);
 	if (match === null || minutes >= 60 || seconds >= 60) {
-		throw new Error(`${where}: invalid timestamp "${timestamp}". Use HH:MM:SS,mmm.`);
+		throw new Error(`${where}: "${timestamp}" is not a valid timestamp, write it as HH:MM:SS,mmm.`);
 	}
 	return Number(match[1]) * 3_600_000 + minutes * 60_000 + seconds * 1000 + Number(match[4]);
 };
@@ -106,21 +106,23 @@ const parseStrict = (input: string): Caption[] => {
 	skipBlank();
 	while (i < lines.length) {
 		const cue = captions.length + 1;
-		const at = (index: number) => `SRT cue ${cue}, line ${index + 1}`;
+		const at = (index: number) => `Line ${index + 1} (cue ${cue})`;
 		if (!isIndexLine(lines[i] as string)) {
-			throw new Error(`${at(i)}: expected a numeric cue index.`);
+			throw new Error(
+				`${at(i)} should be the cue number, but is "${(lines[i] as string).trim()}".`,
+			);
 		}
 		i++;
 		const timing = (lines[i] ?? "").trim();
 		const tokens = timing.split(/\s+/);
 		const [start = "", arrow, end = "", ...settings] = tokens;
 		if (arrow !== "-->" || end === "" || !settings.every((s) => SETTING.test(s))) {
-			throw new Error(`${at(i)}: expected start --> end timestamps.`);
+			throw new Error(`${at(i)} should be the cue timing "start --> end", but is "${timing}".`);
 		}
 		const startMs = parseStrictTimestamp(start, at(i));
 		const endMs = parseStrictTimestamp(end, at(i));
 		if (endMs < startMs) {
-			throw new Error(`${at(i)}: end must not be earlier than start.`);
+			throw new Error(`${at(i)}: the cue ends at ${end}, before it starts at ${start}.`);
 		}
 		i++;
 		const text: string[] = [];
@@ -129,7 +131,7 @@ const parseStrict = (input: string): Caption[] => {
 			i++;
 		}
 		if (text.length === 0) {
-			throw new Error(`${at(i)}: expected cue text.`);
+			throw new Error(`${at(i)}: the cue has no text; add at least one line after its timing.`);
 		}
 		captions.push({
 			text: text.join("\n").trimEnd(),
@@ -142,7 +144,7 @@ const parseStrict = (input: string): Caption[] => {
 	}
 	if (captions.length === 0) {
 		throw new Error(
-			"SRT: No timed captions found. Provide numbered cues with timestamps and text.",
+			'The SRT input holds no cues: each cue is a number, a "start --> end" timing line and its text.',
 		);
 	}
 	return captions;

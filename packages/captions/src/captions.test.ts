@@ -13,7 +13,7 @@ describe("captions", () => {
 	it("names the cue and line of a strict parsing error", () => {
 		expect(() =>
 			parseSrt({ input: "1\n00:00:01,000 --> 00:00:02,000\nA\n\n2\n00:00:03,000\n", strict: true }),
-		).toThrow("SRT cue 2, line 6: expected start --> end timestamps.");
+		).toThrow('Line 6 (cue 2) should be the cue timing "start --> end", but is "00:00:03,000".');
 	});
 
 	it("strips WebVTT markup and decodes character references", () => {

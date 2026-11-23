@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import tiktokFixture from "./__oracle__/create-tiktok-style-captions.json" with { type: "json" };
-import { decodeDeep, type Outcome, outcomeOf } from "./__oracle__/fixtures.js";
+import { decodeDeep, expectOutcome, type Outcome, outcomeOf } from "./__oracle__/fixtures.js";
 import srtFixture from "./__oracle__/parse-srt.json" with { type: "json" };
 import vttFixture from "./__oracle__/parse-vtt.json" with { type: "json" };
 import serializeFixture from "./__oracle__/serialize-srt.json" with { type: "json" };
@@ -25,19 +25,20 @@ describe("parseSrt against the Remotion oracle", () => {
 
 	it(`matches tolerant parsing on ${cases.length} files`, () => {
 		for (const c of cases) {
-			expect(
-				outcomeOf(() => parseSrt({ input: c.input }).captions),
+			expectOutcome(
+				() => parseSrt({ input: c.input }).captions,
+				c.tolerant,
 				JSON.stringify(c.input),
-			).toStrictEqual(c.tolerant);
+			);
 		}
 	});
 
-	it("matches strict parsing, including error messages", () => {
+	it("matches strict parsing, failing on the same files at the same cue and line", () => {
 		let succeeded = 0;
 		for (const c of cases) {
-			const actual = outcomeOf(() => parseSrt({ input: c.input, strict: true }).captions);
-			expect(actual, JSON.stringify(c.input)).toStrictEqual(c.strict);
-			if (actual.out !== undefined) succeeded++;
+			const parse = () => parseSrt({ input: c.input, strict: true }).captions;
+			expectOutcome(parse, c.strict, JSON.stringify(c.input));
+			if (c.strict.error === undefined) succeeded++;
 		}
 		expect(succeeded).toBeGreaterThan(300);
 	});
@@ -49,10 +50,7 @@ describe("parseVtt against the Remotion oracle", () => {
 
 	it(`matches ${cases.length} files`, () => {
 		for (const c of cases) {
-			expect(
-				outcomeOf(() => parseVtt({ input: c.input }).captions),
-				JSON.stringify(c.input),
-			).toStrictEqual(c.result);
+			expectOutcome(() => parseVtt({ input: c.input }).captions, c.result, JSON.stringify(c.input));
 		}
 	});
 });

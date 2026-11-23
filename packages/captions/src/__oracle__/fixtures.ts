@@ -2,6 +2,9 @@
 // recorded from the published Remotion package by tools/oracle-features
 // (pnpm record).
 
+import { compareFailure, failureOf } from "@motiojs/testing/oracle-errors";
+import { expect } from "vitest";
+
 /** Fixtures store NaN, +-Infinity and -0 as strings that Number() parses back. */
 export type Encoded = number | string;
 
@@ -35,8 +38,31 @@ export class ErrorTracker {
 	}
 }
 
-/** A recorded call: either its return value or the message it threw. */
-export type Outcome<T> = { out: T; error?: undefined } | { error: string; out?: undefined };
+/** A recorded call: either its return value or the message it threw and the error's class. */
+export type Outcome<T> =
+	| { out: T; error?: undefined }
+	| { error: string; errorType?: string; out?: undefined };
+
+/**
+ * Asserts that `fn` does what the recorded call did: returns a strictly equal value, or fails with
+ * the same error class (compareFailure()). A recorded strict SRT error names a cue and a line;
+ * Motio's must name the same ones.
+ */
+export const expectOutcome = <T>(fn: () => T, expected: Outcome<T>, label: string): void => {
+	if (expected.error === undefined) {
+		expect({ out: fn() }, label).toStrictEqual(expected);
+		return;
+	}
+	const { threw, error } = failureOf(fn);
+	expect(threw, `${label}: should throw`).toBe(true);
+	expect(compareFailure(error, expected), label).toBeUndefined();
+	const where = /cue (\d+), line (\d+)/.exec(expected.error);
+	if (where !== null) {
+		const message = (error as Error).message;
+		expect(message, label).toMatch(new RegExp(`\\bline ${where[2]}\\b`, "i"));
+		expect(message, label).toMatch(new RegExp(`\\bcue ${where[1]}\\b`, "i"));
+	}
+};
 
 const NUMERIC_KEYS = new Set([
 	"startMs",

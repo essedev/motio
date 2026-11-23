@@ -44,7 +44,9 @@ const parseTimestamp = (timestamp: string): number => {
 		fields.length > 3 ||
 		fields.includes("")
 	) {
-		throw new Error(`Invalid timestamp:${timestamp}`);
+		throw new Error(
+			`"${timestamp}" is not a WebVTT timestamp: write it as HH:MM:SS.mmm or MM:SS.mmm.`,
+		);
 	}
 	const [a = 0, b = 0, c] = fields.map((p) => Number.parseInt(p, 10));
 	const seconds = c === undefined ? a * 60 + b : a * 3600 + b * 60 + c;
