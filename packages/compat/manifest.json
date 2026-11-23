@@ -904,8 +904,8 @@
 				"HtmlInCanvasMotionBlur": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing",
-					"note": "Not provided: needs Chrome's experimental HTML-in-canvas API (D-048)."
+					"status": "supported",
+					"note": "Markup, sample times and rendered stills match Remotion's within the M1 thresholds, the documented example identical; media frame reuse is not reproduced (D-059)."
 				},
 				"Trail": {
 					"kind": "value",
@@ -1455,27 +1455,32 @@
 				"blurSlide": {
 					"kind": "value",
 					"tier": 1,
-					"status": "supported"
+					"status": "supported",
+					"note": "HTML-in-canvas presentation, also exported from its subpath (D-058)."
 				},
 				"crossZoom": {
 					"kind": "value",
 					"tier": 1,
-					"status": "supported"
+					"status": "supported",
+					"note": "HTML-in-canvas presentation, also exported from its subpath (D-058)."
 				},
 				"dreamyZoom": {
 					"kind": "value",
 					"tier": 1,
-					"status": "supported"
+					"status": "supported",
+					"note": "HTML-in-canvas presentation, also exported from its subpath (D-058)."
 				},
 				"filmBurn": {
 					"kind": "value",
 					"tier": 1,
-					"status": "supported"
+					"status": "supported",
+					"note": "HTML-in-canvas presentation, also exported from its subpath (D-058)."
 				},
 				"linearBlur": {
 					"kind": "value",
 					"tier": 1,
-					"status": "supported"
+					"status": "supported",
+					"note": "HTML-in-canvas presentation, also exported from its subpath (D-058)."
 				},
 				"linearTiming": {
 					"kind": "value",
@@ -1485,7 +1490,8 @@
 				"makeHtmlInCanvasPresentation": {
 					"kind": "value",
 					"tier": 1,
-					"status": "supported"
+					"status": "supported",
+					"note": "Scenes rasterised with Chrome's HTML-in-canvas API on Remotion's lifecycle; the documented crossfade shader gives identical stills. effects must be empty (no effect pipeline, D-057); motionBlur on transitions is not applied yet (D-058)."
 				},
 				"pushCut": {
 					"kind": "value",
@@ -1522,6 +1528,21 @@
 				},
 				"useTransitionProgress": {
 					"kind": "value",
+					"tier": 1,
+					"status": "supported"
+				},
+				"HtmlInCanvasShader": {
+					"kind": "type",
+					"tier": 1,
+					"status": "supported"
+				},
+				"HtmlInCanvasShaderDraw": {
+					"kind": "type",
+					"tier": 1,
+					"status": "supported"
+				},
+				"HtmlInCanvasShaderDrawParams": {
+					"kind": "type",
 					"tier": 1,
 					"status": "supported"
 				}
@@ -1604,6 +1625,225 @@
 					"kind": "value",
 					"tier": 1,
 					"status": "supported"
+				}
+			}
+		},
+		"@remotion/transitions/blur-slide": {
+			"tier": 1,
+			"symbols": {
+				"blurSlide": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation rebuilt black-box; rendered stills at least 50 dB, identical away from the midpoint (D-058)."
+				},
+				"blurSlideShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				},
+				"BlurSlideDirection": {
+					"kind": "type",
+					"tier": 1,
+					"status": "supported"
+				}
+			}
+		},
+		"@remotion/transitions/book-flip": {
+			"tier": 1,
+			"symbols": {
+				"bookFlip": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills within the M1 thresholds, at least 70 dB, in all four directions (D-058)."
+				},
+				"bookFlipShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/cross-zoom": {
+			"tier": 1,
+			"symbols": {
+				"crossZoom": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills identical to Remotion's on every frame of fixtures/transitions-canvas (D-058)."
+				},
+				"crossZoomShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/crosswarp": {
+			"tier": 1,
+			"symbols": {
+				"crosswarp": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills identical to Remotion's on every frame of fixtures/transitions-canvas (D-058)."
+				},
+				"crosswarpShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/dissolve": {
+			"tier": 1,
+			"symbols": {
+				"dissolve": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills identical to Remotion's on every frame of fixtures/transitions-canvas (D-058)."
+				},
+				"dissolveShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/dreamy-zoom": {
+			"tier": 1,
+			"symbols": {
+				"dreamyZoom": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills identical to Remotion's on every frame of fixtures/transitions-canvas (D-058)."
+				},
+				"dreamyZoomShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/film-burn": {
+			"tier": 1,
+			"symbols": {
+				"filmBurn": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills identical to Remotion's on every frame of fixtures/transitions-canvas (D-058)."
+				},
+				"filmBurnShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/linear-blur": {
+			"tier": 1,
+			"symbols": {
+				"linearBlur": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills identical to Remotion's on every frame of fixtures/transitions-canvas (D-058)."
+				},
+				"linearBlurShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/push-cut": {
+			"tier": 1,
+			"symbols": {
+				"pushCut": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported"
+				}
+			}
+		},
+		"@remotion/transitions/ripple": {
+			"tier": 1,
+			"symbols": {
+				"ripple": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills identical to Remotion's on every frame of fixtures/transitions-canvas (D-058)."
+				},
+				"rippleShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/swap": {
+			"tier": 1,
+			"symbols": {
+				"swap": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills identical to Remotion's on every frame of fixtures/transitions-canvas (D-058)."
+				},
+				"swapShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/zoom-blur": {
+			"tier": 1,
+			"symbols": {
+				"zoomBlur": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation rebuilt black-box; rendered stills at least 73 dB (D-058)."
+				},
+				"zoomBlurShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
+				}
+			}
+		},
+		"@remotion/transitions/zoom-in-out": {
+			"tier": 1,
+			"symbols": {
+				"zoomInOut": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "HTML-in-canvas presentation; rendered stills identical to Remotion's on every frame of fixtures/transitions-canvas (D-058)."
+				},
+				"zoomInOutShader": {
+					"kind": "value",
+					"tier": 1,
+					"status": "supported",
+					"note": "The presentation's HtmlInCanvasShader, usable with makeHtmlInCanvasPresentation() (D-058)."
 				}
 			}
 		},
