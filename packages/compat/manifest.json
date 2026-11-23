@@ -728,6 +728,29 @@
 				}
 			}
 		},
+		"@remotion/lottie": {
+			"tier": 3,
+			"symbols": {
+				"Lottie": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Frame mapping equal to the oracle; SVG stills identical (D-052)."
+				},
+				"LottieAnimationData": {
+					"kind": "type",
+					"tier": 3,
+					"status": "supported",
+					"note": "Type from the docs (D-052)."
+				},
+				"getLottieMetadata": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Equal to the oracle over 477 inputs (D-052)."
+				}
+			}
+		},
 		"@remotion/media": {
 			"tier": 1,
 			"symbols": {

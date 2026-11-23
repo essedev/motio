@@ -1,0 +1,38 @@
+{
+	"name": "@motiojs/lottie",
+	"version": "0.0.0",
+	"description": "Lottie animations driven by Motio's timeline, mirroring @remotion/lottie",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@motiojs/bundler": "workspace:*",
+		"@motiojs/renderer": "workspace:*",
+		"@motiojs/testing": "workspace:*",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"jsdom": "^31.0.1",
+		"lottie-web": "5.13.0",
+		"motio": "workspace:*",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	},
+	"peerDependencies": {
+		"lottie-web": "^5",
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0"
+	}
+}
