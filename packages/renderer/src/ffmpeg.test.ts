@@ -73,10 +73,18 @@ describe("encoder arguments", () => {
 		);
 	});
 
-	it("decodes JPEG frames as full-range BT.601 before converting", () => {
+	it("converts JPEG frames from full-range BT.601 YCbCr in YUV, keeping their chroma", () => {
 		const f = colorFilter({ imageFormat: "jpeg", pixelFormat: "yuv420p", colorSpace: "bt709" });
-		expect(f.startsWith("scale=in_color_matrix=bt601:in_range=pc:")).toBe(true);
-		expect(f).toContain("format=gbrp16le,scale=in_range=pc:out_color_matrix=bt709:out_range=tv");
+		expect(f).toBe(
+			"scale=in_range=pc:out_range=pc,format=yuv420p|yuv422p|yuv444p,colorspace=all=bt709:iall=bt601-6-625:irange=pc:range=tv:fast=1,format=yuv420p,setparams=colorspace=bt709:color_primaries=bt709:color_trc=bt709:range=tv",
+		);
+		const hdr = colorFilter({
+			imageFormat: "jpeg",
+			pixelFormat: "yuv420p10le",
+			colorSpace: "bt2020-ncl",
+		});
+		expect(hdr).toContain("colorspace=all=bt2020:iall=bt601-6-625:");
+		expect(hdr).toContain(",format=yuv420p10le,setparams=colorspace=bt2020nc:");
 	});
 
 	it("maps colour spaces to matrices and tags", () => {

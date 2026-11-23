@@ -150,6 +150,8 @@ export function assertFfmpegSupports(
 export interface ColorTags {
 	/** `scale` filter matrix name. */
 	matrix: string;
+	/** `colorspace` filter name of the whole colour space (its `all` option). */
+	colorspaceAll: string;
 	colorspace: string;
 	primaries: string;
 	trc: string;
@@ -162,16 +164,29 @@ export interface ColorTags {
 export function colorTags(colorSpace: ColorSpace, pixelFormat: PixelFormat): ColorTags {
 	switch (colorSpace) {
 		case "bt601":
-			return { matrix: "bt601", colorspace: "smpte170m", primaries: "smpte170m", trc: "smpte170m" };
+			return {
+				matrix: "bt601",
+				colorspaceAll: "bt601-6-525",
+				colorspace: "smpte170m",
+				primaries: "smpte170m",
+				trc: "smpte170m",
+			};
 		case "bt2020-ncl":
 			return {
 				matrix: "bt2020",
+				colorspaceAll: "bt2020",
 				colorspace: "bt2020nc",
 				primaries: "bt2020",
 				trc: pixelFormat.includes("10le") ? "bt2020-10" : "bt709",
 			};
 		default:
-			return { matrix: "bt709", colorspace: "bt709", primaries: "bt709", trc: "bt709" };
+			return {
+				matrix: "bt709",
+				colorspaceAll: "bt709",
+				colorspace: "bt709",
+				primaries: "bt709",
+				trc: "bt709",
+			};
 	}
 }
 
@@ -205,9 +220,14 @@ const SWS = "flags=accurate_rnd+full_chroma_int";
 export const VP8_BITRATE_CAP = "1000M";
 
 /**
- * The video filter converting captured frames to YUV. PNG decodes to full-range RGB(A); JPEG
- * from Chrome decodes to full-range BT.601 YCbCr (JFIF), so it is first converted to RGB with
- * that matrix and range (16-bit intermediate, so no extra rounding), then to the output matrix. Never left to FFmpeg's defaults.
+ * The video filter converting captured frames to YUV, never left to FFmpeg's defaults. PNG
+ * decodes to full-range RGB(A), converted to the output matrix and limited range. JPEG from
+ * Chrome decodes to full-range BT.601 YCbCr (JFIF) with 4:2:0 chroma: the `colorspace` filter
+ * converts its matrix and range in YUV, keeping the chroma samples Chrome encoded instead of
+ * resampling them through RGB (D-040). It runs on 8-bit planar YUV marked full range first,
+ * because FFmpeg versions disagree on whether converting the decoder's `yuvj` formats also
+ * compresses the range. Only the matrix and range change (`fast`): the pixels are sRGB, so
+ * primaries and transfer stay as they are and are only tagged.
  */
 export function colorFilter(settings: {
 	imageFormat: "jpeg" | "png";
@@ -217,9 +237,11 @@ export function colorFilter(settings: {
 	const tags = colorTags(settings.colorSpace, settings.pixelFormat);
 	// setparams tags the frames themselves: FFmpeg 7 and later take the encoder's colour
 	// metadata from the frames and ignore -color_primaries and -color_trc otherwise.
-	const toYuv = `scale=in_range=pc:out_color_matrix=${tags.matrix}:out_range=tv:${SWS},format=${settings.pixelFormat},setparams=colorspace=${tags.colorspace}:color_primaries=${tags.primaries}:color_trc=${tags.trc}:range=tv`;
-	if (settings.imageFormat === "png") return toYuv;
-	return `scale=in_color_matrix=bt601:in_range=pc:${SWS},format=gbrp16le,${toYuv}`;
+	const tag = `setparams=colorspace=${tags.colorspace}:color_primaries=${tags.primaries}:color_trc=${tags.trc}:range=tv`;
+	if (settings.imageFormat === "png") {
+		return `scale=in_range=pc:out_color_matrix=${tags.matrix}:out_range=tv:${SWS},format=${settings.pixelFormat},${tag}`;
+	}
+	return `scale=in_range=pc:out_range=pc,format=yuv420p|yuv422p|yuv444p,colorspace=all=${tags.colorspaceAll}:iall=bt601-6-625:irange=pc:range=tv:fast=1,format=${settings.pixelFormat},${tag}`;
 }
 
 /** The filter converting captured frames to the RGB(A) a GIF palette is built from. */
