@@ -13,13 +13,8 @@ import {
 import { type CancelSignal, toAbortController } from "./cancel.js";
 import { captureVideo, mixTimelineAudio } from "./capture-video.js";
 import { MotioError } from "./errors.js";
-import {
-	assertFfmpegSupports,
-	chooseVideoEncoder,
-	probeFfmpeg,
-	resolveFfmpegPath,
-	videoArgs,
-} from "./ffmpeg.js";
+import { assertFfmpegSupports, chooseVideoEncoder, probeFfmpeg, videoArgs } from "./ffmpeg.js";
+import { resolveRenderFfmpeg } from "./ffmpeg-resolve.js";
 import { type Codec, type FrameRange, resolveConcurrency, resolveFrames } from "./options.js";
 import { compositionPageFactory } from "./page-factory.js";
 import { DEFAULT_RECYCLE_EVERY_N_FRAMES, type SlowFrame } from "./pool.js";
@@ -173,7 +168,8 @@ export async function renderChunk(options: RenderChunkOptions): Promise<RenderCh
 	const video = planVideo(options);
 	const frames = resolveFrames(options.frameRange, 1, composition.durationInFrames);
 	const concurrency = resolveConcurrency(options.concurrency ?? 1);
-	const ffmpeg = resolveFfmpegPath(options.ffmpegExecutable);
+	const resolved = await resolveRenderFfmpeg(options);
+	const ffmpeg = resolved.ffmpeg;
 	const ffmpegInfo = await probeFfmpeg(ffmpeg);
 	assertFfmpegSupports(ffmpegInfo, videoCodecNeeds(video));
 	const encoder = await chooseVideoEncoder(ffmpegInfo, video.encoding);
@@ -181,7 +177,11 @@ export async function renderChunk(options: RenderChunkOptions): Promise<RenderCh
 	await mkdir(dirname(output), { recursive: true });
 	const part = `${output}.${process.pid}.part${container.extension}`;
 	const controller = toAbortController(options.cancelSignal, "renderChunk");
-	const session = await openSession(options);
+	const session = await openSession({
+		...options,
+		ffmpegExecutable: resolved.ffmpeg,
+		ffprobeExecutable: resolved.ffprobe,
+	});
 	try {
 		const captured = await captureVideo({
 			ffmpeg,

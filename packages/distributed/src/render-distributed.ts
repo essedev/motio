@@ -12,6 +12,7 @@ import {
 	type ProResProfile,
 	planChunkedRender,
 	renderAudio,
+	resolveFfmpeg,
 	type VideoConfig,
 	type X264Preset,
 } from "@motiojs/renderer";
@@ -159,6 +160,9 @@ export async function renderDistributed(
 ): Promise<RenderDistributedResult> {
 	const { composition } = options;
 	const plan = planChunkedRender(options);
+	// Assembly runs here: the same FFmpeg resolution as a render (D-065). Workers resolve their
+	// own with the same rules, from the same environment when they are local processes.
+	const localFfmpeg = (await resolveFfmpeg(options))?.ffmpeg ?? "ffmpeg";
 	const range = frameRangeOf(options.frameRange, composition.durationInFrames);
 	const chunks = planChunks({
 		frameRange: range,
@@ -335,7 +339,7 @@ export async function renderDistributed(
 			await mkdir(dirname(separateAudioTo), { recursive: true });
 			const part = `${separateAudioTo}.${process.pid}.part${plan.audio.extension}`;
 			try {
-				await run(options.ffmpegExecutable ?? "ffmpeg", [
+				await run(localFfmpeg, [
 					"-hide_banner",
 					"-loglevel",
 					"error",
@@ -370,7 +374,7 @@ export async function renderDistributed(
 						}
 					: {}),
 				...(plan.videoTag ? { videoTag: plan.videoTag } : {}),
-				...(options.ffmpegExecutable ? { ffmpeg: options.ffmpegExecutable } : {}),
+				ffmpeg: localFfmpeg,
 			});
 			await rename(part, output);
 		} finally {

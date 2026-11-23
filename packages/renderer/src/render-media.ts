@@ -27,10 +27,10 @@ import {
 	gifEncodeArgs,
 	gifPaletteArgs,
 	probeFfmpeg,
-	resolveFfmpegPath,
 	runFfmpeg,
 	videoArgs,
 } from "./ffmpeg.js";
+import { resolveRenderFfmpeg } from "./ffmpeg-resolve.js";
 import {
 	assertDimensionsFit,
 	CODECS,
@@ -309,7 +309,8 @@ export async function renderMediaInternal(
 	// The audio covers every frame of the range, also those `everyNthFrame` skips.
 	const audioFrames = resolveFrames(options.frameRange, 1, composition.durationInFrames);
 
-	const ffmpeg = resolveFfmpegPath(options.ffmpegExecutable);
+	const resolved = await resolveRenderFfmpeg(options);
+	const ffmpeg = resolved.ffmpeg;
 	const audioEncoder = audioCodec
 		? { aac: "aac", mp3: "libmp3lame", "pcm-16": "pcm_s16le", opus: "libopus" }[audioCodec]
 		: null;
@@ -337,7 +338,11 @@ export async function renderMediaInternal(
 		muted && !isGif ? output.temp : `${output.temp}.video${isGif ? ".nut" : extension}`;
 	const paletteTemp = `${output.temp}.palette.png`;
 	let committed = false;
-	const session = await openSession(options).catch(async (err: unknown) => {
+	const session = await openSession({
+		...options,
+		ffmpegExecutable: resolved.ffmpeg,
+		ffprobeExecutable: resolved.ffprobe,
+	}).catch(async (err: unknown) => {
 		await output.discard();
 		throw err;
 	});

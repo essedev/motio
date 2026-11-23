@@ -37,6 +37,14 @@ export {
 } from "./compositions.js";
 export { isMotioError, MotioError, type MotioErrorCode, type MotioErrorContext } from "./errors.js";
 export { type FfmpegInfo, MIN_FFMPEG_VERSION, probeFfmpeg } from "./ffmpeg.js";
+export {
+	type FfmpegExecutableOptions,
+	type FfmpegPackage,
+	type FfmpegSource,
+	loadFfmpegPackage,
+	type ResolvedFfmpeg,
+	resolveFfmpeg,
+} from "./ffmpeg-resolve.js";
 export type {
 	Codec,
 	ColorSpace,

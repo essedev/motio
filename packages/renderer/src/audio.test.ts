@@ -8,7 +8,7 @@ import {
 	resolveSampleRate,
 } from "./audio-options.js";
 import { isMotioError } from "./errors.js";
-import { resolveFfprobePath } from "./ffmpeg.js";
+import { siblingFfprobe } from "./ffmpeg-resolve.js";
 
 function intent(patch: Partial<AudioIntent>): AudioIntent {
 	return {
@@ -183,9 +183,9 @@ describe("audio options", () => {
 		const env = process.env.MOTIO_FFPROBE;
 		delete process.env.MOTIO_FFPROBE;
 		try {
-			expect(resolveFfprobePath(null, "/opt/ff/bin/ffmpeg")).toBe("/opt/ff/bin/ffprobe");
-			expect(resolveFfprobePath(null, "ffmpeg")).toBe("ffprobe");
-			expect(resolveFfprobePath("/x/probe", "ffmpeg")).toBe("/x/probe");
+			expect(siblingFfprobe("/opt/ff/bin/ffmpeg")).toBe("/opt/ff/bin/ffprobe");
+			expect(siblingFfprobe("ffmpeg")).toBe("ffprobe");
+			expect(siblingFfprobe("C:\\ff\\ffmpeg.exe")).toBe("C:\\ff\\ffprobe.exe");
 		} finally {
 			if (env !== undefined) process.env.MOTIO_FFPROBE = env;
 		}

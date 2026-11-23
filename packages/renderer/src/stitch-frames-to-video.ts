@@ -21,11 +21,10 @@ import {
 	gifEncodeArgs,
 	gifPaletteArgs,
 	probeFfmpeg,
-	resolveFfmpegPath,
-	resolveFfprobePath,
 	runFfmpeg,
 	videoArgs,
 } from "./ffmpeg.js";
+import { resolveRenderFfmpeg } from "./ffmpeg-resolve.js";
 import { startMediaServer } from "./media-server.js";
 import {
 	CODECS,
@@ -120,11 +119,11 @@ const UNSUPPORTED = [
 	"ffmpegOverride",
 ] as const;
 
-function binaries(directory: string | null | undefined): { ffmpeg: string; ffprobe: string } {
-	if (!directory) {
-		const ffmpeg = resolveFfmpegPath();
-		return { ffmpeg, ffprobe: resolveFfprobePath(undefined, ffmpeg) };
-	}
+/** `binariesDirectory` when given (Remotion's option), else the renderer's resolution (D-065). */
+async function binaries(
+	directory: string | null | undefined,
+): Promise<{ ffmpeg: string; ffprobe: string }> {
+	if (!directory) return resolveRenderFfmpeg();
 	const suffix = process.platform === "win32" ? ".exe" : "";
 	return {
 		ffmpeg: join(directory, `ffmpeg${suffix}`),
@@ -232,7 +231,7 @@ export async function stitchFramesToVideo(
 	const sampleRate = resolveSampleRate(options.sampleRate);
 	if (audioCodec) assertSampleRateFits(audioCodec, sampleRate);
 
-	const { ffmpeg, ffprobe } = binaries(options.binariesDirectory);
+	const { ffmpeg, ffprobe } = await binaries(options.binariesDirectory);
 	const audioEncoder = audioCodec
 		? { aac: "aac", mp3: "libmp3lame", "pcm-16": "pcm_s16le", opus: "libopus" }[audioCodec]
 		: null;

@@ -9,7 +9,7 @@ import {
 	resolveCaptureMethod,
 } from "./capture-method.js";
 import { MotioError } from "./errors.js";
-import { resolveFfmpegPath, resolveFfprobePath } from "./ffmpeg.js";
+import { resolveRenderFfmpeg } from "./ffmpeg-resolve.js";
 import { type MediaServer, startMediaServer } from "./media-server.js";
 import {
 	type LogLevel,
@@ -39,11 +39,14 @@ export interface BrowserSessionOptions {
 	onBrowserLog?: (log: BrowserLog) => void;
 	/** Accepted for compatibility; the renderer logs through `onBrowserLog` and errors. */
 	logLevel?: LogLevel;
-	/** Motio extension: FFmpeg executable. Default `$MOTIO_FFMPEG`, else `ffmpeg` on PATH. */
+	/**
+	 * Motio extension: FFmpeg executable. Default `$MOTIO_FFMPEG`, else the pinned build of
+	 * `@motiojs/ffmpeg` when that package is installed, else `ffmpeg` on PATH (D-065).
+	 */
 	ffmpegExecutable?: string | null;
 	/**
 	 * Motio extension: FFprobe executable. Default `$MOTIO_FFPROBE`, else `ffprobe` next to the
-	 * FFmpeg executable.
+	 * FFmpeg executable, from the same source.
 	 */
 	ffprobeExecutable?: string | null;
 	/**
@@ -130,9 +133,9 @@ export async function openSession(
 	const captureMethod: CaptureMethod = capture
 		? await resolveCaptureMethod(options.captureMethod, executablePath, chromiumOptions)
 		: "screenshot";
+	// Before the bundle server opens, so a failed FFmpeg download leaves nothing running.
+	const { ffmpeg, ffprobe } = await resolveRenderFfmpeg(options);
 	const server = await openServeUrl(options.serveUrl, options.port ?? undefined);
-	const ffmpeg = resolveFfmpegPath(options.ffmpegExecutable);
-	const ffprobe = resolveFfprobePath(options.ffprobeExecutable, ffmpeg);
 	let media: MediaServer;
 	try {
 		media = await startMediaServer({
