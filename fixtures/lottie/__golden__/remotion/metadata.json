@@ -1,0 +1,29 @@
+{
+	"remotion": "4.0.545",
+	"compositions": {
+		"lottie-shapes": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 90,
+			"defaultProps": {},
+			"props": {}
+		},
+		"lottie-options": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 90,
+			"defaultProps": {},
+			"props": {}
+		},
+		"lottie-fetched": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 90,
+			"defaultProps": {},
+			"props": {}
+		}
+	}
+}

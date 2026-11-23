@@ -23,12 +23,18 @@ importers:
       '@remotion/fonts':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/gif':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/google-fonts':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/layout-utils':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/lottie':
+        specifier: 4.0.545
+        version: 4.0.545(lottie-web@5.13.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/media':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -42,6 +48,9 @@ importers:
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/paths':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/player':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/renderer':
@@ -62,6 +71,9 @@ importers:
       esbuild:
         specifier: 0.28.1
         version: 0.28.1
+      lottie-web:
+        specifier: 5.13.0
+        version: 5.13.0
       mediabunny:
         specifier: 1.66.0
         version: 1.66.0
@@ -413,6 +425,12 @@ packages:
   '@remotion/fonts@4.0.545':
     resolution: {integrity: sha512-FWnLx/vTdOwK4WpW+Jzwaxw6epqYQqEOIIa9xl5w+seLMDwWbfIjYNng15tfPmvTb4pgqvPuA0V3dnBV9b+E7A==}
 
+  '@remotion/gif@4.0.545':
+    resolution: {integrity: sha512-Fhti3dlIt1tt5UAzA3nBUubIg/ydVxjSYdINNPED1+/vxbhkDVHQvBSjhtfgpZ0ttoEHqCGp4gX2bEbOS5m7cw==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
   '@remotion/google-fonts@4.0.545':
     resolution: {integrity: sha512-6Mr929E+ydjbqWVY2+3H6/V6D6uYhl3bQNLMif35INozGT2YXtHmFc5D4kWIE3RwQrP29WH10VGTq2bt4890/w==}
 
@@ -421,6 +439,13 @@ packages:
 
   '@remotion/licensing@4.0.545':
     resolution: {integrity: sha512-3xXYhNShkGezJUMCJMCpm7tR7OIqGL6hTWn9EXNi0Vde92hGZmLOsNIjkjA7NYHo5lzlTmvyvklIUUgINVZ1lQ==}
+
+  '@remotion/lottie@4.0.545':
+    resolution: {integrity: sha512-q4F1ZhXdbvJPlcMfhKeY5Iwj5weMPztwOQwHokpjdGqWARGFqMNFM4X0jp7AhqLuG2VfN5cVps4E2BniTZfcBg==}
+    peerDependencies:
+      lottie-web: ^5
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   '@remotion/media-utils@4.0.545':
     resolution: {integrity: sha512-NM+Kj4PgKlYqQ7eKnBbtBKjfEjuVZ4GW5oBWpST8227lYKNV6c8pVfELdT3pf8eZuftl6van54fg/+s2jkFrOg==}
@@ -954,6 +979,9 @@ packages:
   loader-runner@4.3.2:
     resolution: {integrity: sha512-DFEqQ3ihfS9blba08cLfYf1NRAIEm+dDjic073DRDc3/JspI/8wYmtDsHwd3+4hwvdxSK7PGaElfTmm0awWJ4w==}
     engines: {node: '>=6.11.5'}
+
+  lottie-web@5.13.0:
+    resolution: {integrity: sha512-+gfBXl6sxXMPe8tKQm7qzLnUy5DUPJPKIyRHwtpCpyUEYjHYRJC/5gjUvdkuO2c3JllrPtHXH5UJJK8LRYl5yQ==}
 
   lru-cache@6.0.0:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
@@ -1638,6 +1666,12 @@ snapshots:
       - react
       - react-dom
 
+  '@remotion/gif@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
   '@remotion/google-fonts@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -1653,6 +1687,13 @@ snapshots:
       - react-dom
 
   '@remotion/licensing@4.0.545': {}
+
+  '@remotion/lottie@4.0.545(lottie-web@5.13.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      lottie-web: 5.13.0
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
 
   '@remotion/media-utils@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -2248,6 +2289,8 @@ snapshots:
   json-schema-traverse@1.0.0: {}
 
   loader-runner@4.3.2: {}
+
+  lottie-web@5.13.0: {}
 
   lru-cache@6.0.0:
     dependencies:

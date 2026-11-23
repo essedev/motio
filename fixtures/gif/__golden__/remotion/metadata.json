@@ -1,0 +1,30 @@
+{
+	"remotion": "4.0.545",
+	"gl": "swangle",
+	"compositions": {
+		"gif-basic": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 90,
+			"defaultProps": {},
+			"props": {}
+		},
+		"gif-options": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 90,
+			"defaultProps": {},
+			"props": {}
+		},
+		"gif-auto-size": {
+			"width": 640,
+			"height": 360,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		}
+	}
+}
