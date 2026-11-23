@@ -5,10 +5,6 @@
 export {
 	AbsoluteFill,
 	type AbsoluteFillProps,
-	AnimatedImage,
-	type AnimatedImageFillMode,
-	type AnimatedImageLoopBehavior,
-	type AnimatedImageProps,
 	absoluteFillSchema,
 	assertValidInterpolateEasingOption,
 	assertValidInterpolatePosterizeOption,

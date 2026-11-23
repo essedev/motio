@@ -24,8 +24,8 @@
 				"AnimatedImage": {
 					"kind": "value",
 					"tier": 2,
-					"status": "supported",
-					"note": "ImageDecoder in a canvas, frame-accurate in renders and the Player. Shows the frame whose interval contains the time; Remotion shows the frame with the nearest start (405 of 679 recorded frames equal, every difference explained). Canvas size, fit and loop behaviours as recorded; zero-duration frames last 100 ms."
+					"status": "missing",
+					"note": "Being reimplemented from the docs and the recorded oracle only (D-067)."
 				},
 				"Artifact": {
 					"kind": "value",
