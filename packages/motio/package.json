@@ -16,6 +16,18 @@
 		"./no-react": {
 			"types": "./dist/no-react.d.ts",
 			"default": "./dist/no-react.js"
+		},
+		"./remotion": {
+			"types": "./dist/remotion.d.ts",
+			"default": "./dist/remotion.js"
+		},
+		"./remotion/version": {
+			"types": "./dist/remotion/version.d.ts",
+			"default": "./dist/remotion/version.js"
+		},
+		"./remotion/no-react": {
+			"types": "./dist/remotion/no-react.d.ts",
+			"default": "./dist/remotion/no-react.js"
 		}
 	},
 	"files": [

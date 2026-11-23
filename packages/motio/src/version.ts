@@ -1,5 +1,5 @@
 /**
- * The Remotion API version Motio is compatible with, importable without loading React
- * (`import { VERSION } from "motio/version"`, like `remotion/version`).
+ * Motio's version and the Remotion API version it implements, importable without loading React
+ * (`import { VERSION } from "motio/version"`).
  */
-export const VERSION = "4.0.545";
+export { REMOTION_API_VERSION, VERSION } from "@motiojs/core/version";

@@ -91,4 +91,4 @@ export {
 	type DeprecatedConfigNamespace,
 	type DeprecatedConfigSetter,
 } from "./config.js";
-export { VERSION } from "./version.js";
+export { REMOTION_API_VERSION, VERSION } from "./version.js";

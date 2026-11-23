@@ -35,7 +35,7 @@ async function bundle(
 		configFile: false,
 		logLevel: "silent",
 		plugins: [motioCompat(options)],
-		resolve: { alias: { motio: join(root, "fake", "motio.js"), ...alias } },
+		resolve: { alias: { "motio/remotion": join(root, "fake", "motio.js"), ...alias } },
 		build: {
 			write: false,
 			minify: false,
@@ -125,8 +125,11 @@ describe("motioCompat", () => {
 	it("warns, or fails in strict mode, on symbols the manifest lists as missing", async () => {
 		const source =
 			'import { interpolate, Video } from "remotion";\nexport default [interpolate, Video];\n';
-		const alias = { motio: join(root, "fake", "motio-with-video.js") };
-		await writeFile(alias.motio, "export const interpolate = 1; export const Video = 2;\n");
+		const alias = { "motio/remotion": join(root, "fake", "motio-with-video.js") };
+		await writeFile(
+			alias["motio/remotion"],
+			"export const interpolate = 1; export const Video = 2;\n",
+		);
 		const { warnings } = await bundle(source, { manifest }, alias);
 		expect(warnings.join("\n")).toMatch(
 			/"Video" from "remotion" is not implemented in Motio yet \(Tier 1, M1\)/,

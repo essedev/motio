@@ -82,4 +82,4 @@ export {
 export { Loop, type LoopProps } from "./timeline/loop.js";
 export { Sequence, type SequenceProps } from "./timeline/sequence.js";
 export { Series, type SeriesProps, type SeriesSequenceProps } from "./timeline/series.js";
-export { VERSION } from "./version.js";
+export { REMOTION_API_VERSION, VERSION } from "./version.js";
