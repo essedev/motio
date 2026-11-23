@@ -54,9 +54,14 @@ export class FrameExtractor {
 		return p;
 	}
 
-	/** The PNG of source frame `index` (0-based, presentation order). */
-	async frame(src: string, index: number): Promise<Buffer> {
-		const key = `${src}#${index}`;
+	/**
+	 * The PNG of source frame `index` (0-based, presentation order). With `alpha: false` the
+	 * frame is decoded without its alpha channel (opaque RGB), which is faster for VP8 and VP9.
+	 */
+	async frame(src: string, index: number, options: { alpha?: boolean } = {}): Promise<Buffer> {
+		const alpha = options.alpha ?? true;
+		const tag = alpha ? "" : "#opaque";
+		const key = `${src}#${index}${tag}`;
 		const hit = this.cache.get(key);
 		if (hit) {
 			this.cache.delete(key);
@@ -65,8 +70,8 @@ export class FrameExtractor {
 		}
 		let pending = this.inFlight.get(key);
 		if (!pending) {
-			pending = this.decodeBatch(src, index);
-			const keys = Array.from({ length: this.batchSize }, (_, i) => `${src}#${index + i}`);
+			pending = this.decodeBatch(src, index, alpha);
+			const keys = Array.from({ length: this.batchSize }, (_, i) => `${src}#${index + i}${tag}`);
 			for (const k of keys)
 				if (!this.inFlight.has(k) && !this.cache.has(k)) this.inFlight.set(k, pending);
 			pending.finally(() => {
@@ -84,7 +89,7 @@ export class FrameExtractor {
 		return got;
 	}
 
-	private async decodeBatch(src: string, index: number): Promise<void> {
+	private async decodeBatch(src: string, index: number, alpha: boolean): Promise<void> {
 		const { timestamps, codec } = await this.info(src);
 		if (index < 0 || index >= timestamps.length) {
 			throw new VideoFramesError(
@@ -105,7 +110,7 @@ export class FrameExtractor {
 				"-loglevel",
 				"error",
 				"-nostdin",
-				...decoderArgs(codec),
+				...(alpha ? decoderArgs(codec) : []),
 				"-ss",
 				ss.toFixed(6),
 				"-i",
@@ -117,6 +122,7 @@ export class FrameExtractor {
 				"passthrough",
 				"-f",
 				"image2pipe",
+				...(alpha ? [] : ["-pix_fmt", "rgb24"]),
 				"-c:v",
 				"png",
 				"-",
@@ -128,7 +134,9 @@ export class FrameExtractor {
 				{ src, index },
 			);
 		}
-		for (const [i, png] of splitPngStream(data).entries()) this.store(`${src}#${index + i}`, png);
+		const tag = alpha ? "" : "#opaque";
+		for (const [i, png] of splitPngStream(data).entries())
+			this.store(`${src}#${index + i}${tag}`, png);
 	}
 
 	private store(key: string, png: Buffer) {

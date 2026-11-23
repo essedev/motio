@@ -39,3 +39,15 @@ it("extracts the alpha plane of a transparent VP9 WebM", async () => {
 	const alpha = raw[3] ?? 0;
 	expect(Math.abs(alpha - 64)).toBeLessThanOrEqual(1);
 });
+
+it("drops the alpha plane when asked for an opaque frame", async () => {
+	const src = join(dir, "alpha.webm");
+	const png = await new FrameExtractor().frame(src, 3, { alpha: false });
+	const raw = spawnSync(
+		"ffmpeg",
+		["-loglevel", "error", "-i", "-", "-f", "rawvideo", "-pix_fmt", "rgba", "-"],
+		{ input: png },
+	).stdout;
+	expect(raw.length).toBe(64 * 64 * 4);
+	expect(raw[3]).toBe(255);
+});
