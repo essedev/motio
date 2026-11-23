@@ -49,7 +49,9 @@ function fetchFont(url: string): Promise<ArrayBuffer> {
 	if (cached) return cached;
 	const pending = fetch(url).then(async (response) => {
 		if (!response.ok) {
-			throw new Error(`Failed to load font "${url}": ${response.status} ${response.statusText}`);
+			throw new Error(
+				`loadFont() could not fetch "${url}": the server answered HTTP ${response.status} ${response.statusText}.`,
+			);
 		}
 		return response.arrayBuffer();
 	});
@@ -78,7 +80,7 @@ async function load(options: LoadFontOptions): Promise<void> {
 	const format = options.format ?? formatFromUrl(options.url);
 	if (format === null) {
 		throw new Error(
-			`Could not automatically derive font format from the URL "${options.url}". Pass the "format" parameter explicitly ("woff2", "woff", "opentype" or "truetype").`,
+			`loadFont() cannot tell the font format from the URL "${options.url}": pass format ("woff2", "woff", "opentype" or "truetype").`,
 		);
 	}
 	// The font is fetched as bytes so a missing file fails with its HTTP status; the browser

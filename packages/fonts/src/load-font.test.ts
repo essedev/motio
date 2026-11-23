@@ -91,7 +91,7 @@ describe("loadFont", () => {
 
 	it("fails the render and rejects on an HTTP error", async () => {
 		await expect(loadFont({ family: "M", url: "/missing.woff2" })).rejects.toThrow(
-			'Failed to load font "/missing.woff2": 404 Not Found',
+			'loadFont() could not fetch "/missing.woff2": the server answered HTTP 404 Not Found.',
 		);
 		expect((core.cancelled[0] as Error).message).toContain("404 Not Found");
 		expect(core.open.size).toBe(0);
@@ -99,7 +99,7 @@ describe("loadFont", () => {
 
 	it("requires a format when the URL has no known extension, before fetching", async () => {
 		await expect(loadFont({ family: "N", url: "/font" })).rejects.toThrow(
-			'Could not automatically derive font format from the URL "/font". Pass the "format" parameter explicitly ("woff2", "woff", "opentype" or "truetype").',
+			'loadFont() cannot tell the font format from the URL "/font": pass format ("woff2", "woff", "opentype" or "truetype").',
 		);
 		expect(fetchMock).not.toHaveBeenCalled();
 		await expect(loadFont({ family: "N", url: "/font", format: "woff2" })).resolves.toBeUndefined();

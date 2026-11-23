@@ -4,6 +4,6 @@ Target: `@remotion/fonts@4.0.545`. Proof: `fixtures/media-utils/__golden__/remot
 
 | Export | Status | Tolerance |
 |---|---|---|
-| `loadFont` | exact | same resolution or rejection message, same registered `FontFace` descriptors, same requests |
+| `loadFont` | exact | same resolution or rejection (same error class, Motio's own message), same registered `FontFace` descriptors, same requests |
 
-Measured behaviour: the format is derived from the URL extension (case-insensitive, query and hash ignored; `woff2`, `woff`, `otf`, `ttf`) before anything is fetched, and a URL without one rejects asking for `format`. The file is fetched once per URL as bytes (a 404 rejects with `Failed to load font "<url>": 404 Not Found`), so an explicit `format` that does not match the file still loads. The render is blocked with `delayRender()` until the face is added to `document.fonts`, and a failure fails the render with `cancelRender()`.
+Measured behaviour: the format is derived from the URL extension (case-insensitive, query and hash ignored; `woff2`, `woff`, `otf`, `ttf`) before anything is fetched, and a URL without one rejects asking for `format`. The file is fetched once per URL as bytes (a 404 rejects with an `Error` naming the URL and the HTTP status), so an explicit `format` that does not match the file still loads. The render is blocked with `delayRender()` until the face is added to `document.fonts`, and a failure fails the render with `cancelRender()`.

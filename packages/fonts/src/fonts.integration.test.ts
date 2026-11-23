@@ -1,6 +1,7 @@
 // Runs Motio's loadFont() in the pinned chrome-headless-shell over the cases of
 // fixtures/media-utils/fonts-probe.ts and compares the outcomes and the registered FontFace
-// descriptors with the recordings of @remotion/fonts 4.0.545.
+// descriptors with the recordings of @remotion/fonts 4.0.545. Rejections compare on behaviour: the
+// same cases reject with the same error name, in Motio's own words.
 import { readFileSync } from "node:fs";
 import type { Server } from "node:http";
 import { join, resolve } from "node:path";
@@ -9,6 +10,7 @@ import puppeteer, { type Browser } from "puppeteer-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type LoggedRequest, startFixtureServer } from "../../../fixtures/media-utils/server.ts";
 import { testChromeArgs } from "../../testing/src/browser.js";
+import { compareFailure } from "../../testing/src/oracle-errors.js";
 
 const root = resolve(import.meta.dirname, "../../..");
 const fixtures = join(root, "fixtures/media-utils");
@@ -68,7 +70,19 @@ describe("loadFont against @remotion/fonts 4.0.545 in the same browser", () => {
 		expect(golden.cases.length).toBeGreaterThan(5);
 	});
 	it("resolves, rejects and registers faces identically", () => {
-		expect(got).toEqual(golden.cases);
+		type Case = { error?: string; name?: string };
+		const checked = (got as Case[]).map((actual, i) => {
+			const recorded = golden.cases[i] as Case;
+			if (recorded.error === undefined) return actual;
+			const problem = compareFailure(
+				{ name: actual.name, message: actual.error },
+				{ error: recorded.error, errorType: recorded.name },
+				["format"],
+			);
+			expect(problem, JSON.stringify(recorded)).toBeUndefined();
+			return { ...actual, error: recorded.error };
+		});
+		expect(checked).toEqual(golden.cases);
 	});
 	it("fetches the same files, each once", () => {
 		expect(log.filter((r) => r.path !== "/").map((r) => `${r.method} ${r.path}`)).toEqual(
