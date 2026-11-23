@@ -13,6 +13,17 @@ Video fatti con React. Motio rende un albero React fotogramma per fotogramma in 
 - **Determinismo verificato**: stesso progetto, stesse props e stesso fotogramma danno gli stessi pixel in qualsiasi ordine, controllato sugli hash dei fotogrammi decodificati.
 - **Pensato per gli agent**: ogni comando ha l'output `--json`, errori con codici stabili, still, contact sheet, controlli di sfarfallio e di determinismo.
 
+## Per iniziare
+
+```bash
+pnpm create motio my-video     # oppure: npm create motio@latest my-video
+cd my-video
+pnpm dev                       # anteprima nel browser
+pnpm render                    # render in out/intro.mp4
+```
+
+`motio init` (lo stesso comando dentro la CLI) crea un progetto da uno degli starter di Motio: `basic`, `blank` o `captions`. La [guida](docs/guide/README.md), in inglese, parte da lì: struttura del progetto, fotogrammi e tempo, composizioni, sequenze, animazione, media, font, attesa dei dati, render da CLI e da Node, FFmpeg, test dei render in CI e migrazione da Remotion.
+
 ## Requisiti
 
 - Node 22 o successivo, pnpm.
@@ -27,8 +38,9 @@ I binari scaricati sono build di FFmpeg con licenza GPL (GPL-3.0 o successiva). 
 
 ## Documentazione
 
-La documentazione tecnica è in inglese:
+La documentazione è in inglese:
 
+- [Guida](docs/guide/README.md): per chi fa video con Motio
 - [Architettura](docs/ARCHITECTURE.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Decisioni](docs/DECISIONS.md)

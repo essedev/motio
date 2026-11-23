@@ -1,0 +1,21 @@
+{
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": ".",
+		"outDir": "dist",
+		"lib": ["esnext", "dom", "dom.iterable"],
+		"types": ["node"],
+		"module": "preserve",
+		"moduleResolution": "bundler"
+	},
+	"include": ["src", "sync.ts", "sync.test.ts"],
+	"references": [
+		{ "path": "../../../packages/motio" },
+		{ "path": "../../../packages/media" },
+		{ "path": "../../../packages/fonts" },
+		{ "path": "../../../packages/google-fonts" },
+		{ "path": "../../../packages/captions" },
+		{ "path": "../../../packages/bundler" },
+		{ "path": "../../../packages/renderer" }
+	]
+}

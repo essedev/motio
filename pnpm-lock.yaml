@@ -210,6 +210,46 @@ importers:
         specifier: ^5.1.1
         version: 5.1.1(@types/node@26.6.6)(jsdom@31.0.1)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0))
 
+  docs/guide/examples:
+    dependencies:
+      '@motiojs/bundler':
+        specifier: workspace:*
+        version: link:../../../packages/bundler
+      '@motiojs/captions':
+        specifier: workspace:*
+        version: link:../../../packages/captions
+      '@motiojs/fonts':
+        specifier: workspace:*
+        version: link:../../../packages/fonts
+      '@motiojs/google-fonts':
+        specifier: workspace:*
+        version: link:../../../packages/google-fonts
+      '@motiojs/media':
+        specifier: workspace:*
+        version: link:../../../packages/media
+      '@motiojs/renderer':
+        specifier: workspace:*
+        version: link:../../../packages/renderer
+      motio:
+        specifier: workspace:*
+        version: link:../../../packages/motio
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      vitest:
+        specifier: ^5.1.1
+        version: 5.1.1(@types/node@26.6.6)(jsdom@31.0.1)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0))
+
   fixtures/compositions:
     dependencies:
       motio:

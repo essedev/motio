@@ -1,0 +1,27 @@
+{
+	"name": "@motiojs/guide-examples",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"license": "Apache-2.0",
+	"description": "The code samples of docs/guide, type-checked by make check and copied into the pages by sync.ts",
+	"scripts": {
+		"sync": "node sync.ts"
+	},
+	"dependencies": {
+		"@motiojs/bundler": "workspace:*",
+		"@motiojs/captions": "workspace:*",
+		"@motiojs/fonts": "workspace:*",
+		"@motiojs/google-fonts": "workspace:*",
+		"@motiojs/media": "workspace:*",
+		"@motiojs/renderer": "workspace:*",
+		"motio": "workspace:*",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"@types/react": "19.3.0",
+		"vitest": "^5.1.1"
+	}
+}

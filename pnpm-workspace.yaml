@@ -3,5 +3,6 @@ packages:
   - fixtures/*
   - spike
   - tools/benchmark
+  - docs/guide/examples
 allowBuilds:
   esbuild: true

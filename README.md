@@ -13,6 +13,17 @@ Make videos with React. Motio renders a React tree frame by frame in a real head
 - **Deterministic by test**: the same project, props and frame give the same pixels in any order, checked on decoded frame hashes.
 - **Agent-first**: every command has `--json` output, errors with stable codes, stills, contact sheets, flicker and determinism checks.
 
+## Getting started
+
+```bash
+pnpm create motio my-video     # or: npm create motio@latest my-video
+cd my-video
+pnpm dev                       # preview in the browser
+pnpm render                    # render out/intro.mp4
+```
+
+`motio init` (the same command inside the CLI) creates a project from one of Motio's starters: `basic`, `blank` or `captions`. The [guide](docs/guide/README.md) starts from there: project structure, frames and time, compositions, sequences, animation, media, fonts, readiness, rendering from the CLI and from Node, FFmpeg, testing renders in CI, and coming from Remotion.
+
 ## Requirements
 
 - Node 22 or later, pnpm.
@@ -27,6 +38,7 @@ The downloaded binaries are GPL-licensed FFmpeg builds (GPL-3.0-or-later). Their
 
 ## Documentation
 
+- [Guide](docs/guide/README.md): for people making videos with Motio
 - [Architecture](docs/ARCHITECTURE.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Decisions](docs/DECISIONS.md)

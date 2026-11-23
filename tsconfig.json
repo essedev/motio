@@ -17,6 +17,9 @@
 			"path": "packages/create-motio"
 		},
 		{
+			"path": "docs/guide/examples"
+		},
+		{
 			"path": "packages/compat"
 		},
 		{
