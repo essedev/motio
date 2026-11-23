@@ -27,14 +27,14 @@ pnpm exec motio doctor
 
 Besides FFmpeg and the browser, `doctor` scans the project's imports and lists every Remotion symbol it uses with its status: supported, approximated (works, with a documented difference), stubbed (accepted, does nothing or fails with a message at build time) or missing. A package Motio does not provide fails the build with the package name and what to use instead, rather than at render time.
 
-## What is frozen
+## How compatibility is kept
 
 Compatibility is a stable layer, not a moving target (D-066 in the project's decision log):
 
-- It is frozen at the **Remotion 4.0.545** API. Motio does not follow newer Remotion releases; the compatibility tests stay and guard against regressions.
+- It is pinned at the **Remotion 4.0.545** API and checked by tests against recordings of that release. The pin moves on a schedule, every few months or at a significant Remotion release, not with every release; when it moves, changed behaviour of an API Motio already supports is aligned.
 - A Remotion symbol or package that is missing is added when a real project needs it, not to match Remotion's list.
 - Not planned: `@remotion/effects`, `@remotion/skia`, the web renderer, `@remotion/media-parser`, `@remotion/webcodecs`, `@remotion/whisper-web`, and the Lambda and Cloud Run packages (they wait for a use case). Distributed rendering on your own machines is available through `motio render --chunks` and `@motiojs/distributed`.
-- Where Motio can do better it designs its own API and maps Remotion's onto it, as `@motiojs/text` will do for `@remotion/rounded-text-box`.
+- Where Motio can do better it designs its own API and maps Remotion's onto it: `@remotion/rounded-text-box` is a preset of `@motiojs/text`'s [`<TextBackground>`](fonts-and-text.md#text-backgrounds) shape.
 
 ## Differences worth knowing
 

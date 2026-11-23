@@ -13,8 +13,12 @@
 		"@motiojs/captions": "workspace:*",
 		"@motiojs/fonts": "workspace:*",
 		"@motiojs/google-fonts": "workspace:*",
+		"@motiojs/layout-utils": "workspace:*",
 		"@motiojs/media": "workspace:*",
+		"@motiojs/player": "workspace:*",
+		"@motiojs/preload": "workspace:*",
 		"@motiojs/renderer": "workspace:*",
+		"@motiojs/text": "workspace:*",
 		"motio": "workspace:*",
 		"react": "19.3.1",
 		"react-dom": "19.3.1"

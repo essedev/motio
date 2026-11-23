@@ -105,4 +105,65 @@ Audio is never recorded from the browser. Each media component reports what it p
 
 ## Preloading for the player
 
-> **Coming in M6: `@motiojs/preload`.** Functions to load videos, audio, images and fonts ahead of time, so the preview and an embedded player play without waiting for the network.
+A render never needs preloading: it waits for every file before capturing a frame. The Player, which embeds a composition in your own React app, plays on real time instead, so a video that mounts in the middle of playback (in a `<Sequence>` that starts later, say) makes it stand still while the browser downloads the file. `@motiojs/preload` starts those downloads early:
+
+<!-- example: examples/src/preload.tsx#preload -->
+```tsx
+const TRAILER = "https://cdn.example.com/trailer.mp4";
+const MUSIC = "https://cdn.example.com/music.mp3";
+
+// The trailer starts 5 seconds in (at 30 fps). Without preloading, the browser starts fetching
+// it only when the sequence mounts, and the player stands still until enough has arrived.
+const Promo = () => (
+	<AbsoluteFill style={{ backgroundColor: "black" }}>
+		<Audio src={MUSIC} />
+		<Sequence from={150}>
+			<OffthreadVideo src={TRAILER} />
+		</Sequence>
+	</AbsoluteFill>
+);
+
+// The page of your app that embeds the player.
+export const PromoPage = () => {
+	const [trailerReady, setTrailerReady] = useState(false);
+	useEffect(() => {
+		// Both downloads start when the page mounts. Each call returns a function that frees it.
+		const frees = [
+			preloadVideo(TRAILER, { onReady: () => setTrailerReady(true) }),
+			preloadAudio(MUSIC),
+		];
+		return () => {
+			for (const free of frees) free();
+		};
+	}, []);
+	return (
+		<>
+			<Player
+				component={Promo}
+				durationInFrames={450}
+				fps={30}
+				compositionWidth={1920}
+				compositionHeight={1080}
+				controls
+				style={{ width: "100%" }}
+			/>
+			{trailerReady ? null : <p>Loading the trailer...</p>}
+		</>
+	);
+};
+```
+
+Chrome shares the data it has buffered for a file with every media element of the page that plays the same URL, so the `<OffthreadVideo>` that mounts at second 5 starts at once and the file is downloaded only once. In a measurement with a server that took 3 s to send the file, the Player stood still for 3.1 s without preloading and never more than 50 ms with it.
+
+| Function | Adds to the page |
+|---|---|
+| `preloadVideo(src, options?)` | A hidden, muted `<video preload="auto">`. |
+| `preloadAudio(src, options?)` | A hidden `<audio preload="auto">`. |
+| `preloadImage(src, options?)` | `<link rel="preload" as="image">`. |
+| `preloadFont(src, options?)` | `<link rel="preload" as="font" crossorigin="anonymous">`, which an `@font-face` rule for the same URL reuses. |
+| `resolveRedirect(src)` | Nothing: it resolves with the URL after every redirect, without downloading the body. |
+
+- Every preload function returns a function that stops the preload. Calls for the same URL share one element, removed when the last of them is freed.
+- `onReady()` is called once the browser holds enough to show the asset (a video or sound that can play to the end without waiting, an image or font fully loaded), at once if it already does. `onError(error)` is called when the file cannot be loaded; without it, a warning is logged.
+- Call them in an effect or at module level. Outside a browser (server-side rendering) they log a warning and do nothing.
+- `premountFor` on a `<Sequence>` is the other way to have a video ready before it plays; preloading also works before any Player exists and across several Players.

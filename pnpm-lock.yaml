@@ -224,12 +224,24 @@ importers:
       '@motiojs/google-fonts':
         specifier: workspace:*
         version: link:../../../packages/google-fonts
+      '@motiojs/layout-utils':
+        specifier: workspace:*
+        version: link:../../../packages/layout-utils
       '@motiojs/media':
         specifier: workspace:*
         version: link:../../../packages/media
+      '@motiojs/player':
+        specifier: workspace:*
+        version: link:../../../packages/player
+      '@motiojs/preload':
+        specifier: workspace:*
+        version: link:../../../packages/preload
       '@motiojs/renderer':
         specifier: workspace:*
         version: link:../../../packages/renderer
+      '@motiojs/text':
+        specifier: workspace:*
+        version: link:../../../packages/text
       motio:
         specifier: workspace:*
         version: link:../../../packages/motio
