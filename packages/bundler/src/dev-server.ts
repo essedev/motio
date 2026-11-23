@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { isIP } from "node:net";
 import { dirname, extname, isAbsolute, join, resolve, sep } from "node:path";
 import { stripVTControlCharacters } from "node:util";
 import { type MotioCompatOptions, MotioError, motioCompat } from "@motiojs/compat";
@@ -204,6 +205,47 @@ async function readJsonBody(req: IncomingMessage): Promise<unknown> {
 	}
 }
 
+/** Host names that always mean this machine (a DNS name could be rebound to it). */
+function isLocalHostname(hostname: string): boolean {
+	const name = hostname.replace(/^\[|\]$/g, "").toLowerCase();
+	return name === "localhost" || name.endsWith(".localhost") || isIP(name) !== 0;
+}
+
+/**
+ * Why a render-still request must be refused, or null. Rendering runs Chrome and writes files,
+ * so a page on another site must not trigger it: a cross-site `text/plain` POST needs no CORS
+ * preflight. The body must be JSON, and a browser's `Origin` (sent on every POST) must be this
+ * server's, reached by an IP address or `localhost` (DNS rebinding makes a foreign domain's
+ * Origin and Host agree). Clients that send no Origin (curl, scripts) are not browsers.
+ */
+export function stillRequestRefusal(
+	req: Pick<IncomingMessage, "headers">,
+): { status: number; message: string } | null {
+	const origin = req.headers.origin;
+	if (origin !== undefined) {
+		let parsed: URL | null = null;
+		try {
+			parsed = new URL(origin);
+		} catch {
+			parsed = null;
+		}
+		const host = req.headers.host;
+		if (
+			!parsed ||
+			parsed.host !== host ||
+			(parsed.protocol !== "http:" && parsed.protocol !== "https:") ||
+			!isLocalHostname(parsed.hostname)
+		) {
+			return { status: 403, message: "Render requests are accepted from this server's page only." };
+		}
+	}
+	const type = (req.headers["content-type"] ?? "").split(";")[0]?.trim().toLowerCase();
+	if (type !== "application/json") {
+		return { status: 415, message: "The render-still request must be sent as application/json." };
+	}
+	return null;
+}
+
 /** Checks the body of a render-still request. */
 export function parseStillRequest(body: unknown): DevStillRequest {
 	const value = body as Partial<Record<string, unknown>> | null;
@@ -258,6 +300,14 @@ function devPagePlugin(options: DevPagePluginOptions): Plugin {
 			sendJson(res, 404, {
 				ok: false,
 				error: { code: "E_NOT_AVAILABLE", message: "Rendering stills is not enabled." },
+			});
+			return;
+		}
+		const refusal = stillRequestRefusal(req);
+		if (refusal) {
+			sendJson(res, refusal.status, {
+				ok: false,
+				error: { code: "E_INVALID_ARGUMENT", message: refusal.message },
 			});
 			return;
 		}

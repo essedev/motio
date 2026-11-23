@@ -9,6 +9,7 @@ import {
 	type DevServerOptions,
 	parseStillRequest,
 	startDevServer,
+	stillRequestRefusal,
 } from "./dev-server.js";
 import { listStaticFiles } from "./static-files.js";
 
@@ -176,6 +177,47 @@ describe("startDevServer", () => {
 		expect((await fetch(new URL("/__motio/stills/unknown.png", server.url))).status).toBe(404);
 	});
 
+	it("refuses render requests from other sites and bodies that are not JSON", async () => {
+		const handler = vi.fn(async () => ({
+			file: join(project, "never.png"),
+			frame: 0,
+			width: 1,
+			height: 1,
+			durationMs: 1,
+		}));
+		const server = await start({ onRenderStill: handler });
+		const body = JSON.stringify({ compositionId: "Hello", frame: 0, inputProps: {} });
+		const post = (headers: Record<string, string>) =>
+			fetch(new URL("/__motio/still", server.url), { method: "POST", headers, body });
+		const own = new URL(server.url).origin;
+
+		// A form or fetch from another site needs no preflight with text/plain.
+		const crossText = await post({ "content-type": "text/plain", origin: "https://evil.example" });
+		expect(crossText.status).toBe(403);
+		const crossJson = await post({
+			"content-type": "application/json",
+			origin: "https://evil.example",
+		});
+		expect(crossJson.status).toBe(403);
+		// DNS rebinding: Origin and Host agree, but name a domain instead of this machine.
+		const port = new URL(server.url).port;
+		const rebound = await post({
+			"content-type": "application/json",
+			origin: `http://evil.example:${port}`,
+			host: `evil.example:${port}`,
+		});
+		expect(rebound.status).toBe(403);
+		const sameText = await post({ "content-type": "text/plain", origin: own });
+		expect(sameText.status).toBe(415);
+		expect(await sameText.json()).toMatchObject({ error: { code: "E_INVALID_ARGUMENT" } });
+		expect(handler).not.toHaveBeenCalled();
+
+		await writeFile(join(project, "never.png"), Buffer.from([0x89]));
+		const same = await post({ "content-type": "application/json; charset=utf-8", origin: own });
+		expect(same.status).toBe(200);
+		expect(handler).toHaveBeenCalledTimes(1);
+	});
+
 	it("answers 404 to render requests when no handler is set", async () => {
 		const server = await start();
 		const response = await fetch(new URL("/__motio/still", server.url), {
@@ -214,6 +256,30 @@ describe("startDevServer", () => {
 		await expect(start({ publicDir: "missing" })).rejects.toMatchObject({
 			code: "E_PUBLIC_DIR_NOT_FOUND",
 		});
+	});
+});
+
+describe("stillRequestRefusal", () => {
+	const json = { "content-type": "application/json" };
+	it("accepts this server's page and clients without an Origin", () => {
+		for (const host of ["127.0.0.1:3000", "localhost:3000", "[::1]:3000", "192.168.1.20:3000"]) {
+			expect(
+				stillRequestRefusal({ headers: { ...json, host, origin: `http://${host}` } }),
+			).toBeNull();
+		}
+		expect(stillRequestRefusal({ headers: { ...json, host: "127.0.0.1:3000" } })).toBeNull();
+	});
+
+	it("refuses other origins, rebound domains and bodies that are not JSON", () => {
+		const host = "127.0.0.1:3000";
+		const refused = (headers: Record<string, string>) => stillRequestRefusal({ headers })?.status;
+		expect(refused({ ...json, host, origin: "https://evil.example" })).toBe(403);
+		expect(refused({ ...json, host, origin: "null" })).toBe(403);
+		expect(
+			refused({ ...json, host: "evil.example:3000", origin: "http://evil.example:3000" }),
+		).toBe(403);
+		expect(refused({ "content-type": "text/plain", host, origin: `http://${host}` })).toBe(415);
+		expect(refused({ host })).toBe(415);
 	});
 });
 
