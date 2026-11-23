@@ -10,6 +10,6 @@ docker run --rm -v /tmp/motio-work:/work -w /work motio-env bash -lc \
   'pnpm install --frozen-lockfile && pnpm build && pnpm test:integration'
 ```
 
-Inside the image the renderer captures with BeginFrame (D-033); `MOTIO_CAPTURE_METHOD=screenshot` forces the reference path.
+Inside the image the renderer captures with `Page.captureScreenshot`, as everywhere (D-043); `MOTIO_CAPTURE_METHOD=begin-frame` selects BeginFrame (D-033).
 
 `MOTIO_BROWSER_EXECUTABLE` points the renderer at the image's browser.

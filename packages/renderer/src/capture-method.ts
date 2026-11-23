@@ -9,7 +9,7 @@ import { MotioError } from "./errors.js";
  */
 export type CaptureMethod = "begin-frame" | "screenshot";
 
-/** The `captureMethod` option: a method, or `auto` to probe for BeginFrame at start-up. */
+/** The `captureMethod` option: a method, or `auto`, which is the screenshot path (D-043). */
 export type CaptureMethodOption = CaptureMethod | "auto";
 
 export const CAPTURE_METHODS = ["auto", "begin-frame", "screenshot"] as const;
@@ -115,9 +115,11 @@ function withTimeout<T>(work: Promise<T>, ms: number, what: string): Promise<T> 
 }
 
 /**
- * Resolves `captureMethod`: the option, else `$MOTIO_CAPTURE_METHOD`, else `auto`. `auto` uses
- * BeginFrame on Linux when the probe succeeds and the screenshot path otherwise; an explicit
- * `begin-frame` fails with `E_BEGIN_FRAME_UNSUPPORTED` when the probe fails.
+ * Resolves `captureMethod`: the option, else `$MOTIO_CAPTURE_METHOD`, else `auto`. `auto` is the
+ * screenshot path on every platform: with frames drawn unthrottled (D-041) it captures as fast as
+ * BeginFrame on one page and faster on several, because pages can share a browser (D-043). An
+ * explicit `begin-frame` probes for BeginFrame and fails with `E_BEGIN_FRAME_UNSUPPORTED` when
+ * the probe fails.
  */
 export async function resolveCaptureMethod(
 	option: CaptureMethodOption | null | undefined,
@@ -128,10 +130,7 @@ export async function resolveCaptureMethod(
 ): Promise<CaptureMethod> {
 	const fromEnv = process.env.MOTIO_CAPTURE_METHOD?.trim() || undefined;
 	const value = option ?? (fromEnv as CaptureMethodOption | undefined);
-	if (value === undefined || value === "auto") {
-		if (platform !== "linux") return "screenshot";
-		return (await probe(executablePath, chromiumOptions)).supported ? "begin-frame" : "screenshot";
-	}
+	if (value === undefined || value === "auto") return "screenshot";
 	if (!(CAPTURE_METHODS as readonly string[]).includes(value)) {
 		throw new MotioError(
 			"E_INVALID_OPTION",

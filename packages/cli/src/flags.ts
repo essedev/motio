@@ -29,7 +29,7 @@ export const PROJECT_FLAGS = {
 	"capture-method": {
 		type: "string",
 		description:
-			"Motio: frame capture, auto (BeginFrame on Linux when available), begin-frame or screenshot.",
+			"Motio: frame capture, auto or screenshot (Page.captureScreenshot), or begin-frame (Linux).",
 	},
 	"pages-per-browser": {
 		type: "string",

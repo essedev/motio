@@ -46,15 +46,16 @@ export interface BrowserSessionOptions {
 	 */
 	ffprobeExecutable?: string | null;
 	/**
-	 * Motio extension: how frames are captured (D-013). `auto` (the default, or
-	 * `$MOTIO_CAPTURE_METHOD`) uses BeginFrame on Linux when a start-up probe succeeds and
-	 * `Page.captureScreenshot` otherwise; `begin-frame` and `screenshot` force a path.
+	 * Motio extension: how frames are captured (D-013, D-043). `auto` (the default, or
+	 * `$MOTIO_CAPTURE_METHOD`) and `screenshot` use `Page.captureScreenshot`; `begin-frame` uses
+	 * BeginFrame (Linux only), one page per browser.
 	 */
 	captureMethod?: CaptureMethodOption | null;
 	/**
 	 * Motio extension: pages sharing one browser process (D-042). By default the pages are spread
 	 * over two browsers (more above concurrency 8, four pages each), which measures fastest; 1
-	 * gives every page its own process, which confines a browser crash to one page.
+	 * gives every page its own process, which confines a browser crash to one page. BeginFrame
+	 * capture always uses one page per browser (Chrome drives BeginFrame for one tab per browser).
 	 */
 	pagesPerBrowser?: number | null;
 }
@@ -170,7 +171,12 @@ export async function openSession(
 			captureMethod,
 			browsers: {
 				pool: browsers,
-				pagesPerBrowser: pagesPerBrowser ?? defaultPagesPerBrowser(concurrency),
+				// Headless Chrome drives BeginFrame for one tab per browser: with a second tab under
+				// BeginFrame control, neither returns screenshots any more.
+				pagesPerBrowser:
+					captureMethod === "begin-frame"
+						? 1
+						: (pagesPerBrowser ?? defaultPagesPerBrowser(concurrency)),
 			},
 			...size,
 		}),
