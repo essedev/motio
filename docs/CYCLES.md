@@ -2,6 +2,13 @@
 
 Progress log, newest first. One entry per unit of work: what changed, what was measured, what is next.
 
+## 2026-11-23: BeginFrame, codecs, chunked rendering, performance baseline
+
+- BeginFrame capture on Linux with a start-up probe (D-033); every documented codec but AV1, with alpha and GIF (D-037); chunked rendering with local workers, frame-exact for lossless codecs and without dropped or duplicated frames for H.264 (D-039).
+- Core gaps closed (`Interactive`, `Easing.spring`, non-numeric `interpolate` outputs): the official Hello World template builds and renders.
+- Head-to-head with Remotion on 1080p fixtures: Motio 1.6 to 3 times slower with screenshot capture; causes measured and a performance criterion added (D-032). Performance work in progress.
+- Next: meet the performance criterion; the transparent-edge mismatch (D-031, D-038).
+
 ## 2026-11-23: M3 closed, templates, motio dev
 
 - M3 done: `@motiojs/media` (D-029), media service, audio pass, muxing and audio codecs (D-030), the Player's media playback, `motio dev` with a render check (D-026); 907 tests green in `make check`.
