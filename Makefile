@@ -29,3 +29,8 @@ clean: ## Remove build output
 
 test-integration: ## Run integration tests (real Chrome and FFmpeg, serial)
 	pnpm test:integration
+
+bench: ## Throughput benchmark against the pinned Remotion (ROADMAP, Performance)
+	pnpm --dir tools/oracle-render install --frozen-lockfile
+	pnpm --dir tools/benchmark typecheck
+	node tools/benchmark/run.ts $(BENCH_ARGS)

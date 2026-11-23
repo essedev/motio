@@ -1,0 +1,19 @@
+{
+	"name": "@motiojs/benchmark",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"license": "Apache-2.0",
+	"description": "Throughput benchmark of Motio against the pinned Remotion (ROADMAP, Performance)",
+	"scripts": {
+		"bench": "node run.ts",
+		"typecheck": "tsc --noEmit -p ."
+	},
+	"dependencies": {
+		"@motiojs/bundler": "workspace:*",
+		"@motiojs/renderer": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6"
+	}
+}
