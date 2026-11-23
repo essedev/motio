@@ -5,3 +5,11 @@ This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 
 Remotion is a trademark of its respective owner. Motio is an independent project, not
 affiliated with or endorsed by Remotion; the name is used only to describe API compatibility.
+
+Third-party code included in this repository, each file keeping its original copyright notice
+and licence text in its header:
+
+- @motiojs/paths: svg-path-properties (c) 2016 Roger Veciana i Rovira, MIT; svgpath (c) 2013-2015
+  Vitaly Puzrin, MIT; svg-path-bbox (c) 2020-2024 Alvaro Mondejar Rubio, BSD-3-Clause;
+  d3-interpolate-path (c) 2016 Peter Beshai, BSD-3-Clause; WarpJS (c) 2016 Benjamin Fleming, MIT.
+  Details in packages/paths/NOTICE.

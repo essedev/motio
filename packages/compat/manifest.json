@@ -617,7 +617,7 @@
 				"loadFont": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -627,7 +627,7 @@
 				"getAvailableFonts": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -742,62 +742,62 @@
 				"audioBufferToDataUrl": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"createSmoothSvgPath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getAudioData": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getAudioDuration": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getAudioDurationInSeconds": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getImageDimensions": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getVideoMetadata": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getWaveformPortion": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"useAudioData": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"useWindowedAudioData": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"visualizeAudio": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"visualizeAudioWaveform": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -847,107 +847,107 @@
 				"centerPath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"cutPath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"evolvePath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"extendViewBox": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getBoundingBox": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getInstructionIndexAtLength": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getLength": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getPointAtLength": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getSubpaths": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getTangentAtLength": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"interpolatePath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"interpolatePaths": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"normalizePath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"parsePath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"reduceInstructions": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"resetPath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"reversePath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"scalePath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"serializeInstructions": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"translatePath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"warpPath": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -963,7 +963,7 @@
 				"Player": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"PlayerRef": {
 					"kind": "type",
@@ -974,7 +974,7 @@
 				"Thumbnail": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1172,112 +1172,112 @@
 				"Arrow": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Callout": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Circle": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Ellipse": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Heart": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeArrow": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeCallout": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeCircle": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeEllipse": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeHeart": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makePie": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makePolygon": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeRect": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeSpark": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeStar": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeTriangle": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Pie": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Polygon": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Rect": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Spark": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Star": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Triangle": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1349,47 +1349,47 @@
 				"blurSlide": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"crossZoom": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"dreamyZoom": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"filmBurn": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"linearBlur": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"linearTiming": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"makeHtmlInCanvasPresentation": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"pushCut": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"springTiming": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"TransitionPresentation": {
 					"kind": "type",
@@ -1406,7 +1406,7 @@
 				"TransitionSeries": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"TransitionTiming": {
 					"kind": "type",
@@ -1417,7 +1417,7 @@
 				"useTransitionProgress": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1427,7 +1427,7 @@
 				"clockWipe": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1437,7 +1437,7 @@
 				"cube": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1447,7 +1447,7 @@
 				"fade": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1457,7 +1457,7 @@
 				"flip": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1467,7 +1467,7 @@
 				"iris": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1477,7 +1477,7 @@
 				"none": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1487,7 +1487,7 @@
 				"slide": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
@@ -1497,7 +1497,7 @@
 				"wipe": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
