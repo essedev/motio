@@ -52,12 +52,14 @@ const debugOverlay = (instructions: Instruction[]): ReactNode[] => {
 	let startX = 0;
 	let startY = 0;
 	instructions.forEach((i, index) => {
+		// Instructions are a fixed list: their position is their identity.
+		const id = `instruction-${index}`;
 		if (i.type === "C") {
 			nodes.push(
-				<path key={`${index}-a`} d={`M ${x} ${y} ${i.cp1x} ${i.cp1y}`} {...DEBUG_LINE} />,
-				<path key={`${index}-b`} d={`M ${i.x} ${i.y} ${i.cp2x} ${i.cp2y}`} {...DEBUG_LINE} />,
+				<path key={`${id}-a`} d={`M ${x} ${y} ${i.cp1x} ${i.cp1y}`} {...DEBUG_LINE} />,
+				<path key={`${id}-b`} d={`M ${i.x} ${i.y} ${i.cp2x} ${i.cp2y}`} {...DEBUG_LINE} />,
 				<circle
-					key={`${index}-c`}
+					key={`${id}-c`}
 					cx={i.cp1x}
 					cy={i.cp1y}
 					r={3}
@@ -66,7 +68,7 @@ const debugOverlay = (instructions: Instruction[]): ReactNode[] => {
 					stroke="black"
 				/>,
 				<circle
-					key={`${index}-d`}
+					key={`${id}-d`}
 					cx={i.cp2x}
 					cy={i.cp2y}
 					r={3}
@@ -153,6 +155,7 @@ export const RenderSvg = ({
 		}
 	}
 	const svg = (
+		// biome-ignore lint/a11y/noSvgWithoutTitle: the markup mirrors @remotion/shapes exactly; callers add a title or aria attributes
 		<svg
 			width={shape.width}
 			height={shape.height}

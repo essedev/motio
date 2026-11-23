@@ -7,7 +7,16 @@ import { getAvailableFonts } from "@remotion/google-fonts";
 const here = import.meta.dirname;
 const pkg = JSON.parse(readFileSync(join(here, "package.json"), "utf8"));
 const fonts = getAvailableFonts();
-const sampleNames = ["Inter", "TitanOne", "Roboto", "NotoSans", "AbhayaLibre", "Lobster", "SourceCodePro", "PlayfairDisplay"];
+const sampleNames = [
+	"Inter",
+	"TitanOne",
+	"Roboto",
+	"NotoSans",
+	"AbhayaLibre",
+	"Lobster",
+	"SourceCodePro",
+	"PlayfairDisplay",
+];
 const samples: Record<string, unknown> = {};
 for (const name of sampleNames) {
 	const f = fonts.find((x) => x.importName === name);
@@ -18,6 +27,9 @@ for (const name of sampleNames) {
 }
 const dir = resolve(here, "../../fixtures/google-fonts/__golden__/remotion");
 mkdirSync(dir, { recursive: true });
-writeFileSync(join(dir, "fonts.json"), `${JSON.stringify({ remotion: pkg.dependencies["@remotion/google-fonts"], fonts: fonts.map((f) => ({ fontFamily: f.fontFamily, importName: f.importName })) }, null, "\t")}\n`);
+writeFileSync(
+	join(dir, "fonts.json"),
+	`${JSON.stringify({ remotion: pkg.dependencies["@remotion/google-fonts"], fonts: fonts.map((f) => ({ fontFamily: f.fontFamily, importName: f.importName })) }, null, "\t")}\n`,
+);
 writeFileSync(join(dir, "samples.json"), `${JSON.stringify(samples, null, "\t")}\n`);
 console.log(`${fonts.length} fonts, ${Object.keys(samples).length} samples`);

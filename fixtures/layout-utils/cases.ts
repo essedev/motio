@@ -11,9 +11,18 @@ export const measureCases = [
 	{ text: "upper case", fontFamily: FONT, fontSize: 32, textTransform: "uppercase" },
 	{ text: "  padded  ", fontFamily: FONT, fontSize: 20 },
 	{ text: "", fontFamily: FONT, fontSize: 20 },
-	{ text: "Styled", fontFamily: FONT, fontSize: 25, additionalStyles: { fontStyle: "italic", padding: "3px" } },
+	{
+		text: "Styled",
+		fontFamily: FONT,
+		fontSize: 25,
+		additionalStyles: { fontStyle: "italic", padding: "3px" },
+	},
 	{ text: "Tiny", fontFamily: FONT, fontSize: 7.5 },
-	{ text: "Very long text that would normally wrap in a narrow box but here does not", fontFamily: FONT, fontSize: 18 },
+	{
+		text: "Very long text that would normally wrap in a narrow box but here does not",
+		fontFamily: FONT,
+		fontSize: 18,
+	},
 ];
 
 export const fitTextCases = [
@@ -25,14 +34,35 @@ export const fitTextCases = [
 ];
 
 export const fillTextBoxCases = [
-	{ maxBoxWidth: 300, maxLines: 2, words: ["Hello", " World!", " How", " are", " you", " doing", " today", " the end"], fontSize: 40 },
-	{ maxBoxWidth: 150, maxLines: 3, words: ["A", " longer", " sentence", " with", " several", " words", " to", " wrap", " around"], fontSize: 24 },
+	{
+		maxBoxWidth: 300,
+		maxLines: 2,
+		words: ["Hello", " World!", " How", " are", " you", " doing", " today", " the end"],
+		fontSize: 40,
+	},
+	{
+		maxBoxWidth: 150,
+		maxLines: 3,
+		words: ["A", " longer", " sentence", " with", " several", " words", " to", " wrap", " around"],
+		fontSize: 24,
+	},
 	{ maxBoxWidth: 80, maxLines: 1, words: ["Supercalifragilistic", " x"], fontSize: 20 },
 ];
 
 export const fitTextOnNLinesCases = [
-	{ text: "The quick brown fox jumps over the lazy dog", maxBoxWidth: 400, maxLines: 2, fontFamily: FONT },
+	{
+		text: "The quick brown fox jumps over the lazy dog",
+		maxBoxWidth: 400,
+		maxLines: 2,
+		fontFamily: FONT,
+	},
 	{ text: "Short", maxBoxWidth: 300, maxLines: 3, fontFamily: FONT },
-	{ text: "One two three four five six seven eight", maxBoxWidth: 250, maxLines: 4, fontFamily: FONT, fontWeight: "700" },
+	{
+		text: "One two three four five six seven eight",
+		maxBoxWidth: 250,
+		maxLines: 4,
+		fontFamily: FONT,
+		fontWeight: "700",
+	},
 	{ text: "Capped size", maxBoxWidth: 5000, maxLines: 1, fontFamily: FONT, maxFontSize: 120 },
 ];
