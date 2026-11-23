@@ -289,6 +289,18 @@ describe("audio compositions match Remotion's clicks", () => {
 		expect(got.map((g) => Math.round(g.t * 1000))).toEqual(want.map((t) => Math.round(t * 1000)));
 	});
 
+	it("writes separateAudioTo into a directory it creates, and no audio track in the video", async () => {
+		const separate = join(outDir, "missing-dir", "nested", "audio.aac");
+		const video = await renderAudio("audio-offset", { codec: "h264", separateAudioTo: separate });
+		expect(clicks(separate).length).toBe(golden.audio["audio-offset"]?.length);
+		const probe = spawnSync(
+			"ffprobe",
+			["-v", "error", "-show_entries", "stream=codec_type", "-of", "csv=p=0", video],
+			{ encoding: "utf8" },
+		);
+		expect(probe.stdout.trim().split("\n")).toEqual(["video"]);
+	});
+
 	it("writes no audio track when muted", async () => {
 		const out = await renderAudio("audio-offset", { codec: "h264", muted: true });
 		const probe = spawnSync(

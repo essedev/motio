@@ -67,6 +67,12 @@ export function encodeAudio(
 		child.stderr.on("data", (c: Buffer) => {
 			stderr += c.toString();
 		});
+		// FFmpeg exits early when it cannot open the output; the write then fails with EPIPE.
+		// FFmpeg's exit code and stderr carry the cause, so the error is reported from "close".
+		let stdinError: Error | null = null;
+		child.stdin.on("error", (e) => {
+			stdinError = e;
+		});
 		child.on("error", (e) =>
 			reject(
 				new AudioError("E_AUDIO_ENCODE", `could not start ffmpeg: ${e.message}`, {
@@ -75,12 +81,12 @@ export function encodeAudio(
 			),
 		);
 		child.on("close", (code) => {
-			if (code === 0) resolve();
+			if (code === 0 && stdinError === null) resolve();
 			else
 				reject(
 					new AudioError(
 						"E_AUDIO_ENCODE",
-						`ffmpeg failed to encode ${options.output}: ${stderr.trim()}`,
+						`ffmpeg failed to encode ${options.output}: ${stderr.trim() || stdinError?.message}`,
 						{ output: options.output, code },
 					),
 				);

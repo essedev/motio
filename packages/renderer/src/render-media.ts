@@ -1,5 +1,5 @@
-import { readFile, rename, rm } from "node:fs/promises";
-import { resolve as resolvePath } from "node:path";
+import { mkdir, readFile, rename, rm } from "node:fs/promises";
+import { dirname, resolve as resolvePath } from "node:path";
 import type { AudioCodec } from "@motiojs/audio";
 import type { AudioIntent } from "@motiojs/core/protocol";
 import { silence, writeAudioFile } from "./audio.js";
@@ -310,7 +310,11 @@ export async function renderMediaInternal(
 		encoders: [...needs.encoders, ...(audioEncoder ? [audioEncoder] : [])],
 		decoders: needs.decoders,
 	});
-	if (separateAudioTo) await checkOverwrite(separateAudioTo, options.overwrite ?? true);
+	if (separateAudioTo) {
+		await checkOverwrite(separateAudioTo, options.overwrite ?? true);
+		// Created like the directory of the output location.
+		await mkdir(dirname(separateAudioTo), { recursive: true });
+	}
 
 	const controller = toAbortController(options.cancelSignal, "renderMedia");
 	const extension = video
