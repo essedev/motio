@@ -262,7 +262,12 @@ const setters = {
 		nullable(isNonNegativeInteger),
 	),
 	setVideoBitrate: recorded("setVideoBitrate", "videoBitrate", nullable(isString)),
-	setAudioBitrate: recorded("setAudioBitrate", "audioBitrate", nullable(isString)),
+	setAudioBitrate: supported(
+		"setAudioBitrate",
+		"audioBitrate",
+		nullable(isString),
+		'an FFmpeg bitrate such as "128k", or null',
+	),
 	setEncodingBufferSize: recorded(
 		"setEncodingBufferSize",
 		"encodingBufferSize",
@@ -270,8 +275,13 @@ const setters = {
 	),
 	setEncodingMaxRate: recorded("setEncodingMaxRate", "encodingMaxRate", nullable(isString)),
 	setGopSize: recorded("setGopSize", "gopSize", nullable(isPositiveInteger)),
-	setEnforceAudioTrack: recorded("setEnforceAudioTrack", "enforceAudioTrack", isBoolean),
-	setSampleRate: recorded("setSampleRate", "sampleRate", isPositiveInteger),
+	setEnforceAudioTrack: supported(
+		"setEnforceAudioTrack",
+		"enforceAudioTrack",
+		isBoolean,
+		"a boolean",
+	),
+	setSampleRate: supported("setSampleRate", "sampleRate", isPositiveInteger, "a positive integer"),
 	setMetadata: recorded("setMetadata", "metadata", isStringRecord),
 	setHardwareAcceleration: recorded(
 		"setHardwareAcceleration",
@@ -288,7 +298,12 @@ const setters = {
 		"forSeamlessAacConcatenation",
 		isBoolean,
 	),
-	setPreferLosslessAudio: recorded("setPreferLosslessAudio", "preferLosslessAudio", isBoolean),
+	setPreferLosslessAudio: supported(
+		"setPreferLosslessAudio",
+		"preferLosslessAudio",
+		isBoolean,
+		"a boolean",
+	),
 	setDisableSharedMemoryCapture: ignored(
 		"setDisableSharedMemoryCapture",
 		"no-equivalent",
