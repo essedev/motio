@@ -354,6 +354,9 @@ importers:
       motio:
         specifier: workspace:*
         version: link:../motio
+      puppeteer-core:
+        specifier: 25.18.1
+        version: 25.18.1
       react:
         specifier: 19.3.1
         version: 19.3.1

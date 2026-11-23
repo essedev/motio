@@ -3,6 +3,7 @@ import type {
 	loadEnvVariables,
 	loadRemotionConfig,
 	resolveEntryPoint,
+	startDevServer,
 } from "@motiojs/bundler";
 import type { createCompatibilityReport } from "@motiojs/compat";
 import type { CliIo, Reporter } from "./io.js";
@@ -14,6 +15,7 @@ export interface BundlerApi {
 	loadRemotionConfig: typeof loadRemotionConfig;
 	loadEnvVariables: typeof loadEnvVariables;
 	resolveEntryPoint: typeof resolveEntryPoint;
+	startDevServer: typeof startDevServer;
 }
 
 /** Dependencies of every command. */
@@ -26,6 +28,11 @@ export interface CliDeps {
 	ffmpegPath: string;
 	/** Registers a handler for Ctrl+C; returns a function that unregisters it. */
 	onInterrupt: (handler: () => void) => () => void;
+	/**
+	 * Registers a handler for termination signals (SIGTERM, SIGHUP), used by long-running
+	 * commands such as `dev` to shut down cleanly; returns a function that unregisters it.
+	 */
+	onTerminate?: (handler: () => void) => () => void;
 }
 
 export interface CommandContext extends CliDeps {
@@ -41,4 +48,9 @@ export interface CommandResult {
 	human: string[];
 	/** Defaults to 0. */
 	exitCode?: number;
+	/**
+	 * The command already printed its JSON result (a long-running command reports as soon as
+	 * it is ready), so nothing more goes to stdout in JSON mode.
+	 */
+	jsonPrinted?: boolean;
 }

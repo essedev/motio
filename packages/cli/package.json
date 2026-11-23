@@ -21,6 +21,7 @@
 		"@motiojs/testing": "workspace:*",
 		"ajv": "^8.20.0",
 		"motio": "workspace:*",
+		"puppeteer-core": "25.18.1",
 		"react": "19.3.1",
 		"react-dom": "19.3.1"
 	},

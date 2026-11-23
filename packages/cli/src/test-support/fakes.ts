@@ -2,7 +2,7 @@ import { mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { crc32, deflateSync } from "node:zlib";
-import type { BundleResult } from "@motiojs/bundler";
+import type { BundleResult, DevServer, DevServerOptions } from "@motiojs/bundler";
 import type { CompatibilityReport } from "@motiojs/compat";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import type { BundlerApi, CliDeps } from "../context.js";
@@ -165,9 +165,31 @@ export function fakeBundler(overrides: Partial<BundlerApi> = {}): {
 		}),
 		loadEnvVariables: () => ({ variables: { REMOTION_X: "1" }, file: null }),
 		resolveEntryPoint: () => ({ path: "/project/src/index.ts", reason: "common paths" }),
+		startDevServer: async (options) => fakeDevServer(options),
 		...overrides,
 	};
 	return { bundler, bundles };
+}
+
+/** Dev servers started by {@link fakeBundler}, newest last. */
+export const devServers: Array<{ options: DevServerOptions; closed: boolean }> = [];
+
+function fakeDevServer(options: DevServerOptions): DevServer {
+	const record = { options, closed: false };
+	devServers.push(record);
+	const port = options.port ?? 3000;
+	return {
+		url: `http://localhost:${port}/`,
+		port,
+		entryPoint: "/project/src/index.ts",
+		entryPointReason: "common paths",
+		publicDir: null,
+		envVariableNames: Object.keys(options.envVariables ?? {}),
+		vite: {} as DevServer["vite"],
+		close: async () => {
+			record.closed = true;
+		},
+	};
 }
 
 const emptyReport: CompatibilityReport = {

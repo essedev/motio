@@ -1,0 +1,71 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:dev",
+	"title": "motio dev --json",
+	"description": "Printed once, as soon as the preview server listens; the process then keeps running until interrupted (SIGINT, SIGTERM) and prints nothing more on stdout. On a start-up failure, the error object is printed instead and the process exits.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"ok",
+				"command",
+				"url",
+				"port",
+				"entryPoint",
+				"entryPointReason",
+				"publicDir",
+				"envVariableNames",
+				"pid",
+				"warnings"
+			],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "dev"
+				},
+				"url": {
+					"type": "string",
+					"pattern": "^https?://",
+					"description": "URL of the preview page."
+				},
+				"port": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 65535
+				},
+				"entryPoint": {
+					"type": "string",
+					"description": "Absolute path of the entry file."
+				},
+				"entryPointReason": {
+					"enum": ["argument", "config", "common paths"]
+				},
+				"publicDir": {
+					"type": ["string", "null"],
+					"description": "Public directory served, or null."
+				},
+				"envVariableNames": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"description": "Variables exposed as process.env (names only)."
+				},
+				"pid": {
+					"type": "integer",
+					"minimum": 1,
+					"description": "Process to signal to stop the server."
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

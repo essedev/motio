@@ -92,19 +92,45 @@ export async function openProject(
 		serveUrl = outDir;
 	}
 
+	const session = buildSessionOptions(ctx, flags, {
+		config,
+		envVariables: env.variables,
+		serveUrl,
+		rendererPort: flags.integer("port", { min: 1, max: 65535 }) ?? config.rendererPort ?? undefined,
+	});
+	return { config, serveUrl, session, bundle };
+}
+
+/**
+ * The renderer options every call shares (browser, timeout, logging, props), read from the
+ * flags with the config as fallback. `rendererPort` is passed in because `motio dev` uses
+ * `--port` for its own server.
+ */
+export function buildSessionOptions(
+	ctx: CommandContext,
+	flags: Flags,
+	options: {
+		config: Readonly<Partial<ConfigValues>>;
+		envVariables: Record<string, string>;
+		serveUrl: string;
+		rendererPort: number | undefined;
+	},
+): SessionOptions {
+	const { config, serveUrl } = options;
+	const rootDir = ctx.io.cwd;
 	const gl = flags.oneOf("gl", GL_RENDERERS) ?? config.chromiumOpenGlRenderer ?? undefined;
 	const userAgent = flags.string("user-agent") ?? config.chromiumUserAgent ?? undefined;
 	const timeout =
 		flags.integer("timeout", { min: 1 }) ?? config.delayRenderTimeoutInMilliseconds ?? undefined;
-	const port = flags.integer("port", { min: 1, max: 65535 }) ?? config.rendererPort ?? undefined;
+	const port = options.rendererPort;
 	const browserExecutable =
 		flags.string("browser-executable") ?? config.browserExecutable ?? undefined;
 	const props = flags.string("props");
 	const logLevel = logLevelFrom(flags) ?? config.logLevel;
 
-	const session: SessionOptions = {
+	return {
 		serveUrl,
-		envVariables: env.variables,
+		envVariables: options.envVariables,
 		...(props ? { inputProps: parseProps(props, rootDir) } : {}),
 		...(timeout ? { timeoutInMilliseconds: timeout } : {}),
 		...(port ? { port } : {}),
@@ -126,7 +152,6 @@ export async function openProject(
 		},
 		onBrowserLog: (log) => ctx.reporter.verbose(`[browser ${log.type}] ${log.text}`),
 	};
-	return { config, serveUrl, session, bundle };
 }
 
 /** Lists composition ids, for the error raised when none was given. */

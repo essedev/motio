@@ -3,6 +3,7 @@ import {
 	loadEnvVariables,
 	loadRemotionConfig,
 	resolveEntryPoint,
+	startDevServer,
 } from "@motiojs/bundler";
 import { createCompatibilityReport } from "@motiojs/compat";
 import type { FlagSpecs } from "./args.js";
@@ -14,6 +15,7 @@ import {
 	FLICKER_FLAGS,
 } from "./commands/check.js";
 import { COMPOSITIONS_FLAGS, compositionsCommand } from "./commands/compositions.js";
+import { DEV_FLAGS, devCommand } from "./commands/dev.js";
 import { DOCTOR_FLAGS, doctorCommand } from "./commands/doctor.js";
 import { FRAMES_FLAGS, framesCommand } from "./commands/frames.js";
 import { RENDER_FLAGS, renderCommand } from "./commands/render.js";
@@ -61,6 +63,13 @@ export const COMMANDS: readonly CommandDefinition[] = [
 		summary: "Render a contact sheet: a grid PNG of evenly spaced frames.",
 		flags: FRAMES_FLAGS,
 		run: framesCommand,
+	},
+	{
+		words: ["dev"],
+		usage: "motio dev [entry-point]",
+		summary: "Start the preview page: compositions in a Player, hot reload, render check.",
+		flags: DEV_FLAGS,
+		run: devCommand,
 	},
 	{
 		words: ["browser", "ensure"],
@@ -145,12 +154,26 @@ export function defaultDeps(env: Record<string, string | undefined>): CliDeps {
 			renderer ??= loadRenderer();
 			return renderer;
 		},
-		bundler: { createBundle, loadRemotionConfig, loadEnvVariables, resolveEntryPoint },
+		bundler: {
+			createBundle,
+			loadRemotionConfig,
+			loadEnvVariables,
+			resolveEntryPoint,
+			startDevServer,
+		},
 		compatibilityReport: createCompatibilityReport,
 		ffmpegPath: env.MOTIO_FFMPEG ?? "ffmpeg",
 		onInterrupt: (handler) => {
 			process.once("SIGINT", handler);
 			return () => process.off("SIGINT", handler);
+		},
+		onTerminate: (handler) => {
+			process.once("SIGTERM", handler);
+			process.once("SIGHUP", handler);
+			return () => {
+				process.off("SIGTERM", handler);
+				process.off("SIGHUP", handler);
+			};
 		},
 	};
 }
@@ -200,9 +223,16 @@ export async function runCli(argv: readonly string[], io: CliIo, deps: CliDeps):
 	const ctx: CommandContext = { ...deps, io, reporter, cleanup: [] };
 	try {
 		const result = await definition.run(ctx, rest);
-		if (json)
-			reporter.resultJson({ ok: true, command: name, ...result.json, warnings: reporter.warnings });
-		else reporter.result(result.human);
+		if (json) {
+			if (!result.jsonPrinted) {
+				reporter.resultJson({
+					ok: true,
+					command: name,
+					...result.json,
+					warnings: reporter.warnings,
+				});
+			}
+		} else reporter.result(result.human);
 		return result.exitCode ?? EXIT.ok;
 	} catch (error) {
 		const payload = toErrorJson(error);

@@ -7,7 +7,7 @@ A milestone is done only when every criterion below holds and `make check` is gr
 M1 done (D-024). Ahead of the milestone order, already committed and proven against the oracle:
 
 - M2: transitions (SSIM at least 0.9994 on the fixture), captions, shapes, paths, noise, layout-utils, zod-types, google-fonts, fonts; the compat alias, `Config`, Tailwind setup and the symbol manifest. Left: BeginFrame capture on Linux in the renderer, the three official templates through the alias, and manifest statuses for every Tier 1 symbol.
-- M3: the Player (ref API, events, real-clock playback), `@motiojs/audio` (mixer), `@motiojs/video-frames` (source-frame selection and extraction), media-utils. Left: the media components (`Video`, `OffthreadVideo`, `Audio`, `@remotion/media`), the audio pass in the renderer, audio muxing, `motio dev`.
+- M3: the Player (ref API, events, real-clock playback), `@motiojs/audio` (mixer), `@motiojs/video-frames` (source-frame selection and extraction), media-utils. Left: the media components (`Video`, `OffthreadVideo`, `Audio`, `@remotion/media`), the audio pass in the renderer, audio muxing. `motio dev` is done (D-026).
 - M5: chunk planning and assembly (`@motiojs/distributed`), alpha and GIF recipes (D-018 to D-020). Left: the renderer's chunk output mode, the local and Lambda workers, alpha and GIF output in the renderer.
 
 ## Spike (done)
