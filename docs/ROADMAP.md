@@ -50,6 +50,10 @@ Done when:
 - Audio: click times of the audio compositions within 1 ms of `media.json` and click peaks within 0.01 (offset and volume ramp; the time-stretched `playbackRate` 2 case within 2 ms), no seams.
 - Player: Playwright tests cover the ref API and events.
 
+## Performance (cross-cutting)
+
+Done when a committed benchmark renders the `fixtures/compositions` motion and timeline compositions at 1920x1080 with Motio and with the pinned Remotion on the same machine, and Motio's wall time is at most Remotion's at concurrency 1, 4 and 8, with the colour and determinism criteria of M1 still met. Measured gap and plan: D-{n:03d}.
+
 ## M4: a real production project
 
 Done when every video of a production Remotion project renders with no source changes, `doctor` reports no missing symbol, renders match the project's Remotion renders within the M1 thresholds and pass the flicker check. Needs a project chosen by the author.

@@ -182,3 +182,21 @@ Choices beyond the docs:
 
 Two template stills (OnlyLogo 20, Overlay 30) miss the thresholds only at the antialiased edges of a scaled element over a transparent background (PSNR 33 and 38 dB; on white the same frames match at 52 dB). Measured so far: the element has the same size in both renders (337.0 against 337.02 px wide); Remotion's edges carry a faint bilinear resampling halo (alpha 2 to 3 outside the edge) that Motio's do not. Ruled out: fonts (fixed separately, D-027), the Chrome patch version (Motio rendering with Remotion's own 158.0.8127.2 binary gives the same result), and the command line (observing the running process shows Remotion launches Chrome with the same GL and determinism flags, GPU compositing through SwiftShader). Compositing in software (`--disable-gpu-compositing`) reproduces Overlay exactly but moves the 3D `flip` transition from SSIM 0.9995 to 0.989, so the default stays GPU compositing through SwiftShader. Next lead: page-level differences in how the composition container is layered (a wrapper transform or layer that makes Chrome rasterise the scaled element at scale 1 and resample it). The two stills stay marked as known mismatches in `fixtures/templates/templates.json`.
 
+## D-032 Throughput against Remotion: measured gap and the plan to close it (2026-11-23)
+
+Head-to-head on the same machine (Apple M5, 10 cores), same compositions (`fixtures/compositions` motion and timeline, 60 frames rendered at scale 3 = 1920x1080), H.264 at CRF 18, muted, total wall time including browser start:
+
+| Concurrency | Remotion 4.0.545 | Motio | Motio, `x264Preset: "ultrafast"` |
+|---|---|---|---|
+| 1 | 3.5 to 3.9 s | 5.4 to 6.3 s | |
+| 4 | 1.4 to 1.9 s | 3.0 to 4.4 s | 2.9 s |
+| 8 | 1.2 to 1.6 s | 3.7 to 4.7 s | 2.5 s |
+
+Motio is 1.6 to 3 times slower today. Causes measured so far:
+
+1. **Pool layout (revisits D-007).** On the real bundle at 1080p, seek plus JPEG capture alone reaches 63 fps with one browser per page and 77 fps with 8 pages in one browser; D-007 had measured the opposite on a trivial scene. Pages sharing one browser (or a few) should be the default, with the process-per-page layout as an option for crash isolation.
+2. **Colour conversion of JPEG frames.** The exact path (JPEG YCbCr to 16-bit RGB to BT.709 YUV, accurate rounding) encodes at 70 fps offline and produces files 64% larger than a range-only conversion that keeps the BT.601 matrix (138 fps, 46.6 dB against the captured frames, against 48.4 dB for the exact path); Remotion's files are of the smaller kind and carry no colour tags. Candidate default: the range-only path tagged BT.601 (`smpte170m`), keeping the exact BT.709 path behind `colorSpace: "bt709"`.
+3. **Remaining pipeline overhead.** Even with the encoder at `ultrafast`, the full render reaches about half the raw capture throughput: per-frame work in the renderer between capture and encoder (transfer, reorder buffer, backpressure, the media service and audio-intent collection added in M3) needs profiling.
+
+A performance criterion is added to the roadmap: wall time at most Remotion's at concurrency 1, 4 and 8 on these compositions, measured by a committed benchmark script.
+
