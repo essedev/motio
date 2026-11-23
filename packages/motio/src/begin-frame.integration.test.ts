@@ -92,6 +92,19 @@ function framesOf(file: string): Record<string, number[]> {
 	return JSON.parse(readFileSync(join(ROOT, file), "utf8")) as Record<string, number[]>;
 }
 
+// The identity tests below run only where BeginFrame works. On Linux (the pinned image) the probe
+// must succeed, so they cannot be skipped there by accident; elsewhere the skip says where to
+// run them (docker/README.md).
+it("probes BeginFrame: required on Linux, reported elsewhere", () => {
+	if (process.platform === "linux") {
+		expect(probe.supported, probe.reason).toBe(true);
+	} else if (!probe.supported) {
+		console.log(
+			`BeginFrame identity tests skipped on ${process.platform}: ${probe.reason ?? "unsupported"}. Run them in the Linux image (docker/README.md).`,
+		);
+	}
+});
+
 describe.skipIf(!probe.supported)("BeginFrame capture equals the screenshot path", () => {
 	for (const [id, frames] of Object.entries(framesOf("fixtures/compositions/frames.json"))) {
 		it(`compositions/${id}: frames ${frames.join(", ")}`, async () => {

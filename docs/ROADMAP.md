@@ -51,11 +51,11 @@ Scope: `Video`, `OffthreadVideo`, `Audio`, `@remotion/media`, the audio pass and
 Done when:
 - Video: every video composition of `fixtures/media` (frame-stamped sources at 24, 30, 59.94 and 60 fps, `playbackRate` 2, trim, HTML5 `Video`, `@remotion/media` `Video`) shows exactly the source-frame sequence in `fixtures/media/__golden__/remotion/media.json`. The selection rule differs per component (`OffthreadVideo` rounds down, the HTML5 `Video` rounds to nearest).
 - Audio: click times of the audio compositions within 1 ms of `media.json` and click peaks within 0.01 (offset and volume ramp; the time-stretched `playbackRate` 2 case within 2 ms), no seams.
-- Player: Playwright tests cover the ref API and events.
+- Player: real-browser tests (puppeteer-core in the pinned chrome-headless-shell, D-022) cover the ref API and events.
 
 ## Performance (cross-cutting, done)
 
-Done when a committed benchmark renders the `fixtures/compositions` motion and timeline compositions at 1920x1080 with Motio and with the pinned Remotion on the same machine, and Motio's wall time is at most Remotion's at concurrency 1, 4 and 8, with the colour and determinism criteria of M1 still met. Measured gap and plan: D-032; changes: D-040 to D-043.
+Checked by `make bench BENCH_ARGS="--assert"`, outside `make check` (it needs the pinned Remotion and takes minutes). Done when a committed benchmark renders the `fixtures/compositions` motion and timeline compositions at 1920x1080 with Motio and with the pinned Remotion on the same machine, and Motio's wall time is at most Remotion's at concurrency 1, 4 and 8, with the colour and determinism criteria of M1 still met. Measured gap and plan: D-032; changes: D-040 to D-043.
 
 - [x] `make bench` (`tools/benchmark`; `--assert` checks the criterion). Medians, both compositions summed, H.264 CRF 18, muted (D-044):
 
