@@ -89,6 +89,27 @@ describe("render", () => {
 		expect(existsSync(bundles[0] as string)).toBe(false);
 	});
 
+	it("passes the audio flags", async () => {
+		const { calls, code } = await run([
+			"render",
+			"Main",
+			"--json",
+			"--audio-codec=mp3",
+			"--audio-bitrate=128k",
+			"--enforce-audio-track",
+			"--sample-rate=44100",
+			"--separate-audio-to=out/sound.mp3",
+		]);
+		expect(code).toBe(0);
+		expect(calls.renderMedia?.[0]).toMatchObject({
+			audioCodec: "mp3",
+			audioBitrate: "128k",
+			enforceAudioTrack: true,
+			sampleRate: 44100,
+			separateAudioTo: join(cwd, "out", "sound.mp3"),
+		});
+	});
+
 	it("takes the output positional and infers the codec from its extension", async () => {
 		const { io, calls } = await run(["render", "src/index.ts", "Main", "out/video.webm", "--json"]);
 		expect(parseJson(io)).toMatchObject({ codec: "vp8", output: join(cwd, "out", "video.webm") });

@@ -27,7 +27,17 @@ export const RENDER_FLAGS = {
 	...CAPTURE_FLAGS,
 	output: { type: "string", description: "Output file (alternative to the positional output)." },
 	codec: { type: "string", description: `Codec: ${CODECS.join(", ")}.` },
-	"audio-codec": { type: "string", description: "Audio codec." },
+	"audio-codec": { type: "string", description: "Audio codec: aac, mp3, pcm-16, opus." },
+	"audio-bitrate": { type: "string", description: 'Audio bitrate, for example "128k".' },
+	"enforce-audio-track": {
+		type: "boolean",
+		description: "Write a silent audio track when the composition has no audio.",
+	},
+	"sample-rate": { type: "string", description: "Audio sample rate in Hz (default 48000)." },
+	"separate-audio-to": {
+		type: "string",
+		description: "Write the audio to this file instead of muxing it into the video.",
+	},
 	crf: { type: "string", description: "Constant rate factor (quality)." },
 	"image-format": { type: "string", description: "Frame capture format: jpeg, png, none." },
 	frames: { type: "string", description: "Frames to render: 5, 0-9, 100- or 0,30-59,90-." },
@@ -72,6 +82,8 @@ export async function renderCommand(
 	const pixelFormat = flags.oneOf("pixel-format", PIXEL_FORMATS);
 	const colorSpace = flags.oneOf("color-space", COLOR_SPACES);
 	const x264Preset = flags.oneOf("x264-preset", X264_PRESETS);
+	const sampleRate = flags.integer("sample-rate", { min: 1 });
+	const separateAudioTo = flags.string("separate-audio-to");
 	const outputFlag = flags.string("output");
 	if (outputFlag && positionalOutput && outputFlag !== positionalOutput) {
 		throw usageError("Pass the output either as an argument or with --output, not both.");
@@ -123,6 +135,11 @@ export async function renderCommand(
 				colorSpace: colorSpace ?? config.colorSpace,
 				x264Preset: x264Preset ?? config.x264Preset,
 				audioCodec: flags.string("audio-codec") ?? config.audioCodec,
+				audioBitrate: flags.string("audio-bitrate") ?? config.audioBitrate ?? undefined,
+				enforceAudioTrack: flags.boolean("enforce-audio-track") ?? config.enforceAudioTrack,
+				preferLossless: config.preferLosslessAudio,
+				sampleRate: sampleRate ?? config.sampleRate,
+				separateAudioTo: separateAudioTo ? resolvePath(ctx.io.cwd, separateAudioTo) : undefined,
 			}),
 			onProgress: (progress) => {
 				renderedFrames = progress.renderedFrames;

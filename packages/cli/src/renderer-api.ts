@@ -85,6 +85,11 @@ export interface RenderMediaOptions extends SessionOptions {
 	colorSpace?: ColorSpace;
 	x264Preset?: string;
 	audioCodec?: string;
+	audioBitrate?: string | null;
+	enforceAudioTrack?: boolean;
+	preferLossless?: boolean;
+	sampleRate?: number | null;
+	separateAudioTo?: string | null;
 	muted?: boolean;
 	cancelSignal?: unknown;
 	onProgress?: (progress: RenderMediaProgress) => void;
