@@ -25,11 +25,15 @@ export const interpolateColors = (
 	options?: InterpolateColorsOptions,
 ): string => {
 	if (inputRange.length !== outputRange.length) {
-		throw new Error(
-			`inputRange (${inputRange.length} values provided) and outputRange (${outputRange.length} values provided) must have the same length`,
+		throw new TypeError(
+			`inputRange has ${inputRange.length} values and outputRange ${outputRange.length}: give both one value per keyframe.`,
 		);
 	}
 	const colors = outputRange.map(parseColor);
+	// interpolate() would report this as an Error; Remotion's interpolateColors() throws a TypeError.
+	if (typeof input === "undefined") {
+		throw new TypeError("input is undefined: pass the number to map, such as the current frame.");
+	}
 	const channelOptions: InterpolateOptions = {
 		easing: options?.easing,
 		posterize: options?.posterize,

@@ -3,6 +3,7 @@ import {
 	decode,
 	decodeAll,
 	type Encoded,
+	expectSameFailure,
 	type FixtureOptions,
 	toOptions,
 } from "./__oracle__/fixtures.js";
@@ -20,6 +21,7 @@ type GridCase = {
 	inputs: Encoded[];
 	out?: string[];
 	error?: string;
+	errorType?: string;
 };
 
 type EdgeCase = {
@@ -30,9 +32,10 @@ type EdgeCase = {
 	options: FixtureOptions;
 	out?: string;
 	error?: string;
+	errorType?: string;
 };
 
-type ParseCase = { probe: string; out?: string; error?: string };
+type ParseCase = { probe: string; out?: string; error?: string; errorType?: string };
 
 /** The result as a string, or the thrown message prefixed with "Error: ". */
 const outcome = (fn: () => string) => {
@@ -53,8 +56,11 @@ describe("interpolateColors against the Remotion oracle", () => {
 			const inputRange = decodeAll(c.inputRange);
 			const options = toOptions(c.options);
 			if (c.error !== undefined) {
-				const got = outcome(() => interpolateColors(0.5, inputRange, c.outputRange, options));
-				if (got !== `Error: ${c.error}`) mismatches.push(`${c.outputRange}: ${got}`);
+				expectSameFailure(
+					() => interpolateColors(0.5, inputRange, c.outputRange, options),
+					{ error: c.error, errorType: c.errorType },
+					JSON.stringify(c.outputRange),
+				);
 				continue;
 			}
 			decodeAll(c.inputs).forEach((x, i) => {
@@ -79,22 +85,29 @@ describe("interpolateColors against the Remotion oracle", () => {
 					: c.inputType === "number"
 						? decode(c.input as Encoded)
 						: c.input;
-			const got = outcome(() =>
+			const call = () =>
 				interpolateColors(
 					input as number,
 					decodeAll(c.inputRange),
 					c.outputRange as string[],
 					toOptions(c.options),
-				),
-			);
-			expect(got, JSON.stringify(c)).toBe(c.error === undefined ? c.out : `Error: ${c.error}`);
+				);
+			if (c.error !== undefined) {
+				expectSameFailure(call, { error: c.error, errorType: c.errorType }, JSON.stringify(c));
+			} else {
+				expect(call(), JSON.stringify(c)).toBe(c.out);
+			}
 		}
 	});
 
 	it("accepts and rejects the same color strings", () => {
 		for (const c of parseFixture.cases as ParseCase[]) {
-			const got = outcome(() => interpolateColors(0.5, [0, 1], [c.probe, "black"]));
-			expect(got, c.probe).toBe(c.error === undefined ? c.out : `Error: ${c.error}`);
+			const call = () => interpolateColors(0.5, [0, 1], [c.probe, "black"]);
+			if (c.error !== undefined) {
+				expectSameFailure(call, { error: c.error, errorType: c.errorType }, c.probe);
+			} else {
+				expect(call(), c.probe).toBe(c.out);
+			}
 		}
 	});
 });
@@ -140,7 +153,7 @@ describe("parseColor", () => {
 	});
 
 	it("rejects names in the wrong case and non-strings", () => {
-		expect(() => parseColor("RED")).toThrow("invalid color string RED provided");
-		expect(() => parseColor(12)).toThrow("invalid color string 12 provided");
+		expect(() => parseColor("RED")).toThrow('"RED" is not a supported color');
+		expect(() => parseColor(12)).toThrow('"12" is not a supported color');
 	});
 });

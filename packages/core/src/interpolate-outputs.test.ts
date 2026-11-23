@@ -1,8 +1,10 @@
+import { compareFailure } from "@motiojs/testing/oracle-errors";
 import { describe, expect, it } from "vitest";
 import {
 	ErrorTracker,
 	errorOf,
 	type FixtureOptions,
+	OPTION_NAMES,
 	toOptions,
 	untag,
 } from "./__oracle__/fixtures.js";
@@ -33,23 +35,37 @@ type ErrorCase = {
 // numeric interpolate() fixture.
 const TOLERANCE = 1e-12;
 
-const run = (fn: () => unknown): Result => {
+type Actual = { threw: false; out: unknown } | { threw: true; error: unknown };
+
+const run = (fn: () => unknown): Actual => {
 	try {
-		return { out: fn() };
-	} catch (e) {
-		const error = e as Error;
-		return { error: error.message, errorType: error instanceof TypeError ? "TypeError" : "Error" };
+		return { threw: false, out: fn() };
+	} catch (error) {
+		return { threw: true, error };
 	}
 };
 
-/** Compares one result with the recorded one; returns a description of the difference or null. */
-const compare = (actual: Result, expected: Result): string | null => {
+/**
+ * Compares one result with the recorded one; returns a description of the difference or null.
+ * Failures match on behaviour (same error class, the same options named), not on wording.
+ */
+const compare = (actual: Actual, expected: Result): string | null => {
 	if (expected.error !== undefined) {
-		if (actual.error === expected.error && actual.errorType === expected.errorType) return null;
-		return `expected ${expected.errorType}: ${expected.error}, got ${actual.error !== undefined ? `${actual.errorType}: ${actual.error}` : JSON.stringify(actual.out)}`;
+		if (!actual.threw) {
+			return `expected a ${expected.errorType} (${expected.error}), got ${JSON.stringify(actual.out)}`;
+		}
+		const diff = compareFailure(
+			actual.error,
+			{ error: expected.error, errorType: expected.errorType },
+			OPTION_NAMES,
+		);
+		return diff === undefined
+			? null
+			: `recorded ${expected.errorType} (${expected.error}): ${diff}`;
 	}
-	if (actual.error !== undefined)
-		return `expected ${JSON.stringify(expected.out)}, got ${actual.errorType}: ${actual.error}`;
+	if (actual.threw) {
+		return `expected ${JSON.stringify(expected.out)}, got ${String(actual.error)}`;
+	}
 	const a = actual.out;
 	const b = expected.out;
 	const same =
@@ -78,11 +94,12 @@ describe("interpolate with non-numeric outputs against the Remotion oracle", () 
 				const diff = compare(actual, expected);
 				const context = () =>
 					`interpolate(${x}, ${JSON.stringify(c.outputRange)}, ${JSON.stringify(c.options)})`;
+				const out = actual.threw ? undefined : actual.out;
 				if (diff === null && typeof expected.out === "number") {
-					numbers.add(actual.out as number, expected.out, context);
+					numbers.add(out as number, expected.out, context);
 				} else if (diff === null && Array.isArray(expected.out)) {
 					expected.out.forEach((v, k) => {
-						numbers.add((actual.out as number[])[k] as number, v as number, context);
+						numbers.add((out as number[])[k] as number, v as number, context);
 					});
 				}
 				if (diff !== null) {
@@ -98,7 +115,7 @@ describe("interpolate with non-numeric outputs against the Remotion oracle", () 
 		expect(mismatches.slice(0, 20), `${mismatches.length} mismatches`).toEqual([]);
 	});
 
-	it("throws the same messages and error types for invalid arguments", () => {
+	it("throws for the same invalid arguments, with the same error class", () => {
 		const mismatches: string[] = [];
 		for (const raw of errorFixture.cases) {
 			const c = untag(raw) as ErrorCase;

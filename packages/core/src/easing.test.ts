@@ -7,12 +7,13 @@ import {
 	type EasingSpec,
 	type Encoded,
 	ErrorTracker,
+	expectSameFailure,
 } from "./__oracle__/fixtures.js";
 import { Easing } from "./easing.js";
 
 type EasingCase =
 	| { easing: EasingSpec; t: Encoded[]; out: Encoded[] }
-	| { easing: EasingSpec; error: string };
+	| { easing: EasingSpec; error: string; errorType: string };
 
 const cases = fixture.cases as EasingCase[];
 
@@ -36,11 +37,11 @@ describe("Easing against the Remotion oracle", () => {
 		expect(tracker.max, tracker.worst).toBeLessThanOrEqual(TOLERANCE);
 	});
 
-	it("throws the same errors for invalid bezier control points", () => {
+	it("throws for the same invalid bezier control points, with the same error class", () => {
 		const errorCases = cases.filter((c) => "error" in c);
 		expect(errorCases.length).toBeGreaterThan(0);
 		for (const c of errorCases) {
-			expect(() => buildEasing(c.easing)(0.5)).toThrow(c.error);
+			expectSameFailure(() => buildEasing(c.easing)(0.5), c, JSON.stringify(c.easing));
 		}
 	});
 });

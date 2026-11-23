@@ -4,6 +4,7 @@ import {
 	decodeAll,
 	type Encoded,
 	ErrorTracker,
+	expectSameFailure,
 	type FixtureOptions,
 	toOptions,
 } from "./__oracle__/fixtures.js";
@@ -28,6 +29,7 @@ type ErrorCase = {
 	options: FixtureOptions;
 	out?: Encoded;
 	error?: string;
+	errorType?: string;
 };
 
 // Tolerance: 1e-12 (relative above 1, absolute below). 99% of the values
@@ -55,7 +57,7 @@ describe("interpolate against the Remotion oracle", () => {
 		expect(tracker.max, tracker.worst).toBeLessThanOrEqual(TOLERANCE);
 	});
 
-	it("throws the same messages for invalid arguments", () => {
+	it("throws for the same invalid arguments, with the same error class", () => {
 		for (const c of errorFixture.cases as ErrorCase[]) {
 			const input = c.inputType === "undefined" ? undefined : c.input;
 			const call = () =>
@@ -66,7 +68,7 @@ describe("interpolate against the Remotion oracle", () => {
 					toOptions(c.options),
 				);
 			if (c.error !== undefined) {
-				expect(call, JSON.stringify(c)).toThrow(c.error);
+				expectSameFailure(call, { error: c.error, errorType: c.errorType }, JSON.stringify(c));
 			} else {
 				expect(call()).toBe(decode(c.out as Encoded));
 			}
@@ -105,7 +107,7 @@ describe("interpolate", () => {
 
 	it("rejects ranges that are not strictly increasing", () => {
 		expect(() => interpolate(1, [0, 1, 1], [0, 1, 2])).toThrow(
-			"inputRange must be strictly monotonically increasing but got [0,1,1]",
+			"inputRange [0,1,1] is not strictly increasing",
 		);
 	});
 });

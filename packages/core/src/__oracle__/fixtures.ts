@@ -1,6 +1,8 @@
 // Helpers shared by the oracle tests. The JSON files next to this module are
 // recorded from the published Remotion package by tools/oracle (pnpm record).
 
+import { compareFailure, failureOf, type RecordedFailure } from "@motiojs/testing/oracle-errors";
+import { expect } from "vitest";
 import { Easing, type EasingFunction } from "../easing.js";
 import type { InterpolateOptions } from "../interpolate.js";
 
@@ -113,4 +115,41 @@ export const toOptions = (o: FixtureOptions): InterpolateOptions => {
 	if (o.easing !== undefined) options.easing = buildEasing(o.easing);
 	if (o.easingSegments !== undefined) options.easing = o.easingSegments.map(buildEasing);
 	return options as InterpolateOptions;
+};
+
+/**
+ * Arguments and options of `interpolate()`, `interpolateColors()`, `spring()`, `measureSpring()`
+ * and `Easing`: when a recorded message names one of them, Motio's message must name it too.
+ */
+export const OPTION_NAMES = [
+	"input",
+	"inputRange",
+	"outputRange",
+	"easing",
+	"posterize",
+	"output",
+	"outputType",
+	"extrapolateLeft",
+	"extrapolateRight",
+	"Easing.step1",
+	"fps",
+	"frame",
+	"damping",
+	"stiffness",
+	"threshold",
+	"durationInFrames",
+];
+
+/**
+ * Asserts that `call` fails like the recorded call: it throws, with the same built-in error class,
+ * a message of Motio's own that names the same options (see `compareFailure`).
+ */
+export const expectSameFailure = (
+	call: () => unknown,
+	recorded: RecordedFailure,
+	context: string,
+): void => {
+	const { threw, error } = failureOf(call);
+	expect(threw, `${context}: should throw`).toBe(true);
+	expect(compareFailure(error, recorded, OPTION_NAMES), context).toBeUndefined();
 };

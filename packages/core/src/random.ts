@@ -39,5 +39,7 @@ export const random = (seed: number | string | null): number => {
 	if (seed === null) return Math.random();
 	if (typeof seed === "string") return mulberry32(hashString(seed));
 	if (typeof seed === "number") return mulberry32(seed * 1e10);
-	throw new TypeError("random() argument must be a number or a string");
+	throw new Error(
+		`random() got a ${typeof seed} seed: pass a number or a string, or null for a different value each call.`,
+	);
 };

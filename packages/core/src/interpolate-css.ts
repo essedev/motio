@@ -122,7 +122,9 @@ export const looksLikeCssValue = (value: string, outputType: InterpolateOutputTy
 };
 
 const componentCountError = (raw: string) =>
-	new TypeError(`String outputRange values must contain 1 to 3 components, but got "${raw}"`);
+	new TypeError(
+		`"${raw}" in outputRange has the wrong number of components: use 1 to 3, separated by spaces.`,
+	);
 
 const AXES: Record<string, [number, number, number]> = {
 	x: [1, 0, 0],
@@ -135,7 +137,7 @@ const kindOfUnit = (raw: string, unit: string): CssValueKind => {
 	if (LENGTH_UNITS.has(unit) || unit === "%") return "translate";
 	if (ANGLE_UNITS.has(unit)) return "rotate";
 	throw new TypeError(
-		`Cannot interpolate "${raw}" because "${unit}" is not a supported translate or rotate unit`,
+		`"${raw}" uses the unit "${unit}", which is neither a length nor an angle: use a unit such as px, %, em or deg.`,
 	);
 };
 
@@ -169,7 +171,7 @@ const parseTransformValue = (raw: string): ParsedValue => {
 	const other = kinds.find((k) => k !== first);
 	if (other !== undefined) {
 		throw new TypeError(
-			`Cannot interpolate "${raw}" because it mixes ${first} and ${other} values`,
+			`"${raw}" combines ${first} and ${other} components: one value must be only one of them.`,
 		);
 	}
 	return { kind: first, raw, components };
@@ -193,7 +195,7 @@ const parseOriginValue = (raw: string): ParsedValue => {
 			return { length: parseNumberToken(token) };
 		}
 		throw new TypeError(
-			`Cannot interpolate "${raw}" because "${token}" is not a supported transform-origin length-percentage`,
+			`"${raw}": "${token}" is neither a transform-origin keyword nor a length-percentage.`,
 		);
 	};
 	const first = read(tokens[0] as string);
@@ -214,7 +216,7 @@ const parseOriginValue = (raw: string): ParsedValue => {
 		const second = read(tokens[1] as string);
 		const pairError = () =>
 			new TypeError(
-				`Cannot interpolate "${raw}" because "${tokens[0]} ${tokens[1]}" is not a valid transform-origin keyword pair`,
+				`"${raw}": "${tokens[0]} ${tokens[1]}" is not a valid pair of transform-origin keywords.`,
 			);
 		const horizontal = (k: string) => (k === "center" ? CENTER : percent(HORIZONTAL[k] as number));
 		const vertical = (k: string) => (k === "center" ? CENTER : percent(VERTICAL[k] as number));
@@ -247,7 +249,7 @@ const parseOriginValue = (raw: string): ParsedValue => {
 		} else if ("length" in first && "keyword" in second) {
 			if (second.keyword in HORIZONTAL) {
 				throw new TypeError(
-					`Cannot interpolate "${raw}" because horizontal transform-origin keywords must come before a length-percentage value`,
+					`"${raw}": a horizontal transform-origin keyword must come before the length-percentage, not after it.`,
 				);
 			}
 			x = first.length;
@@ -263,7 +265,7 @@ const parseOriginValue = (raw: string): ParsedValue => {
 		const match = NUMBER_TOKEN.exec(token);
 		if (match === null || !LENGTH_UNITS.has(match[2] as string)) {
 			throw new TypeError(
-				`Cannot interpolate "${raw}" because "${token}" is not a supported transform-origin z length`,
+				`"${raw}": the transform-origin z offset "${token}" must be a length, such as 10px.`,
 			);
 		}
 		components.push(parseNumberToken(token));
@@ -287,7 +289,7 @@ const axisUnits = (values: readonly ParsedValue[], count: number): string[] => {
 			if (unit === undefined) unit = component.unit;
 			else if (component.unit !== unit) {
 				throw new TypeError(
-					`Cannot interpolate ${familyOf(values[0]?.kind ?? "translate")} values with different units on axis ${axis + 1}: ${unit} and ${component.unit}`,
+					`The ${familyOf(values[0]?.kind ?? "translate")} keyframes use ${unit} and ${component.unit} on axis ${axis + 1}: use the same unit on that axis in every keyframe.`,
 				);
 			}
 		}
@@ -324,7 +326,9 @@ const isZeroPlainAngle = (value: ParsedValue) =>
 const rotatePlan = (values: readonly ParsedValue[]): CssPlan => {
 	if (!values.some((v) => v.axis !== undefined)) return listPlan(values, () => 0);
 	if (values.some((v) => v.components.length > 1)) {
-		throw new TypeError("Cannot interpolate a multi-angle rotate value with an axis rotation");
+		throw new TypeError(
+			"The rotate keyframes mix several angles with a rotation about an axis: use one form in every keyframe.",
+		);
 	}
 	const [unit] = axisUnits(values, 1);
 	// A rotation by 0 without an axis is the same about any axis, so it takes an
@@ -391,14 +395,16 @@ export const planCssOutput = (
 	for (const value of parsed) {
 		const family = familyOf(value.kind);
 		if (family !== first) {
-			throw new TypeError(`Cannot interpolate ${first} values with ${family} values`);
+			throw new TypeError(
+				`outputRange mixes ${first} and ${family} keyframes: use one kind of value in every keyframe.`,
+			);
 		}
 	}
 	if (outputType !== undefined) {
 		for (const value of parsed) {
 			if (value.kind !== outputType) {
 				throw new TypeError(
-					`Cannot interpolate "${value.raw}" as ${outputType} because it is a ${value.kind} value`,
+					`"${value.raw}" is a ${value.kind} value, but outputType is "${outputType}".`,
 				);
 			}
 		}

@@ -35,7 +35,9 @@ const BISECTION_MAX_ITERATIONS = 10;
  */
 const cubicBezier = (x1: number, y1: number, x2: number, y2: number): EasingFunction => {
 	if (!(x1 >= 0 && x1 <= 1 && x2 >= 0 && x2 <= 1)) {
-		throw new Error("bezier x values must be in [0, 1] range");
+		throw new Error(
+			`Easing.bezier(${x1}, ${y1}, ${x2}, ${y2}): x1 and x2 must be between 0 and 1.`,
+		);
 	}
 	// Like a CSS timing function, the curve is only defined on [0, 1]: input
 	// outside it returns the nearest end point.

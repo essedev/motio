@@ -11,7 +11,10 @@ const NUMBER = String.raw`[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?`;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const toByte = (unit: number) => Math.round(clamp(unit, 0, 1) * 255);
 
-const invalid = (value: unknown) => new Error(`invalid color string ${String(value)} provided`);
+const invalid = (value: unknown) =>
+	new Error(
+		`"${String(value)}" is not a supported color: use a lowercase CSS color name, a hex color, or rgb(), rgba(), hsl(), hsla(), oklch(), oklab(), lab(), lch() or hwb().`,
+	);
 
 // Legacy comma syntax: rgb(r, g, b), rgba(r, g, b, a), hsl(h, s%, l%), hsla(h, s%, l%, a).
 const legacy = (name: string, args: string[]) =>
@@ -195,7 +198,7 @@ const parseModern = (match: RegExpExecArray): Rgba8 => {
  * (lowercase), `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, comma-separated
  * `rgb()`, `rgba()`, `hsl()`, `hsla()`, and space-separated `oklch()`,
  * `oklab()`, `lab()`, `lch()`, `hwb()` with an optional `/ alpha`.
- * Throws `invalid color string <value> provided` for anything else.
+ * Throws an `Error` naming the value for anything else.
  */
 export const parseColor = (value: unknown): Rgba8 => {
 	if (typeof value !== "string") throw invalid(value);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decode, type Encoded } from "./__oracle__/fixtures.js";
+import { decode, type Encoded, expectSameFailure } from "./__oracle__/fixtures.js";
 import fixture from "./__oracle__/random.json" with { type: "json" };
 import { random } from "./random.js";
 
@@ -7,7 +7,7 @@ type RandomCase =
 	| { kind: "number"; seeds: Encoded[]; out: Encoded[] }
 	| { kind: "string"; seeds: string[]; out: Encoded[] }
 	| { kind: "codeUnits"; seeds: number[][]; out: Encoded[] }
-	| { kind: "invalid"; seedType: string; error: string };
+	| { kind: "invalid"; seedType: string; error: string; errorType: string };
 
 const cases = fixture.cases as RandomCase[];
 
@@ -44,10 +44,10 @@ describe("random against the Remotion oracle", () => {
 		expect(actual).toEqual(c.out.map(decode));
 	});
 
-	it("throws the same error for invalid seeds", () => {
+	it("throws for the same invalid seeds, with the same error class", () => {
 		for (const c of cases) {
 			if (c.kind !== "invalid") continue;
-			expect(() => random(invalidSeeds[c.seedType] as string)).toThrow(c.error);
+			expectSameFailure(() => random(invalidSeeds[c.seedType] as string), c, c.seedType);
 		}
 	});
 });

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { decode, decodeAll, type Encoded, ErrorTracker } from "./__oracle__/fixtures.js";
+import {
+	decode,
+	decodeAll,
+	type Encoded,
+	ErrorTracker,
+	expectSameFailure,
+} from "./__oracle__/fixtures.js";
 import measureFixture from "./__oracle__/measure-spring.json" with { type: "json" };
 import springFixture from "./__oracle__/spring.json" with { type: "json" };
 import errorFixture from "./__oracle__/spring-errors.json" with { type: "json" };
@@ -8,7 +14,7 @@ import { type MeasureSpringOptions, measureSpring, type SpringOptions, spring } 
 
 type Params = Record<string, Encoded | boolean | Record<string, number | boolean> | undefined>;
 type FrameCase = { params: Params; frames: Encoded[]; out: Encoded[] };
-type ResultCase = { params: Params; out?: Encoded; error?: string };
+type ResultCase = { params: Params; out?: Encoded; error?: string; errorType?: string };
 
 const decodeParams = (params: Params): Record<string, unknown> =>
 	Object.fromEntries(
@@ -54,8 +60,13 @@ describe("spring against the Remotion oracle", () => {
 	it("throws the same messages and returns the same degenerate values", () => {
 		for (const c of errorFixture.cases as ResultCase[]) {
 			const call = () => spring(decodeParams(c.params) as SpringOptions);
-			if (c.error !== undefined) expect(call, JSON.stringify(c.params)).toThrow(c.error);
-			else expect(call()).toBe(decode(c.out as Encoded));
+			if (c.error !== undefined) {
+				expectSameFailure(
+					call,
+					{ error: c.error, errorType: c.errorType },
+					JSON.stringify(c.params),
+				);
+			} else expect(call()).toBe(decode(c.out as Encoded));
 		}
 	});
 });
@@ -66,8 +77,13 @@ describe("measureSpring against the Remotion oracle", () => {
 		expect(cases.length).toBeGreaterThan(2800);
 		for (const c of cases) {
 			const call = () => measureSpring(decodeParams(c.params) as MeasureSpringOptions);
-			if (c.error !== undefined) expect(call, JSON.stringify(c.params)).toThrow(c.error);
-			else expect(call(), JSON.stringify(c.params)).toBe(decode(c.out as Encoded));
+			if (c.error !== undefined) {
+				expectSameFailure(
+					call,
+					{ error: c.error, errorType: c.errorType },
+					JSON.stringify(c.params),
+				);
+			} else expect(call(), JSON.stringify(c.params)).toBe(decode(c.out as Encoded));
 		}
 	});
 });
@@ -95,9 +111,7 @@ describe("spring", () => {
 	});
 
 	it("rejects zero damping, which would never settle", () => {
-		expect(() => measureSpring({ fps: 30, config: { damping: 0 } })).toThrow(
-			"Spring damping must be greater than 0",
-		);
+		expect(() => measureSpring({ fps: 30, config: { damping: 0 } })).toThrow("damping is 0");
 	});
 
 	it("measures the documented example", () => {
@@ -107,11 +121,9 @@ describe("spring", () => {
 
 describe("measureSpring where Remotion never returns", () => {
 	it("throws for zero stiffness instead of looping forever", () => {
-		expect(() => measureSpring({ fps: 30, config: { stiffness: 0 } })).toThrow(
-			"Spring stiffness must be greater than 0",
-		);
+		expect(() => measureSpring({ fps: 30, config: { stiffness: 0 } })).toThrow("stiffness is 0");
 		expect(() =>
 			spring({ frame: 5, fps: 30, durationInFrames: 10, config: { stiffness: 0 } }),
-		).toThrow("Spring stiffness must be greater than 0");
+		).toThrow("stiffness is 0");
 	});
 });

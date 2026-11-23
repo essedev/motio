@@ -75,7 +75,11 @@ export const makeSpringEasing = (config: EasingSpringConfig = {}): SpringEasingF
 			frame = t * MEASURE_FRAMES;
 			time = Number.isFinite(frame) ? (frame * (measure() / MEASURE_FRAMES)) / MEASURE_FPS : 0;
 		}
-		if (!Number.isFinite(frame)) throw new RangeError(`Frame ${frame} is not finite`);
+		if (!Number.isFinite(frame)) {
+			throw new RangeError(
+				`Easing.spring() was evaluated at ${t}, which maps to frame ${frame}: the progress must be finite.`,
+			);
+		}
 		let progress = springPosition(time, resolved);
 		if (resolved.overshootClamping && progress > 1) progress = 1;
 		return progress;

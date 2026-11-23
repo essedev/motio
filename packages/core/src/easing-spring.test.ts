@@ -1,6 +1,7 @@
+import { compareFailure, failureOf } from "@motiojs/testing/oracle-errors";
 import { describe, expect, it } from "vitest";
 import fixture from "./__oracle__/easing-spring.json" with { type: "json" };
-import { ErrorTracker, untag } from "./__oracle__/fixtures.js";
+import { ErrorTracker, OPTION_NAMES, untag } from "./__oracle__/fixtures.js";
 import { Easing } from "./easing.js";
 import type { EasingSpringConfig } from "./easing-spring.js";
 import { spring } from "./spring.js";
@@ -21,7 +22,7 @@ const TOLERANCE = 1e-12;
 const cases = fixture.cases.map((raw) => untag(raw) as Case);
 
 describe("Easing.spring against the Remotion oracle", () => {
-	it(`matches every value within ${TOLERANCE} and throws the same messages`, () => {
+	it(`matches every value within ${TOLERANCE} and fails where it fails`, () => {
 		const tracker = new ErrorTracker();
 		const mismatches: string[] = [];
 		for (const c of cases) {
@@ -30,26 +31,30 @@ describe("Easing.spring against the Remotion oracle", () => {
 			expect(easing.remotionShouldExtendRight, JSON.stringify(c.config)).toBe(c.extendRight);
 			c.t.forEach((t, i) => {
 				const expected = c.results?.[i] as Result;
-				let actual: Result;
-				try {
-					actual = { out: easing(t) };
-				} catch (e) {
-					const error = e as Error;
-					actual = {
-						error: error.message,
-						errorType: error instanceof TypeError ? "TypeError" : "Error",
-					};
-				}
-				if (expected.error !== undefined || actual.error !== undefined) {
-					if (actual.error !== expected.error || actual.errorType !== expected.errorType) {
+				let out: number | undefined;
+				const { threw, error } = failureOf(() => {
+					out = easing(t);
+				});
+				if (expected.error !== undefined || threw) {
+					const diff =
+						expected.error === undefined
+							? `threw ${String(error)}`
+							: threw
+								? compareFailure(
+										error,
+										{ error: expected.error, errorType: expected.errorType },
+										OPTION_NAMES,
+									)
+								: `returned ${out}`;
+					if (diff !== undefined) {
 						mismatches.push(
-							`${JSON.stringify(c.config)} t=${t}: ${JSON.stringify(actual)} vs ${JSON.stringify(expected)}`,
+							`${JSON.stringify(c.config)} t=${t}: ${diff} (recorded ${JSON.stringify(expected)})`,
 						);
 					}
 					return;
 				}
 				tracker.add(
-					actual.out as number,
+					out as number,
 					expected.out as number,
 					() => `Easing.spring(${JSON.stringify(c.config)})(${t})`,
 				);
@@ -63,9 +68,7 @@ describe("Easing.spring against the Remotion oracle", () => {
 	it("throws where Remotion never returns (deliberate difference)", () => {
 		const hanging = cases.filter((c) => c.errorType === "timeout").map((c) => c.config);
 		expect(hanging).toEqual([{ stiffness: 0 }, { durationRestThreshold: 0 }]);
-		expect(() => Easing.spring({ stiffness: 0 })(0.5)).toThrow(
-			"Spring stiffness must be greater than 0",
-		);
+		expect(() => Easing.spring({ stiffness: 0 })(0.5)).toThrow("stiffness is 0");
 		expect(() => Easing.spring({ durationRestThreshold: 0 })(0.5)).toThrow(
 			"durationRestThreshold must be greater than 0",
 		);
@@ -100,6 +103,6 @@ describe("Easing.spring", () => {
 		const easing = Easing.spring({ damping: 0 });
 		expect(easing(0)).toBe(0);
 		expect(easing(1)).toBe(1);
-		expect(() => easing(0.5)).toThrow("Spring damping must be greater than 0");
+		expect(() => easing(0.5)).toThrow("damping is 0");
 	});
 });

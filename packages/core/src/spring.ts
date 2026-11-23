@@ -61,17 +61,19 @@ export const springPosition = (t: number, { mass, damping, stiffness }: SpringCo
 
 const validateFps = (fps: number, caller: string) => {
 	if (!Number.isFinite(fps)) {
-		throw new Error(`"fps" must be a finite, but you passed ${fps} to ${caller}`);
+		throw new Error(
+			`${caller} got fps ${fps}: pass the composition's frame rate, a finite number.`,
+		);
 	}
 	if (fps <= 0) {
-		throw new Error(`"fps" must be positive, but got ${fps} to ${caller}`);
+		throw new TypeError(`${caller} got fps ${fps}: the frame rate must be greater than 0.`);
 	}
 };
 
 const validateDamping = (config: SpringConfig) => {
 	if (config.damping <= 0) {
 		throw new Error(
-			"Spring damping must be greater than 0, otherwise the spring() animation will never end, causing an infinite loop.",
+			`damping is ${config.damping}: a spring without damping never comes to rest, so use a value greater than 0.`,
 		);
 	}
 };
@@ -129,15 +131,18 @@ export const measureSpring = ({
 	config,
 	threshold = DEFAULT_THRESHOLD,
 }: MeasureSpringOptions): number => {
-	validateFps(fps, "the measureSpring() function");
-	if (Number.isNaN(threshold)) throw new TypeError("Threshold is NaN");
-	if (threshold < 0) throw new TypeError("Threshold is below 0");
+	validateFps(fps, "measureSpring()");
+	if (Number.isNaN(threshold) || threshold < 0) {
+		throw new TypeError(`threshold is ${threshold}: use 0 or a positive number.`);
+	}
 	if (threshold === 0) return Number.POSITIVE_INFINITY;
 	const resolved = resolveConfig(config);
 	validateDamping(resolved);
 	if (resolved.stiffness === 0 && threshold < 1) {
 		// The spring never moves, so it never settles. Remotion loops forever here.
-		throw new Error("Spring stiffness must be greater than 0, otherwise the spring never settles");
+		throw new Error(
+			"stiffness is 0: a spring without stiffness never moves, so it never settles. Use a value greater than 0.",
+		);
 	}
 	return settledFrame(resolved, fps, threshold);
 };
@@ -191,12 +196,16 @@ export const spring = (options: SpringOptions): number => {
 		reverse = false,
 	} = options;
 	if (!("frame" in options) || frame === undefined) {
-		throw new Error('Argument missing for parameter "frame"');
+		throw new TypeError("spring() needs a frame: pass the current frame, from useCurrentFrame().");
 	}
-	if (!Number.isFinite(frame)) throw new Error(`Frame ${frame} is not finite`);
+	if (!Number.isFinite(frame)) {
+		throw new RangeError(`spring() got frame ${frame}: the frame must be a finite number.`);
+	}
 	validateFps(fps, "spring()");
 	if (durationInFrames !== undefined && !(durationInFrames > 0)) {
-		throw new Error(`A "duration" of a spring must be positive, but is ${durationInFrames}`);
+		throw new TypeError(
+			`durationInFrames is ${durationInFrames}: a spring's duration must be greater than 0.`,
+		);
 	}
 	const resolved = resolveConfig(config);
 	validateDamping(resolved);

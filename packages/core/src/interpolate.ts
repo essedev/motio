@@ -59,17 +59,17 @@ const formatRange = (range: readonly number[]) => `[${range.join(",")}]`;
 /** Validates the ranges shared by `interpolate()` and `interpolateColors()`. */
 export const validateInputRange = (inputRange: readonly number[]): void => {
 	if (inputRange.length < 1) {
-		throw new Error("inputRange must have at least 1 element");
+		throw new Error("inputRange is empty: pass at least one input value.");
 	}
 	if (!inputRange.every(Number.isFinite)) {
 		throw new Error(
-			`inputRange must contain only finite numbers, but got ${formatRange(inputRange)}`,
+			`inputRange ${formatRange(inputRange)} holds a value that is not a finite number: every input value must be finite.`,
 		);
 	}
 	for (let i = 1; i < inputRange.length; i++) {
 		if (!((inputRange[i] as number) > (inputRange[i - 1] as number))) {
 			throw new Error(
-				`inputRange must be strictly monotonically increasing but got ${formatRange(inputRange)}`,
+				`inputRange ${formatRange(inputRange)} is not strictly increasing: each value must be greater than the one before it.`,
 			);
 		}
 	}
@@ -79,7 +79,7 @@ export const validateInputRange = (inputRange: readonly number[]): void => {
  * Throws unless `easing` is a valid `easing` option of `interpolate()` for an input range of
  * `inputRangeLength` values: `undefined`, one function, or an array with one function per
  * segment (`inputRangeLength - 1` entries). The check `interpolate()` runs on its options,
- * exported by `remotion` and `remotion/no-react` under this name; messages match Remotion's.
+ * exported by `remotion` and `remotion/no-react` under this name. Throws where Remotion throws.
  */
 export function assertValidInterpolateEasingOption(
 	easing: unknown,
@@ -92,11 +92,15 @@ export function assertValidInterpolateEasingOption(
 	const segmentCount = inputRangeLength - 1;
 	if (entries.length !== segmentCount) {
 		throw new Error(
-			`When easing is an array, it must have one entry per segment between keyframes (length inputRange.length - 1 = ${segmentCount}), but got length ${entries.length}`,
+			`easing is an array of length ${entries.length}, but inputRange has ${segmentCount} segments between its values: pass one easing per segment, or a single function.`,
 		);
 	}
 	for (let i = 0; i < segmentCount; i++) {
-		if (typeof entries[i] !== "function") throw new Error(`easing[${i}] must be a function`);
+		if (typeof entries[i] !== "function") {
+			throw new Error(
+				`easing[${i}] is ${entries[i] === null ? "null" : `a ${typeof entries[i]}`}, not a function: each entry of an easing array must be an easing function.`,
+			);
+		}
 	}
 }
 
@@ -107,7 +111,9 @@ export function assertValidInterpolateEasingOption(
 export function assertValidInterpolatePosterizeOption(posterize: unknown): void {
 	if (posterize === undefined) return;
 	if (!(typeof posterize === "number" && Number.isFinite(posterize) && posterize > 0)) {
-		throw new Error(`posterize must be a positive finite number, but got ${posterize}`);
+		throw new Error(
+			`posterize is ${String(posterize)}: use a positive finite step, or leave it out.`,
+		);
 	}
 }
 
@@ -285,9 +291,7 @@ const discretePlan = <T>(
 	// A single keyframe is returned as it is, whatever the easing.
 	if (values.length > 1 && !isStep1Only(options?.easing)) {
 		throw new TypeError(
-			what === "booleans"
-				? "Booleans can only be interpolated using Easing.step1"
-				: "Non-numeric strings can only be interpolated using Easing.step1",
+			`outputRange holds ${what}, which cannot be blended: pass easing: Easing.step1 to hold each value until the next keyframe.`,
 		);
 	}
 	return {
@@ -297,7 +301,9 @@ const discretePlan = <T>(
 			false,
 		),
 		identity: (side) => {
-			throw new TypeError(`extrapolate${side}: "identity" is not supported for ${what}`);
+			throw new TypeError(
+				`extrapolate${side} "identity" returns the input number, which an outputRange of ${what} cannot do: choose another extrapolation.`,
+			);
 		},
 	};
 };
@@ -312,22 +318,22 @@ const parseFontWeight = (value: number | string): number => {
 				(/^\d+(?:\.\d+)?$/.test(value) ? Number(value) : Number.NaN));
 	if (!(weight >= 1 && weight <= 1000)) {
 		throw new TypeError(
-			`Cannot interpolate font weight "${String(value)}". Expected "normal", "bold", or a number between 1 and 1000`,
+			`"${String(value)}" is not a font weight: use "normal", "bold" or a number from 1 to 1000.`,
 		);
 	}
 	return weight;
 };
 
 const UNSUPPORTED_WITH_STRINGS =
-	"outputRange must contain only numbers, or supported scale, translate, and rotate strings";
+	"outputRange mixes values that cannot be interpolated together: use numbers, or scale, translate and rotate strings.";
 const UNSUPPORTED =
-	"outputRange must contain only numbers, numeric tuples, or supported scale, translate, and rotate strings";
+	"outputRange holds a value that cannot be interpolated: use numbers, numeric tuples, or scale, translate and rotate strings.";
 
 /** Thrown for a string that is neither a CSS value nor part of an all-strings range. */
 export class UnsupportedStringInterpolationValueError extends TypeError {
 	constructor(value: string) {
 		super(
-			`Cannot interpolate "${value}" because "${value}" is not a supported scale, translate, or rotate value`,
+			`"${value}" in outputRange is not a scale, translate or rotate value, so it cannot be interpolated with the numbers next to it.`,
 		);
 		this.name = "UnsupportedStringInterpolationValueError";
 	}
@@ -336,10 +342,19 @@ export class UnsupportedStringInterpolationValueError extends TypeError {
 const needsCssUnits = (outputType: InterpolateOutputType | undefined) =>
 	outputType === "translate" || outputType === "rotate" || outputType === "transform-origin";
 
+const CSS_EXAMPLES: Partial<Record<InterpolateOutputType, string>> = {
+	translate: '"10px 20px"',
+	rotate: '"45deg"',
+	"transform-origin": '"50% 50%"',
+};
+
+const cssUnitsNeeded = (outputType: InterpolateOutputType | undefined) =>
+	`outputType "${outputType}" needs outputRange strings with CSS units, such as ${CSS_EXAMPLES[outputType as InterpolateOutputType]}, not plain numbers.`;
+
 const validateOptions = (options: InterpolateOptions | undefined) => {
 	const output = options?.output;
 	if (output !== undefined && output !== "linear" && output !== "perceptual-scale") {
-		throw new Error(`output must be "linear" or "perceptual-scale", but got ${output}`);
+		throw new Error(`output is "${String(output)}": use "linear" or "perceptual-scale".`);
 	}
 	const outputType = options?.outputType;
 	if (
@@ -347,7 +362,7 @@ const validateOptions = (options: InterpolateOptions | undefined) => {
 		!["font-weight", "scale", "translate", "rotate", "transform-origin"].includes(outputType)
 	) {
 		throw new Error(
-			`outputType must be "font-weight", "scale", "translate", "rotate", or "transform-origin", but got ${outputType}`,
+			`outputType is "${String(outputType)}": use "font-weight", "scale", "translate", "rotate" or "transform-origin".`,
 		);
 	}
 };
@@ -362,15 +377,23 @@ const planFor = (
 
 	if (outputRange.some((v) => typeof v === "boolean")) {
 		if (!outputRange.every((v) => typeof v === "boolean")) {
-			throw new TypeError("Boolean outputRange must contain only booleans");
+			throw new TypeError(
+				"outputRange mixes booleans with other values: a range with booleans must hold only booleans.",
+			);
 		}
-		if (outputType !== undefined) throw new TypeError("Boolean outputRange cannot use outputType");
+		if (outputType !== undefined) {
+			throw new TypeError(
+				`outputType "${outputType}" does not apply to an outputRange of booleans: remove it.`,
+			);
+		}
 		return discretePlan(outputRange as boolean[], options, "booleans");
 	}
 
 	if (outputType === "font-weight") {
 		if (!outputRange.every((v) => typeof v === "number" || typeof v === "string")) {
-			throw new TypeError("Font weight outputRange must contain only numbers or strings");
+			throw new TypeError(
+				'With outputType "font-weight", outputRange must hold only numbers and strings.',
+			);
 		}
 		const weights = (outputRange as (number | string)[]).map((v) => [parseFontWeight(v)]);
 		return vectorPlan(weights, (c) => c[0] as number, perceptual);
@@ -386,22 +409,22 @@ const planFor = (
 		for (const tuple of tuples) {
 			if (tuple.length !== size) {
 				throw new TypeError(
-					`outputRange tuples must all have the same length, but got ${size} and ${tuple.length}`,
+					`outputRange tuples have different lengths (${size} and ${tuple.length}): give every keyframe the same number of values.`,
 				);
 			}
 		}
 		for (const tuple of tuples) {
 			if (!tuple.every((v) => typeof v === "number" && Number.isFinite(v))) {
 				throw new TypeError(
-					`outputRange tuples must contain only finite numbers, but got ${formatRange(tuple as number[])}`,
+					`outputRange tuple ${formatRange(tuple as number[])} holds a value that is not a finite number: use finite numbers only.`,
 				);
 			}
 		}
-		if (size === 0) throw new TypeError("outputRange tuples must contain at least 1 number");
+		if (size === 0) {
+			throw new TypeError("outputRange tuples are empty: each one needs at least one number.");
+		}
 		if (needsCssUnits(outputType)) {
-			throw new TypeError(
-				`${outputType} outputRange must contain strings with the appropriate CSS units`,
-			);
+			throw new TypeError(cssUnitsNeeded(outputType));
 		}
 		return vectorPlan(tuples as readonly (readonly number[])[], (c) => [...c], perceptual);
 	}
@@ -412,14 +435,12 @@ const planFor = (
 	const numbers = outputRange.filter((v): v is number => typeof v === "number");
 	if (!numbers.every(Number.isFinite)) {
 		throw new Error(
-			`outputRange must contain only finite numbers, but got ${formatRange(numbers)}`,
+			`outputRange ${formatRange(numbers)} holds a value that is not a finite number: every output value must be finite.`,
 		);
 	}
 	if (!hasString) {
 		if (needsCssUnits(outputType)) {
-			throw new TypeError(
-				`${outputType} outputRange must contain strings with the appropriate CSS units`,
-			);
+			throw new TypeError(cssUnitsNeeded(outputType));
 		}
 		return vectorPlan(
 			numbers.map((n) => [n]),
@@ -458,8 +479,8 @@ const planFor = (
  *
  * `inputRange` must be strictly increasing, both ranges must have the same
  * non-zero length and contain only finite numbers. With a single keyframe the
- * only output value is returned as it is. Throws an `Error` or `TypeError`
- * with the same message as Remotion on invalid arguments.
+ * only output value is returned as it is. Invalid arguments throw an `Error`
+ * or `TypeError` where Remotion does.
  *
  * @example interpolate(10, [0, 20], [0, 1]) // 0.5
  * @example interpolate(15, [0, 30], ["0px 0px", "0px -150px"]) // "0px -75px"
@@ -501,14 +522,16 @@ export function interpolate(
 	options?: InterpolateOptions,
 ): InterpolateOutputValue {
 	if (typeof input === "undefined") {
-		throw new Error("input can not be undefined");
+		throw new Error("input is undefined: pass the number to map, such as the current frame.");
 	}
 	if (typeof input !== "number") {
-		throw new TypeError("Cannot interpolate an input which is not a number");
+		throw new TypeError(
+			`input is ${input === null ? "null" : `a ${typeof input}`}, not a number: pass the number to map, such as the current frame.`,
+		);
 	}
 	if (inputRange.length !== outputRange.length) {
 		throw new Error(
-			`inputRange (${inputRange.length}) and outputRange (${outputRange.length}) must have the same length`,
+			`inputRange has ${inputRange.length} values and outputRange ${outputRange.length}: give both one value per keyframe.`,
 		);
 	}
 	validateInputRange(inputRange);

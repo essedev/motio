@@ -67,14 +67,13 @@ describe("getStaticFiles", () => {
 });
 
 describe("watchStaticFile", () => {
-	// Recorded from the published package in Node: the same warning, a handle with cancel().
-	it("warns that it needs the Remotion Studio and never calls back", () => {
+	// Recorded from the published package in Node: one warning per call, a handle with cancel().
+	it("warns once per call that it has no effect and never calls back", () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const callback = vi.fn();
 		const handle = watchStaticFile("data.json", callback);
-		expect(warn).toHaveBeenCalledWith(
-			"The watchStaticFile() API is only available while using the Remotion Studio.",
-		);
+		expect(warn).toHaveBeenCalledTimes(1);
+		expect(warn.mock.calls[0]?.[0]).toMatch(/watchStaticFile\("data\.json"\) has no effect/);
 		expect(Object.keys(handle)).toEqual(["cancel"]);
 		expect(handle.cancel()).toBeUndefined();
 		expect(callback).not.toHaveBeenCalled();

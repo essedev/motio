@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import fixture from "./__oracle__/exports.json" with { type: "json" };
-import { untag } from "./__oracle__/fixtures.js";
+import { expectSameFailure, untag } from "./__oracle__/fixtures.js";
 import { absoluteFillSchema } from "./interactive-schema.js";
 import {
 	assertValidInterpolateEasingOption,
@@ -24,14 +24,10 @@ const build = (spec: unknown): unknown => {
 	return spec;
 };
 
-const outcome = (fn: () => void): Outcome => {
-	try {
-		fn();
-		return {};
-	} catch (error) {
-		const e = error as Error;
-		return { error: e.message, errorType: e instanceof TypeError ? "TypeError" : "Error" };
-	}
+/** Asserts that `call` returns, or fails like the recorded call (same class, same options named). */
+const expectOutcome = (call: () => void, c: Outcome, label: string) => {
+	if (c.error === undefined) expect(call, label).not.toThrow();
+	else expectSameFailure(call, { error: c.error, errorType: c.errorType }, label);
 };
 
 describe("plain-data exports equal the published package", () => {
@@ -46,12 +42,11 @@ describe("interpolate() option checks equal the oracle", () => {
 	>;
 	it(`assertValidInterpolateEasingOption over ${easingCases.length} cases`, () => {
 		for (const c of easingCases) {
-			const got = outcome(() =>
-				assertValidInterpolateEasingOption(build(c.easing), build(c.length) as number),
+			expectOutcome(
+				() => assertValidInterpolateEasingOption(build(c.easing), build(c.length) as number),
+				c,
+				JSON.stringify([c.easing, c.length]),
 			);
-			const label = JSON.stringify([c.easing, c.length]);
-			expect(got.error, label).toBe(c.error);
-			expect(got.errorType, label).toBe(c.errorType);
 		}
 	});
 
@@ -60,9 +55,10 @@ describe("interpolate() option checks equal the oracle", () => {
 	>;
 	it(`assertValidInterpolatePosterizeOption over ${posterizeCases.length} cases`, () => {
 		for (const c of posterizeCases) {
-			const got = outcome(() => assertValidInterpolatePosterizeOption(build(c.posterize)));
-			expect(got, JSON.stringify(c.posterize)).toEqual(
-				c.error === undefined ? {} : { error: c.error, errorType: c.errorType },
+			expectOutcome(
+				() => assertValidInterpolatePosterizeOption(build(c.posterize)),
+				c,
+				JSON.stringify(c.posterize),
 			);
 		}
 	});
@@ -70,7 +66,7 @@ describe("interpolate() option checks equal the oracle", () => {
 	it("interpolate() rejects easing arrays holding non-functions, like Remotion", () => {
 		const easing = [(t: number) => t, 2] as unknown as Array<(t: number) => number>;
 		expect(() => interpolate(0.5, [0, 1, 2], [0, 1, 2], { easing })).toThrow(
-			"easing[1] must be a function",
+			"easing[1] is a number, not a function",
 		);
 	});
 });
