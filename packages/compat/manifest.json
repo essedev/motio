@@ -574,67 +574,80 @@
 				"checkerboard": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"cornerPin": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"gridlines": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"lightLeak": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"lightLeakEffectSchema": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"linearGradient": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"linearGradientTint": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"pattern": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"rings": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"starburst": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"starburstEffectSchema": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"tile": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				},
 				"zigzag": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "missing",
+					"note": "Needs the effect pipeline of canvas components (<Solid>, createEffect(), the effects prop), which Motio does not have yet (D-057)."
 				}
 			}
 		},
@@ -737,17 +750,20 @@
 				"lightLeak": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "stubbed",
+					"note": "An effect for the effects prop of canvas components, which Motio does not have: throws, pointing to <LightLeak> (D-057)."
 				},
 				"LightLeak": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "approximated",
+					"note": "Props, markup, timing and errors equal the published package; Motio draws its own pattern, since Remotion's shader is not documented: the pixels differ (D-056)."
 				},
 				"lightLeakEffectSchema": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Plain data, equal to the recorded value (D-056)."
 				}
 			}
 		},
@@ -1371,17 +1387,20 @@
 				"starburst": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "stubbed",
+					"note": "An effect for the effects prop of canvas components, which Motio does not have: throws, pointing to <Starburst> (D-057)."
 				},
 				"Starburst": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Stills equal to Remotion's with swangle; fractional ray counts turned past the left seam color their rays differently (D-055)."
 				},
 				"starburstEffectSchema": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Plain data, equal to the recorded value (D-055)."
 				}
 			}
 		},
