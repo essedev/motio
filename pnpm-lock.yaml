@@ -877,6 +877,37 @@ importers:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
 
+  packages/starburst:
+    dependencies:
+      '@motiojs/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@motiojs/bundler':
+        specifier: workspace:*
+        version: link:../bundler
+      '@motiojs/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      motio:
+        specifier: workspace:*
+        version: link:../motio
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+
   packages/testing: {}
 
   packages/three:

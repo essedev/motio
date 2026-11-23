@@ -84,6 +84,9 @@
 		},
 		{
 			"path": "packages/gif"
+		},
+		{
+			"path": "packages/starburst"
 		}
 	]
 }
