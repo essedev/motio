@@ -119,9 +119,9 @@ export class RenderPage {
 	private inFlightFrame: number | undefined;
 	/** The last BeginFrame sent; BeginFrames are serialised. */
 	private frameChain: Promise<unknown> = Promise.resolve();
-	/** BeginFrame pages: images, fonts and style sheets being loaded, by request id. */
+	/** Images, fonts and style sheets being loaded, by request id. */
 	private readonly loading = new Set<string>();
-	/** BeginFrame pages: such requests started so far. */
+	/** Such requests started so far. */
 	private requestsStarted = 0;
 	private readonly loadingWaiters = new Set<() => void>();
 
@@ -335,9 +335,9 @@ export class RenderPage {
 	}
 
 	/**
-	 * Under BeginFrame control style and layout run only inside a frame, so a CSS background image
-	 * or a font is requested only when a frame is drawn. The page tracks those requests to wait
-	 * for them before the frame it captures.
+	 * A CSS background image or a font is requested only when style and layout run, which can be
+	 * after the page reported the frame ready; under BeginFrame control they run only inside a
+	 * frame. The page tracks those requests to wait for them before the frame it captures.
 	 */
 	private async trackResources(): Promise<void> {
 		const done = (e: { requestId: string }) => {
@@ -364,9 +364,28 @@ export class RenderPage {
 		return new Promise((resolve) => this.loadingWaiters.add(resolve));
 	}
 
+	/**
+	 * Runs style and layout with `layout` and waits for the images, fonts and style sheets they
+	 * requested, until a pass requests nothing. Each pass ends with a round trip through the page's
+	 * main thread, which delivers the request events sent during the pass before its result;
+	 * `layoutIsRoundTrip` says `layout` already is one (an evaluation in the page).
+	 */
+	private async awaitResources(
+		layout: () => Promise<unknown>,
+		layoutIsRoundTrip = false,
+	): Promise<void> {
+		for (let pass = 0; pass < BEGIN_FRAME_ATTEMPTS; pass++) {
+			const started = this.requestsStarted;
+			await layout();
+			if (!layoutIsRoundTrip) await this.cdp.send("Runtime.evaluate", { expression: "0" });
+			await this.resourcesLoaded();
+			if (this.requestsStarted === started) return;
+		}
+	}
+
 	private async prepare(): Promise<void> {
 		const c = this.config;
-		if (this.captureMethod === "begin-frame") await this.trackResources();
+		await this.trackResources();
 		const context: RunContext = {
 			protocol: PROTOCOL_VERSION,
 			inputProps: c.inputProps,
@@ -536,7 +555,16 @@ export class RenderPage {
 		if (this.captureMethod === "begin-frame") {
 			return this.guardCapture(this.captureBeginFrame(format, quality, frame), timeout, frame);
 		}
-		const res = await this.guard(
+		// A resource the frame's style requests (a CSS background image, a font) can still be
+		// loading when the page reports the frame ready, and a fast capture would miss it: reading
+		// the layout runs style and layout, which starts those requests, and they are awaited.
+		const capture = this.awaitResources(
+			() =>
+				this.cdp.send("Runtime.evaluate", {
+					expression: "void document.documentElement.getBoundingClientRect()",
+				}),
+			true,
+		).then(() =>
 			this.cdp.send("Page.captureScreenshot", {
 				format,
 				...(format === "png" ? {} : { quality }),
@@ -544,6 +572,9 @@ export class RenderPage {
 				fromSurface: true,
 				captureBeyondViewport: false,
 			}),
+		);
+		const res = await this.guard(
+			capture,
 			timeout,
 			() =>
 				new MotioError(
@@ -585,16 +616,10 @@ export class RenderPage {
 		frame: number,
 	): Promise<Buffer> {
 		// Frames without display updates run style and layout, which starts the requests for
-		// resources the frame needs (CSS images, fonts); wait for them until a frame starts none.
-		// The evaluation is a round trip through the page's main thread, which delivers the
-		// request events sent during the frame before its result.
-		for (let pass = 0; pass < BEGIN_FRAME_ATTEMPTS; pass++) {
-			const started = this.requestsStarted;
-			await this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS, noDisplayUpdates: true });
-			await this.cdp.send("Runtime.evaluate", { expression: "0" });
-			await this.resourcesLoaded();
-			if (this.requestsStarted === started) break;
-		}
+		// resources the frame needs (CSS images, fonts).
+		await this.awaitResources(() =>
+			this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS, noDisplayUpdates: true }),
+		);
 		const screenshot = { format, ...(format === "png" ? {} : { quality }), optimizeForSpeed: true };
 		for (let attempt = 0; attempt < BEGIN_FRAME_ATTEMPTS; attempt++) {
 			const res = await this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS, screenshot });
