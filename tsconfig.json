@@ -63,6 +63,9 @@
 		},
 		{
 			"path": "packages/shapes"
+		},
+		{
+			"path": "packages/preview"
 		}
 	]
 }
