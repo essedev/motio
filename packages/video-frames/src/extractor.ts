@@ -1,5 +1,5 @@
 import { VideoFramesError } from "./errors.js";
-import { splitPngStream } from "./png-stream.js";
+import { splitPngStream, stripColourChunks } from "./png-stream.js";
 import { probeVideo, type VideoInfo } from "./probe.js";
 import { run } from "./run.js";
 
@@ -136,7 +136,7 @@ export class FrameExtractor {
 		}
 		const tag = alpha ? "" : "#opaque";
 		for (const [i, png] of splitPngStream(data).entries())
-			this.store(`${src}#${index + i}${tag}`, png);
+			this.store(`${src}#${index + i}${tag}`, stripColourChunks(png));
 	}
 
 	private store(key: string, png: Buffer) {
