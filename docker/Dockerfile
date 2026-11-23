@@ -7,10 +7,10 @@ ARG CHROME_VERSION=158.0.8127.36
 ARG CHROME_SHA256_ARM64=176ee5c55486c22de43128871189061365ea28e881fc96016fd18e7cb59437c8
 ARG CHROME_SHA256_AMD64=2d3a23017323c54fd457a678e4351f895c4076d8050e39d5aa6247f93448b73a
 
-# FFmpeg from Debian trixie, chrome-headless-shell runtime libraries, and a fixed font set so
-# text never depends on the host.
+# FFmpeg from Debian trixie, chrome-headless-shell runtime libraries, a fixed font set so text
+# never depends on the host, and procps (pgrep) for the tests that check child processes.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ffmpeg ca-certificates curl unzip \
+      ffmpeg ca-certificates curl unzip procps \
       libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libdrm2 libxkbcommon0 \
       libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2t64 libpango-1.0-0 \
       libcairo2 libdbus-1-3 libexpat1 libx11-6 libxcb1 libxext6 \
