@@ -250,6 +250,8 @@ importers:
         specifier: ^5.1.1
         version: 5.1.1(@types/node@26.6.6)(jsdom@31.0.1)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0))
 
+  fixtures/animated-image: {}
+
   fixtures/compositions:
     dependencies:
       motio:

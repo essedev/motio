@@ -1,0 +1,8 @@
+{
+	"name": "@motiojs/fixture-animated-image",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"license": "Apache-2.0",
+	"description": "Animated images whose per-frame content and timing are known, for the tests of <AnimatedImage>"
+}
