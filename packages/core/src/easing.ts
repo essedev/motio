@@ -1,3 +1,9 @@
+import {
+	type EasingSpringConfig,
+	makeSpringEasing,
+	type SpringEasingFunction,
+} from "./easing-spring.js";
+
 /** A function that maps animation progress (usually 0..1) to eased progress. */
 export type EasingFunction = (t: number) => number;
 
@@ -166,6 +172,13 @@ export const Easing = {
 	 */
 	bezier: (x1: number, y1: number, x2: number, y2: number): EasingFunction =>
 		cubicBezier(x1, y1, x2, y2),
+	/**
+	 * A spring as an easing curve for `interpolate()`, normalised to the segment
+	 * (it takes no frame or fps): the spring is measured as if it ran for 30
+	 * frames at 30 fps and its settling time is stretched to the segment. With
+	 * `allowTail`, the spring keeps settling after its segment ends.
+	 */
+	spring: (config?: EasingSpringConfig): SpringEasingFunction => makeSpringEasing(config),
 	/** Runs an easing function forwards (identity modifier). */
 	in: (easing: EasingFunction): EasingFunction => easing,
 	/** Runs an easing function backwards: f(t) = 1 - easing(1 - t). */

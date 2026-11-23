@@ -12,6 +12,7 @@ export type {
 	CalculateMetadataResult,
 } from "./composition/types.js";
 export { Easing, type EasingFunction } from "./easing.js";
+export type { EasingSpringConfig, SpringEasingFunction } from "./easing-spring.js";
 export {
 	getInputProps,
 	getRemotionEnvironment,

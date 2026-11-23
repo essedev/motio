@@ -30,7 +30,8 @@ const SETTLE_WINDOW_FRAMES = 18;
 /** A spring configuration where every field is optional and takes its default. */
 export type SpringConfigInput = { [K in keyof SpringConfig]?: SpringConfig[K] | undefined };
 
-const resolveConfig = (config: SpringConfigInput | undefined): SpringConfig => ({
+/** Fills the missing fields of a spring configuration with their defaults. */
+export const resolveConfig = (config: SpringConfigInput | undefined): SpringConfig => ({
 	mass: config?.mass ?? DEFAULT_CONFIG.mass,
 	damping: config?.damping ?? DEFAULT_CONFIG.damping,
 	stiffness: config?.stiffness ?? DEFAULT_CONFIG.stiffness,
@@ -47,7 +48,7 @@ const resolveConfig = (config: SpringConfigInput | undefined): SpringConfig => (
  *   every z >= 1 instead of the slower overdamped solution, and so do we, to render the
  *   same motion.
  */
-const springPosition = (t: number, { mass, damping, stiffness }: SpringConfig): number => {
+export const springPosition = (t: number, { mass, damping, stiffness }: SpringConfig): number => {
 	const w0 = Math.sqrt(stiffness / mass);
 	const zeta = damping / (2 * Math.sqrt(stiffness * mass));
 	if (zeta < 1) {
@@ -129,8 +130,8 @@ export const measureSpring = ({
 	threshold = DEFAULT_THRESHOLD,
 }: MeasureSpringOptions): number => {
 	validateFps(fps, "the measureSpring() function");
-	if (Number.isNaN(threshold)) throw new Error("Threshold is NaN");
-	if (threshold < 0) throw new Error("Threshold is below 0");
+	if (Number.isNaN(threshold)) throw new TypeError("Threshold is NaN");
+	if (threshold < 0) throw new TypeError("Threshold is below 0");
 	if (threshold === 0) return Number.POSITIVE_INFINITY;
 	const resolved = resolveConfig(config);
 	validateDamping(resolved);

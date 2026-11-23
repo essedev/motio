@@ -13,9 +13,16 @@ export const decode = (value: Encoded): number =>
 export const decodeAll = (values: readonly Encoded[]): number[] => values.map(decode);
 
 /** Easing specs as written by tools/oracle/record.mjs. */
-export type EasingSpec = string | [string, ...(number | EasingSpec)[]];
+export type EasingSpec = string | [string, ...(number | EasingSpec | Record<string, unknown>)[]];
 
 export const buildEasing = (spec: EasingSpec): EasingFunction => {
+	if (Array.isArray(spec) && spec[0] === "spring") {
+		return Easing.spring(untag(spec[1]) as Parameters<typeof Easing.spring>[0]);
+	}
+	if (Array.isArray(spec) && spec[0] === "tail") {
+		const inner = buildEasing(spec[1] as EasingSpec);
+		return Object.assign((t: number) => inner(t), { remotionShouldExtendRight: true });
+	}
 	if (typeof spec === "string") {
 		const fn = (Easing as unknown as Record<string, unknown>)[spec];
 		if (typeof fn !== "function") throw new Error(`unknown easing ${spec}`);
@@ -69,6 +76,21 @@ export class ErrorTracker {
 	}
 }
 
+/**
+ * Values of the fixtures that hold strings (interpolate-outputs, easing-spring,
+ * interactive): NaN, infinities and -0 are written { "$n": "NaN" } and
+ * undefined { "$u": true }.
+ */
+export const untag = (value: unknown): unknown => {
+	if (Array.isArray(value)) return value.map(untag);
+	if (value !== null && typeof value === "object") {
+		if ("$n" in value) return Number((value as { $n: string }).$n);
+		if ("$u" in value) return undefined;
+		return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, untag(v)]));
+	}
+	return value;
+};
+
 /** Options as stored in the fixtures: easings are specs, not functions. */
 export type FixtureOptions = {
 	extrapolateLeft?: string;
@@ -76,6 +98,8 @@ export type FixtureOptions = {
 	easing?: EasingSpec;
 	easingSegments?: EasingSpec[];
 	posterize?: Encoded;
+	output?: string;
+	outputType?: string;
 };
 
 /** Builds real options from fixture options. */
@@ -84,6 +108,8 @@ export const toOptions = (o: FixtureOptions): InterpolateOptions => {
 	if (o.extrapolateLeft !== undefined) options.extrapolateLeft = o.extrapolateLeft;
 	if (o.extrapolateRight !== undefined) options.extrapolateRight = o.extrapolateRight;
 	if (o.posterize !== undefined) options.posterize = decode(o.posterize);
+	if (o.output !== undefined) options.output = o.output;
+	if (o.outputType !== undefined) options.outputType = o.outputType;
 	if (o.easing !== undefined) options.easing = buildEasing(o.easing);
 	if (o.easingSegments !== undefined) options.easing = o.easingSegments.map(buildEasing);
 	return options as InterpolateOptions;

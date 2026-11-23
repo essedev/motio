@@ -212,3 +212,9 @@ The renderer resolves `captureMethod` (a Motio option, `--capture-method`, `$MOT
 
 Revisit if Chrome removes `HeadlessExperimental.beginFrame` from headless-shell, or if the pre-frame proves insufficient for a resource type it does not track (media elements are excluded because they stream).
 
+
+## D-034 `Easing.spring`: validated lazily, two configurations throw instead of hanging (2026-11-23)
+
+`Easing.spring(config)` follows remotion.dev/docs/easing (a spring measured over 30 frames at 30 fps) and the recordings: inside the segment it is `spring({ frame: t * 30, fps: 30, durationInFrames: 30, durationRestThreshold })`, at or before 0 it returns 0, at or after 1 it returns 1, and with `allowTail` it continues as the unstretched spring at frame `t * natural duration`. Like Remotion, the configuration is validated the first time the spring is evaluated inside (0, 1) or in its tail, not when the easing is created, so `Easing.spring({ damping: 0 })` only throws once used. The returned function carries `remotionShouldExtendRight`, set to the `allowTail` value, which `interpolate()` reads (D-035).
+
+Two configurations never return in Remotion (the recorder gives up after 20 s, and in-process they leave later `Easing.spring` calls failing with `RangeError: Too many properties to enumerate`): `stiffness: 0` and `durationRestThreshold: 0`. Motio throws instead (`Spring stiffness must be greater than 0, ...` from `measureSpring()`, and `durationRestThreshold must be greater than 0 for Easing.spring(), ...`). `measureSpring()` now throws its threshold errors as `TypeError`, as Remotion does; the messages are unchanged.
