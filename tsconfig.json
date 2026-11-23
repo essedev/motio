@@ -87,6 +87,9 @@
 		},
 		{
 			"path": "packages/starburst"
+		},
+		{
+			"path": "packages/light-leaks"
 		}
 	]
 }
