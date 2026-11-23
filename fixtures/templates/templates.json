@@ -9,11 +9,9 @@
 				"Logo": [20],
 				"Title": [40]
 			},
-			"blockedBy": [
-				"remotion#Interactive",
-				"remotion#Easing.spring",
-				"remotion#interpolate (string outputRange, output: \"perceptual-scale\")"
-			]
+			"knownMismatch": {
+				"Logo/20": "antialiased edges of the scaled, rotated logo over a transparent background differ from Remotion's (D-031): alpha differs at 5874 px, all next to an antialiased edge; composited on white the frame matches at 53.1 dB"
+			}
 		},
 		"empty": {
 			"repository": "https://github.com/remotion-dev/template-empty",
