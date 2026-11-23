@@ -1,6 +1,6 @@
 // Renders the official Remotion templates (fixtures/templates/templates.json) with the published
 // Remotion at the pinned version: reference stills and resolved composition
-// metadata, written to fixtures/templates/__golden__/remotion/<template>/. Each template is
+// metadata, written to fixtures/templates/.cache/golden/remotion/<template>/ (ignored). Each template is
 // fetched at its pinned commit (never vendored), and its src/ and public/ are copied unchanged
 // (with its package.json) next to this project so that remotion and @remotion/* resolve to the pinned packages here.
 // As in the template's own README, the Node APIs do not apply remotion.config.ts.
@@ -19,7 +19,8 @@ import { fetchTemplate, readTemplates } from "../../fixtures/templates/fetch.ts"
 const SCALE = 1;
 
 const here = import.meta.dirname;
-const goldenRoot = resolve(here, "../../fixtures/templates/__golden__/remotion");
+// Ignored cache: Remotion's renders of its own templates are its content, never committed.
+const goldenRoot = resolve(here, "../../fixtures/templates/.cache/golden/remotion");
 const version = JSON.parse(readFileSync(join(here, "package.json"), "utf8")).dependencies
 	.remotion as string;
 const templates = readTemplates();

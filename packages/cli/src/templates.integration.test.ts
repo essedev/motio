@@ -1,9 +1,9 @@
 // M2 proof: official Remotion templates, fetched at pinned commits and left unmodified, build
 // through the compat alias and render within the M1 thresholds of Remotion 4.0.545's stills
-// (fixtures/templates/__golden__/remotion, recorded by tools/oracle-render record-templates.ts).
+// (recorded locally into fixtures/templates/.cache/golden/remotion by tools/oracle-render record-templates.ts).
 // The templates install nothing: their imports resolve from fixtures/templates/node_modules, a
 // parent directory holding Motio's packages and the third-party versions the templates pin.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -26,7 +26,10 @@ import {
 import { defaultDeps, runCli } from "./main.js";
 import { testIo } from "./test-support/fakes.js";
 
-const GOLDEN = join(TEMPLATES_DIR, "__golden__/remotion");
+// Remotion's renders of its own templates are Remotion's content: they are recorded locally into
+// the ignored cache (`pnpm --dir tools/oracle-render record:templates`), never committed.
+const GOLDEN = join(TEMPLATES_DIR, ".cache/golden/remotion");
+const hasGolden = (name: string) => existsSync(join(GOLDEN, name, "metadata.json"));
 
 // ROADMAP M1 thresholds.
 const MEAN_SSIM = 0.99;
@@ -114,7 +117,12 @@ const rendered = Object.entries(templates).filter(
 );
 
 for (const [name, template] of rendered) {
-	describe(`template ${name}${template.network ? " (loads fonts from the internet)" : ""}`, () => {
+	const title = `template ${name}${template.network ? " (loads fonts from the internet)" : ""}`;
+	if (!hasGolden(name)) {
+		describe.skip(`${title}: no local references, run pnpm --dir tools/oracle-render record:templates`, () => {});
+		continue;
+	}
+	describe(title, () => {
 		const golden = JSON.parse(
 			readFileSync(join(GOLDEN, name, "metadata.json"), "utf8"),
 		) as GoldenMetadata;
