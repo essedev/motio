@@ -111,7 +111,11 @@ describe("renderStill", () => {
 			(await renderStill({ serveUrl, composition, imageFormat: "jpeg", jpegQuality: 100 }))
 				.buffer as Buffer,
 		);
-		expect(px(jpeg, 48, 48).slice(0, 3).every((v) => v <= 4)).toBe(true);
+		expect(
+			px(jpeg, 48, 48)
+				.slice(0, 3)
+				.every((v) => v <= 4),
+		).toBe(true);
 	}, 60_000);
 
 	it("writes to a file and respects overwrite: false", async () => {

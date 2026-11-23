@@ -19,7 +19,10 @@ const chromiumOptions = gl ? { gl: gl as "swangle" } : {};
 const imageFormat = args.includes("--image-format=jpeg") ? "jpeg" : "png";
 const fixture = resolve(here, "../../fixtures", fixtureName);
 const work = join(here, `.work-${fixtureName}`);
-const out = join(fixture, imageFormat === "jpeg" ? "__golden__/remotion-jpeg" : "__golden__/remotion");
+const out = join(
+	fixture,
+	imageFormat === "jpeg" ? "__golden__/remotion-jpeg" : "__golden__/remotion",
+);
 const version = JSON.parse(readFileSync(join(here, "package.json"), "utf8")).dependencies
 	.remotion as string;
 const frames = JSON.parse(readFileSync(join(fixture, "frames.json"), "utf8")) as Record<

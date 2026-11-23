@@ -4,10 +4,10 @@
 // stills (CPU raster, GPU compositing) and JPEG stills, the default video capture with software
 // compositing (D-041, D-050), against Remotion's JPEG stills.
 import { readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { bundle } from "@motiojs/bundler";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { bundle } from "@motiojs/bundler";
 import { renderMedia, renderStill, selectComposition } from "@motiojs/renderer";
 import { decodeImage, decodeVideoFrames, psnr, type RgbaImage, ssim } from "@motiojs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
