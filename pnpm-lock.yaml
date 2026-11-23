@@ -361,6 +361,9 @@ importers:
         specifier: ^18.0.0 || ^19.0.0
         version: 19.3.1
     devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
@@ -405,7 +408,11 @@ importers:
         specifier: ^4.3.5
         version: 4.3.5
 
-  packages/captions: {}
+  packages/captions:
+    devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   packages/cli:
     dependencies:
@@ -456,6 +463,9 @@ importers:
 
   packages/core:
     devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
@@ -648,6 +658,9 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
@@ -749,6 +762,10 @@ importers:
       '@motiojs/core':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   packages/player:
     dependencies:
@@ -840,6 +857,9 @@ importers:
         specifier: workspace:*
         version: link:../paths
     devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0

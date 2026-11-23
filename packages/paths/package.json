@@ -18,5 +18,8 @@
 	"scripts": {},
 	"dependencies": {
 		"@motiojs/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@motiojs/testing": "workspace:*"
 	}
 }
