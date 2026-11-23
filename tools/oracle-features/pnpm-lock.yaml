@@ -20,6 +20,9 @@ importers:
       '@remotion/paths':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/rounded-text-box':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/shapes':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -44,11 +47,17 @@ packages:
   '@remotion/captions@4.0.545':
     resolution: {integrity: sha512-wjNEBuLXlffeI/D2Wi/zwjNHex1AF6zx94WZbGrR5PbfTtaHvKBwkFopZWZGFZeUo9PWJJ8rm8V/xUvanxDYBA==}
 
+  '@remotion/layout-utils@4.0.545':
+    resolution: {integrity: sha512-YAsT/kD9Pdphv8UcUnE5X/l8n2vUO8CWsQDQQzEZD2sYXGDP/BN5HiGR4ULr8IR8Kc+KBU3pDiqWOns0dNqIgg==}
+
   '@remotion/noise@4.0.545':
     resolution: {integrity: sha512-/PcBVMW3gR+3YY9Ez/nIy4J7Nzc44j4wvJHKkEuL9lqrnil7BVE+1NtFxQOGi/pcfarguoAv3PflmtZgZDAlnA==}
 
   '@remotion/paths@4.0.545':
     resolution: {integrity: sha512-DIobHU3y4PH4LHm/T70S35I8R4kT6iDDQIMpu2Yhnc/NbXJtrNQFco7Xwmcj8Mho/gPchBkEEm/rYaIOzloP7g==}
+
+  '@remotion/rounded-text-box@4.0.545':
+    resolution: {integrity: sha512-o62IR+DHtRx4v85roO3kZ86+8R5PttqfI5sYXfexna/42sqXSsf9HjXkgkYo6rIBd8PupWlS5ZTQaPc/8J+T+g==}
 
   '@remotion/shapes@4.0.545':
     resolution: {integrity: sha512-Dwp1r/wUDyW+QAfwFROBKmKAH0xbwV9TjK6FjUxcyQXqZINOUHaSpLqlwT7WPj2uK00GeFB0aw2A2B0v+S72sA==}
@@ -87,6 +96,13 @@ snapshots:
 
   '@remotion/captions@4.0.545': {}
 
+  '@remotion/layout-utils@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
   '@remotion/noise@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -98,6 +114,14 @@ snapshots:
   '@remotion/paths@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+    transitivePeerDependencies:
+      - react
+      - react-dom
+
+  '@remotion/rounded-text-box@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@remotion/layout-utils': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/paths': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
     transitivePeerDependencies:
       - react
       - react-dom

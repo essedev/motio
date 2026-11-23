@@ -1,7 +1,7 @@
 {
 	"name": "motio-oracle-features",
 	"version": "0.0.0",
-	"description": "Records outputs of the published @remotion/paths, shapes, noise, captions and animation-utils packages (public API only) as fixtures for the Motio feature packages",
+	"description": "Records outputs of the published @remotion/paths, shapes, noise, captions, animation-utils and rounded-text-box packages (public API only) as fixtures for the Motio feature packages",
 	"private": true,
 	"type": "module",
 	"license": "Apache-2.0",
@@ -13,6 +13,7 @@
 		"@remotion/captions": "4.0.545",
 		"@remotion/noise": "4.0.545",
 		"@remotion/paths": "4.0.545",
+		"@remotion/rounded-text-box": "4.0.545",
 		"@remotion/shapes": "4.0.545",
 		"react": "19.3.1",
 		"react-dom": "19.3.1",
