@@ -42,11 +42,17 @@ process.on("message", (message: Incoming) => {
 		async (err: unknown) => {
 			await send({
 				type: "error",
-				error: {
-					message: err instanceof Error ? err.message : String(err),
-					code: isMotioError(err) ? err.code : undefined,
-					frame: isMotioError(err) ? err.frame : undefined,
-				},
+				error: isMotioError(err)
+					? {
+							message: err.message,
+							code: err.code,
+							frame: err.frame,
+							label: err.label,
+							composition: err.composition,
+							pageStack: err.pageStack,
+							details: err.details,
+						}
+					: { message: err instanceof Error ? err.message : String(err) },
 			});
 			process.exit(1);
 		},

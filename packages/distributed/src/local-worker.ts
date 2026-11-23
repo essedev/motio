@@ -1,16 +1,28 @@
 import { type ChildProcess, fork } from "node:child_process";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { MotioError, type MotioErrorCode } from "@motiojs/renderer";
 import { DistributedError } from "./errors.js";
 import type { ChunkJob, ChunkJobControl, ChunkWorker } from "./worker.js";
 
 /** Grace period for a cancelled child to close its browsers before it is killed. */
 const CANCEL_GRACE_MS = 10_000;
 
+/** A renderer error as the child reports it: the fields of `MotioError`. */
+interface ChildError {
+	message: string;
+	code?: MotioErrorCode;
+	frame?: number;
+	label?: string;
+	composition?: string;
+	pageStack?: string;
+	details?: Record<string, unknown>;
+}
+
 type Outgoing =
 	| { type: "progress"; renderedFrames: number }
 	| { type: "done"; output: string }
-	| { type: "error"; error: { message: string; code?: string; frame?: number } };
+	| { type: "error"; error: ChildError };
 
 /** The child module, compiled next to this file, or its TypeScript source when run from `src`. */
 function childModule(): string {
@@ -57,25 +69,28 @@ export class LocalChunkWorker implements ChunkWorker {
 				signal?.removeEventListener("abort", onAbort);
 				if (result?.type === "done") return resolve({ output: result.output });
 				if (signal?.aborted) return reject(signal.reason);
-				const error =
+				const { chunk } = job;
+				const where = `Chunk ${chunk.index} (frames ${chunk.start} to ${chunk.end})`;
+				const failed = result?.type === "error" ? result.error : undefined;
+				if (failed?.code) {
+					// A renderer error keeps its code, frame and label, with the chunk as context.
+					return reject(
+						new MotioError(failed.code, `${where}: ${failed.message}`, {
+							...(failed.frame !== undefined ? { frame: failed.frame } : {}),
+							...(failed.label !== undefined ? { label: failed.label } : {}),
+							...(failed.composition !== undefined ? { composition: failed.composition } : {}),
+							...(failed.pageStack !== undefined ? { pageStack: failed.pageStack } : {}),
+							details: { ...(failed.details ?? {}), chunk },
+						}),
+					);
+				}
+				const message =
 					result?.type === "error"
-						? result.error
-						: {
-								message: `the worker process exited with ${exitSignal ?? `code ${code}`}${
-									stderr.trim() ? `: ${stderr.trim()}` : ""
-								}`,
-							};
-				reject(
-					new DistributedError(
-						"E_CHUNK_RENDER",
-						`Chunk ${job.chunk.index} (frames ${job.chunk.start} to ${job.chunk.end}) failed: ${error.message}`,
-						{
-							chunk: job.chunk,
-							...("code" in error && error.code ? { cause: error.code } : {}),
-							...("frame" in error && error.frame !== undefined ? { frame: error.frame } : {}),
-						},
-					),
-				);
+						? result.error.message
+						: `the worker process exited with ${exitSignal ?? `code ${code}`}${
+								stderr.trim() ? `: ${stderr.trim()}` : ""
+							}`;
+				reject(new DistributedError("E_CHUNK_RENDER", `${where} failed: ${message}`, { chunk }));
 			});
 			child.send({ type: "render", job });
 		});

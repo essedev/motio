@@ -32,3 +32,34 @@ it("reports cancelRender() called from a timer as E_CANCELLED with its frame", a
 		expect(result.error?.context.frame).toBe(4);
 	}
 });
+
+it("reports a readiness timeout in a chunked render with its code, label and frame", async () => {
+	const io = testIo(project);
+	const code = await runCli(
+		[
+			"render",
+			"src/index.tsx",
+			"hang",
+			join(out, "hang.mp4"),
+			"--chunks=2",
+			"--timeout=1000",
+			"--json",
+		],
+		io,
+		defaultDeps(process.env),
+	);
+	const result = JSON.parse(io.out.join("")) as {
+		ok: boolean;
+		error?: {
+			code: string;
+			message: string;
+			context: { frame?: number; label?: string; details?: { chunk?: unknown } };
+		};
+	};
+	expect(code).toBe(1);
+	expect(result.error?.code).toBe("E_READINESS_TIMEOUT");
+	expect(result.error?.context.label).toBe("fixture: data that never arrives");
+	expect(result.error?.context.frame).toBe(5);
+	expect(result.error?.message).toContain("Chunk 1 (frames 5 to 9)");
+	expect(result.error?.context.details?.chunk).toEqual({ index: 1, start: 5, end: 9 });
+}, 60_000);
