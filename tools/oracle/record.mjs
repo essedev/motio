@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { Easing, interpolate, interpolateColors, measureSpring, random, spring } from "remotion";
 import { CSS_NAMED_COLORS } from "./named-colors.mjs";
 import { recordEasingSpring } from "./record-easing-spring.mjs";
+import { recordExports } from "./record-exports.mjs";
 import { recordInteractive } from "./record-interactive.mjs";
 import { recordInterpolateOutputs } from "./record-interpolate-outputs.mjs";
 
@@ -809,5 +810,6 @@ recordMeasureSpring();
 recordRandom();
 recordInterpolateOutputs({ write, linspace, toRemotionOptions });
 recordInteractive({ write });
+recordExports({ write });
 // Last: some configs in it leave Remotion's spring code in a failing state.
 recordEasingSpring({ write, linspace, here });

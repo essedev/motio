@@ -12,7 +12,8 @@
 		"record:layout": "node record-layout.ts",
 		"record:google-fonts": "node record-google-fonts.ts",
 		"record:media-utils": "node record-media-utils.ts",
-		"record:templates": "node record-templates.ts"
+		"record:templates": "node record-templates.ts",
+		"record:exports": "node record-exports.ts"
 	},
 	"dependencies": {
 		"@remotion/bundler": "4.0.545",

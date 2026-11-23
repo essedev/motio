@@ -1,0 +1,26 @@
+{
+	"package": "@remotion/media",
+	"version": "4.0.545",
+	"chrome": "158.0.8127.36",
+	"exports": [
+		"Audio",
+		"AudioForPreview",
+		"Video",
+		"experimental_Audio",
+		"experimental_Video",
+		"getTargetSampleRate"
+	],
+	"getTargetSampleRate": {
+		"node": {
+			"length": 0,
+			"value": 48000
+		},
+		"browser": {
+			"length": 0,
+			"value": 48000
+		}
+	},
+	"AudioForPreview": {
+		"typeof": "function"
+	}
+}

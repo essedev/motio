@@ -1,0 +1,39 @@
+{
+	"package": "@remotion/renderer/client",
+	"version": "4.0.545",
+	"exports": [
+		"BrowserSafeApis",
+		"customEditorColumnNumberPlaceholder",
+		"customEditorLineNumberPlaceholder",
+		"customEditorTargetPathPlaceholder",
+		"defaultCodingAgentIds",
+		"defaultEditorIds"
+	],
+	"values": {
+		"customEditorColumnNumberPlaceholder": "%COLUMN_NUMBER%",
+		"customEditorLineNumberPlaceholder": "%LINE_NUMBER%",
+		"customEditorTargetPathPlaceholder": "%TARGET_PATH%",
+		"defaultCodingAgentIds": [
+			"codex",
+			"cursor",
+			"copilot",
+			"claude-code"
+		],
+		"defaultEditorIds": [
+			"vscode",
+			"cursor",
+			"windsurf",
+			"zed",
+			"vscodium",
+			"webstorm",
+			"sublime-text"
+		]
+	},
+	"frozen": {
+		"customEditorColumnNumberPlaceholder": true,
+		"customEditorLineNumberPlaceholder": true,
+		"customEditorTargetPathPlaceholder": true,
+		"defaultCodingAgentIds": false,
+		"defaultEditorIds": false
+	}
+}
