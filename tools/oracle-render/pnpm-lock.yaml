@@ -56,6 +56,9 @@ importers:
       '@remotion/player':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/preload':
+        specifier: 4.0.545
+        version: 4.0.545
       '@remotion/renderer':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -494,6 +497,9 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
+
+  '@remotion/preload@4.0.545':
+    resolution: {integrity: sha512-JmD6G8+ZgH+j4xWwAmqWUhx1GB9fZ1aIGoS4XPQvUZOVXzqk3fWOw4zsY9wtvVnfBussF+QUkBiriVymM8q9Kg==}
 
   '@remotion/renderer@4.0.545':
     resolution: {integrity: sha512-Hqn5f63Tq1IeOLcZuDC19wEebRdXzLKOBKpQMOd7zvDIB3WCQp+n7tMJaGslnA9pUGKjm8U6T7C+k1Vn96Sh8Q==}
@@ -1779,6 +1785,8 @@ snapshots:
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
+  '@remotion/preload@4.0.545': {}
 
   '@remotion/renderer@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:

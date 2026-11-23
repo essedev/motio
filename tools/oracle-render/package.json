@@ -18,7 +18,8 @@
 		"record:gif": "node record-gif.ts",
 		"record:light-leaks-starburst": "node record-light-leaks-starburst.ts",
 		"record:rive": "node record-rive.ts",
-		"record:node-api": "node record-node-api.ts"
+		"record:node-api": "node record-node-api.ts",
+		"record:preload": "node record-preload.ts"
 	},
 	"dependencies": {
 		"@react-three/fiber": "9.2.0",
@@ -37,8 +38,9 @@
 		"@remotion/noise": "4.0.545",
 		"@remotion/paths": "4.0.545",
 		"@remotion/player": "4.0.545",
-		"@remotion/rive": "4.0.545",
+		"@remotion/preload": "4.0.545",
 		"@remotion/renderer": "4.0.545",
+		"@remotion/rive": "4.0.545",
 		"@remotion/shapes": "4.0.545",
 		"@remotion/starburst": "4.0.545",
 		"@remotion/three": "4.0.545",
