@@ -4,7 +4,11 @@ A milestone is done only when every criterion below holds and `make check` is gr
 
 ## Current state
 
-Spike done (D-005, D-006, D-007, D-013). M1 in progress. Ahead of schedule, already proven against the oracle: `@motiojs/zod-types` and `@motiojs/layout-utils` (M2), the audio mixer `@motiojs/audio` and `@motiojs/video-frames` (M3, D-014 to D-016). Oracle recordings exist for M1 (`fixtures/compositions`), M2 (`fixtures/features`, `fixtures/zod-types`, `fixtures/layout-utils`) and M3 (`fixtures/media`).
+M1 done (D-024). Ahead of the milestone order, already committed and proven against the oracle:
+
+- M2: transitions (SSIM at least 0.9994 on the fixture), captions, shapes, paths, noise, layout-utils, zod-types, google-fonts, fonts; the compat alias, `Config`, Tailwind setup and the symbol manifest. Left: BeginFrame capture on Linux in the renderer, the three official templates through the alias, and manifest statuses for every Tier 1 symbol.
+- M3: the Player (ref API, events, real-clock playback), `@motiojs/audio` (mixer), `@motiojs/video-frames` (source-frame selection and extraction), media-utils. Left: the media components (`Video`, `OffthreadVideo`, `Audio`, `@remotion/media`), the audio pass in the renderer, audio muxing, `motio dev`.
+- M5: chunk planning and assembly (`@motiojs/distributed`), alpha and GIF recipes (D-018 to D-020). Left: the renderer's chunk output mode, the local and Lambda workers, alpha and GIF output in the renderer.
 
 ## Spike (done)
 
@@ -14,7 +18,7 @@ Spike done (D-005, D-006, D-007, D-013). M1 in progress. Ahead of schedule, alre
 - [x] BeginFrame against screenshot in the Linux image (D-013).
 - Moved into M1 as integration tests: frame stamps, React fixtures, colour round trip.
 
-## M1: single-node render
+## M1: single-node render (done, D-024)
 
 Scope: core timeline and components (`Composition`, `Still`, `Folder`, `Sequence` with the full prop set of the target, `Series`, `Loop`, `Freeze`, `AbsoluteFill`, `registerRoot`, `getInputProps`, `calculateMetadata`, readiness), the pure functions, the page runtime and frame protocol, the Vite bundler with the compat alias, the renderer (browser ensure, page pool, screenshot capture, H.264 MP4 encoder with explicit colour), the CLI (`render`, `still`, `compositions`, `frames`, `check determinism`, `check flicker`, `browser ensure`, `--json`).
 

@@ -120,3 +120,19 @@ Measured with RGBA PNG frames (alpha gradient plus a half-transparent box) encod
 
 GIF output encodes the captured frames with a palette built for the clip: `-filter_complex "[0:v]split[a][b];[a]palettegen=max_colors=256:stats_mode=full[p];[b][p]paletteuse=dither=none"`. On a 2 s test signal this gives 41.3 dB PSNR against the source frames, with every frame present. `everyNthFrame` selects frames before encoding and divides the frame rate (every 3rd frame of 30 fps gives 20 frames at 10 fps for 60 inputs). Remotion's `numberOfGifLoops` maps to FFmpeg's `-loop`: `null` (loop forever) is `-loop 0`, `0` (play once) is `-loop -1`, which omits the NETSCAPE loop extension, and `n` (repeat n times) is `-loop n`, checked in the written loop extension. Dithering is off by default for deterministic, flat output; an option can enable it later.
 
+## D-021 `viteOverride` replaces `webpackOverride` (2026-11-23)
+
+`bundle()` rejects `webpackOverride` with an error that points to `viteOverride`, a function that receives and returns the Vite configuration (D-003). `remotion.config.ts` setters with no equivalent (`overrideWebpackConfig`) record a warning instead of throwing, and `enableTailwind` is recognised and turned into `@tailwindcss/vite` (v4) or PostCSS (v3).
+
+## D-022 Player browser tests use puppeteer-core (2026-11-23, supersedes the Playwright part of D-012)
+
+The Player's real-browser tests drive the pinned chrome-headless-shell with puppeteer-core, already used by the renderer, instead of Playwright: one browser binary and one driver for the whole repository, no extra browser download. Playwright remains an option if cross-browser Player tests are added.
+
+## D-023 `useWindowedAudioData` is approximated (2026-11-23)
+
+For WAV files the loaded windows, `resultId`, `dataOffsetInSeconds`, sample rate, duration and errors match Remotion, but Remotion repeats one sample at each window boundary (its windows run 1 to 3 samples long) while Motio's windows tile the file exactly; on windowed data `visualizeAudio` then differs by up to 0.042 and `visualizeAudioWaveform` by up to 0.0028. Non-WAV files are decoded whole at 48 kHz and sliced. Every other `@motiojs/media-utils` function matches exactly or within 1e-12 (`packages/media-utils/COMPAT.md`). Motio keeps the exact tiling: duplicating a sample is an artefact, not a contract.
+
+## D-024 M1 closed (2026-11-23)
+
+Every M1 criterion in `ROADMAP.md` is backed by a committed test that passes in `make check`: pure functions against the oracle (exact or within 1e-12), frame stamps over 3,000 frames at concurrency 1, 4 and 8 in random order, the React fixtures, determinism across runs, orders and concurrencies, the colour round trip with `ffprobe` checks, the 28 fixture stills against Remotion (SSIM at least 0.9975, PSNR at least 45.9 dB), and error codes with label and frame. An adversarial review of the M1 code found six defects (an asynchronous `cancelRender()` reported as a page error, `--frames` lists, `check determinism` never rendering in descending order, frames missing from crash errors, non-atomic stills, the default check concurrency on 1-thread machines); all are fixed with tests. The repository builds and renders from a clean `git archive` inside the pinned Linux image.
+

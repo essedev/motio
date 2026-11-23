@@ -2,6 +2,13 @@
 
 Progress log, newest first. One entry per unit of work: what changed, what was measured, what is next.
 
+## 2026-11-23: M1 closed, M2 and M3 largely in place
+
+- M1 done (D-024): core timeline and page runtime, renderer, bundler, compat, CLI, testing utilities; every criterion backed by a committed test, `make check` green (705 tests including integration), clean build and render inside the pinned Linux image.
+- End-of-milestone adversarial review: six defects found and fixed with tests.
+- Delivered ahead of order: transitions, captions, shapes, paths, noise, layout-utils, zod-types, google-fonts, fonts, media-utils, the Player, the audio mixer, video frame extraction, chunk assembly; measured recipes for alpha and GIF output.
+- Next: the media components and audio pass (M3), BeginFrame and the official templates (M2), chunk output and workers (M5).
+
 ## 2026-11-22: oracle recordings and early M2/M3 pieces
 
 - Reference recordings from the published Remotion (pinned, run locally, public API only): stills for the M1 fixture compositions and the M2 feature fixtures, source-frame sequences and click positions for media, zod-types acceptance, layout-utils outputs in Chrome 158.
