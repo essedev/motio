@@ -43,7 +43,7 @@
 				"Audio": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"CalculateMetadataFunction": {
 					"kind": "type",
@@ -152,12 +152,12 @@
 				"Html5Audio": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Html5Video": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"HtmlInCanvas": {
 					"kind": "value",
@@ -212,7 +212,7 @@
 				"OffthreadVideo": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"prefetch": {
 					"kind": "value",
@@ -318,7 +318,7 @@
 				"Video": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"VideoConfig": {
 					"kind": "type",
@@ -707,7 +707,7 @@
 				"Audio": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"AudioForPreview": {
 					"kind": "value",
@@ -717,12 +717,12 @@
 				"experimental_Audio": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"experimental_Video": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"getTargetSampleRate": {
 					"kind": "value",
@@ -732,7 +732,7 @@
 				"Video": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
