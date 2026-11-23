@@ -1266,6 +1266,23 @@
 				}
 			}
 		},
+		"@remotion/rive": {
+			"tier": 3,
+			"symbols": {
+				"RemotionRiveCanvas": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Same runtime version; canvas pixels, markup, times and failures equal the oracle; stills identical with swangle. Seeks from the start, so out-of-order frames do not depend on the previous one; effects throws (D-061)."
+				},
+				"RiveCanvasRef": {
+					"kind": "type",
+					"tier": 3,
+					"status": "supported",
+					"note": "The four getters return the runtime's animation instance, artboard, renderer and runtime (D-061)."
+				}
+			}
+		},
 		"@remotion/shapes": {
 			"tier": 2,
 			"symbols": {
