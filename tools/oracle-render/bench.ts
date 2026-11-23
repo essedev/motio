@@ -94,7 +94,8 @@ function observeChildren(): { stop: () => Record<string, string> } {
 		}
 		for (const r of rows) {
 			if (!r || !tree.has(Number(r[1]))) continue;
-			const chrome = /^(\S*chrome-headless-shell)\s/.exec(r[3] as string);
+			// chrome-headless-shell on macOS, headless_shell in the Linux builds.
+			const chrome = /^(\S*(?:chrome-headless-shell|headless_shell))\s/.exec(r[3] as string);
 			if (chrome) found.set("chrome", chrome[1] as string);
 			const ffmpeg = /^(\S*\/ffmpeg)\s/.exec(r[3] as string);
 			if (ffmpeg) found.set("ffmpeg", ffmpeg[1] as string);
