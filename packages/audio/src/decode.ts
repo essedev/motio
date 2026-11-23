@@ -1,8 +1,32 @@
 import { spawn } from "node:child_process";
 import { AudioError } from "./errors.js";
 
-/** Number of channels of audio stream `stream` (default the first) of `src`, read with ffprobe. */
-export function probeChannels(ffprobe: string, src: string, stream = 0): Promise<number> {
+/** What the mixer needs to know about one audio stream of a source. */
+export interface SourceProbe {
+	/** Channels of the stream. */
+	channels: number;
+	/** FFmpeg's demuxer names for the container, e.g. `"mov,mp4,m4a,3gp,3g2,mj2"`. */
+	formatName: string;
+}
+
+/**
+ * Containers whose input seeking (`-ss` before `-i`) keeps every sample where a decode from the
+ * start puts it, measured with FFmpeg 7 and 8: WAV, AIFF, FLAC, MP3, Ogg and MP4/MOV. Matroska
+ * and WebM seeks land 1 ms (48 samples) off, so those, and any container not listed, decode
+ * from the start.
+ */
+const SAMPLE_ACCURATE_SEEK = new Set(["wav", "aiff", "flac", "mp3", "ogg", "mov", "mp4"]);
+
+/** Whether `-ss` before the input keeps the samples of a container where they are. */
+export function seeksSampleAccurately(formatName: string): boolean {
+	return formatName.split(",").some((name) => SAMPLE_ACCURATE_SEEK.has(name));
+}
+
+/**
+ * Channels of audio stream `stream` (default the first) of `src` and its container, read with
+ * one ffprobe run.
+ */
+export function probeSource(ffprobe: string, src: string, stream = 0): Promise<SourceProbe> {
 	return new Promise((resolve, reject) => {
 		const args = [
 			"-v",
@@ -10,9 +34,9 @@ export function probeChannels(ffprobe: string, src: string, stream = 0): Promise
 			"-select_streams",
 			`a:${stream}`,
 			"-show_entries",
-			"stream=channels",
+			"stream=channels:format=format_name",
 			"-of",
-			"csv=p=0",
+			"json",
 			src,
 		];
 		const child = spawn(ffprobe, args, { stdio: ["ignore", "pipe", "pipe"] });
@@ -28,8 +52,19 @@ export function probeChannels(ffprobe: string, src: string, stream = 0): Promise
 			reject(new AudioError("E_AUDIO_DECODE", `could not start ffprobe: ${e.message}`, { src })),
 		);
 		child.on("close", (code) => {
-			const n = Number.parseInt(out.trim(), 10);
-			if (code !== 0 || !Number.isInteger(n) || n < 1) {
+			let channels = Number.NaN;
+			let formatName = "";
+			try {
+				const parsed = JSON.parse(out) as {
+					streams?: { channels?: number }[];
+					format?: { format_name?: string };
+				};
+				channels = parsed.streams?.[0]?.channels ?? Number.NaN;
+				formatName = parsed.format?.format_name ?? "";
+			} catch {
+				// Reported below with ffprobe's stderr.
+			}
+			if (code !== 0 || !Number.isInteger(channels) || channels < 1) {
 				reject(
 					new AudioError("E_AUDIO_DECODE", `${src} has no readable audio stream: ${err.trim()}`, {
 						src,
@@ -38,7 +73,7 @@ export function probeChannels(ffprobe: string, src: string, stream = 0): Promise
 				);
 				return;
 			}
-			resolve(n);
+			resolve({ channels, formatName });
 		});
 	});
 }
@@ -57,10 +92,18 @@ export function decodeToFloat(options: {
 	channels: number;
 	/** Zero-based audio stream. Default 0. */
 	stream?: number;
+	/** Input seek in seconds (`-ss` before `-i`), for containers that seek sample-accurately. */
+	seekSeconds?: number;
+	/** Output duration in seconds (`-t`): decoding stops there. Default: to the end. */
+	durationSeconds?: number;
 }): Promise<Float32Array> {
 	const { ffmpeg, src, sampleRate, channels, filter } = options;
-	const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-i", src, "-vn"];
-	args.push("-map", `0:a:${options.stream ?? 0}`, "-af", filter);
+	const args = ["-hide_banner", "-loglevel", "error", "-nostdin"];
+	if (options.seekSeconds !== undefined && options.seekSeconds > 0) {
+		args.push("-ss", String(options.seekSeconds));
+	}
+	args.push("-i", src, "-vn", "-map", `0:a:${options.stream ?? 0}`, "-af", filter);
+	if (options.durationSeconds !== undefined) args.push("-t", String(options.durationSeconds));
 	args.push("-ac", String(channels), "-ar", String(sampleRate), "-f", "f32le", "-");
 	return new Promise((resolve, reject) => {
 		const child = spawn(ffmpeg, args, { stdio: ["ignore", "pipe", "pipe"] });

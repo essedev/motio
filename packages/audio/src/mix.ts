@@ -1,4 +1,5 @@
-import { decodeToFloat, probeChannels } from "./decode.js";
+import { availableParallelism } from "node:os";
+import { decodeToFloat, probeSource, type SourceProbe, seeksSampleAccurately } from "./decode.js";
 import { AudioError } from "./errors.js";
 import { sourceFilter } from "./filters.js";
 
@@ -43,6 +44,34 @@ export interface MixOptions {
 	ffmpeg?: string;
 	/** FFprobe executable. Default "ffprobe". */
 	ffprobe?: string;
+	/** FFmpeg processes running at once. Default half the CPU threads, between 1 and 8. */
+	concurrency?: number;
+}
+
+/**
+ * Input seeks start this many seconds before the trim, so a decoder that needs earlier packets
+ * (MP3's bit reservoir, AAC's overlap) has settled by the first sample placed; the rest is trimmed
+ * sample-accurately by `atrim`.
+ */
+const SEEK_PREROLL_SECONDS = 1;
+
+/** Decoding runs this much past the samples a segment places, for resampler and tempo latency. */
+const DURATION_MARGIN_SECONDS = 0.1;
+
+/** Runs `task` over `items` with at most `limit` running at once; rejects on the first failure. */
+async function forEachLimited<T>(
+	items: readonly T[],
+	limit: number,
+	task: (item: T) => Promise<void>,
+): Promise<void> {
+	let next = 0;
+	const worker = async (): Promise<void> => {
+		while (next < items.length) {
+			const item = items[next++] as T;
+			await task(item);
+		}
+	};
+	await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
 /** Interleaved float samples of the whole timeline. */
@@ -75,50 +104,86 @@ export async function mixAudio(options: MixOptions): Promise<MixedAudio> {
 	const totalSamples = Math.round((durationInFrames / fps) * sampleRate);
 	const out = new Float32Array(totalSamples * channels);
 
-	await Promise.all(
-		sources.map(async (source) => {
-			if (source.muted) return;
-			if (source.startFrame < 0 || source.trimBeforeFrames < 0 || source.durationInFrames < 0) {
-				throw new AudioError(
-					"E_AUDIO_INVALID_SOURCE",
-					"startFrame, trimBeforeFrames and durationInFrames must not be negative",
-					{ src: source.src },
-				);
+	const concurrency =
+		options.concurrency ?? Math.max(1, Math.min(8, Math.floor(availableParallelism() / 2)));
+	if (!Number.isInteger(concurrency) || concurrency < 1) {
+		throw new RangeError(`concurrency must be a positive integer, got ${concurrency}`);
+	}
+	// One probe per source and stream, one decode per distinct trim and duration (a Loop repeats
+	// the same segment).
+	const probes = new Map<string, Promise<SourceProbe>>();
+	const decodes = new Map<string, Promise<Float32Array>>();
+	const once = <V>(cache: Map<string, Promise<V>>, key: string, run: () => Promise<V>) => {
+		let p = cache.get(key);
+		if (!p) {
+			p = run();
+			cache.set(key, p);
+		}
+		return p;
+	};
+
+	for (const source of sources) {
+		if (source.startFrame < 0 || source.trimBeforeFrames < 0 || source.durationInFrames < 0) {
+			throw new AudioError(
+				"E_AUDIO_INVALID_SOURCE",
+				"startFrame, trimBeforeFrames and durationInFrames must not be negative",
+				{ src: source.src },
+			);
+		}
+	}
+
+	await forEachLimited(sources, concurrency, async (source) => {
+		if (source.muted) return;
+		const offset = Math.round((source.startFrame / fps) * sampleRate);
+		const endFrame = Math.min(durationInFrames, source.startFrame + source.durationInFrames);
+		const end = Math.min(totalSamples, Math.round((endFrame / fps) * sampleRate));
+		if (end <= offset) return;
+		const stream = source.audioStreamIndex ?? 0;
+		// Fails with a clear error when the stream does not exist.
+		const probe = await once(probes, `${stream}\n${source.src}`, () =>
+			probeSource(ffprobe, source.src, stream),
+		);
+		const trimSeconds = source.trimBeforeFrames / fps;
+		const seekSeconds =
+			seeksSampleAccurately(probe.formatName) && trimSeconds > SEEK_PREROLL_SECONDS
+				? Math.floor((trimSeconds - SEEK_PREROLL_SECONDS) * 1000) / 1000
+				: 0;
+		const filter = sourceFilter({
+			trimSeconds: trimSeconds - seekSeconds,
+			playbackRate: source.playbackRate ?? 1,
+			toneFrequency: source.toneFrequency ?? 1,
+			preservePitch: source.preservePitch ?? true,
+			sampleRate,
+		});
+		const durationSeconds =
+			Math.ceil(((end - offset) / sampleRate + DURATION_MARGIN_SECONDS) * 1000) / 1000;
+		const decoded = await once(
+			decodes,
+			JSON.stringify([source.src, stream, seekSeconds, filter, durationSeconds]),
+			() =>
+				decodeToFloat({
+					ffmpeg,
+					stream,
+					src: source.src,
+					filter,
+					sampleRate,
+					channels,
+					seekSeconds,
+					durationSeconds,
+				}),
+		);
+		const frames = decoded.length / channels;
+		for (let i = offset; i < end; i++) {
+			const s = i - offset;
+			if (s >= frames) break;
+			const frame = Math.floor(((i - offset) * fps) / sampleRate);
+			const gain = volumeAt(source.volume, frame);
+			if (gain === 0) continue;
+			for (let c = 0; c < channels; c++) {
+				const k = i * channels + c;
+				out[k] = (out[k] ?? 0) + (decoded[s * channels + c] ?? 0) * gain;
 			}
-			const filter = sourceFilter({
-				trimSeconds: source.trimBeforeFrames / fps,
-				playbackRate: source.playbackRate ?? 1,
-				toneFrequency: source.toneFrequency ?? 1,
-				preservePitch: source.preservePitch ?? true,
-				sampleRate,
-			});
-			const stream = source.audioStreamIndex ?? 0;
-			// Fails with a clear error when the stream does not exist.
-			await probeChannels(ffprobe, source.src, stream);
-			const decoded = await decodeToFloat({
-				ffmpeg,
-				stream,
-				src: source.src,
-				filter,
-				sampleRate,
-				channels,
-			});
-			const offset = Math.round((source.startFrame / fps) * sampleRate);
-			const endFrame = Math.min(durationInFrames, source.startFrame + source.durationInFrames);
-			const end = Math.min(totalSamples, Math.round((endFrame / fps) * sampleRate));
-			const frames = decoded.length / channels;
-			for (let i = offset; i < end; i++) {
-				const s = i - offset;
-				if (s >= frames) break;
-				const frame = Math.floor(((i - offset) * fps) / sampleRate);
-				const gain = volumeAt(source.volume, frame);
-				if (gain === 0) continue;
-				for (let c = 0; c < channels; c++) {
-					const k = i * channels + c;
-					out[k] = (out[k] ?? 0) + (decoded[s * channels + c] ?? 0) * gain;
-				}
-			}
-		}),
-	);
+		}
+	});
 	return { samples: out, sampleRate, channels };
 }
