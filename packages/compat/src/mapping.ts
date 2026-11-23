@@ -91,10 +91,16 @@ export const PACKAGE_MAPPINGS: readonly PackageMapping[] = [
 	featurePackage("elevenlabs", 3, "after v1"),
 	featurePackage("whisper-web", 3, "after v1"),
 	featurePackage("web-renderer", 3, "after v1"),
-	featurePackage("preload", 3, "after v1"),
+	featurePackage("preload", 3, "M6"),
 	featurePackage("media-parser", 3, "after v1"),
 	featurePackage("webcodecs", 3, "after v1"),
-	featurePackage("rounded-text-box", 3, "after v1"),
+	// A preset of Motio's configurable <TextBackground> (D-066).
+	{
+		source: "@remotion/rounded-text-box",
+		target: "@motiojs/text/rounded-text-box",
+		tier: 3,
+		milestone: "M6",
+	},
 	{
 		source: "@remotion/studio",
 		tier: 3,

@@ -24,7 +24,8 @@
 				"AnimatedImage": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "ImageDecoder in a canvas, frame-accurate in renders and the Player. Shows the frame whose interval contains the time; Remotion shows the frame with the nearest start (405 of 679 recorded frames equal, every difference explained). Canvas size, fit and loop behaviours as recorded; zero-duration frames last 100 ms."
 				},
 				"Artifact": {
 					"kind": "value",
@@ -1166,6 +1167,41 @@
 				}
 			}
 		},
+		"@remotion/preload": {
+			"tier": 3,
+			"symbols": {
+				"preloadAudio": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "A hidden <audio preload=auto> with the URL as given: no fetch first, so no CORS needed (D-066). Same element and place as the oracle; one element per URL."
+				},
+				"preloadFont": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "<link rel=preload as=font> in the head as the oracle, plus crossorigin=anonymous so @font-face reuses it."
+				},
+				"preloadImage": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "<link rel=preload as=image> in the head with the URL as given; one link per URL."
+				},
+				"preloadVideo": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "A hidden <video preload=auto> with the URL as given; Chrome shares its buffer with the Player's media elements, redirects included (D-066)."
+				},
+				"resolveRedirect": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "Equal to the oracle on 12 recorded URLs (redirect chains, cross-origin with and without CORS, failures); stops reading at the headers."
+				}
+			}
+		},
 		"@remotion/renderer": {
 			"tier": 1,
 			"symbols": {
@@ -1378,6 +1414,35 @@
 					"tier": 3,
 					"status": "supported",
 					"note": "The four getters return the runtime's animation instance, artboard, renderer and runtime (D-061)."
+				}
+			}
+		},
+		"@remotion/rounded-text-box": {
+			"tier": 3,
+			"symbols": {
+				"createRoundedTextBox": {
+					"kind": "value",
+					"tier": 3,
+					"status": "supported",
+					"note": "A preset of Motio's makeTextBackground() (D-066): same d, boundingBox and instructions as the oracle on 1009 recorded inputs. Negative line heights are outside the domain and differ."
+				},
+				"CreateRoundedTextBoxProps": {
+					"kind": "type",
+					"tier": 3,
+					"status": "supported",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"CreateRoundedTextBoxResult": {
+					"kind": "type",
+					"tier": 3,
+					"status": "supported",
+					"note": "Type export named in the docs; not checked at runtime."
+				},
+				"TextAlign": {
+					"kind": "type",
+					"tier": 3,
+					"status": "supported",
+					"note": "Type export named in the docs; not checked at runtime."
 				}
 			}
 		},

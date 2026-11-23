@@ -34,6 +34,13 @@ describe("mapSpecifier", () => {
 		expect(mapSpecifier("@remotion/cli")).toMatchObject({ kind: "unsupported" });
 	});
 
+	it("maps @remotion/rounded-text-box to the preset of @motiojs/text", () => {
+		expect(mapSpecifier("@remotion/rounded-text-box")).toMatchObject({
+			kind: "mapped",
+			target: "@motiojs/text/rounded-text-box",
+		});
+	});
+
 	it("maps Tailwind helpers to the compat replacements", () => {
 		expect(mapSpecifier("@remotion/tailwind-v4")).toMatchObject({
 			target: "@motiojs/compat/tailwind-v4",
