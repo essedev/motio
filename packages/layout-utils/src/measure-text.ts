@@ -58,7 +58,7 @@ export function measureText(style: TextStyle): TextDimensions {
 		const fallback = measureOnce(style, style.fontFamily === "serif" ? "monospace" : "serif");
 		if (fallback.width === result.width && fallback.height === result.height) {
 			throw new Error(
-				`Called measureText() with "fontFamily": ${JSON.stringify(style.fontFamily)} but it looks like the font is not loaded at the time of calling: the measurement equals the fallback font's. Load the font before measuring.`,
+				`measureText(): the font ${JSON.stringify(style.fontFamily)} does not seem to be loaded, because the text measures the same in a fallback font. Load the font, and wait for it, before measuring.`,
 			);
 		}
 	}
