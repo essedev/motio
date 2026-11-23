@@ -1,4 +1,12 @@
-import type { EasingFunction } from "./easing.js";
+import { Easing, type EasingFunction } from "./easing.js";
+import {
+	type CssPlan,
+	type InterpolateOutputType,
+	looksLikeCssValue,
+	planCssOutput,
+} from "./interpolate-css.js";
+
+export type { InterpolateOutputType } from "./interpolate-css.js";
 
 /**
  * What `interpolate()` does with an input outside the input range:
@@ -26,7 +34,23 @@ export type InterpolateOptions = {
 	 * stop-motion look: with 3, inputs 0, 1 and 2 all use the value at 0.
 	 */
 	posterize?: number | undefined;
+	/**
+	 * How values are distributed between keyframes, after easing. `linear`
+	 * (default) is additive; `perceptual-scale` interpolates
+	 * `sign(v) * v^2` (the visible area of a scale) and maps back with
+	 * `sign(a) * sqrt(|a|)`, so `[0, 1]` at half way gives `sqrt(0.5)`.
+	 */
+	output?: InterpolateOutput | undefined;
+	/**
+	 * What the output range holds, when it should be enforced: CSS `scale`,
+	 * `translate`, `rotate` or `transform-origin` strings, or a `font-weight`
+	 * (numbers, numeric strings and the keywords `normal` and `bold`).
+	 */
+	outputType?: InterpolateOutputType | undefined;
 };
+
+/** The `output` option of `interpolate()`. */
+export type InterpolateOutput = "linear" | "perceptual-scale";
 
 const linear: EasingFunction = (t) => t;
 
@@ -94,47 +118,358 @@ const wrapInput = (input: number, first: number, last: number) => {
 	return first + ((((input - first) % span) + span) % span);
 };
 
-/**
- * Progress of `input` within the segment [inMin, inMax], after extrapolation,
- * or `{ identity }` when the extrapolation returns the input itself.
- */
-const segmentProgress = (
+/** Whether `input` is outside the range on a side whose extrapolation is `identity`. */
+const identitySide = (
 	input: number,
-	inMin: number,
-	inMax: number,
+	first: number,
+	last: number,
 	left: ExtrapolateType,
 	right: ExtrapolateType,
-): number | { identity: number } => {
-	let value = input;
-	if (value < inMin) {
-		if (left === "identity") return { identity: value };
-		if (left === "clamp") value = inMin;
+): "Left" | "Right" | null => {
+	if (input < first && left === "identity") return "Left";
+	if (input > last && right === "identity") return "Right";
+	return null;
+};
+
+/** Interpolates one component between two keyframe values. */
+const lerp = (from: number, to: number, eased: number, perceptual: boolean): number => {
+	if (from === to) return from;
+	if (!perceptual) return from + eased * (to - from);
+	const a = Math.sign(from) * from ** 2;
+	const b = Math.sign(to) * to ** 2;
+	const area = a + eased * (b - a);
+	return Math.sign(area) * Math.sqrt(Math.abs(area));
+};
+
+/** Keyframe vectors of one segment. */
+type SegmentVectors = { from: readonly number[]; to: readonly number[] };
+
+/** How a resolved output range is evaluated and turned back into an output value. */
+type OutputPlan<T> = {
+	segment(index: number): SegmentVectors;
+	/** Vector of one keyframe on its own (for a single-keyframe range). */
+	keyframe(index: number): readonly number[];
+	dimension: number;
+	format(components: readonly number[]): T;
+	/** Called when an input falls on a side whose extrapolation is `identity`. */
+	identity?(side: "Left" | "Right"): void;
+	/** Whether easing applies (discrete outputs only switch at keyframes). */
+	perceptual: boolean;
+};
+
+const extendsRight = (easing: EasingFunction): boolean =>
+	(easing as { remotionShouldExtendRight?: unknown }).remotionShouldExtendRight === true;
+
+/**
+ * The numeric core of `interpolate()`, over vectors: posterize, wrap, find the
+ * segment, extrapolate, ease, then add what earlier segments whose easing
+ * extends right (`Easing.spring({ allowTail: true })`) still move.
+ */
+const evaluate = <T>(
+	input: number,
+	inputRange: readonly number[],
+	plan: OutputPlan<T>,
+	options: InterpolateOptions | undefined,
+	easingFor: (segment: number) => EasingFunction,
+	posterize: (input: number) => number,
+): T => {
+	const left = options?.extrapolateLeft ?? "extend";
+	const right = options?.extrapolateRight ?? "extend";
+	const first = inputRange[0] as number;
+	const last = inputRange[inputRange.length - 1] as number;
+
+	let x = posterize(input);
+	if ((x < first && left === "wrap") || (x > last && right === "wrap")) {
+		x = wrapInput(x, first, last);
 	}
-	if (value > inMax) {
-		if (right === "identity") return { identity: value };
-		if (right === "clamp") value = inMax;
+	const segment = findSegment(x, inputRange);
+	const inMin = inputRange[segment] as number;
+	const inMax = inputRange[segment + 1] as number;
+
+	const side = identitySide(x, inMin, inMax, left, right);
+	let result: number[];
+	if (side !== null) {
+		plan.identity?.(side);
+		result = new Array<number>(plan.dimension).fill(x);
+	} else {
+		const easing = easingFor(segment);
+		let value = x;
+		if (value < inMin && left === "clamp") value = inMin;
+		// An easing that extends right is not clamped: it keeps settling.
+		if (value > inMax && right === "clamp" && !extendsRight(easing)) value = inMax;
+		const eased = easing((value - inMin) / (inMax - inMin));
+		const { from, to } = plan.segment(segment);
+		result = from.map((a, i) => lerp(a, to[i] as number, eased, plan.perceptual));
 	}
-	return (value - inMin) / (inMax - inMin);
+
+	for (let k = 0; k < segment; k++) {
+		const easing = easingFor(k);
+		if (!extendsRight(easing)) continue;
+		const start = inputRange[k] as number;
+		const end = inputRange[k + 1] as number;
+		const eased = easing((x - start) / (end - start));
+		const { from, to } = plan.segment(k);
+		for (let i = 0; i < result.length; i++) {
+			const a = from[i] as number;
+			const b = to[i] as number;
+			result[i] = (result[i] as number) + (lerp(a, b, eased, plan.perceptual) - b);
+		}
+	}
+	return plan.format(result);
+};
+
+/** A plan whose keyframe vectors do not depend on the segment. */
+const vectorPlan = <T>(
+	vectors: readonly (readonly number[])[],
+	format: (components: readonly number[]) => T,
+	perceptual: boolean,
+): OutputPlan<T> => ({
+	segment: (index) => ({
+		from: vectors[index] as readonly number[],
+		to: vectors[index + 1] as readonly number[],
+	}),
+	keyframe: (index) => vectors[index] as readonly number[],
+	dimension: vectors[0]?.length ?? 1,
+	format,
+	perceptual,
+});
+
+/** The value types `interpolate()` accepts in an output range. */
+export type InterpolateOutputValue = number | string | boolean | readonly number[];
+
+const isStep1Only = (easing: InterpolateOptions["easing"]): boolean => {
+	if (easing === undefined) return false;
+	if (typeof easing === "function") return easing === Easing.step1;
+	return easing.every((e) => e === Easing.step1);
 };
 
 /**
- * Maps `input` from `inputRange` to `outputRange`, piecewise linearly between
- * keyframes, with optional easing per segment and a choice of extrapolation
- * on each side. Compatible with Remotion's numeric `interpolate()`.
+ * Strings and booleans that cannot be blended: the output holds a keyframe's
+ * value until the next keyframe, which only `Easing.step1` expresses.
+ */
+const discretePlan = <T>(
+	values: readonly T[],
+	options: InterpolateOptions | undefined,
+	what: "non-numeric strings" | "booleans",
+): OutputPlan<T> => {
+	// A single keyframe is returned as it is, whatever the easing.
+	if (values.length > 1 && !isStep1Only(options?.easing)) {
+		throw new TypeError(
+			what === "booleans"
+				? "Booleans can only be interpolated using Easing.step1"
+				: "Non-numeric strings can only be interpolated using Easing.step1",
+		);
+	}
+	return {
+		...vectorPlan(
+			values.map((_, i) => [i]),
+			(c) => values[c[0] as number] as T,
+			false,
+		),
+		identity: (side) => {
+			throw new TypeError(`extrapolate${side}: "identity" is not supported for ${what}`);
+		},
+	};
+};
+
+const FONT_WEIGHT_KEYWORDS: Record<string, number> = { normal: 400, bold: 700 };
+
+const parseFontWeight = (value: number | string): number => {
+	const weight =
+		typeof value === "number"
+			? value
+			: (FONT_WEIGHT_KEYWORDS[value.toLowerCase()] ??
+				(/^\d+(?:\.\d+)?$/.test(value) ? Number(value) : Number.NaN));
+	if (!(weight >= 1 && weight <= 1000)) {
+		throw new TypeError(
+			`Cannot interpolate font weight "${String(value)}". Expected "normal", "bold", or a number between 1 and 1000`,
+		);
+	}
+	return weight;
+};
+
+const UNSUPPORTED_WITH_STRINGS =
+	"outputRange must contain only numbers, or supported scale, translate, and rotate strings";
+const UNSUPPORTED =
+	"outputRange must contain only numbers, numeric tuples, or supported scale, translate, and rotate strings";
+
+/** Thrown for a string that is neither a CSS value nor part of an all-strings range. */
+export class UnsupportedStringInterpolationValueError extends TypeError {
+	constructor(value: string) {
+		super(
+			`Cannot interpolate "${value}" because "${value}" is not a supported scale, translate, or rotate value`,
+		);
+		this.name = "UnsupportedStringInterpolationValueError";
+	}
+}
+
+const needsCssUnits = (outputType: InterpolateOutputType | undefined) =>
+	outputType === "translate" || outputType === "rotate" || outputType === "transform-origin";
+
+const validateOptions = (options: InterpolateOptions | undefined) => {
+	const output = options?.output;
+	if (output !== undefined && output !== "linear" && output !== "perceptual-scale") {
+		throw new Error(`output must be "linear" or "perceptual-scale", but got ${output}`);
+	}
+	const outputType = options?.outputType;
+	if (
+		outputType !== undefined &&
+		!["font-weight", "scale", "translate", "rotate", "transform-origin"].includes(outputType)
+	) {
+		throw new Error(
+			`outputType must be "font-weight", "scale", "translate", "rotate", or "transform-origin", but got ${outputType}`,
+		);
+	}
+};
+
+/** Resolves an output range into the plan that evaluates it. */
+const planFor = (
+	outputRange: readonly unknown[],
+	options: InterpolateOptions | undefined,
+): OutputPlan<InterpolateOutputValue> => {
+	const perceptual = options?.output === "perceptual-scale";
+	const outputType = options?.outputType;
+
+	if (outputRange.some((v) => typeof v === "boolean")) {
+		if (!outputRange.every((v) => typeof v === "boolean")) {
+			throw new TypeError("Boolean outputRange must contain only booleans");
+		}
+		if (outputType !== undefined) throw new TypeError("Boolean outputRange cannot use outputType");
+		return discretePlan(outputRange as boolean[], options, "booleans");
+	}
+
+	if (outputType === "font-weight") {
+		if (!outputRange.every((v) => typeof v === "number" || typeof v === "string")) {
+			throw new TypeError("Font weight outputRange must contain only numbers or strings");
+		}
+		const weights = (outputRange as (number | string)[]).map((v) => [parseFontWeight(v)]);
+		return vectorPlan(weights, (c) => c[0] as number, perceptual);
+	}
+
+	const hasString = outputRange.some((v) => typeof v === "string");
+	if (outputRange.some(Array.isArray)) {
+		if (!outputRange.every(Array.isArray)) {
+			throw new TypeError(hasString ? UNSUPPORTED_WITH_STRINGS : UNSUPPORTED);
+		}
+		const tuples = outputRange as readonly (readonly unknown[])[];
+		const size = (tuples[0] as readonly unknown[]).length;
+		for (const tuple of tuples) {
+			if (tuple.length !== size) {
+				throw new TypeError(
+					`outputRange tuples must all have the same length, but got ${size} and ${tuple.length}`,
+				);
+			}
+		}
+		for (const tuple of tuples) {
+			if (!tuple.every((v) => typeof v === "number" && Number.isFinite(v))) {
+				throw new TypeError(
+					`outputRange tuples must contain only finite numbers, but got ${formatRange(tuple as number[])}`,
+				);
+			}
+		}
+		if (size === 0) throw new TypeError("outputRange tuples must contain at least 1 number");
+		if (needsCssUnits(outputType)) {
+			throw new TypeError(
+				`${outputType} outputRange must contain strings with the appropriate CSS units`,
+			);
+		}
+		return vectorPlan(tuples as readonly (readonly number[])[], (c) => [...c], perceptual);
+	}
+
+	if (!outputRange.every((v) => typeof v === "number" || typeof v === "string")) {
+		throw new TypeError(hasString ? UNSUPPORTED_WITH_STRINGS : UNSUPPORTED);
+	}
+	const numbers = outputRange.filter((v): v is number => typeof v === "number");
+	if (!numbers.every(Number.isFinite)) {
+		throw new Error(
+			`outputRange must contain only finite numbers, but got ${formatRange(numbers)}`,
+		);
+	}
+	if (!hasString) {
+		if (needsCssUnits(outputType)) {
+			throw new TypeError(
+				`${outputType} outputRange must contain strings with the appropriate CSS units`,
+			);
+		}
+		return vectorPlan(
+			numbers.map((n) => [n]),
+			(c) => c[0] as number,
+			perceptual,
+		);
+	}
+
+	const values = outputRange as readonly (string | number)[];
+	const notCss = values.find(
+		(v): v is string => typeof v === "string" && !looksLikeCssValue(v, outputType),
+	);
+	if (notCss !== undefined) {
+		if (values.every((v) => typeof v === "string")) {
+			return discretePlan(values as string[], options, "non-numeric strings");
+		}
+		throw new UnsupportedStringInterpolationValueError(notCss);
+	}
+	const css: CssPlan = planCssOutput(
+		values,
+		outputType as Exclude<InterpolateOutputType, "font-weight"> | undefined,
+	);
+	return { ...css, perceptual };
+};
+
+/**
+ * Maps `input` from `inputRange` to `outputRange`, piecewise between
+ * keyframes, with optional easing per segment and a choice of extrapolation on
+ * each side. Compatible with Remotion's `interpolate()`.
+ *
+ * The output range can hold numbers, numeric tuples (interpolated element by
+ * element), CSS `scale`, `translate`, `rotate` and `transform-origin` strings
+ * (interpolated per component, output rounded to 6 decimals), font weights
+ * with `outputType: "font-weight"`, and discrete strings or booleans, which
+ * need `easing: Easing.step1` and hold each keyframe's value until the next.
  *
  * `inputRange` must be strictly increasing, both ranges must have the same
  * non-zero length and contain only finite numbers. With a single keyframe the
- * only output value is returned. Throws an `Error` with the same message as
- * Remotion on invalid arguments.
+ * only output value is returned as it is. Throws an `Error` or `TypeError`
+ * with the same message as Remotion on invalid arguments.
  *
  * @example interpolate(10, [0, 20], [0, 1]) // 0.5
+ * @example interpolate(15, [0, 30], ["0px 0px", "0px -150px"]) // "0px -75px"
  */
-export const interpolate = (
+export function interpolate(
+	input: number,
+	inputRange: readonly number[],
+	outputRange: readonly (number | string)[],
+	options: InterpolateOptions & { outputType: "font-weight" },
+): number;
+export function interpolate(
 	input: number,
 	inputRange: readonly number[],
 	outputRange: readonly number[],
 	options?: InterpolateOptions,
-): number => {
+): number;
+export function interpolate<T extends readonly number[]>(
+	input: number,
+	inputRange: readonly number[],
+	outputRange: readonly T[],
+	options?: InterpolateOptions,
+): T;
+export function interpolate(
+	input: number,
+	inputRange: readonly number[],
+	outputRange: readonly (string | number)[],
+	options?: InterpolateOptions,
+): string;
+export function interpolate(
+	input: number,
+	inputRange: readonly number[],
+	outputRange: readonly boolean[],
+	options?: InterpolateOptions,
+): boolean;
+export function interpolate(
+	input: number,
+	inputRange: readonly number[],
+	outputRange: readonly InterpolateOutputValue[],
+	options?: InterpolateOptions,
+): InterpolateOutputValue {
 	if (typeof input === "undefined") {
 		throw new Error("input can not be undefined");
 	}
@@ -147,34 +482,13 @@ export const interpolate = (
 		);
 	}
 	validateInputRange(inputRange);
-	if (!outputRange.every(Number.isFinite)) {
-		throw new Error(
-			`outputRange must contain only finite numbers, but got ${formatRange(outputRange)}`,
-		);
-	}
 	const easingFor = resolveEasings(options?.easing, inputRange.length - 1);
 	const posterize = resolvePosterize(options?.posterize);
+	validateOptions(options);
+	const plan = planFor(outputRange, options);
 
-	if (inputRange.length === 1) return outputRange[0] as number;
-
-	const left = options?.extrapolateLeft ?? "extend";
-	const right = options?.extrapolateRight ?? "extend";
-	const first = inputRange[0] as number;
-	const last = inputRange[inputRange.length - 1] as number;
-
-	let x = posterize(input);
-	if ((x < first && left === "wrap") || (x > last && right === "wrap")) {
-		x = wrapInput(x, first, last);
-	}
-
-	const segment = findSegment(x, inputRange);
-	const inMin = inputRange[segment] as number;
-	const inMax = inputRange[segment + 1] as number;
-	const outMin = outputRange[segment] as number;
-	const outMax = outputRange[segment + 1] as number;
-
-	const progress = segmentProgress(x, inMin, inMax, left, right);
-	if (typeof progress !== "number") return progress.identity;
-	if (outMin === outMax) return outMin;
-	return outMin + easingFor(segment)(progress) * (outMax - outMin);
-};
+	// A single keyframe is the output, normalised like any keyframe (a CSS
+	// string comes back formatted, "left" as "0% 50%").
+	if (inputRange.length === 1) return plan.format(plan.keyframe(0));
+	return evaluate(input, inputRange, plan, options, easingFor, posterize);
+}

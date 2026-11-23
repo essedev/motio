@@ -19,7 +19,13 @@ export {
 	type RemotionEnvironment,
 	useRemotionEnvironment,
 } from "./environment.js";
-export { type ExtrapolateType, type InterpolateOptions, interpolate } from "./interpolate.js";
+export {
+	type ExtrapolateType,
+	type InterpolateOptions,
+	type InterpolateOutput,
+	type InterpolateOutputType,
+	interpolate,
+} from "./interpolate.js";
 export { type InterpolateColorsOptions, interpolateColors } from "./interpolate-colors.js";
 export { Img, type ImgProps } from "./media/img.js";
 export {
