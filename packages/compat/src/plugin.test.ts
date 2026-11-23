@@ -95,8 +95,31 @@ describe("motioCompat", () => {
 
 	it("fails with the roadmap tier when the Motio package is not available yet", async () => {
 		await expect(
-			bundle('import { evolvePath } from "@remotion/paths";\nexport default evolvePath;\n'),
-		).rejects.toThrow(/evolvePath from "@remotion\/paths".*Tier 2 \(M2\)/s);
+			bundle('import { ThreeCanvas } from "@remotion/three";\nexport default ThreeCanvas;\n', {
+				manifest,
+			}),
+		).rejects.toThrow(/ThreeCanvas from "@remotion\/three".*Tier 2 \(M5\)/s);
+	});
+
+	it("asks to install the Motio package when it ships but is not installed", async () => {
+		const delivered: Manifest = {
+			...manifest,
+			modules: {
+				"@remotion/paths": {
+					tier: 2,
+					symbols: { evolvePath: { kind: "value", tier: 2, status: "supported" } },
+				},
+			},
+		};
+		const error = await bundle(
+			'import { evolvePath } from "@remotion/paths";\nexport default evolvePath;\n',
+			{ manifest: delivered },
+		).catch((caught: unknown) => caught as Error);
+		expect(error).toBeInstanceOf(Error);
+		expect((error as Error).message).toMatch(
+			/"@remotion\/paths" maps to "@motiojs\/paths", which is not installed in this project\. Install "@motiojs\/paths"/,
+		);
+		expect((error as Error).message).not.toMatch(/planned/);
 	});
 
 	it("warns, or fails in strict mode, on symbols the manifest lists as missing", async () => {

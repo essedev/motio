@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { Plugin } from "vite";
-import { loadManifest, lookupSymbol, type Manifest } from "./manifest.js";
+import { findModule, loadManifest, lookupSymbol, type Manifest } from "./manifest.js";
 import { describeUnavailable, isRemotionSpecifier, mapSpecifier } from "./mapping.js";
 import { scanSource } from "./scan.js";
 
@@ -41,6 +41,14 @@ function importedSymbols(importer: string | undefined, specifier: string): strin
 	return [...new Set(imports.flatMap((usage) => usage.symbols.map((symbol) => symbol.name)))];
 }
 
+/** True when the manifest lists at least one symbol of the module as implemented. */
+function isDelivered(manifest: Manifest, specifier: string): boolean {
+	const module = findModule(manifest, specifier)?.module;
+	return Object.values(module?.symbols ?? {}).some(
+		(symbol) => symbol.status === "supported" || symbol.status === "approximated",
+	);
+}
+
 /**
  * Vite plugin resolving `remotion` to `motio` and `@remotion/<pkg>` (with subpaths) to the
  * Motio package that replaces it, including `@remotion/cli/config` to
@@ -73,13 +81,22 @@ export function motioCompat(options: MotioCompatOptions = {}): Plugin {
 			});
 			if (resolved) return resolved;
 			const mapping = resolution.kind === "mapped" ? resolution.mapping : undefined;
+			const targetPackage = resolution.target
+				.split("/")
+				.slice(0, resolution.target.startsWith("@") ? 2 : 1)
+				.join("/");
+			const where = importer ? ` (imported by ${cleanId(importer)})` : "";
+			manifest ??= loadManifest();
+			if (mapping && isDelivered(manifest, source)) {
+				// The replacement ships with Motio: the project just does not have it installed.
+				this.error(
+					`"${source}" maps to "${resolution.target}", which is not installed in this project. Install "${targetPackage}"${where}.`,
+				);
+			}
 			this.error(
 				`"${source}" maps to "${resolution.target}", which cannot be resolved. ` +
 					describeUnavailable(source, mapping, importedSymbols(importer, source)) +
-					` Install "${resolution.target
-						.split("/")
-						.slice(0, resolution.target.startsWith("@") ? 2 : 1)
-						.join("/")}" if it is available.`,
+					` Install "${targetPackage}" if it is available${where}.`,
 			);
 		},
 
