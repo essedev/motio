@@ -9,6 +9,13 @@ Progress log, newest first. One entry per unit of work: what changed, what was m
 - Side effect: every template still and `fixtures/compositions` golden is identical to Remotion's render; the transparent-edge mismatch (D-031, D-038) is closed.
 - Next: M2's manifest statuses, the TikTok and Three templates' packages, the Lambda adapter (M5).
 
+## 2026-11-23: M2 closed, performance criterion met
+
+- Performance (D-040 to D-044): FFmpeg starts encoding with the first frame, software compositing for opaque captures, BT.709 conversion in YUV, pages sharing two browsers; Motio renders the 1080p benchmark in 0.27 to 0.83 of Remotion's time (`make bench --assert`).
+- Every Tier 1 symbol supported or stubbed (D-045); `@motiojs/three`, `@motiojs/animation-utils`, `@motiojs/motion-blur` (D-046 to D-048).
+- All seven official templates build unmodified and match Remotion's stills; `fixtures/features` compared in full; M2 closed (D-{n:03d}).
+- Next, needing the author: M4 on a real production project, cloud spending for the Lambda and Cloud Run adapters, D-009 confirmation, publishing.
+
 ## 2026-11-23: BeginFrame, codecs, chunked rendering, performance baseline
 
 - BeginFrame capture on Linux with a start-up probe (D-033); every documented codec but AV1, with alpha and GIF (D-037); chunked rendering with local workers, frame-exact for lossless codecs and without dropped or duplicated frames for H.264 (D-039).

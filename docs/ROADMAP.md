@@ -4,9 +4,9 @@ A milestone is done only when every criterion below holds and `make check` is gr
 
 ## Current state
 
-M1 done (D-024). M3 done: every criterion has a committed test (see below). In progress or left:
+M1 done (D-024), M2 done (D-049), M3 done, performance done (D-044). Left: M4 (needs a production project chosen by the author), the cloud adapters of M5 (need approved cloud spending), the remaining Tier 2 and Tier 3 packages.
 
-- M2: transitions (SSIM at least 0.9994 on the fixture), captions, shapes, paths, noise, layout-utils, zod-types, google-fonts, fonts; the compat alias, `Config`, Tailwind setup and the symbol manifest. BeginFrame capture on Linux (D-033, identical pixels), opt-in since screenshots caught up (D-043). Five official templates build unmodified with Remotion's metadata (D-025), including Hello World after `Interactive`, `Easing.spring` and non-numeric `interpolate` outputs landed (D-034 to D-036). Every template still is identical to Remotion's render since D-041 closed the transparent-edge mismatch (D-031, D-038). Every Tier 1 symbol of the manifest is supported or stubbed (D-045). All seven official templates build unmodified and every still is identical to Remotion's, Three with `@motiojs/three` (D-046) and TikTok with `@motiojs/animation-utils` (D-047). Left: a golden test for the shapes, paths and noise stills of `fixtures/features` (only the transitions are compared).
+- M2: transitions (SSIM at least 0.9994 on the fixture), captions, shapes, paths, noise, layout-utils, zod-types, google-fonts, fonts; the compat alias, `Config`, Tailwind setup and the symbol manifest. BeginFrame capture on Linux (D-033, identical pixels), opt-in since screenshots caught up (D-043). Five official templates build unmodified with Remotion's metadata (D-025), including Hello World after `Interactive`, `Easing.spring` and non-numeric `interpolate` outputs landed (D-034 to D-036). Every template still is identical to Remotion's render since D-041 closed the transparent-edge mismatch (D-031, D-038). Every Tier 1 symbol of the manifest is supported or stubbed (D-045). All seven official templates build unmodified and every still is identical to Remotion's, Three with `@motiojs/three` (D-046) and TikTok with `@motiojs/animation-utils` (D-047). `fixtures/features` is compared in full: shapes, paths and noise are pixel-identical to Remotion's stills, transitions above 44 dB.
 - M3: every criterion has a committed test. The media components (`@motiojs/media`, D-029), the renderer's media service, audio pass, audio muxing and audio-only codecs (D-030), the Player's media playback with shared audio tags, `motio dev` (D-026), media-utils. Measured: every `fixtures/media` video composition shows the expected source frames exactly; audio clicks land within 0.000 ms of Remotion's with peaks within 0.004 outside the volume-lag window (the time-stretched case within 2 ms); a Video in the Player follows the real clock with at most 0.044 s of drift.
 - Tier 2 packages: `@motiojs/three` (D-046), `@motiojs/animation-utils` (D-047) and `@motiojs/motion-blur` (D-048), each equal to the published package on its oracle and rendered stills. Left: `<ThreeWebGPUCanvas>`, `<HtmlInCanvasMotionBlur>`, effects, light leaks and starburst.
 - Performance: done (D-044). Motio renders the benchmark in 0.27 to 0.83 of Remotion's wall time on macOS and 0.28 to 0.68 in the pinned Linux image.
@@ -33,7 +33,7 @@ Done when:
 - Oracle stills: the fixture compositions match Remotion's render of the same code with mean SSIM at least 0.99 and PSNR at least 40 dB, worst frame SSIM at least 0.97.
 - Errors: a readiness timeout reports its code, label and frame; every `--json` output validates against its schema.
 
-## M2: compatibility breadth
+## M2: compatibility breadth (done, D-049)
 
 Scope: BeginFrame capture on Linux (D-013), `Img`, fonts, Google Fonts, Tailwind, `remotion.config.ts` and `Config`, env vars, static files, transitions, captions, Zod schemas, shapes, paths, noise, layout utils; the symbol manifest and `doctor`.
 
