@@ -47,7 +47,11 @@ function serve(html: string): Server {
 		const type = file.endsWith(".mp4") ? "video/mp4" : "audio/wav";
 		const m = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? "");
 		if (!m) {
-			res.writeHead(200, { "content-type": type, "content-length": size, "accept-ranges": "bytes" });
+			res.writeHead(200, {
+				"content-type": type,
+				"content-length": size,
+				"accept-ranges": "bytes",
+			});
 			createReadStream(file).pipe(res);
 			return;
 		}
@@ -97,8 +101,9 @@ afterAll(async () => {
 const call = <T>(fn: string, ...args: unknown[]): Promise<T> =>
 	page.evaluate(
 		(f, a) => {
-			const api = (window as unknown as { __mediaTest: Record<string, (...x: unknown[]) => unknown> })
-				.__mediaTest;
+			const api = (
+				window as unknown as { __mediaTest: Record<string, (...x: unknown[]) => unknown> }
+			).__mediaTest;
 			return (api[f] as (...x: unknown[]) => unknown)(...a);
 		},
 		fn,
@@ -109,7 +114,9 @@ const player = (method: string, ...args: unknown[]) =>
 	page.evaluate(
 		(m, a) => {
 			const p = (
-				window as unknown as { __mediaTest: { player: () => Record<string, (...x: unknown[]) => unknown> } }
+				window as unknown as {
+					__mediaTest: { player: () => Record<string, (...x: unknown[]) => unknown> };
+				}
 			).__mediaTest.player();
 			return (p[m] as (...x: unknown[]) => unknown)(...a);
 		},
@@ -126,7 +133,10 @@ describe("media in the Player", () => {
 		await sleep(500);
 		const samples: { t: number; frame: number; video: ElementState }[] = [];
 		for (let i = 0; i < 8; i++) {
-			const [frame, video] = await Promise.all([call<number>("frame"), call<ElementState>("video")]);
+			const [frame, video] = await Promise.all([
+				call<number>("frame"),
+				call<ElementState>("video"),
+			]);
 			samples.push({ t: performance.now(), frame, video });
 			await sleep(150);
 		}
