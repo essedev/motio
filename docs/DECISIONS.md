@@ -232,3 +232,35 @@ The docs name the forms but not the edge rules (when a string counts as a CSS va
 The schema helpers (`Interactive.textSchema`, ...) are plain data exported with the recorded values so that compositions spreading them build; nothing reads them. `Interactive._internalMakeRemotionComponentIdentity` is internal and not provided.
 
 Found on the way, not changed here: Remotion's `<Sequence>` crop writes percentages unrounded and makes overlapping opposite crops meet at 50%, while Motio's `cropClipPath` in `timeline/sequence.tsx` rounds to 6 decimals and meets at the midpoint of the overlap. `Interactive` uses Remotion's rule.
+
+## D-037 Codecs and formats: the codec table, recipes and alpha bounds (2026-11-23)
+
+`renderMedia` encodes every documented video `codec` but `av1`, through one table (`packages/renderer/src/codecs.ts`):
+
+| Codec | Encoder, container | CRF (Remotion's table) | Pixel formats, default first | Audio codecs, default first |
+|---|---|---|---|---|
+| `h264`, `h264-mkv`, `h264-ts` | libx264; MP4, Matroska, MPEG-TS | 1 to 51, 18 | `yuv420p`, 4:2:2, 4:4:4, 10-bit | MP4 and TS: aac, mp3; MKV: aac, mp3, opus, pcm-16 |
+| `h265` | libx265, MP4 tagged `hvc1` | 0 to 51, 23 | as H.264 | aac, mp3 |
+| `vp8` | libvpx, WebM | 4 to 63, 9 | `yuv420p`, `yuva420p` | opus |
+| `vp9` | libvpx-vp9, WebM | 0 to 63, 28 | `yuv420p`, `yuva420p`, 4:2:2, 4:4:4, 10-bit | opus |
+| `prores` | prores_ks (`-vendor apl0`), MOV | none (rejected) | `yuv422p10le`; `yuv444p10le` for 4444 profiles; `yuva444p10le` with 4444 or 4444-xq | pcm-16 (documented), aac |
+| `gif` | palette, GIF | none (rejected) | RGB(A) | none |
+
+Choices beyond the docs:
+
+- **Audio per container.** Remotion's compatibility table does not render in its docs (D-030), so each container lists what FFmpeg muxes into it; WebM takes only Opus, whose encoder runs at 48, 24, 16, 12 or 8 kHz (other `sampleRate` values fail early). A GIF renders no audio: `audioCodec`, `enforceAudioTrack` and `separateAudioTo` fail with it.
+- **VP8 runs in constrained quality** with a 1000M bitrate cap: libvpx's VP8 encoder ignores the CRF with `-b:v 0` (CRF 4 and 9 both gave the same 68 kB file at 37.8 dB on a 2 s test signal; with the cap, CRF 9 gives 52.6 dB).
+- **VP9 CRF 0 is lossless** (`-lossless 1`): Remotion's table calls 0 the best quality, and libvpx's CRF 0 alone is not lossless. Alpha needs `-auto-alt-ref 0` (D-019) for VP8 as well.
+- **ProRes** defaults to `hq` or the composition's `defaultProResProfile`; `proResProfile` and `proResBitsPerMacroblock` with another codec fail, as do a CRF and alpha with a 4:2:2 profile. FFmpeg's decoder reports 4444 streams as 12-bit, and FFmpeg 7 writes no range into the MOV colour atom (ProRes is limited range by definition).
+- **Alpha** needs `imageFormat: "png"` and an alpha pixel format; anything else fails before rendering.
+- **GIF** is encoded in three FFmpeg runs: the captured images are copied to an intermediate file, the D-020 palette is built from all of it, then every frame is mapped to it, so long GIFs never hold their frames in memory. PNG capture keeps transparency. `numberOfGifLoops` follows D-020 and is ignored by other codecs.
+- **Image sequences** are a CLI output, as Remotion documents (`--sequence`, `setImageSequence()`, a `--frames` list of single frames, `--image-sequence-pattern`, JPEG by default) into a folder, by default `out/<name>`: `renderMedia`'s output must be a file. The JSON result has `codec: null` and `sequence: true`.
+- **`av1`** fails with `E_UNSUPPORTED_CODEC`: common FFmpeg builds (Homebrew's) carry no AV1 encoder, and Remotion itself does not offer AV1 on Linux arm64.
+- **Matroska and AAC.** The AAC priming makes the audio of an MKV start at -21 ms; FFmpeg 7 decoding at a constant rate then duplicates the first video frame, so the tests decode frames as stored.
+
+Measured in the pinned image and on macOS (same numbers): frame stamps decode exactly from every codec (60 frames each, GIF every 3rd frame at 10 fps), with the expected codec, pixel format, BT.709 tags, frame count and default audio codec. Alpha against the PNG frames of a fixture with an alpha ramp, a moving half-transparent box and an opaque frame stamp: ProRes 4444 and 4444 XQ and lossless VP9 within 1 code value in alpha and 0 in opaque colour; VP8 at its default CRF within 2. 4:2:0 chroma subsampling mixes the colour of transparent neighbours into opaque pixels next to them (up to 50 code values at the end of the red ramp), so opaque colour is compared at least 2 px from transparency. Lossy VP9 stays within D-019's bounds on the ramp (2 at CRF 4 and 20, 3 at 31), but the moving box's hard alpha edges ring more than D-019's static signal showed (3, 16, 16; 18 at the default CRF 28). The M5 alpha criterion therefore applies D-019's bounds to smooth alpha, and the tests bound the whole frame at the measured values plus headroom (4, 18, 20).
+
+## D-038 Transparent edges (D-031), further leads ruled out (2026-11-23)
+
+Now three template stills are affected (Hello World Logo 20 joined OnlyLogo 20 and Overlay 30). Attaching read-only to Remotion's browser during a render shows the same element geometry as Motio's page (the Overlay box is 337.344 x 221 px in both, no `will-change`, `contain` or transform on any ancestor); the ancestors differ only in that Remotion's `html`, `body` and canvas container are 1080 px tall and in normal flow, while Motio's are 0 px tall with an absolutely positioned canvas. Synthetic pages isolating that difference, and the transform history (mounting at scale 0 then seeking, with and without intermediate frames), give pixel-identical edges. The cause stays open; the remaining difference to examine is how each page applies the frame (Remotion's capture timing relative to compositor frames).
+
