@@ -225,17 +225,17 @@ export function cropClipPath(
 ): string | null {
 	let { left, right, top, bottom } = crop;
 	if (left === 0 && right === 0 && top === 0 && bottom === 0) return null;
+	// As Remotion writes it (the same rule Interactive matches from the oracle, D-036):
+	// overlapping opposite crops both become 50%, and percentages are not rounded.
 	if (left + right > 1) {
-		const meet = (left + 1 - right) / 2;
-		left = meet;
-		right = 1 - meet;
+		left = 0.5;
+		right = 0.5;
 	}
 	if (top + bottom > 1) {
-		const meet = (top + 1 - bottom) / 2;
-		top = meet;
-		bottom = 1 - meet;
+		top = 0.5;
+		bottom = 0.5;
 	}
-	const pct = (n: number) => `${Number((n * 100).toFixed(6))}%`;
+	const pct = (n: number) => `${n * 100}%`;
 	let clip = `inset(${pct(top)} ${pct(right)} ${pct(bottom)} ${pct(left)}`;
 	const all = cssLength(style?.borderRadius as string | number | undefined);
 	const corners = [
@@ -244,7 +244,11 @@ export function cropClipPath(
 		cssLength(style?.borderBottomRightRadius as string | number | undefined) ?? all,
 		cssLength(style?.borderBottomLeftRadius as string | number | undefined) ?? all,
 	];
-	if (corners.some((c) => c !== null)) clip += ` round ${corners.map((c) => c ?? "0").join(" ")}`;
+	if (corners.every((c) => c === all)) {
+		if (all !== null) clip += ` round ${all}`;
+	} else {
+		clip += ` round ${corners.map((c) => c ?? "0").join(" ")}`;
+	}
 	return `${clip})`;
 }
 

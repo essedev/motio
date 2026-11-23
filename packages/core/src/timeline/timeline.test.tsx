@@ -5,7 +5,7 @@ import { AbsoluteFill } from "./absolute-fill.js";
 import { Freeze } from "./freeze.js";
 import { useCurrentFrame, useVideoConfig } from "./hooks.js";
 import { Loop } from "./loop.js";
-import { Sequence } from "./sequence.js";
+import { cropClipPath, Sequence } from "./sequence.js";
 import { Series } from "./series.js";
 
 const Label = ({ name }: { name: string }) => {
@@ -242,6 +242,16 @@ describe("Sequence", () => {
 		);
 		const wrapper = mounted.container.querySelector<HTMLElement>("[data-motio-from]");
 		expect(wrapper?.style.clipPath).toBe("inset(10% 0% 0% 25% round 8px)");
+	});
+
+	it("sets overlapping opposite crops both to 50% and keeps percentages unrounded", () => {
+		// Checked on the function: jsdom normalises the clip-path value it stores.
+		expect(cropClipPath({ left: 0.7, right: 0.6, top: 1 / 3, bottom: 0 }, undefined)).toBe(
+			`inset(${(1 / 3) * 100}% 50% 0% 50%)`,
+		);
+		expect(
+			cropClipPath({ left: 0.1, right: 0, top: 0, bottom: 0 }, { borderTopLeftRadius: 4 }),
+		).toBe("inset(0% 0% 0% 10% round 4px 0 0 0)");
 	});
 
 	it("premounts hidden at the first frame outside rendering", () => {
