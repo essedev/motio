@@ -30,7 +30,7 @@ Done when:
 - React fixtures pass: `delayRender` in an effect, `setState` in an effect, `useDeferredValue`, lazy plus `Suspense`.
 - Determinism: identical decoded frame hashes across 2 runs, 2 orders and 3 concurrencies on the same machine.
 - Colour: palette round trip within 2 code values; `ffprobe` shows bt709 and tv range, the exact frame count and fps.
-- Oracle stills: the fixture compositions match Remotion's render of the same code with mean SSIM at least 0.99 and PSNR at least 40 dB, worst frame SSIM at least 0.97.
+- Oracle stills: the fixture compositions match Remotion's render of the same code with mean SSIM at least 0.99 and PSNR at least 40 dB, worst frame SSIM at least 0.97, on each capture path: PNG stills against Remotion's PNG stills, and JPEG stills (the default video capture) against Remotion's JPEG stills (D-050).
 - Errors: a readiness timeout reports its code, label and frame; every `--json` output validates against its schema.
 
 ## M2: compatibility breadth (done, D-049)

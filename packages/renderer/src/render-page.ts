@@ -437,11 +437,12 @@ export class RenderPage {
 			deviceScaleFactor: c.scale,
 			mobile: false,
 		});
-		if (c.transparent) {
-			await this.cdp.send("Emulation.setDefaultBackgroundColorOverride", {
-				color: { r: 0, g: 0, b: 0, a: 0 },
-			});
-		}
+		// Where the composition draws nothing, a transparent capture stays transparent and an opaque
+		// one (JPEG, the video default) is black, as in Remotion's output; Chrome's own default
+		// background is white (D-050).
+		await this.cdp.send("Emulation.setDefaultBackgroundColorOverride", {
+			color: { r: 0, g: 0, b: 0, a: c.transparent ? 0 : 1 },
+		});
 		if (c.chromiumOptions.darkMode) {
 			await this.page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]);
 		}

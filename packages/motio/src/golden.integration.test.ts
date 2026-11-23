@@ -1,6 +1,8 @@
 // End-to-end proof of M1: fixtures/compositions, written against the Remotion API, bundled with
 // @motiojs/bundler (remotion aliased to motio) and rendered with @motiojs/renderer, match the
 // stills and metadata recorded from Remotion 4.0.545 (fixtures/compositions/__golden__/remotion).
+// The default video path (JPEG capture, software compositing, D-041) is compared too, with
+// JPEG stills from the same Remotion (__golden__/remotion-jpeg, D-050).
 import { readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -12,6 +14,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const FIXTURE = resolve(import.meta.dirname, "../../../fixtures/compositions");
 const GOLDEN = join(FIXTURE, "__golden__/remotion");
+const GOLDEN_JPEG = join(FIXTURE, "__golden__/remotion-jpeg");
 const frames = JSON.parse(readFileSync(join(FIXTURE, "frames.json"), "utf8")) as Record<
 	string,
 	number[]
@@ -93,6 +96,40 @@ describe("stills match Remotion's reference renders", () => {
 	it("meets the mean SSIM threshold over every still", () => {
 		expect(scores.length).toBeGreaterThan(0);
 		const mean = scores.reduce((sum, s) => sum + s.ssim, 0) / scores.length;
+		expect(mean).toBeGreaterThanOrEqual(MEAN_SSIM);
+	});
+});
+
+describe("JPEG stills (the default video capture) match Remotion's JPEG stills", () => {
+	const jpegScores: Array<{ ssim: number }> = [];
+	for (const [id, list] of Object.entries(frames)) {
+		it(`${id}: frames ${list.join(", ")}`, async () => {
+			const composition = await selectComposition({ serveUrl, id, inputProps: {} });
+			for (const frame of list) {
+				const { buffer } = await renderStill({
+					serveUrl,
+					composition,
+					frame,
+					imageFormat: "jpeg",
+					jpegQuality: 80,
+				});
+				if (!buffer) throw new Error("renderStill returned no buffer");
+				const ours = await decodeImage(buffer);
+				const ref = await decodeImage(
+					readFileSync(join(GOLDEN_JPEG, id, `${String(frame).padStart(4, "0")}.jpeg`)),
+				);
+				const s = ssim(ours, ref);
+				const p = psnr(ours, ref);
+				jpegScores.push({ ssim: s });
+				expect(s, `${id} frame ${frame} SSIM`).toBeGreaterThanOrEqual(WORST_SSIM);
+				expect(p, `${id} frame ${frame} PSNR`).toBeGreaterThanOrEqual(MIN_PSNR_DB);
+			}
+		});
+	}
+
+	it("meets the mean SSIM threshold over every JPEG still", () => {
+		expect(jpegScores.length).toBeGreaterThan(0);
+		const mean = jpegScores.reduce((sum, s) => sum + s.ssim, 0) / jpegScores.length;
 		expect(mean).toBeGreaterThanOrEqual(MEAN_SSIM);
 	});
 });

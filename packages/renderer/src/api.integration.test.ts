@@ -99,7 +99,7 @@ describe("renderStill", () => {
 		expect(webp.buffer?.subarray(8, 12).toString()).toBe("WEBP");
 	}, 60_000);
 
-	it("captures PNG with a transparent background and JPEG on white", async () => {
+	it("captures PNG with a transparent background and JPEG on black, as Remotion (D-050)", async () => {
 		const composition = await selectComposition({ serveUrl, id: "alpha" });
 		const png = await decodeImage((await renderStill({ serveUrl, composition })).buffer as Buffer);
 		const px = (img: { data: Uint8Array; width: number }, x: number, y: number) => [
@@ -111,7 +111,7 @@ describe("renderStill", () => {
 			(await renderStill({ serveUrl, composition, imageFormat: "jpeg", jpegQuality: 100 }))
 				.buffer as Buffer,
 		);
-		expect(px(jpeg, 48, 48).every((v) => v >= 250)).toBe(true);
+		expect(px(jpeg, 48, 48).slice(0, 3).every((v) => v <= 4)).toBe(true);
 	}, 60_000);
 
 	it("writes to a file and respects overwrite: false", async () => {
