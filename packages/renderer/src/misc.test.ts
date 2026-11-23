@@ -19,6 +19,25 @@ describe("chrome flags", () => {
 		}
 	});
 
+	it("draws frames unthrottled with every GL backend", () => {
+		expect(chromeArgs()).toContain("--disable-frame-rate-limit");
+		expect(chromeArgs({ gl: "angle" })).toContain("--disable-frame-rate-limit");
+	});
+
+	it("composites opaque captures in software and rasterises transparent ones on the CPU", () => {
+		const gpuFlags = (args: string[]) =>
+			args.filter((a) => a === "--disable-gpu-compositing" || a === "--disable-gpu-rasterization");
+		expect(gpuFlags(chromeArgs())).toEqual(["--disable-gpu-compositing"]);
+		expect(gpuFlags(chromeArgs({ gl: "swiftshader" }))).toEqual(["--disable-gpu-compositing"]);
+		expect(gpuFlags(chromeArgs({}, { transparent: true }))).toEqual([
+			"--disable-gpu-rasterization",
+		]);
+		// Hardware GL keeps Chrome's own choice.
+		expect(gpuFlags(chromeArgs({ gl: "angle" }, { transparent: true }))).toEqual([]);
+		// chromiumOptions.flags can still undo it.
+		expect(gpuFlags(chromeArgs({ flags: { "disable-gpu-compositing": false } }))).toEqual([]);
+	});
+
 	it("maps chromiumOptions to flags", () => {
 		const args = chromeArgs({
 			gl: "angle",

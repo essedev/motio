@@ -14,11 +14,13 @@ export interface LaunchOptions {
 	 * ignore the emulated scale factor, so the browser itself runs at the output scale.
 	 */
 	beginFrame?: { scale: number };
+	/** The pages capture with a transparent background, which selects the compositing (D-041). */
+	transparent?: boolean;
 }
 
 /** Chrome's command line for a launch. */
 export function launchArgs(options: LaunchOptions): string[] {
-	const base = chromeArgs(options.chromiumOptions);
+	const base = chromeArgs(options.chromiumOptions, { transparent: options.transparent === true });
 	if (!options.beginFrame) return [...base, `--window-size=${options.width},${options.height}`];
 	const scale = `--force-device-scale-factor=${options.beginFrame.scale}`;
 	const args = base.map((a) => (a.startsWith("--force-device-scale-factor=") ? scale : a));

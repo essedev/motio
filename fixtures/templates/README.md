@@ -20,17 +20,17 @@ Reference stills come from `tools/oracle-render/record-templates.ts`: it copies 
 
 | Template | Pinned commit | Result on Motio |
 | --- | --- | --- |
-| [Blank](https://github.com/remotion-dev/template-empty) (`empty`) | `16562d5` | Metadata and still match. |
-| [Hello World (JavaScript)](https://github.com/remotion-dev/template-helloworld-javascript) | `f3c1be7` | Metadata matches; `HelloWorld` stills match (SSIM 0.9994 to 0.9997, PSNR 52 to 55 dB); `OnlyLogo` (transparent) is a known mismatch. |
+| [Blank](https://github.com/remotion-dev/template-empty) (`empty`) | `16562d5` | Metadata matches; the still is identical. |
+| [Hello World (JavaScript)](https://github.com/remotion-dev/template-helloworld-javascript) | `f3c1be7` | Metadata matches; every still is identical, `OnlyLogo` (transparent) included since D-041. |
 | [Still](https://github.com/remotion-dev/template-still) | `5487596` | Metadata (with Zod schema props) and still match (SSIM 0.9997, PSNR 49.8 dB). Loads Inter from Google Fonts while rendering. |
-| [Overlay](https://github.com/remotion-dev/template-overlay) | `5f61771` | Metadata matches; frame 10 matches, frame 30 is a known mismatch (Google Fonts file). Loads Roboto from Google Fonts while rendering. |
-| [Hello World](https://github.com/remotion-dev/template-helloworld) | `01cb8eb` | Metadata matches; `HelloWorld` stills match (SSIM 0.9996 to 0.9997, PSNR 53 to 55 dB), `Title` is identical; `Logo` (transparent) is a known mismatch (D-031). Uses `Interactive`, `Easing.spring` and string `interpolate()` with `output: "perceptual-scale"`. |
+| [Overlay](https://github.com/remotion-dev/template-overlay) | `5f61771` | Metadata matches; both stills are identical (frame 30 since D-041). Loads Roboto from Google Fonts while rendering. |
+| [Hello World](https://github.com/remotion-dev/template-helloworld) | `01cb8eb` | Metadata matches; every still is identical, `Logo` (transparent) included since D-041 (it was the D-031 mismatch). Uses `Interactive`, `Easing.spring` and string `interpolate()` with `output: "perceptual-scale"`. |
 | [TikTok](https://github.com/remotion-dev/template-tiktok) | `1d2bffa` | Does not build: `@remotion/animation-utils` (M5) and `@remotion/media` (M3); the compat plugin names the package and its milestone. |
 | [Three](https://github.com/remotion-dev/template-three) | `6915403` | Does not build: `@remotion/three` (M5) and `@remotion/media` (M3), same message. |
 
 Not used: templates built on packages outside Motio's scope or needing services (Skia, Code Hike with `@remotion/studio`, Audiogram and Music Visualization on `@remotion/media`, the Next.js, React Router, Electron, Vercel and render-server apps, prompt-to-video), and the obsolete Tailwind template.
 
-`templates.json` marks the exceptions the test expects: `blockedBy` (build fails on a missing symbol; none at the moment), `unsupported` (build fails with the compat message) and `knownMismatch` (a still misses the thresholds, with the reason). Each such test is written to fail once the cause is fixed, so the marker has to be removed then.
+`templates.json` marks the exceptions the test expects: `blockedBy` (build fails on a missing symbol; none at the moment), `unsupported` (build fails with the compat message) and `knownMismatch` (a still misses the thresholds, with the reason; none at the moment, the D-031 ones were fixed by D-041). Each such test is written to fail once the cause is fixed, so the marker has to be removed then.
 
 ## Licences
 

@@ -46,7 +46,30 @@ export const DETERMINISM_FLAGS: readonly string[] = [
 	"--disable-extensions",
 	"--disable-component-update",
 	"--disable-sync",
+	// Chrome draws at most one frame per display refresh (60 Hz), and a screenshot waits for the
+	// next frames: about 49 ms per capture on one page. Unthrottled, a frame is drawn as soon as
+	// the capture asks for it (D-041).
+	"--disable-frame-rate-limit",
 ];
+
+/**
+ * How a software-GL browser rasterises and composites (D-041). Opaque captures composite in
+ * software: compositing on the GPU process makes SwiftShader draw every frame on the CPU, and
+ * pages competing for it slow every capture down, while Chrome's software compositor draws the
+ * same layers far cheaper (WebGL still runs on SwiftShader). Transparent captures rasterise on the
+ * CPU and composite on SwiftShader: only that keeps the faint alpha of antialiased edges of scaled
+ * and 3D-transformed layers that Remotion's renders carry (D-031), which a transparent output
+ * shows. Both draw opaque content to identical pixels.
+ */
+export function softwareCompositingFlags(transparent: boolean): readonly string[] {
+	return transparent ? ["--disable-gpu-rasterization"] : ["--disable-gpu-compositing"];
+}
+
+/** Options of `chromeArgs()` that come from the render rather than from `chromiumOptions`. */
+export interface ChromeArgsContext {
+	/** The page captures with a transparent background (PNG with alpha). Default false. */
+	transparent?: boolean;
+}
 
 /**
  * Extra flags of the BeginFrame capture path (D-013): the compositor draws only when the renderer
@@ -75,7 +98,10 @@ const GL_FLAGS: Record<OpenGlRenderer, readonly string[]> = {
 const RESERVED = /^(user-data-dir|remote-debugging-)/;
 
 /** Builds Chrome's command line from `chromiumOptions`. */
-export function chromeArgs(options: ChromiumOptions = {}): string[] {
+export function chromeArgs(
+	options: ChromiumOptions = {},
+	context: ChromeArgsContext = {},
+): string[] {
 	const gl = options.gl ?? "swangle";
 	const glFlags = GL_FLAGS[gl];
 	if (!glFlags) {
@@ -91,6 +117,9 @@ export function chromeArgs(options: ChromiumOptions = {}): string[] {
 	};
 	for (const f of DETERMINISM_FLAGS) put(f);
 	for (const f of glFlags) put(f);
+	if (gl === "swangle" || gl === "swiftshader") {
+		for (const f of softwareCompositingFlags(context.transparent === true)) put(f);
+	}
 	if (options.ignoreCertificateErrors) put("--ignore-certificate-errors");
 	if (options.disableWebSecurity) put("--disable-web-security");
 	if (options.enableMultiProcessOnLinux === false && process.platform === "linux") {

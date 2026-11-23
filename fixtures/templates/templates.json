@@ -8,9 +8,6 @@
 				"HelloWorld": [45, 130],
 				"Logo": [20],
 				"Title": [40]
-			},
-			"knownMismatch": {
-				"Logo/20": "antialiased edges of the scaled, rotated logo over a transparent background differ from Remotion's (D-031): alpha differs at 5874 px, all next to an antialiased edge; composited on white the frame matches at 53.1 dB"
 			}
 		},
 		"empty": {
@@ -26,9 +23,6 @@
 			"stills": {
 				"HelloWorld": [45, 90, 130],
 				"OnlyLogo": [20]
-			},
-			"knownMismatch": {
-				"OnlyLogo/20": "antialiased edges of a scaled element over a transparent background differ from Remotion's (D-031); the same shapes on white match at 52 dB"
 			}
 		},
 		"still": {
@@ -45,10 +39,7 @@
 			"stills": {
 				"Overlay": [10, 30]
 			},
-			"network": true,
-			"knownMismatch": {
-				"Overlay/30": "antialiased edges of a scaled element over a transparent background carry a faint resampling halo in Remotion's render and not in Motio's (D-031); the fonts now match (D-027)"
-			}
+			"network": true
 		},
 		"tiktok": {
 			"repository": "https://github.com/remotion-dev/template-tiktok",

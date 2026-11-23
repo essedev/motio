@@ -139,6 +139,7 @@ export class RenderPage {
 			chromiumOptions: config.chromiumOptions,
 			width: Math.round(config.width * config.scale),
 			height: Math.round(config.height * config.scale),
+			transparent: config.transparent,
 			...(config.captureMethod === "begin-frame" ? { beginFrame: { scale: config.scale } } : {}),
 		});
 		let rp: RenderPage | undefined;
