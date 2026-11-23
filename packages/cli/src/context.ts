@@ -7,7 +7,12 @@ import type {
 } from "@motiojs/bundler";
 import type { createCompatibilityReport } from "@motiojs/compat";
 import type { CliIo, Reporter } from "./io.js";
-import type { DistributedApi, RendererApi } from "./renderer-api.js";
+import type {
+	DistributedApi,
+	RendererApi,
+	ResolvedFfmpeg,
+	ResolveFfmpegOptions,
+} from "./renderer-api.js";
 
 /** The bundler functions the CLI calls; injectable for tests. */
 export interface BundlerApi {
@@ -26,8 +31,12 @@ export interface CliDeps {
 	distributed?: () => Promise<DistributedApi>;
 	bundler: BundlerApi;
 	compatibilityReport: typeof createCompatibilityReport;
-	/** FFmpeg executable used to decode frames and build contact sheets. */
-	ffmpegPath: string;
+	/**
+	 * Resolves FFmpeg as the renderer does (D-065): `MOTIO_FFMPEG`, else `@motiojs/ffmpeg` when it
+	 * is installed, else `ffmpeg` on PATH. Resolves to null only with `download: false` for an
+	 * installed package whose build is not downloaded yet.
+	 */
+	resolveFfmpeg: (options?: ResolveFfmpegOptions) => Promise<ResolvedFfmpeg | null>;
 	/** Registers a handler for Ctrl+C; returns a function that unregisters it. */
 	onInterrupt: (handler: () => void) => () => void;
 	/**

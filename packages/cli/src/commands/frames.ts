@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { Flags, parseCommandArgs } from "../args.js";
 import type { CommandContext, CommandResult } from "../context.js";
 import { usageError } from "../errors.js";
+import { commandFfmpeg } from "../ffmpeg.js";
 import { CAPTURE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import { composeContactSheet } from "../frames/ffmpeg.js";
 import { framesInRange, renderToFiles } from "../frames/render-to-files.js";
@@ -79,7 +80,7 @@ export async function framesCommand(
 	});
 	const padding = 4;
 	await composeContactSheet(
-		ctx.ffmpegPath,
+		(await commandFfmpeg(ctx)).ffmpeg,
 		frames.map((frame) => files.get(frame) as string),
 		{ columns, rows, cellWidth, padding },
 		output,

@@ -6,6 +6,7 @@ import type { CompatibilityReport } from "@motiojs/compat";
 import { Flags, parseCommandArgs } from "../args.js";
 import type { CommandContext, CommandResult } from "../context.js";
 import { EXIT, toErrorJson, usageError } from "../errors.js";
+import { FFMPEG_SOURCE_LABELS } from "../ffmpeg.js";
 import { BASE_FLAGS } from "../flags.js";
 import { resolvePath } from "../options.js";
 
@@ -92,13 +93,44 @@ export function parseFfmpegRelease(text: string): {
 
 async function checkFfmpeg(ctx: CommandContext): Promise<DoctorCheck[]> {
 	const checks: DoctorCheck[] = [];
-	const ffmpeg = await run(ctx.ffmpegPath, ["-hide_banner", "-version"]);
+	// Never downloads: doctor reports a pinned build that is not downloaded yet instead.
+	let resolved: Awaited<ReturnType<CommandContext["resolveFfmpeg"]>>;
+	try {
+		resolved = await ctx.resolveFfmpeg({ download: false });
+	} catch (error) {
+		// For example @motiojs/ffmpeg installed on a platform it has no build for.
+		const { code, message } = toErrorJson(error);
+		return [
+			{ name: "ffmpeg", status: "fail", message, details: { code } },
+			{
+				name: "ffprobe",
+				status: "warn",
+				message: "Not checked: FFmpeg could not be resolved.",
+				details: {},
+			},
+		];
+	}
+	if (resolved === null) {
+		const message =
+			"@motiojs/ffmpeg is installed but its FFmpeg is not downloaded yet: run `motio ffmpeg ensure` (renders download it on first use).";
+		return [
+			{ name: "ffmpeg", status: "warn", message, details: { source: "package" } },
+			{ name: "ffprobe", status: "warn", message, details: { source: "package" } },
+		];
+	}
+	const path = resolved.ffmpeg;
+	const source = {
+		source: resolved.source,
+		...(resolved.pinned ? { pinned: resolved.pinned } : {}),
+	};
+	const from = `from ${FFMPEG_SOURCE_LABELS[resolved.source]}${resolved.pinned ? ` ${resolved.pinned.version}-${resolved.pinned.build}` : ""}`;
+	const ffmpeg = await run(path, ["-hide_banner", "-version"]);
 	if (ffmpeg.code !== 0) {
 		checks.push({
 			name: "ffmpeg",
 			status: "fail",
-			message: `FFmpeg was not found at "${ctx.ffmpegPath}". Install FFmpeg (brew install ffmpeg, apt install ffmpeg) or set MOTIO_FFMPEG.`,
-			details: { path: ctx.ffmpegPath },
+			message: `FFmpeg was not found at "${path}" (${from}). Install FFmpeg (brew install ffmpeg, apt install ffmpeg), install @motiojs/ffmpeg, or set MOTIO_FFMPEG.`,
+			details: { path, ...source },
 		});
 	} else {
 		const { version, release } = parseFfmpegRelease(ffmpeg.output);
@@ -107,9 +139,7 @@ async function checkFfmpeg(ctx: CommandContext): Promise<DoctorCheck[]> {
 		const tooOld =
 			release !== null &&
 			(release[0] < minMajor || (release[0] === minMajor && release[1] < minMinor));
-		const available = parseEncoderList(
-			(await run(ctx.ffmpegPath, ["-hide_banner", "-encoders"])).output,
-		);
+		const available = parseEncoderList((await run(path, ["-hide_banner", "-encoders"])).output);
 		const missing = REQUIRED_ENCODERS.filter((name) => !available.has(name));
 		const table = renderer?.VIDEO_CODEC_SPECS
 			? Object.fromEntries(
@@ -127,16 +157,16 @@ async function checkFfmpeg(ctx: CommandContext): Promise<DoctorCheck[]> {
 			name: "ffmpeg",
 			status: tooOld || missing.length > 0 ? "fail" : unavailable.length > 0 ? "warn" : "pass",
 			message: tooOld
-				? `FFmpeg ${version} is too old; Motio needs ${minMajor}.${minMinor} or later.`
+				? `FFmpeg ${version} (${from}) is too old; Motio needs ${minMajor}.${minMinor} or later.`
 				: missing.length > 0
-					? `FFmpeg ${version} lacks the ${missing.join(", ")} encoder(s).`
+					? `FFmpeg ${version} (${from}) lacks the ${missing.join(", ")} encoder(s).`
 					: unavailable.length > 0
-						? `FFmpeg ${version}; no encoder for ${unavailable.join(", ")}: those codecs fail until FFmpeg has one (or install @motiojs/ffmpeg). Encoders: ${using.join(", ")}.`
-						: `FFmpeg ${version}. Encoders: ${using.join(", ")}.`,
-			details: { path: ctx.ffmpegPath, version, missingEncoders: missing, codecs },
+						? `FFmpeg ${version} (${from}); no encoder for ${unavailable.join(", ")}: those codecs fail until FFmpeg has one (or install @motiojs/ffmpeg). Encoders: ${using.join(", ")}.`
+						: `FFmpeg ${version} (${from}). Encoders: ${using.join(", ")}.`,
+			details: { path, ...source, version, missingEncoders: missing, codecs },
 		});
 	}
-	const ffprobePath = ctx.ffmpegPath.replace(/ffmpeg(\.exe)?$/, "ffprobe$1");
+	const ffprobePath = resolved.ffprobe;
 	const ffprobe = await run(ffprobePath, ["-hide_banner", "-version"]);
 	checks.push({
 		name: "ffprobe",

@@ -14,6 +14,7 @@ import {
 import { Flags, parseCommandArgs } from "../args.js";
 import type { CommandContext, CommandResult } from "../context.js";
 import { usageError } from "../errors.js";
+import { commandFfmpeg } from "../ffmpeg.js";
 import { CAPTURE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import {
 	CODEC_EXTENSIONS,
@@ -168,12 +169,22 @@ export async function renderCommand(
 	await mkdir(dirname(output), { recursive: true });
 
 	const renderer = await ctx.renderer();
+	// Resolved once here, so the render, its chunks and the JSON result name the same FFmpeg.
+	const ffmpeg = await commandFfmpeg(ctx);
+	const ffmpegVersion = renderer.probeFfmpeg
+		? await renderer.probeFfmpeg(ffmpeg.ffmpeg).then(
+				(info) => info.version,
+				() => null,
+			)
+		: null;
 	const { cancelSignal, cancel } = renderer.makeCancelSignal();
 	const stopListening = ctx.onInterrupt(cancel);
 	const started = Date.now();
 	let renderedFrames = 0;
 	const common = {
 		...project.session,
+		ffmpegExecutable: ffmpeg.ffmpeg,
+		ffprobeExecutable: ffmpeg.ffprobe,
 		composition,
 		codec,
 		outputLocation: output,
@@ -266,6 +277,12 @@ export async function renderCommand(
 			renderedFrames,
 			durationMs,
 			serveUrl: project.serveUrl,
+			ffmpeg: {
+				path: ffmpeg.ffmpeg,
+				version: ffmpegVersion,
+				source: ffmpeg.source,
+				...(ffmpeg.pinned ? { build: ffmpeg.pinned.build } : {}),
+			},
 		},
 		human: [`Rendered ${composition.id} to ${output} in ${(durationMs / 1000).toFixed(1)}s`],
 	};

@@ -245,7 +245,11 @@ export function testDeps(
 		renderer: async () => renderer,
 		bundler,
 		compatibilityReport: async () => emptyReport,
-		ffmpegPath: process.env.MOTIO_FFMPEG ?? "ffmpeg",
+		resolveFfmpeg: async () => ({
+			ffmpeg: process.env.MOTIO_FFMPEG ?? "ffmpeg",
+			ffprobe: process.env.MOTIO_FFPROBE ?? "ffprobe",
+			source: process.env.MOTIO_FFMPEG ? "env" : "path",
+		}),
 		onInterrupt: () => () => {},
 		...overrides,
 	};

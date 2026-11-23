@@ -17,6 +17,7 @@ import {
 import { COMPOSITIONS_FLAGS, compositionsCommand } from "./commands/compositions.js";
 import { DEV_FLAGS, devCommand } from "./commands/dev.js";
 import { DOCTOR_FLAGS, doctorCommand } from "./commands/doctor.js";
+import { FFMPEG_ENSURE_FLAGS, ffmpegEnsureCommand } from "./commands/ffmpeg-ensure.js";
 import { FRAMES_FLAGS, framesCommand } from "./commands/frames.js";
 import { RENDER_FLAGS, renderCommand } from "./commands/render.js";
 import { STILL_FLAGS, stillCommand } from "./commands/still.js";
@@ -77,6 +78,13 @@ export const COMMANDS: readonly CommandDefinition[] = [
 		summary: "Download the pinned chrome-headless-shell if needed.",
 		flags: BROWSER_ENSURE_FLAGS,
 		run: browserEnsureCommand,
+	},
+	{
+		words: ["ffmpeg", "ensure"],
+		usage: "motio ffmpeg ensure",
+		summary: "Download the pinned FFmpeg of @motiojs/ffmpeg if needed (when installed).",
+		flags: FFMPEG_ENSURE_FLAGS,
+		run: ffmpegEnsureCommand,
 	},
 	{
 		words: ["doctor"],
@@ -149,11 +157,12 @@ function commandHelp(definition: CommandDefinition): string {
 /** Default dependencies: the real renderer, bundler and FFmpeg. */
 export function defaultDeps(env: Record<string, string | undefined>): CliDeps {
 	let renderer: ReturnType<typeof loadRenderer> | undefined;
+	const getRenderer = () => {
+		renderer ??= loadRenderer();
+		return renderer;
+	};
 	return {
-		renderer: () => {
-			renderer ??= loadRenderer();
-			return renderer;
-		},
+		renderer: getRenderer,
 		distributed: loadDistributed,
 		bundler: {
 			createBundle,
@@ -163,7 +172,17 @@ export function defaultDeps(env: Record<string, string | undefined>): CliDeps {
 			startDevServer,
 		},
 		compatibilityReport: createCompatibilityReport,
-		ffmpegPath: env.MOTIO_FFMPEG ?? "ffmpeg",
+		resolveFfmpeg: async (options) => {
+			const loaded = await getRenderer().catch(() => undefined);
+			if (loaded?.resolveFfmpeg) return loaded.resolveFfmpeg(options);
+			// Without the renderer: the environment, else PATH.
+			const ffmpeg = env.MOTIO_FFMPEG ?? "ffmpeg";
+			return {
+				ffmpeg,
+				ffprobe: env.MOTIO_FFPROBE ?? ffmpeg.replace(/ffmpeg(\.exe)?$/i, "ffprobe$1"),
+				source: env.MOTIO_FFMPEG ? "env" : "path",
+			};
+		},
 		onInterrupt: (handler) => {
 			process.once("SIGINT", handler);
 			return () => process.off("SIGINT", handler);

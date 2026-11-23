@@ -47,6 +47,29 @@
 				"serveUrl": {
 					"type": "string"
 				},
+				"ffmpeg": {
+					"type": "object",
+					"description": "The FFmpeg that encoded the video (D-065). Absent for image sequences, which do not run FFmpeg.",
+					"additionalProperties": false,
+					"required": ["path", "version", "source"],
+					"properties": {
+						"path": {
+							"type": "string"
+						},
+						"version": {
+							"type": ["string", "null"],
+							"description": "As FFmpeg prints it; null when it could not be read."
+						},
+						"source": {
+							"enum": ["option", "env", "package", "path"],
+							"description": "MOTIO_FFMPEG (env), the pinned build of @motiojs/ffmpeg (package) or PATH."
+						},
+						"build": {
+							"type": "integer",
+							"description": "Build number of the pinned build, when source is package."
+						}
+					}
+				},
 				"warnings": {
 					"$ref": "urn:motio:cli:common#/$defs/warnings"
 				},

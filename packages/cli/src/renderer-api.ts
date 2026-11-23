@@ -58,6 +58,42 @@ export interface SessionOptions {
 	logLevel?: LogLevel;
 	captureMethod?: "auto" | "begin-frame" | "screenshot";
 	pagesPerBrowser?: number | null;
+	ffmpegExecutable?: string | null;
+	ffprobeExecutable?: string | null;
+}
+
+/** Where the FFmpeg of a command came from (D-065). */
+export type FfmpegSource = "option" | "env" | "package" | "path";
+
+/** The FFmpeg and ffprobe a command uses, as the renderer resolves them. */
+export interface ResolvedFfmpeg {
+	ffmpeg: string;
+	ffprobe: string;
+	source: FfmpegSource;
+	/** The pinned build, when `source` is `package`. */
+	pinned?: { version: string; build: number };
+}
+
+/** Options of the FFmpeg resolution. */
+export interface ResolveFfmpegOptions {
+	/** False never downloads: an installed package without its build resolves to null. */
+	download?: boolean;
+	onDownloadProgress?: (progress: { downloadedBytes: number; totalBytes: number }) => void;
+}
+
+/** The part of `@motiojs/ffmpeg` that `motio ffmpeg ensure` calls. */
+export interface FfmpegPackageApi {
+	ensureFfmpeg(options?: {
+		onProgress?: (progress: { downloadedBytes: number; totalBytes: number }) => void;
+	}): Promise<{
+		ffmpeg: string;
+		ffprobe: string;
+		version: string;
+		build: number;
+		platform: string;
+		directory: string;
+		downloaded: boolean;
+	}>;
 }
 
 export interface CancelSignalHandle {
@@ -160,6 +196,10 @@ export interface RendererApi {
 	probeFfmpeg?(path: string): Promise<FfmpegInfo>;
 	/** Optional: the encoders of each video codec, in order of preference, for `doctor`. */
 	VIDEO_CODEC_SPECS?: Readonly<Record<string, { encoders: readonly string[] }>>;
+	/** Optional: the renderer's FFmpeg resolution (D-065). */
+	resolveFfmpeg?(options?: ResolveFfmpegOptions): Promise<ResolvedFfmpeg | null>;
+	/** Optional: loads `@motiojs/ffmpeg` when it is installed, for `motio ffmpeg ensure`. */
+	loadFfmpegPackage?(): Promise<FfmpegPackageApi | null>;
 	/** Optional: minimum FFmpeg release, for `doctor`. */
 	MIN_FFMPEG_VERSION?: readonly [number, number];
 	/** Optional: the pinned browser version, for `doctor`. */

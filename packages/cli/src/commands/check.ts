@@ -3,6 +3,7 @@ import type { Concurrency } from "@motiojs/compat/config";
 import { Flags, parseCommandArgs } from "../args.js";
 import type { CommandContext, CommandResult } from "../context.js";
 import { EXIT, usageError } from "../errors.js";
+import { commandFfmpeg } from "../ffmpeg.js";
 import { CAPTURE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import {
 	compareRuns,
@@ -115,7 +116,7 @@ export async function checkDeterminismCommand(
 		});
 		const runHashes = new Map<number, string>();
 		await decodePngs(
-			ctx.ffmpegPath,
+			(await commandFfmpeg(ctx)).ffmpeg,
 			frames.map((frame) => files.get(frame) as string),
 			(i, rgba) => void runHashes.set(frames[i] as number, hashPixels(rgba)),
 		);
@@ -169,7 +170,7 @@ export async function checkFlickerCommand(
 	// Sliding window of the last three decoded frames; only consecutive frames are compared.
 	const window: Array<{ frame: number; rgba: Buffer }> = [];
 	await decodePngs(
-		ctx.ffmpegPath,
+		(await commandFfmpeg(ctx)).ffmpeg,
 		frames.map((frame) => files.get(frame) as string),
 		(index, rgba) => {
 			window.push({ frame: frames[index] as number, rgba: Buffer.from(rgba) });

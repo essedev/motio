@@ -1,0 +1,62 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:ffmpeg-ensure",
+	"title": "motio ffmpeg ensure --json",
+	"description": "The pinned FFmpeg of @motiojs/ffmpeg, downloaded and verified if needed (D-065).",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"ok",
+				"command",
+				"ffmpeg",
+				"ffprobe",
+				"version",
+				"build",
+				"platform",
+				"directory",
+				"downloaded",
+				"warnings"
+			],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "ffmpeg ensure"
+				},
+				"ffmpeg": {
+					"type": "string",
+					"description": "Absolute path."
+				},
+				"ffprobe": {
+					"type": "string",
+					"description": "Absolute path."
+				},
+				"version": {
+					"type": "string"
+				},
+				"build": {
+					"type": "integer"
+				},
+				"platform": {
+					"type": "string"
+				},
+				"directory": {
+					"type": "string",
+					"description": "Folder of the build, with its licences and BUILDINFO.json."
+				},
+				"downloaded": {
+					"type": "boolean"
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

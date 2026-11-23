@@ -410,6 +410,137 @@ describe("browser ensure", () => {
 	});
 });
 
+describe("FFmpeg resolution (D-065)", () => {
+	const pinned = {
+		ffmpeg: "/cache/ffmpeg/8.1.3-1/linux-x64/bin/ffmpeg",
+		ffprobe: "/cache/ffmpeg/8.1.3-1/linux-x64/bin/ffprobe",
+		source: "package" as const,
+		pinned: { version: "8.1.3", build: 1 },
+	};
+
+	async function runWith(
+		argv: string[],
+		overrides: Partial<Parameters<typeof testDeps>[2]>,
+		rendererOverrides: Partial<ReturnType<typeof fakeRenderer>["renderer"]> = {},
+	) {
+		const io = testIo(cwd);
+		const { renderer, calls } = fakeRenderer();
+		const { bundler } = fakeBundler();
+		const code = await runCli(
+			argv,
+			io,
+			testDeps({ ...renderer, ...rendererOverrides }, bundler, overrides),
+		);
+		return { io, calls, code };
+	}
+
+	it("render passes the resolved FFmpeg to the renderer and records it in the result", async () => {
+		const { io, calls, code } = await runWith(
+			["render", "Main", "--json"],
+			{ resolveFfmpeg: async () => pinned },
+			{
+				probeFfmpeg: async (path) => ({
+					path,
+					version: "8.1.3",
+					encoders: new Set(),
+					decoders: new Set(),
+				}),
+			},
+		);
+		expect(code).toBe(0);
+		const result = parseJson(io);
+		expect(validate("render", result)).toBeNull();
+		expect(result.ffmpeg).toEqual({
+			path: pinned.ffmpeg,
+			version: "8.1.3",
+			source: "package",
+			build: 1,
+		});
+		expect(calls.renderMedia?.[0]).toMatchObject({
+			ffmpegExecutable: pinned.ffmpeg,
+			ffprobeExecutable: pinned.ffprobe,
+		});
+	});
+
+	it("ffmpeg ensure fails with a stable code when @motiojs/ffmpeg is not installed", async () => {
+		const { io, code } = await runWith(
+			["ffmpeg", "ensure", "--json"],
+			{},
+			{
+				loadFfmpegPackage: async () => null,
+			},
+		);
+		expect(code).toBe(1);
+		const result = parseJson(io);
+		expect(validate("ffmpeg-ensure", result)).toBeNull();
+		expect(result.error).toMatchObject({ code: "E_FFMPEG_PACKAGE_MISSING" });
+	});
+
+	it("ffmpeg ensure installs through the package and reports the build", async () => {
+		const progress: number[] = [];
+		const { io, code } = await runWith(
+			["ffmpeg", "ensure", "--json"],
+			{},
+			{
+				loadFfmpegPackage: async () => ({
+					ensureFfmpeg: async (o) => {
+						o?.onProgress?.({ downloadedBytes: 1, totalBytes: 2 });
+						progress.push(1);
+						return {
+							ffmpeg: pinned.ffmpeg,
+							ffprobe: pinned.ffprobe,
+							version: "8.1.3",
+							build: 1,
+							platform: "linux-x64",
+							directory: "/cache/ffmpeg/8.1.3-1/linux-x64",
+							downloaded: true,
+						};
+					},
+				}),
+			},
+		);
+		expect(code).toBe(0);
+		const result = parseJson(io);
+		expect(validate("ffmpeg-ensure", result)).toBeNull();
+		expect(result).toMatchObject({ ffmpeg: pinned.ffmpeg, downloaded: true, build: 1 });
+		expect(progress).toEqual([1]);
+	});
+
+	it("doctor reports a resolution error as a failed check", async () => {
+		const { io, code } = await runWith(["doctor", "--json"], {
+			resolveFfmpeg: async () => {
+				throw Object.assign(new Error("no build for win32-arm64"), {
+					code: "E_FFMPEG_UNSUPPORTED_PLATFORM",
+				});
+			},
+		});
+		expect(code).toBe(3);
+		const result = parseJson(io);
+		expect(validate("doctor", result)).toBeNull();
+		expect((result.checks as Array<Record<string, unknown>>)[1]).toMatchObject({
+			name: "ffmpeg",
+			status: "fail",
+			details: { code: "E_FFMPEG_UNSUPPORTED_PLATFORM" },
+		});
+	});
+
+	it("doctor reports a pinned build that is not downloaded yet, without downloading", async () => {
+		const asked: unknown[] = [];
+		const { io } = await runWith(["doctor", "--json"], {
+			resolveFfmpeg: async (options) => {
+				asked.push(options);
+				return null;
+			},
+		});
+		const result = parseJson(io);
+		expect(validate("doctor", result)).toBeNull();
+		const ffmpeg = (result.checks as Array<{ name: string; status: string; message: string }>)[1];
+		expect(ffmpeg).toMatchObject({ name: "ffmpeg", status: "warn" });
+		expect(ffmpeg?.message).toContain("motio ffmpeg ensure");
+		expect(asked).toEqual([{ download: false }]);
+	});
+});
+
 describe("doctor", () => {
 	it("runs every check and validates against the schema", async () => {
 		const { io } = await run(["doctor", "--json"]);
