@@ -35,6 +35,7 @@ import {
 	type X264Preset,
 } from "./options.js";
 import { checkOverwrite, prepareOutput } from "./output.js";
+import { resolveOutputContainer } from "./output-container.js";
 import type { RenderAssetInfo } from "./render-frames.js";
 import { planVideo, videoCodecNeeds } from "./render-media.js";
 import type { VideoConfig } from "./session.js";
@@ -218,6 +219,7 @@ export async function stitchFramesToVideo(
 	const audioBitrate = resolveAudioBitrate(options.audioBitrate);
 	const sampleRate = resolveSampleRate(options.sampleRate);
 	if (audioCodec) assertSampleRateFits(audioCodec, sampleRate);
+	const { extension, muxer } = resolveOutputContainer(codec, audioCodec, options.outputLocation);
 
 	const { ffmpeg, ffprobe } = await resolveMediaBinaries({
 		binariesDirectory: options.binariesDirectory,
@@ -248,7 +250,6 @@ export async function stitchFramesToVideo(
 		ffprobe,
 	});
 	const controller = toAbortController(options.cancelSignal, "stitchFramesToVideo");
-	const extension = video.encoding.spec.extension;
 	let output: Awaited<ReturnType<typeof prepareOutput>> | null = null;
 	let committed = false;
 	let videoTemp = "";
@@ -280,6 +281,7 @@ export async function stitchFramesToVideo(
 				colorSpace: video.colorSpace,
 				frameCount: total,
 				encoder: videoEncoder,
+				...(muxer ? { muxer } : {}),
 			}),
 			(n) => options.onProgress?.(n),
 		);

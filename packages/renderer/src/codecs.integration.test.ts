@@ -2,7 +2,8 @@
 // output, ffprobe checks of codec, pixel format, colour tags, frame count and the default audio
 // codec of the container; alpha against the PNG frames within the D-019 bounds; GIF frame
 // selection and loop counts.
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -197,6 +198,46 @@ describe("video codecs", () => {
 		await expect(attempt({ codec: "av1", audioCodec: "opus" })).rejects.toThrow(
 			/cannot be used with codec "av1"/,
 		);
+	});
+
+	it("writes the container the output's extension names, and rejects the others", async () => {
+		const format = (file: string) => {
+			const r = spawnSync(
+				"ffprobe",
+				[
+					"-v",
+					"error",
+					"-show_entries",
+					"format=format_name:format_tags=major_brand",
+					"-of",
+					"json",
+					file,
+				],
+				{ encoding: "utf8" },
+			);
+			const f = (
+				JSON.parse(r.stdout) as { format: { format_name: string; tags?: Record<string, string> } }
+			).format;
+			return `${f.format_name} ${f.tags?.major_brand?.trim() ?? ""}`.trim();
+		};
+		const cases = [
+			{ codec: "h264", file: "x.mov", expected: "mov,mp4,m4a,3gp,3g2,mj2 qt" },
+			{ codec: "h264", file: "x.MKV", expected: "matroska,webm" },
+			{ codec: "prores", file: "x-prores.mkv", expected: "matroska,webm" },
+			{ codec: "aac", file: "x.m4a", expected: "mov,mp4,m4a,3gp,3g2,mj2 M4A" },
+		] as const;
+		for (const c of cases) {
+			const { output } = await render("stamp", c.file, { codec: c.codec, frameRange: [0, 9] });
+			expect({ file: c.file, format: format(output) }).toEqual({
+				file: c.file,
+				format: c.expected,
+			});
+		}
+		const composition = await selectComposition({ serveUrl, id: "stamp" });
+		await expect(
+			renderMedia({ serveUrl, composition, codec: "vp9", outputLocation: join(dir, "intro.mp4") }),
+		).rejects.toThrow(/does not fit the codec vp9 with opus audio, which is written to \.webm/);
+		expect(existsSync(join(dir, "intro.mp4"))).toBe(false);
 	});
 });
 

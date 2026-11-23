@@ -52,7 +52,7 @@ async function both(
 		id,
 		inputProps: durationInFrames ? { durationInFrames } : {},
 	});
-	const ext = { h264: "mp4", h265: "mp4", vp9: "webm", vp8: "webm", prores: "mov" }[
+	const ext = { h264: "mp4", h265: "mp4", av1: "mp4", vp9: "webm", vp8: "webm", prores: "mov" }[
 		render.codec as string
 	];
 	const single = join(dir, `${name}-single.${ext}`);

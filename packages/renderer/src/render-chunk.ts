@@ -16,6 +16,7 @@ import { MotioError } from "./errors.js";
 import { assertFfmpegSupports, chooseVideoEncoder, probeFfmpeg, videoArgs } from "./ffmpeg.js";
 import { resolveRenderFfmpeg } from "./ffmpeg-resolve.js";
 import { type Codec, type FrameRange, resolveConcurrency, resolveFrames } from "./options.js";
+import { resolveOutputContainer } from "./output-container.js";
 import { compositionPageFactory } from "./page-factory.js";
 import { DEFAULT_RECYCLE_EVERY_N_FRAMES, type SlowFrame } from "./pool.js";
 import { planVideo, type VideoPlanOptions, videoCodecNeeds } from "./render-media.js";
@@ -72,6 +73,8 @@ export interface ChunkedRenderPlanOptions extends VideoPlanOptions {
 	everyNthFrame?: number | undefined;
 	/** Write the audio to this file instead of the video (`renderMedia`'s option). */
 	separateAudioTo?: string | null | undefined;
+	/** The assembled file; its extension must fit the codec, and names the container. */
+	outputLocation?: string | null | undefined;
 }
 
 /** What a chunked render of a codec produces, validated before any chunk renders. */
@@ -123,11 +126,18 @@ export function planChunkedRender(options: ChunkedRenderPlanOptions): ChunkedRen
 			extension: AUDIO_EXTENSIONS[codec],
 		};
 	}
-	const extension = video.encoding.spec.extension;
+	const { extension } = resolveOutputContainer(
+		options.codec,
+		audio?.codec ?? null,
+		options.outputLocation,
+	);
 	return {
 		chunks,
 		extension,
-		videoTag: video.encoding.codec === "h265" && extension === ".mp4" ? "hvc1" : null,
+		videoTag:
+			video.encoding.codec === "h265" && (extension === ".mp4" || extension === ".mov")
+				? "hvc1"
+				: null,
 		audio,
 	};
 }

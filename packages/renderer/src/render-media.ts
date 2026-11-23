@@ -50,6 +50,7 @@ import {
 	type X264Preset,
 } from "./options.js";
 import { checkOverwrite, prepareOutput } from "./output.js";
+import { resolveOutputContainer } from "./output-container.js";
 import { compositionPageFactory } from "./page-factory.js";
 import { DEFAULT_RECYCLE_EVERY_N_FRAMES, type SlowFrame } from "./pool.js";
 import type { OnStartData } from "./render-frames.js";
@@ -298,6 +299,7 @@ export async function renderMediaInternal(
 	const audioBitrate = resolveAudioBitrate(options.audioBitrate);
 	const sampleRate = resolveSampleRate(options.sampleRate ?? composition.defaultSampleRate);
 	if (audioCodec) assertSampleRateFits(audioCodec, sampleRate);
+	const container = resolveOutputContainer(codec, audioCodec, options.outputLocation);
 	if (audioOnly && options.imageFormat !== undefined && options.imageFormat !== "none") {
 		resolveJpegQuality(options.imageFormat, options.jpegQuality);
 	}
@@ -328,9 +330,7 @@ export async function renderMediaInternal(
 	}
 
 	const controller = toAbortController(options.cancelSignal, "renderMedia");
-	const extension = video
-		? video.encoding.spec.extension
-		: AUDIO_EXTENSIONS[audioCodec as AudioCodec];
+	const { extension, muxer } = container;
 	const output = await prepareOutput(options.outputLocation, options.overwrite ?? true, extension);
 	// Video first goes to its own file when audio is muxed afterwards, or when a GIF needs its
 	// palette passes.
@@ -392,6 +392,7 @@ export async function renderMediaInternal(
 					colorSpace: video.colorSpace,
 					frameCount: total,
 					...(videoEncoder ? { encoder: videoEncoder } : {}),
+					...(muxer ? { muxer } : {}),
 				}),
 				frames,
 				...(internals.frameOrder ? { order: internals.frameOrder([...frames]) } : {}),
