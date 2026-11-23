@@ -7,5 +7,11 @@
 	"description": "Media fixtures: frame-stamped source videos and a click track, with compositions written against the Remotion API",
 	"scripts": {
 		"generate": "node generate.ts"
+	},
+	"dependencies": {
+		"@motiojs/media": "workspace:*",
+		"motio": "workspace:*",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
 	}
 }
