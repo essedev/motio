@@ -18,7 +18,8 @@
 				"absoluteFillSchema": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: plain Studio data, equal to the recorded value (D-045)."
 				},
 				"AnimatedImage": {
 					"kind": "value",
@@ -33,12 +34,14 @@
 				"assertValidInterpolateEasingOption": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: the option checks of interpolate(), equal to the oracle over a recorded grid (D-045)."
 				},
 				"assertValidInterpolatePosterizeOption": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: the option checks of interpolate(), equal to the oracle over a recorded grid (D-045)."
 				},
 				"Audio": {
 					"kind": "value",
@@ -75,8 +78,8 @@
 				"Config": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing",
-					"note": "Deprecated in remotion.config.ts in favour of @remotion/cli/config; maps to @motiojs/compat/config."
+					"status": "supported",
+					"note": "Deprecated since 4.0: every setter throws the migration message Remotion prints (it exits the process instead); use @remotion/cli/config (D-045)."
 				},
 				"continueRender": {
 					"kind": "value",
@@ -167,7 +170,7 @@
 				"IFrame": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Img": {
 					"kind": "value",
@@ -482,8 +485,8 @@
 				"WebpackOverrideFn": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
-					"note": "Type export named in the docs; not checked at runtime."
+					"status": "supported",
+					"note": "Type export named in the docs; bundle() rejects webpackOverride, remotion.config.ts overrides are read for Tailwind."
 				}
 			}
 		},
@@ -712,7 +715,8 @@
 				"AudioForPreview": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "stubbed",
+					"note": "No docs page: rendering it throws a message pointing to <Audio> (D-045)."
 				},
 				"experimental_Audio": {
 					"kind": "value",
@@ -727,7 +731,8 @@
 				"getTargetSampleRate": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "stubbed",
+					"note": "No docs page: returns 48000, the value recorded from the published package in Node and Chrome (D-045)."
 				},
 				"Video": {
 					"kind": "value",
@@ -1062,7 +1067,7 @@
 				"LogLevel": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"makeCancelSignal": {
@@ -1094,7 +1099,7 @@
 				"RenderMediaOnProgress": {
 					"kind": "type",
 					"tier": 1,
-					"status": "missing",
+					"status": "supported",
 					"note": "Type export named in the docs; not checked at runtime."
 				},
 				"renderStill": {
@@ -1116,7 +1121,8 @@
 				"stitchFramesToVideo": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported",
+					"note": "videoBitrate, bufferSize, maxRate, gopSize, metadata, ffmpegOverride and hardware acceleration fail with E_INVALID_OPTION, as in renderMedia (D-045)."
 				},
 				"validateOutputFilename": {
 					"kind": "value",
@@ -1142,27 +1148,32 @@
 				"customEditorColumnNumberPlaceholder": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: plain data equal to the recorded value (D-045)."
 				},
 				"customEditorLineNumberPlaceholder": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: plain data equal to the recorded value (D-045)."
 				},
 				"customEditorTargetPathPlaceholder": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: plain data equal to the recorded value (D-045)."
 				},
 				"defaultCodingAgentIds": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: plain data equal to the recorded value (D-045)."
 				},
 				"defaultEditorIds": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: plain data equal to the recorded value (D-045)."
 				}
 			}
 		},
@@ -1527,22 +1538,24 @@
 				"assertValidInterpolateEasingOption": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: the option checks of interpolate(), equal to the oracle over a recorded grid (D-045)."
 				},
 				"assertValidInterpolatePosterizeOption": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported",
+					"note": "No docs page: the option checks of interpolate(), equal to the oracle over a recorded grid (D-045)."
 				},
 				"interpolate": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				},
 				"random": {
 					"kind": "value",
 					"tier": 1,
-					"status": "missing"
+					"status": "supported"
 				}
 			}
 		},
