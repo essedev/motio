@@ -1264,7 +1264,8 @@
 				"openBrowser": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Returns a handle for puppeteerInstance in renderMedia, renderStill, renderFrames, selectComposition and getCompositions; keeps the D-042 two-browser layout across renders and a separate browser for transparent captures (D-041). Not a Puppeteer Browser."
 				},
 				"PixelFormat": {
 					"kind": "type",

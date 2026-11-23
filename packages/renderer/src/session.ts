@@ -11,6 +11,7 @@ import {
 import { MotioError } from "./errors.js";
 import { resolveRenderFfmpeg } from "./ffmpeg-resolve.js";
 import { type MediaServer, startMediaServer } from "./media-server.js";
+import { type HeadlessBrowser, sharedBrowsers } from "./open-browser.js";
 import {
 	type LogLevel,
 	resolveEnvVariables,
@@ -34,6 +35,12 @@ export interface BrowserSessionOptions {
 	chromiumOptions?: ChromiumOptions;
 	/** Use this browser instead of the pinned `chrome-headless-shell`. */
 	browserExecutable?: string | null;
+	/**
+	 * A browser from `openBrowser()`, reused instead of launching one: the call opens tabs on it
+	 * and leaves it running; the caller closes it. Its `browserExecutable` and `chromiumOptions`
+	 * apply, and this call's are ignored.
+	 */
+	puppeteerInstance?: HeadlessBrowser | null;
 	/** Port of the local bundle server; random if unset. */
 	port?: number | null;
 	onBrowserLog?: (log: BrowserLog) => void;
@@ -97,7 +104,10 @@ export interface BrowserSession {
 	timeoutInMilliseconds: number;
 	chromiumOptions: ChromiumOptions;
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
-	/** Browsers shared by the session's pages (D-042), killed by `close()`. */
+	/**
+	 * Browsers shared by the session's pages (D-042), killed by `close()` unless they belong to a
+	 * `puppeteerInstance`.
+	 */
 	browsers: BrowserPool;
 	/**
 	 * The configuration of a page; `concurrency` (default 1) is the number of pages the render
@@ -125,8 +135,10 @@ export async function openSession(
 	const envVariables = resolveEnvVariables(options.envVariables);
 	const timeoutInMilliseconds = resolveTimeout(options.timeoutInMilliseconds);
 	const pagesPerBrowser = resolvePagesPerBrowser(options.pagesPerBrowser);
-	const chromiumOptions = options.chromiumOptions ?? {};
+	const shared = options.puppeteerInstance ? sharedBrowsers(options.puppeteerInstance) : null;
+	const chromiumOptions = shared ? shared.chromiumOptions : (options.chromiumOptions ?? {});
 	const executablePath =
+		shared?.executablePath ??
 		options.browserExecutable ??
 		process.env.MOTIO_BROWSER_EXECUTABLE ??
 		(await ensureBrowser()).executablePath;
@@ -149,7 +161,8 @@ export async function openSession(
 		throw err;
 	}
 	const onBrowserLog = options.onBrowserLog;
-	const browsers = new BrowserPool();
+	// A shared browser outlives the session: its pages close with the render, its processes stay.
+	const browsers = shared ? shared.pool : new BrowserPool();
 	return {
 		executablePath,
 		captureMethod,
@@ -185,7 +198,7 @@ export async function openSession(
 			...size,
 		}),
 		close: async () => {
-			await Promise.all([browsers.close(), server.close(), media.close()]);
+			await Promise.all([shared ? undefined : browsers.close(), server.close(), media.close()]);
 		},
 	};
 }

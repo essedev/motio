@@ -1,4 +1,5 @@
 import type { Browser } from "puppeteer-core";
+import { MotioError } from "../errors.js";
 
 /**
  * Pages sharing one browser process when the caller does not choose (D-042): the pages are spread
@@ -55,7 +56,12 @@ export class BrowserPool {
 		pagesPerBrowser: number,
 		launch: () => Promise<Browser>,
 	): Promise<BrowserLease> {
-		if (this.closed) throw new Error("The browser pool is closed");
+		if (this.closed) {
+			throw new MotioError(
+				"E_BROWSER_CLOSED",
+				"The browser was closed while a render was using it. Close an openBrowser() instance only after its renders finished.",
+			);
+		}
 		let host = this.hosts.find((h) => h.key === key && !h.dead && h.pages < pagesPerBrowser);
 		if (!host) {
 			const browser = launch();

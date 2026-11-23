@@ -112,6 +112,19 @@ export function fromPageError(
 	return err;
 }
 
+/**
+ * Pages whose browsers have this key can share one. The window size is left out for screenshot
+ * pages, which set their own viewport, so renders of different sizes share a browser opened by
+ * `openBrowser()`; BeginFrame captures depend on the window and keep it.
+ */
+export function browserPoolKey(launch: LaunchOptions): string {
+	const args = launchArgs(launch);
+	return JSON.stringify([
+		launch.executablePath,
+		launch.beginFrame ? args : args.filter((a) => !a.startsWith("--window-size=")),
+	]);
+}
+
 /** How long closing a page on a shared browser may take before the browser is killed. */
 const PAGE_CLOSE_TIMEOUT_MS = 3_000;
 
@@ -171,10 +184,8 @@ export class RenderPage {
 		};
 		const shared = config.browsers;
 		const lease = shared
-			? await shared.pool.lease(
-					JSON.stringify([launch.executablePath, launchArgs(launch)]),
-					shared.pagesPerBrowser,
-					() => launchBrowser(launch),
+			? await shared.pool.lease(browserPoolKey(launch), shared.pagesPerBrowser, () =>
+					launchBrowser(launch),
 				)
 			: undefined;
 		const browser = lease ? lease.browser : await launchBrowser(launch);

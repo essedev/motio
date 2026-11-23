@@ -30,7 +30,8 @@ export type MotioErrorCode =
 	| "E_MEDIA_SOURCE"
 	| "E_AUDIO_FAILED"
 	| "E_NO_VIDEO_STREAM"
-	| "E_NO_AUDIO_STREAM";
+	| "E_NO_AUDIO_STREAM"
+	| "E_BROWSER_CLOSED";
 
 /** Structured context attached to an error. */
 export interface MotioErrorContext {

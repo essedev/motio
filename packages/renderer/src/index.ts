@@ -60,6 +60,13 @@ export {
 	type VideoMetadataCodec,
 	type VideoMetadataColorSpace,
 } from "./get-video-metadata.js";
+export {
+	type ChromeMode,
+	type CloseBrowserOptions,
+	type HeadlessBrowser,
+	type OpenBrowserOptions,
+	openBrowser,
+} from "./open-browser.js";
 export type {
 	Codec,
 	ColorSpace,

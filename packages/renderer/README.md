@@ -1,6 +1,6 @@
 # @motiojs/renderer
 
-The Node renderer of [Motio](../../README.md): it opens a bundle in a pinned headless Chrome, captures it frame by frame and encodes with FFmpeg (`renderMedia`, `renderStill`, `renderFrames`, `stitchFramesToVideo`, `getCompositions`, `selectComposition`). This page covers the media functions; the architecture is in [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
+The Node renderer of [Motio](../../README.md): it opens a bundle in a pinned headless Chrome, captures it frame by frame and encodes with FFmpeg (`renderMedia`, `renderStill`, `renderFrames`, `stitchFramesToVideo`, `getCompositions`, `selectComposition`). This page covers the media functions and the reusable browser; the architecture is in [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
 
 ## Media functions
 
@@ -66,3 +66,41 @@ Recorded against `@remotion/renderer@4.0.545` on the files in [`fixtures/node-ap
 - Opus at 0 dB: Remotion starts the silence 0.5 ms in, after a 0.5 ms audible part; Motio finds silence from the first sample.
 - Opus into `.opus`: FFmpeg's Ogg muxer keeps the stream's pre-skip, so the file decodes to 96024 samples where Remotion's decodes to 96648 (the source: 96000).
 - Remotion 4.0.545 fails on PCM WAV files in `getSilentParts` and on `.m4a` output in `extractAudio`; Motio handles both.
+
+## Reusing a browser across renders
+
+Every render normally launches Chrome and kills it at the end. A pipeline that renders many stills or short videos can open the browser once and pass it to every call as `puppeteerInstance`:
+
+```ts
+import { openBrowser, renderMedia, renderStill, selectComposition } from "@motiojs/renderer";
+
+const browser = await openBrowser("chrome");
+try {
+	for (const user of users) {
+		const inputProps = { user };
+		const composition = await selectComposition({ serveUrl, id: "card", inputProps, puppeteerInstance: browser });
+		await renderStill({ serveUrl, composition, inputProps, output: `out/${user.id}.png`, puppeteerInstance: browser });
+		await renderMedia({ serveUrl, composition, inputProps, codec: "h264", outputLocation: `out/${user.id}.mp4`, puppeteerInstance: browser });
+	}
+} finally {
+	await browser.close();
+}
+```
+
+- Each render opens its own tabs on the shared browser and closes them when it ends; the browser processes stay until `close()`. The layout of a render does not change: its pages are spread over two browser processes by default (more above concurrency 8), and `pagesPerBrowser` still applies. The instance starts one browser at once and the others the first time a render needs them.
+- Transparent captures (PNG with alpha, the `renderStill` default) composite differently from opaque ones for identical pixels, so they run on a browser of their own, also kept.
+- `browserExecutable` and `chromiumOptions` are fixed when the browser starts: pass them to `openBrowser()`. A render given `puppeteerInstance` ignores its own.
+- A browser that crashes is replaced on the next render. Several renders may share the instance at the same time.
+- `close()` kills every process and resolves when they have exited; calling it twice throws `E_BROWSER_CLOSED` unless you pass `{ silent: true }`. A render given a closed instance fails with `E_BROWSER_CLOSED`, and a render running while the instance closes fails.
+- The instance is not a Puppeteer `Browser`, and a Puppeteer `Browser` is not accepted (`E_INVALID_OPTION`).
+
+Gain, measured on 10 calls back to back (512x288 composition, Apple M5, medians of 5 alternating rounds, `openBrowser()` included in the shared time):
+
+| Calls | New browser each time | Shared browser | Ratio |
+|---|---|---|---|
+| `renderStill`, PNG | 367 ms per call | 160 ms per call | 0.44 |
+| `renderStill`, JPEG | 189 ms per call | 115 ms per call | 0.61 |
+| `renderMedia`, 30 frames H.264, concurrency 4 | 350 ms per call | 252 ms per call | 0.72 |
+| `selectComposition` | 165 ms per call | 90 ms per call | 0.55 |
+
+What remains per call is opening the tabs, loading the bundle and, for videos, capture and encoding.
