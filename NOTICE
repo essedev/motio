@@ -13,3 +13,5 @@ and licence text in its header:
   Vitaly Puzrin, MIT; svg-path-bbox (c) 2020-2024 Alvaro Mondejar Rubio, BSD-3-Clause;
   d3-interpolate-path (c) 2016 Peter Beshai, BSD-3-Clause; WarpJS (c) 2016 Benjamin Fleming, MIT.
   Details in packages/paths/NOTICE.
+- @motiojs/transitions: fragment shaders of ten presentations ported from gl-transitions
+  (c) 2017-present gl-transitions contributors, MIT. Details in packages/transitions/NOTICE.

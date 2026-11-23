@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import type { HtmlInCanvasShader } from "./html-in-canvas/make-html-in-canvas-presentation.js";
 
 /** Which side of a transition a scene is on. */
 export type PresentationDirection = "entering" | "exiting";
@@ -39,4 +40,9 @@ export interface TransitionPresentation<
 > {
 	component: ComponentType<TransitionPresentationComponentProps<PresentationProps>>;
 	props: PresentationProps;
+	/**
+	 * The canvas shader of an HTML-in-canvas presentation. When present, `<TransitionSeries>` draws
+	 * the scenes next to the transition through it instead of wrapping them in `component`.
+	 */
+	canvas?: HtmlInCanvasShader<PresentationProps>;
 }

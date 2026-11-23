@@ -1,9 +1,9 @@
 export {
+	HtmlInCanvasEffectsUnsupportedError,
 	type HtmlInCanvasPresentationOptions,
 	type HtmlInCanvasShader,
 	type HtmlInCanvasShaderDraw,
 	type HtmlInCanvasShaderDrawParams,
-	HtmlInCanvasUnsupportedError,
 	makeHtmlInCanvasPresentation,
 } from "./html-in-canvas/make-html-in-canvas-presentation.js";
 export { type BlurSlideProps, blurSlide } from "./presentations/blur-slide.js";

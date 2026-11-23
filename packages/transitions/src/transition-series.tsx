@@ -9,7 +9,10 @@ import {
 	type ReactElement,
 	type ReactNode,
 	type Ref,
+	useState,
 } from "react";
+import { HtmlInCanvasRegistry } from "./html-in-canvas/registry.js";
+import { type HtmlInCanvasRole, HtmlInCanvasScene } from "./html-in-canvas/scene.js";
 import { type LayoutItem, layoutTransitionSeries, type PlacedTransition } from "./layout.js";
 import { slide } from "./presentations/slide.js";
 import { type TransitionProgress, TransitionProgressContext } from "./transition-progress.js";
@@ -77,7 +80,7 @@ export interface TransitionSeriesTransitionProps<
 	timing: TransitionTiming;
 	/** The visual effect. Default: `slide()`. */
 	presentation?: TransitionPresentation<PresentationProps>;
-	/** Motion blur; needs an HTML-in-canvas presentation, which Motio does not support yet. */
+	/** Motion blur of the presentation's movement. Not supported by Motio yet: it has no effect. */
 	motionBlur?: TransitionMotionBlur;
 }
 
@@ -222,9 +225,41 @@ function wrap(
 	);
 }
 
+/**
+ * What the canvas of a scene next to an HTML-in-canvas transition does at `frame` (see
+ * `HtmlInCanvasRole`). Measured on Remotion's renders: while a transition between two scenes plays,
+ * the entering scene draws both through its shader and the exiting scene shows nothing; otherwise
+ * each scene is drawn alone with `time` 0, as the entering image after its transition and the
+ * exiting one before. A transition before the first scene or after the last does not change it.
+ */
+function htmlInCanvasRole(
+	enter: PlacedTransition | null,
+	exit: PlacedTransition | null,
+	entering: number | null,
+	exiting: number | null,
+	sceneCount: ReadonlyMap<number, number>,
+	frame: number,
+	fps: number,
+): HtmlInCanvasRole {
+	const between = (transition: PlacedTransition) => sceneCount.get(transition.index) === 2;
+	if (exit && exiting !== null && between(exit)) {
+		return { kind: "source", key: String(exit.index) };
+	}
+	if (
+		enter &&
+		entering !== null &&
+		between(enter) &&
+		progressAt(enter, "exiting", frame, fps) !== null
+	) {
+		return { kind: "blend", key: String(enter.index), time: entering };
+	}
+	return { kind: "alone", side: enter ? "prev" : "next" };
+}
+
 function SeriesContent({ items }: { items: Child[] }): ReactNode {
 	const frame = useCurrentFrame();
 	const { fps } = useVideoConfig();
+	const [registry] = useState(() => new HtmlInCanvasRegistry());
 	const layoutItems: LayoutItem[] = items.map((item) => {
 		if (item.kind === "sequence") {
 			const { durationInFrames, offset, playbackRate } = item.element.props;
@@ -243,7 +278,7 @@ function SeriesContent({ items }: { items: Child[] }): ReactNode {
 		if (motionBlur) {
 			warnOnce(
 				"motionBlur",
-				"<TransitionSeries.Transition>: motionBlur needs an HTML-in-canvas presentation, which Motio does not support yet. It has no effect.",
+				"<TransitionSeries.Transition>: Motio does not apply motionBlur to transitions yet. The transition is drawn without it.",
 			);
 		}
 		return {
@@ -253,6 +288,14 @@ function SeriesContent({ items }: { items: Child[] }): ReactNode {
 		};
 	});
 	const layout = layoutTransitionSeries(layoutItems, fps);
+	// How many scenes each transition sits between: 2 for a transition between two scenes, 1 for
+	// one before the first scene or after the last.
+	const sceneCount = new Map<number, number>();
+	for (const placed of layout.sequences) {
+		for (const transition of [placed.enter, placed.exit]) {
+			if (transition) sceneCount.set(transition.index, (sceneCount.get(transition.index) ?? 0) + 1);
+		}
+	}
 
 	const sequences = layout.sequences.map((placed) => {
 		const item = items[placed.index] as Extract<Child, { kind: "sequence" }>;
@@ -267,11 +310,39 @@ function SeriesContent({ items }: { items: Child[] }): ReactNode {
 		if (sequenceLayout === "none") warnOnce("layout", LAYOUT_NONE_WARNING);
 		const entering = progressAt(placed.enter, "entering", frame, fps);
 		const exiting = progressAt(placed.exit, "exiting", frame, fps);
+		// Scenes next to an HTML-in-canvas transition are drawn through its canvas on every frame, not
+		// only while it plays, so the scene is not remounted when the transition starts. The canvas is
+		// inside the CSS presentations of the scene's other transition, as in Remotion's renders.
+		const canvasEnter = placed.enter?.presentation.canvas ? placed.enter : null;
+		const canvasExit = placed.exit?.presentation.canvas ? placed.exit : null;
 		let content: ReactNode = children;
-		if (placed.enter && entering !== null) {
+		const own = canvasEnter ?? canvasExit;
+		if (own?.presentation.canvas) {
+			content = (
+				<HtmlInCanvasScene
+					shader={own.presentation.canvas}
+					passedProps={own.presentation.props}
+					presentationDurationInFrames={own.durationInFrames}
+					role={htmlInCanvasRole(
+						canvasEnter,
+						canvasExit,
+						entering,
+						exiting,
+						sceneCount,
+						frame,
+						fps,
+					)}
+					registry={registry}
+					token={frame}
+				>
+					{content}
+				</HtmlInCanvasScene>
+			);
+		}
+		if (placed.enter && entering !== null && !canvasEnter) {
 			content = wrap(content, placed.enter, "entering", entering);
 		}
-		if (placed.exit && exiting !== null) {
+		if (placed.exit && exiting !== null && !canvasExit) {
 			content = wrap(content, placed.exit, "exiting", exiting);
 		}
 		const progress: TransitionProgress = {

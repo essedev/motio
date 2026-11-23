@@ -95,7 +95,8 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},

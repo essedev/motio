@@ -1,0 +1,19 @@
+@motiojs/transitions
+Copyright 2026 the Motio authors. Licensed under the Apache License, Version 2.0.
+
+This package includes fragment shaders ported from the gl-transitions collection
+(https://github.com/gl-transitions/gl-transitions), Copyright (c) 2017-present
+gl-transitions contributors, MIT License. Each ported file keeps the copyright notice
+and licence text in its header; the conventions that wire them to the scenes and the
+changes measured against Remotion's renders are Motio's.
+
+- BookFlip by hong (src/presentations/book-flip.ts)
+- CrossZoom by rectalogic, ported by gre (src/presentations/cross-zoom.ts)
+- crosswarp by Eke Péter (src/presentations/crosswarp.ts)
+- dissolve (GlowDissolve) by hjm1fb (src/presentations/dissolve.ts)
+- DreamyZoom by Zeh Fernando (src/presentations/dreamy-zoom.ts)
+- FilmBurn by Anastasia Dunbar (src/presentations/film-burn.ts)
+- LinearBlur by gre (src/presentations/linear-blur.ts)
+- ripple by gre (src/presentations/ripple.ts)
+- swap by gre (src/presentations/swap.ts)
+- zoomInOut by OllyOllyOlly (src/presentations/zoom-in-out.ts)

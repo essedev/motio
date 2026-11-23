@@ -24,6 +24,8 @@ export type LayoutItem =
 
 /** A transition attached to one side of a scene, in frames of the series. */
 export interface PlacedTransition {
+	/** Index of the transition among the children of the series. */
+	index: number;
 	/** First frame of the transition. */
 	start: number;
 	/** Length of the transition in frames. */
@@ -180,6 +182,7 @@ export function layoutTransitionSeries(
 				);
 			}
 			pending = {
+				index,
 				start: 0,
 				durationInFrames,
 				timing: item.timing,
