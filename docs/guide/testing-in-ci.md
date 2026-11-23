@@ -14,7 +14,7 @@ The exit code says what happened: 0 success, 1 error, 2 invalid arguments, 3 a c
 pnpm exec motio check determinism src/index.ts Intro --frames=0-
 ```
 
-Renders the frames four times (ascending and descending order, on one tab and on several) and compares the decoded pixels. A frame that differs between runs depends on something other than its number: state kept between frames, `Math.random()`, a clock, an animation library running on real time, or the transform drawing quirk described in [Frames and time](frames-and-time.md). The report names the frames:
+Renders the frames four times (ascending and descending order, on one tab and on several) and compares the decoded pixels. A frame that differs between runs depends on something other than its number: state kept between frames, `Math.random()`, a clock, or an animation library running on real time (see [Frames and time](frames-and-time.md)). The report names the frames:
 
 ```text
 Not deterministic: 5 of 60 frames differ between runs.

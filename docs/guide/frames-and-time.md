@@ -60,7 +60,7 @@ export const Stars = () => {
 
 - CSS keyframe animations and the Web Animations API are fine: before each screenshot Motio pauses every animation on the page and sets it to the time of the frame, measured from the start of the enclosing `<Sequence>`. CSS transitions are not: they start when a style changes, which depends on the previous frame.
 
-- Prefer sizes, margins and opacity to a CSS `transform` that changes on every frame. Chrome can draw an element whose transform just changed a few pixels differently from the same element drawn fresh, so the same frame may differ slightly depending on the frame the tab rendered before it. `will-change: transform` on the element avoids it when the element starts close to its final scale, not when it grows from nothing; the `basic` starter animates the size of its logo for that reason.
+CSS transforms, filters and other styles can change freely from frame to frame: Motio draws every captured frame as if on a freshly loaded page, so a frame never depends on the one the tab rendered before it.
 
 `motio check determinism` renders frames in different orders and with different numbers of tabs and compares the pixels, so a component that breaks these rules is caught in a test (see [Testing renders in CI](testing-in-ci.md)).
 

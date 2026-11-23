@@ -33,10 +33,6 @@ export const Title = ({ title, subtitle }: { title: string; subtitle: string }) 
 					margin: 0,
 					opacity: enter,
 					transform: `scale(${scale})`,
-					// Keeps the element on its own layer on every frame. Without it, Chrome draws an
-					// element whose transform changed on the previous frame differently, so a frame
-					// would depend on the one rendered before it (motio check determinism catches it).
-					willChange: "transform",
 				}}
 			>
 				{title}
