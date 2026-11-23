@@ -12,6 +12,10 @@
 		"./version": {
 			"types": "./dist/version.d.ts",
 			"default": "./dist/version.js"
+		},
+		"./no-react": {
+			"types": "./dist/no-react.d.ts",
+			"default": "./dist/no-react.js"
 		}
 	},
 	"files": [

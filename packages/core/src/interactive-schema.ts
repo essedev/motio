@@ -428,3 +428,18 @@ export const sequenceSchema = {
 		},
 	},
 } as const satisfies InteractivitySchema;
+
+/**
+ * Studio controls of `<AbsoluteFill>`: the timing fields, transform, background, border,
+ * radius, text and children. Exported by `remotion` without a docs page; the value equals the
+ * one Remotion 4.0.545 publishes (recorded in __oracle__/exports.json).
+ */
+export const absoluteFillSchema = {
+	...baseSchema,
+	...transformSchema,
+	...backgroundSchema,
+	...borderSchema,
+	...borderRadiusSchema,
+	...textSchema,
+	...childrenSchema,
+} as const satisfies InteractivitySchema;

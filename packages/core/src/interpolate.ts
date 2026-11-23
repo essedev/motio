@@ -75,27 +75,57 @@ export const validateInputRange = (inputRange: readonly number[]): void => {
 	}
 };
 
+/**
+ * Throws unless `easing` is a valid `easing` option of `interpolate()` for an input range of
+ * `inputRangeLength` values: `undefined`, one function, or an array with one function per
+ * segment (`inputRangeLength - 1` entries). The check `interpolate()` runs on its options,
+ * exported by `remotion` and `remotion/no-react` under this name; messages match Remotion's.
+ */
+export function assertValidInterpolateEasingOption(
+	easing: unknown,
+	inputRangeLength: number,
+): void {
+	if (easing === undefined || typeof easing === "function") return;
+	// Read `length` like an array would: a string or object is reported by its own length,
+	// `null` throws the engine's TypeError, as the published package does.
+	const entries = easing as ArrayLike<unknown>;
+	const segmentCount = inputRangeLength - 1;
+	if (entries.length !== segmentCount) {
+		throw new Error(
+			`When easing is an array, it must have one entry per segment between keyframes (length inputRange.length - 1 = ${segmentCount}), but got length ${entries.length}`,
+		);
+	}
+	for (let i = 0; i < segmentCount; i++) {
+		if (typeof entries[i] !== "function") throw new Error(`easing[${i}] must be a function`);
+	}
+}
+
+/**
+ * Throws unless `posterize` is a valid `posterize` option of `interpolate()`: `undefined` or a
+ * positive finite number. Exported by `remotion` and `remotion/no-react` under this name.
+ */
+export function assertValidInterpolatePosterizeOption(posterize: unknown): void {
+	if (posterize === undefined) return;
+	if (!(typeof posterize === "number" && Number.isFinite(posterize) && posterize > 0)) {
+		throw new Error(`posterize must be a positive finite number, but got ${posterize}`);
+	}
+}
+
 /** Resolves the `easing` option into one easing function per segment. */
 export const resolveEasings = (
 	easing: InterpolateOptions["easing"],
 	segmentCount: number,
 ): ((segment: number) => EasingFunction) => {
+	assertValidInterpolateEasingOption(easing, segmentCount + 1);
 	if (easing === undefined) return () => linear;
 	if (typeof easing === "function") return () => easing;
-	if (easing.length !== segmentCount) {
-		throw new Error(
-			`When easing is an array, it must have one entry per segment between keyframes (length inputRange.length - 1 = ${segmentCount}), but got length ${easing.length}`,
-		);
-	}
 	return (segment) => easing[segment] ?? linear;
 };
 
 /** Validates `posterize` and returns the function that quantises the input. */
 export const resolvePosterize = (posterize: number | undefined): ((input: number) => number) => {
+	assertValidInterpolatePosterizeOption(posterize);
 	if (posterize === undefined) return (input) => input;
-	if (!(Number.isFinite(posterize) && posterize > 0)) {
-		throw new Error(`posterize must be a positive finite number, but got ${posterize}`);
-	}
 	return (input) => Math.floor(input / posterize) * posterize;
 };
 

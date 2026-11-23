@@ -5,6 +5,9 @@
 export {
 	AbsoluteFill,
 	type AbsoluteFillProps,
+	absoluteFillSchema,
+	assertValidInterpolateEasingOption,
+	assertValidInterpolatePosterizeOption,
 	type BufferState,
 	type CalculateMetadataFunction,
 	type CalculateMetadataOptions,
@@ -25,6 +28,8 @@ export {
 	getInputProps,
 	getRemotionEnvironment,
 	getStaticFiles,
+	IFrame,
+	type IFrameProps,
 	Img,
 	type ImgProps,
 	Interactive,
@@ -78,4 +83,10 @@ export {
 	OffthreadVideo,
 	type OffthreadVideoProps,
 } from "@motiojs/media";
+export {
+	Config,
+	type DeprecatedConfig,
+	type DeprecatedConfigNamespace,
+	type DeprecatedConfigSetter,
+} from "./config.js";
 export { VERSION } from "./version.js";

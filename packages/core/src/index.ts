@@ -34,7 +34,10 @@ export {
 	type InteractivitySchemaField,
 	type WithSchemaOptions,
 } from "./interactive.js";
+export { absoluteFillSchema } from "./interactive-schema.js";
 export {
+	assertValidInterpolateEasingOption,
+	assertValidInterpolatePosterizeOption,
 	type ExtrapolateType,
 	type InterpolateOptions,
 	type InterpolateOutput,
@@ -42,6 +45,7 @@ export {
 	interpolate,
 } from "./interpolate.js";
 export { type InterpolateColorsOptions, interpolateColors } from "./interpolate-colors.js";
+export { IFrame, type IFrameProps } from "./media/iframe.js";
 export { Img, type ImgProps } from "./media/img.js";
 export {
 	type PrefetchOnProgress,
