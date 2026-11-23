@@ -351,6 +351,40 @@ describe("check determinism", () => {
 		]);
 	});
 
+	it("compares every run with a new page per frame with --reference fresh", async () => {
+		const { io, calls, code } = await run(
+			["check", "determinism", "Main", "--frames=0-5", "--reference=fresh", "--json"],
+			// The reference (run 0) differs on frame 2 from runs that agree with each other.
+			{ level: (frame, run) => (frame === 2 && run === 0 ? 77 : frame * 10) },
+		);
+		expect(code).toBe(3);
+		const result = parseJson(io);
+		expect(validate("check-determinism", result)).toBeNull();
+		expect(result.reference).toBe("fresh");
+		expect((result.runs as unknown[])[0]).toEqual({
+			order: "ascending",
+			concurrency: 1,
+			freshPage: true,
+		});
+		expect(result.runs).toHaveLength(5);
+		expect((result.mismatches as Array<{ frame: number }>).map((m) => m.frame)).toEqual([2]);
+		expect(calls.renderFrames?.map((c) => c.recycleEveryNFrames)).toEqual([
+			1,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+		]);
+	});
+
+	it("keeps the default reference and refuses an unknown one", async () => {
+		const ok = await run(["check", "determinism", "Main", "--frames=0-1", "--json"]);
+		expect(parseJson(ok.io)).toMatchObject({ reference: "runs" });
+		expect(ok.calls.renderFrames).toHaveLength(4);
+		const bad = await run(["check", "determinism", "Main", "--reference=page", "--json"]);
+		expect(bad.code).toBe(2);
+	});
+
 	it("reports frames whose pixels differ between runs, with exit code 3", async () => {
 		const { io, code } = await run(["check", "determinism", "Main", "--frames=0-5", "--json"], {
 			level: (frame, run) => (frame === 3 && run === 2 ? 99 : frame * 10),

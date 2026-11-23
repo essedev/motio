@@ -13,6 +13,8 @@ export interface RenderToFilesOptions {
 	scale?: number | undefined;
 	/** Order frames are handed to pages (Motio renderer extension). */
 	frameOrder?: (frames: number[]) => number[];
+	/** Replace a page after this many frames (Motio renderer extension); 1 renders without history. */
+	recycleEveryNFrames?: number;
 	label: string;
 }
 
@@ -43,6 +45,9 @@ export async function renderToFiles(
 			...(options.concurrency !== undefined ? { concurrency: options.concurrency } : {}),
 			...(options.scale !== undefined ? { scale: options.scale } : {}),
 			...(options.frameOrder ? { frameOrder: options.frameOrder } : {}),
+			...(options.recycleEveryNFrames !== undefined
+				? { recycleEveryNFrames: options.recycleEveryNFrames }
+				: {}),
 			onFrameBuffer: async (buffer, frame) => {
 				const file = join(directory, `${frame}.${options.imageFormat}`);
 				await writeFile(file, buffer);

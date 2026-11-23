@@ -166,6 +166,8 @@ export interface RenderFramesOptions extends SessionOptions {
 	 * so `check determinism` can render in several orders (supported by `renderFrames`).
 	 */
 	frameOrder?: (frames: number[]) => number[];
+	/** Motio extension: replace a page with a new one after this many frames. */
+	recycleEveryNFrames?: number;
 }
 
 export interface EnsuredBrowser {

@@ -35,6 +35,10 @@
 					},
 					"minItems": 1
 				},
+				"reference": {
+					"description": "What every run is compared with: the first run (runs) or a render with a new page per frame (fresh, the first run). Absent in results of older versions, which mean runs.",
+					"enum": ["runs", "fresh"]
+				},
 				"runs": {
 					"type": "array",
 					"items": {
@@ -47,6 +51,10 @@
 							},
 							"concurrency": {
 								"type": ["integer", "string"]
+							},
+							"freshPage": {
+								"description": "Every frame of this run was rendered on a new page.",
+								"const": true
 							}
 						}
 					}

@@ -27,7 +27,17 @@ const CHECK_FLAGS = {
 	},
 } as const;
 
-export const DETERMINISM_FLAGS = CHECK_FLAGS;
+export const DETERMINISM_FLAGS = {
+	...CHECK_FLAGS,
+	reference: {
+		type: "string",
+		description:
+			"Motio: what each run is compared with: runs (the first run, default) or fresh (every frame on a new page, which also catches pixels that depend on the frames a page rendered before).",
+	},
+} as const;
+
+/** What `check determinism` compares every run with. */
+export type DeterminismReference = "runs" | "fresh";
 
 export const FLICKER_FLAGS = {
 	...CHECK_FLAGS,
@@ -47,7 +57,11 @@ function checkPositionals(positionals: readonly string[]): { entry?: string; id?
 	return positionals[0] ? { id: positionals[0] } : {};
 }
 
-async function prepare(ctx: CommandContext, argv: readonly string[], specs: typeof CHECK_FLAGS) {
+async function prepare(
+	ctx: CommandContext,
+	argv: readonly string[],
+	specs: typeof CHECK_FLAGS | typeof DETERMINISM_FLAGS,
+) {
 	const { positionals, values } = parseCommandArgs(argv, specs);
 	const flags = new Flags(values);
 	const { entry, id } = checkPositionals(positionals);
@@ -71,16 +85,42 @@ async function prepare(ctx: CommandContext, argv: readonly string[], specs: type
 	};
 }
 
-/** The runs of `check determinism`: two orders at concurrency 1 and at a higher concurrency. */
-export function determinismRuns(highConcurrency: Concurrency) {
+/** One render of `check determinism`. */
+export interface DeterminismRun {
+	order: "ascending" | "descending";
+	concurrency: Concurrency;
+	frameOrder: (frames: number[]) => number[];
+	/** Every frame on a new page: the reference without any history. */
+	freshPage?: true;
+}
+
+/**
+ * The runs of `check determinism`: two orders at concurrency 1 and at a higher concurrency. With
+ * the `fresh` reference a first run renders every frame on a new page, and every other run is
+ * compared with it: two runs whose pages carry the same history agree with each other even when
+ * both are wrong (a transform change below Blink's raster tolerance, D-072), a new page has none.
+ */
+export function determinismRuns(
+	highConcurrency: Concurrency,
+	reference: DeterminismReference = "runs",
+): DeterminismRun[] {
 	const ascending = (frames: number[]) => [...frames].sort((a, b) => a - b);
 	const descending = (frames: number[]) => [...frames].sort((a, b) => b - a);
-	return [
+	const runs: DeterminismRun[] = [
 		{ order: "ascending", concurrency: 1 as Concurrency, frameOrder: ascending },
 		{ order: "descending", concurrency: 1 as Concurrency, frameOrder: descending },
 		{ order: "ascending", concurrency: highConcurrency, frameOrder: ascending },
 		{ order: "descending", concurrency: highConcurrency, frameOrder: descending },
 	];
+	if (reference === "fresh") {
+		runs.unshift({
+			order: "ascending",
+			concurrency: 1 as Concurrency,
+			frameOrder: ascending,
+			freshPage: true,
+		});
+	}
+	return runs;
 }
 
 /**
@@ -91,11 +131,12 @@ export async function checkDeterminismCommand(
 	ctx: CommandContext,
 	argv: readonly string[],
 ): Promise<CommandResult> {
-	const { project, composition, frames, scale, concurrency } = await prepare(
+	const { flags, project, composition, frames, scale, concurrency } = await prepare(
 		ctx,
 		argv,
 		DETERMINISM_FLAGS,
 	);
+	const reference: DeterminismReference = flags.oneOf("reference", ["runs", "fresh"]) ?? "runs";
 	// Never above the CPU threads: the renderer rejects that (1-thread CI containers).
 	const high: Concurrency =
 		concurrency ??
@@ -103,7 +144,7 @@ export async function checkDeterminismCommand(
 			availableParallelism(),
 			Math.max(2, Math.min(4, Math.floor(availableParallelism() / 2))),
 		);
-	const runs = determinismRuns(high);
+	const runs = determinismRuns(high, reference);
 	const hashes: Array<Map<number, string>> = [];
 	for (const [index, run] of runs.entries()) {
 		const files = await renderToFiles(ctx, project, composition, {
@@ -112,7 +153,10 @@ export async function checkDeterminismCommand(
 			concurrency: run.concurrency,
 			scale,
 			frameOrder: run.frameOrder,
-			label: `Run ${index + 1}/${runs.length} (${run.order}, concurrency ${run.concurrency})`,
+			...(run.freshPage ? { recycleEveryNFrames: 1 } : {}),
+			label: run.freshPage
+				? `Run ${index + 1}/${runs.length} (a new page per frame)`
+				: `Run ${index + 1}/${runs.length} (${run.order}, concurrency ${run.concurrency})`,
 		});
 		const runHashes = new Map<number, string>();
 		await decodePngs(
@@ -128,16 +172,25 @@ export async function checkDeterminismCommand(
 		json: {
 			composition: compositionJson(composition),
 			frames,
-			runs: runs.map(({ order, concurrency: c }) => ({ order, concurrency: c })),
+			reference,
+			runs: runs.map(({ order, concurrency: c, freshPage }) => ({
+				order,
+				concurrency: c,
+				...(freshPage ? { freshPage } : {}),
+			})),
 			deterministic,
 			mismatches,
 		},
 		human: deterministic
 			? [
-					`Deterministic: ${frames.length} frames identical across ${runs.length} runs (2 orders, concurrency 1 and ${high}).`,
+					reference === "fresh"
+						? `Deterministic: ${frames.length} frames identical to a new page per frame across ${runs.length - 1} runs (2 orders, concurrency 1 and ${high}).`
+						: `Deterministic: ${frames.length} frames identical across ${runs.length} runs (2 orders, concurrency 1 and ${high}).`,
 				]
 			: [
-					`Not deterministic: ${mismatches.length} of ${frames.length} frames differ between runs.`,
+					reference === "fresh"
+						? `Not deterministic: ${mismatches.length} of ${frames.length} frames differ from a new page per frame in at least one run.`
+						: `Not deterministic: ${mismatches.length} of ${frames.length} frames differ between runs.`,
 					`Frames: ${mismatches.map((m) => m.frame).join(", ")}`,
 				],
 		exitCode: deterministic ? EXIT.ok : EXIT.checkFailed,
