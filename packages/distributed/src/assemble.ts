@@ -1,6 +1,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { type AudioCodec, audioCodecArgs } from "@motiojs/audio";
 import { DistributedError } from "./errors.js";
 import { run } from "./run.js";
 
@@ -9,8 +10,17 @@ export interface AssembleOptions {
 	chunks: readonly string[];
 	/** Output file; the container follows the extension (`.mp4`, `.mov`, `.mkv`). */
 	output: string;
-	/** Audio rendered once for the whole timeline (D-014), muxed without re-encoding. */
+	/**
+	 * Audio rendered once for the whole timeline (D-014): muxed without re-encoding, or encoded
+	 * in the same run with `audioCodec` (from `renderAudio()`'s lossless float WAV).
+	 */
 	audio?: string;
+	/** Encode `audio` with this codec instead of copying it. */
+	audioCodec?: AudioCodec;
+	/** Bitrate of the encoded audio, FFmpeg `-b:a` syntax. */
+	audioBitrate?: string;
+	/** Video codec tag of the output, such as `hvc1` for H.265 in MP4. */
+	videoTag?: string;
 	ffmpeg?: string;
 }
 
@@ -43,7 +53,15 @@ export async function assembleChunks(options: AssembleOptions): Promise<void> {
 			list,
 		];
 		if (options.audio) args.push("-i", options.audio, "-map", "0:v:0", "-map", "1:a:0");
-		args.push("-c", "copy");
+		args.push("-c:v", "copy");
+		if (options.audio) {
+			args.push(
+				...(options.audioCodec
+					? audioCodecArgs(options.audioCodec, options.audioBitrate)
+					: ["-c:a", "copy"]),
+			);
+		}
+		if (options.videoTag) args.push("-tag:v", options.videoTag);
 		if (/\.(mp4|mov|m4v)$/i.test(options.output)) args.push("-movflags", "+faststart");
 		args.push(options.output);
 		await run(ffmpeg, args).catch((e: Error) => {

@@ -34,6 +34,7 @@
 	"dependencies": {
 		"@motiojs/bundler": "workspace:*",
 		"@motiojs/compat": "workspace:*",
+		"@motiojs/distributed": "workspace:*",
 		"@motiojs/renderer": "workspace:*"
 	}
 }

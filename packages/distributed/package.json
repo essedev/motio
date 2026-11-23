@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/distributed",
 	"version": "0.0.0",
-	"description": "Chunked rendering: plan frame ranges, encode chunks independently, assemble without re-encoding",
+	"description": "Chunked rendering: plan frame ranges, render chunks in parallel, assemble without re-encoding",
 	"license": "Apache-2.0",
 	"type": "module",
 	"exports": {
@@ -15,7 +15,16 @@
 	],
 	"sideEffects": false,
 	"scripts": {},
+	"engines": {
+		"node": ">=22"
+	},
+	"dependencies": {
+		"@motiojs/audio": "workspace:*",
+		"@motiojs/renderer": "workspace:*"
+	},
 	"devDependencies": {
+		"@motiojs/bundler": "workspace:*",
+		"@motiojs/testing": "workspace:*",
 		"@types/node": "^26.6.6"
 	}
 }

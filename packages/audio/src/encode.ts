@@ -18,6 +18,30 @@ export function audioCodecArgs(codec: AudioCodec, bitrate?: string): string[] {
 }
 
 /**
+ * The mixed samples as a WAV file of 32-bit floats: lossless, so encoding it later gives the
+ * same bitstream as encoding the samples directly.
+ */
+export function floatWav(audio: MixedAudio): Buffer {
+	const s = audio.samples;
+	const data = Buffer.from(s.buffer, s.byteOffset, s.byteLength);
+	const header = Buffer.alloc(44);
+	header.write("RIFF", 0, "ascii");
+	header.writeUInt32LE(36 + data.length, 4);
+	header.write("WAVE", 8, "ascii");
+	header.write("fmt ", 12, "ascii");
+	header.writeUInt32LE(16, 16);
+	header.writeUInt16LE(3, 20); // WAVE_FORMAT_IEEE_FLOAT
+	header.writeUInt16LE(audio.channels, 22);
+	header.writeUInt32LE(audio.sampleRate, 24);
+	header.writeUInt32LE(audio.sampleRate * audio.channels * 4, 28);
+	header.writeUInt16LE(audio.channels * 4, 32);
+	header.writeUInt16LE(32, 34);
+	header.write("data", 36, "ascii");
+	header.writeUInt32LE(data.length, 40);
+	return Buffer.concat([header, data]);
+}
+
+/**
  * Encodes mixed samples once to `output` (the container follows the file extension). With
  * `video`, that file's video stream is copied into `output` next to the audio: encoding and
  * muxing in one FFmpeg run keeps the encoder delay (AAC priming) compensated in the container.

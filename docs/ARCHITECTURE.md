@@ -61,7 +61,7 @@ A pnpm monorepo, ESM-only, TypeScript strict throughout, Node 22 or later for No
 | `@motiojs/renderer` | Node | `bundle`, `getCompositions`, `selectComposition`, `renderMedia`, `renderStill`, `renderFrames`, `stitchFramesToVideo`. Owns the browser pool, the frame driver, capture, the media server, the audio mixer and the encoder. |
 | `@motiojs/cli` | Node | `render`, `still`, `frames` (contact sheets), `compositions`, `dev`, `doctor`, `check determinism`, `check flicker`, `benchmark`, `browser ensure`. Positional forms and flags of the Remotion CLI; every command takes `--json`. Exit codes: 0 success, 1 error, 2 invalid arguments, 3 a check found problems. |
 | `@motiojs/compat` | build | The alias plugin mapping `remotion` and `@remotion/*` to our packages, build-time failures for unsupported packages, `Config` for `remotion.config.ts`, and the compatibility report. |
-| `@motiojs/distributed` | Node | Chunk planning, chunk rendering, assembly, behind a worker interface. Local processes first, adapters for AWS Lambda, Cloud Run and Kubernetes later. |
+| `@motiojs/distributed` | Node | Chunk planning, `renderDistributed()`, assembly, behind the `ChunkWorker` interface. `LocalChunkWorker` (child processes) today, adapters for AWS Lambda, Cloud Run and Kubernetes later. |
 | Feature packages | browser | `transitions`, `captions`, `shapes`, `paths`, `noise`, `motion-blur`, `layout-utils`, `three`, `google-fonts`, `zod-types`, `tailwind`, later `lottie`, `gif`, `skia`, `rive`. Each mirrors the Remotion package of the same name. |
 | `@motiojs/testing` | Node, dev only | Golden-frame comparison (PSNR, SSIM), frame-stamp decoding, determinism hashing, oracle fixture loading. |
 
@@ -139,7 +139,7 @@ RGB to YUV conversion is explicit, never FFmpeg's default (BT.601 for RGB input,
 ## Parallel and distributed rendering
 
 - **One machine.** A pool of pages across one or more browser processes pulling frame numbers from a shared queue (contiguous ranges in the virtual time model), all feeding one encoder. Default concurrency: half the CPU threads, capped at 8, as in Remotion.
-- **Many machines.** The planner cuts the timeline into chunks; workers encode chunks as MPEG-TS with closed GOPs; the assembler concatenates without re-encoding (D-018), remuxes to the container and muxes the audio rendered once. Workers sit behind three operations (plan, render chunk, assemble), so local processes, Lambda, Cloud Run and Kubernetes are adapters.
+- **Many machines.** `renderDistributed()` plans the timeline into chunks; workers run `renderChunk()` and encode each chunk on its own (MPEG-TS for H.264 and H.265, WebM for VP8 and VP9, MOV for ProRes), starting on a keyframe; meanwhile `renderAudio()` renders the audio once as float samples; the assembler concatenates without re-encoding (D-018) and encodes the audio in the same run, as `renderMedia` does (D-039). Workers implement one method, `ChunkWorker.renderChunk(job)` with a JSON job: `LocalChunkWorker` runs a child process per chunk, and Lambda, Cloud Run and Kubernetes are adapters to write.
 
 ## Preview
 

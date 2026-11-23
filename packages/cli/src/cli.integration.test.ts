@@ -68,6 +68,30 @@ describe("motio CLI end to end", () => {
 		});
 	});
 
+	it("renders in chunks in child processes and assembles them (--chunks)", async () => {
+		const output = join(out, "chunked.mp4");
+		const { code, result } = await motio(
+			["render", "Hello", output, "--chunks=3", "--concurrency=3"],
+			"render",
+		);
+		expect(code, JSON.stringify(result)).toBe(0);
+		const probe = execFileSync(
+			process.env.MOTIO_FFPROBE ?? "ffprobe",
+			[
+				"-v",
+				"error",
+				"-count_frames",
+				"-show_entries",
+				"stream=nb_read_frames",
+				"-of",
+				"json",
+				output,
+			],
+			{ encoding: "utf8" },
+		);
+		expect(JSON.parse(probe).streams[0]).toMatchObject({ nb_read_frames: "30" });
+	});
+
 	it("renders a still and a contact sheet", async () => {
 		const still = await motio(["still", "Hello", join(out, "still.png"), "--frame=-1"], "still");
 		expect(still.result).toMatchObject({ ok: true, frame: 29 });

@@ -48,6 +48,19 @@ export type {
 } from "./options.js";
 export type { SlowFrame } from "./pool.js";
 export {
+	type ChunkContainer,
+	type ChunkedRenderPlan,
+	type ChunkedRenderPlanOptions,
+	chunkContainer,
+	planChunkedRender,
+	type RenderAudioOptions,
+	type RenderAudioResult,
+	type RenderChunkOptions,
+	type RenderChunkResult,
+	renderAudio,
+	renderChunk,
+} from "./render-chunk.js";
+export {
 	type OnStartData,
 	type RenderAssetInfo,
 	type RenderFramesOptions,

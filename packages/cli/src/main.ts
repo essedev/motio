@@ -23,7 +23,7 @@ import { STILL_FLAGS, stillCommand } from "./commands/still.js";
 import type { CliDeps, CommandContext, CommandResult } from "./context.js";
 import { EXIT, exitCodeFor, toErrorJson, usageError } from "./errors.js";
 import { type CliIo, Reporter } from "./io.js";
-import { loadRenderer } from "./renderer-api.js";
+import { loadDistributed, loadRenderer } from "./renderer-api.js";
 
 interface CommandDefinition {
 	/** Words that select the command, e.g. `["check", "determinism"]`. */
@@ -154,6 +154,7 @@ export function defaultDeps(env: Record<string, string | undefined>): CliDeps {
 			renderer ??= loadRenderer();
 			return renderer;
 		},
+		distributed: loadDistributed,
 		bundler: {
 			createBundle,
 			loadRemotionConfig,

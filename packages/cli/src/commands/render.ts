@@ -23,6 +23,7 @@ import {
 	resolvePath,
 } from "../options.js";
 import { compositionJson, openProject, selectComposition, splitPositionals } from "../project.js";
+import { loadDistributed } from "../renderer-api.js";
 
 export const RENDER_FLAGS = {
 	...PROJECT_FLAGS,
@@ -60,6 +61,19 @@ export const RENDER_FLAGS = {
 		type: "boolean",
 		description: "Overwrite the output (default true; --overwrite=false).",
 	},
+	"frames-per-chunk": {
+		type: "string",
+		description:
+			"Motio: render in chunks of this many frames in parallel processes, then assemble (D-039).",
+	},
+	chunks: {
+		type: "string",
+		description: "Motio: render in this many chunks in parallel processes, then assemble (D-039).",
+	},
+	"concurrency-per-chunk": {
+		type: "string",
+		description: "Motio: pages each chunk renders with (default 1); --concurrency counts chunks.",
+	},
 	sequence: {
 		type: "boolean",
 		description: "Output an image sequence (JPEG by default) into the output folder.",
@@ -95,6 +109,16 @@ export async function renderCommand(
 	const proResProfile = flags.oneOf("prores-profile", PRORES_PROFILES);
 	const numberOfGifLoops = flags.integer("number-of-gif-loops", { min: 0 });
 	const imageSequencePattern = flags.string("image-sequence-pattern");
+	const framesPerChunk = flags.integer("frames-per-chunk", { min: 1 });
+	const chunks = flags.integer("chunks", { min: 1 });
+	const concurrencyPerChunk = flags.integer("concurrency-per-chunk", { min: 1 });
+	if (framesPerChunk !== undefined && chunks !== undefined) {
+		throw usageError("Pass either --frames-per-chunk or --chunks, not both.");
+	}
+	const chunked = framesPerChunk !== undefined || chunks !== undefined;
+	if (chunked && concurrency !== undefined && typeof concurrency !== "number") {
+		throw usageError("With --chunks or --frames-per-chunk, --concurrency is a number of chunks.");
+	}
 	const sampleRate = flags.integer("sample-rate", { min: 1 });
 	const separateAudioTo = flags.string("separate-audio-to");
 	const outputFlag = flags.string("output");
@@ -148,48 +172,87 @@ export async function renderCommand(
 	const stopListening = ctx.onInterrupt(cancel);
 	const started = Date.now();
 	let renderedFrames = 0;
+	const common = {
+		...project.session,
+		composition,
+		codec,
+		outputLocation: output,
+		cancelSignal,
+		overwrite: flags.boolean("overwrite") ?? config.overwriteOutput ?? true,
+		muted: flags.boolean("muted") ?? config.muted ?? false,
+	};
 	try {
-		await renderer.renderMedia({
-			...project.session,
-			composition,
-			codec,
-			outputLocation: output,
-			cancelSignal,
-			overwrite: flags.boolean("overwrite") ?? config.overwriteOutput ?? true,
-			muted: flags.boolean("muted") ?? config.muted ?? false,
-			...pick({
-				crf: crf ?? config.crf,
-				imageFormat: imageFormat ?? config.videoImageFormat,
-				jpegQuality: jpegQuality ?? config.jpegQuality,
-				frameRange: frameRange ?? config.frameRange ?? undefined,
-				everyNthFrame: everyNthFrame ?? config.everyNthFrame,
-				concurrency: concurrency ?? config.concurrency ?? undefined,
-				scale: scale ?? config.scale,
-				pixelFormat: pixelFormat ?? config.pixelFormat,
-				colorSpace: colorSpace ?? config.colorSpace,
-				x264Preset: x264Preset ?? config.x264Preset,
-				// The config's ProRes and GIF values apply only to their codec; flags pass through,
-				// so a mismatch reports the renderer's error.
-				proResProfile: proResProfile ?? (codec === "prores" ? config.proResProfile : undefined),
-				proResBitsPerMacroblock: codec === "prores" ? config.proResBitsPerMacroblock : undefined,
-				numberOfGifLoops:
-					numberOfGifLoops ?? (codec === "gif" ? config.numberOfGifLoops : undefined),
-				audioCodec: flags.string("audio-codec") ?? config.audioCodec,
-				audioBitrate: flags.string("audio-bitrate") ?? config.audioBitrate ?? undefined,
-				enforceAudioTrack: flags.boolean("enforce-audio-track") ?? config.enforceAudioTrack,
-				preferLossless: config.preferLosslessAudio,
-				sampleRate: sampleRate ?? config.sampleRate,
-				separateAudioTo: separateAudioTo ? resolvePath(ctx.io.cwd, separateAudioTo) : undefined,
-			}),
-			onProgress: (progress) => {
-				renderedFrames = progress.renderedFrames;
-				ctx.reporter.progress(
-					"Rendering",
-					progress.progress,
-					`(${progress.renderedFrames} rendered, ${progress.encodedFrames} encoded)`,
-				);
-			},
-		});
+		if (chunked) {
+			const distributed = await (ctx.distributed ?? loadDistributed)();
+			await distributed.renderDistributed({
+				...common,
+				...pick({
+					framesPerChunk,
+					chunks,
+					concurrencyPerChunk,
+					concurrency: (concurrency ?? config.concurrency ?? undefined) as number | undefined,
+					crf: crf ?? config.crf,
+					imageFormat: imageFormat ?? config.videoImageFormat,
+					jpegQuality: jpegQuality ?? config.jpegQuality,
+					frameRange: frameRange ?? config.frameRange ?? undefined,
+					everyNthFrame: everyNthFrame ?? config.everyNthFrame,
+					scale: scale ?? config.scale,
+					pixelFormat: pixelFormat ?? config.pixelFormat,
+					colorSpace: colorSpace ?? config.colorSpace,
+					x264Preset: x264Preset ?? config.x264Preset,
+					proResProfile: proResProfile ?? (codec === "prores" ? config.proResProfile : undefined),
+					proResBitsPerMacroblock: codec === "prores" ? config.proResBitsPerMacroblock : undefined,
+					audioCodec: flags.string("audio-codec") ?? config.audioCodec,
+					audioBitrate: flags.string("audio-bitrate") ?? config.audioBitrate ?? undefined,
+					enforceAudioTrack: flags.boolean("enforce-audio-track") ?? config.enforceAudioTrack,
+					preferLossless: config.preferLosslessAudio,
+					sampleRate: sampleRate ?? config.sampleRate,
+				}),
+				onProgress: (progress) => {
+					renderedFrames = progress.renderedFrames;
+					ctx.reporter.progress(
+						"Rendering chunks",
+						progress.progress,
+						`(${progress.renderedFrames} rendered)`,
+					);
+				},
+			});
+		} else
+			await renderer.renderMedia({
+				...common,
+				...pick({
+					crf: crf ?? config.crf,
+					imageFormat: imageFormat ?? config.videoImageFormat,
+					jpegQuality: jpegQuality ?? config.jpegQuality,
+					frameRange: frameRange ?? config.frameRange ?? undefined,
+					everyNthFrame: everyNthFrame ?? config.everyNthFrame,
+					concurrency: concurrency ?? config.concurrency ?? undefined,
+					scale: scale ?? config.scale,
+					pixelFormat: pixelFormat ?? config.pixelFormat,
+					colorSpace: colorSpace ?? config.colorSpace,
+					x264Preset: x264Preset ?? config.x264Preset,
+					// The config's ProRes and GIF values apply only to their codec; flags pass through,
+					// so a mismatch reports the renderer's error.
+					proResProfile: proResProfile ?? (codec === "prores" ? config.proResProfile : undefined),
+					proResBitsPerMacroblock: codec === "prores" ? config.proResBitsPerMacroblock : undefined,
+					numberOfGifLoops:
+						numberOfGifLoops ?? (codec === "gif" ? config.numberOfGifLoops : undefined),
+					audioCodec: flags.string("audio-codec") ?? config.audioCodec,
+					audioBitrate: flags.string("audio-bitrate") ?? config.audioBitrate ?? undefined,
+					enforceAudioTrack: flags.boolean("enforce-audio-track") ?? config.enforceAudioTrack,
+					preferLossless: config.preferLosslessAudio,
+					sampleRate: sampleRate ?? config.sampleRate,
+					separateAudioTo: separateAudioTo ? resolvePath(ctx.io.cwd, separateAudioTo) : undefined,
+				}),
+				onProgress: (progress) => {
+					renderedFrames = progress.renderedFrames;
+					ctx.reporter.progress(
+						"Rendering",
+						progress.progress,
+						`(${progress.renderedFrames} rendered, ${progress.encodedFrames} encoded)`,
+					);
+				},
+			});
 	} finally {
 		stopListening();
 	}

@@ -7,7 +7,7 @@ import type {
 } from "@motiojs/bundler";
 import type { createCompatibilityReport } from "@motiojs/compat";
 import type { CliIo, Reporter } from "./io.js";
-import type { RendererApi } from "./renderer-api.js";
+import type { DistributedApi, RendererApi } from "./renderer-api.js";
 
 /** The bundler functions the CLI calls; injectable for tests. */
 export interface BundlerApi {
@@ -22,6 +22,8 @@ export interface BundlerApi {
 export interface CliDeps {
 	/** Loaded on first use, so `--help` and argument errors never load the renderer. */
 	renderer: () => Promise<RendererApi>;
+	/** Chunked rendering (`motio render --chunks`), loaded on first use. */
+	distributed?: () => Promise<DistributedApi>;
 	bundler: BundlerApi;
 	compatibilityReport: typeof createCompatibilityReport;
 	/** FFmpeg executable used to decode frames and build contact sheets. */

@@ -7,7 +7,7 @@ import type { CompatibilityReport } from "@motiojs/compat";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import type { BundlerApi, CliDeps } from "../context.js";
 import type { CliIo } from "../io.js";
-import type { RendererApi, VideoConfig } from "../renderer-api.js";
+import type { DistributedApi, RendererApi, VideoConfig } from "../renderer-api.js";
 
 /** Encodes an RGBA image as PNG (filter 0, colour type 6), for fake renderer output. */
 export function encodePng(
@@ -66,7 +66,7 @@ export function fakeRenderer(
 		/** Grey level of a frame; `run` counts renderFrames calls. */
 		level?: (frame: number, run: number) => number;
 	} = {},
-): { renderer: RendererApi; calls: RendererCalls } {
+): { renderer: RendererApi; calls: RendererCalls; distributed: DistributedApi } {
 	const compositions = options.compositions ?? [COMPOSITION];
 	const level = options.level ?? ((frame: number) => frame * 10);
 	const calls: RendererCalls = {};
@@ -127,7 +127,14 @@ export function fakeRenderer(
 		CHROME_VERSION: "158.0.8127.36",
 		defaultBrowserCacheDir: () => join(tmpdir(), "motio-no-browser-cache"),
 	};
-	return { renderer, calls };
+	const distributed: DistributedApi = {
+		async renderDistributed(o) {
+			record("renderDistributed", o);
+			o.onProgress?.({ renderedFrames: o.composition.durationInFrames, progress: 1 });
+			return {};
+		},
+	};
+	return { renderer, calls, distributed };
 }
 
 /** A bundler that never runs Vite. */

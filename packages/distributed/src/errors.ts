@@ -1,5 +1,9 @@
 /** Error codes raised by chunk planning and assembly. */
-export type DistributedErrorCode = "E_CHUNK_PLAN" | "E_CHUNK_ASSEMBLE" | "E_CHUNK_RENDER";
+export type DistributedErrorCode =
+	| "E_CHUNK_PLAN"
+	| "E_CHUNK_ASSEMBLE"
+	| "E_CHUNK_RENDER"
+	| "E_CANCELLED";
 
 /** A distributed rendering failure with a stable code and context. */
 export class DistributedError extends Error {

@@ -29,9 +29,13 @@ function parseJson(io: TestIo): Record<string, unknown> {
 
 async function run(argv: string[], setup: Parameters<typeof fakeRenderer>[0] = {}) {
 	const io = testIo(cwd);
-	const { renderer, calls } = fakeRenderer(setup);
+	const { renderer, calls, distributed } = fakeRenderer(setup);
 	const { bundler, bundles } = fakeBundler();
-	const code = await runCli(argv, io, testDeps(renderer, bundler));
+	const code = await runCli(
+		argv,
+		io,
+		testDeps(renderer, bundler, { distributed: async () => distributed }),
+	);
 	return { io, calls, bundles, code };
 }
 
@@ -119,6 +123,34 @@ describe("render", () => {
 		expect(gif.calls.renderMedia?.[0]).toMatchObject({ codec: "gif", numberOfGifLoops: 0 });
 		const bad = await run(["render", "Main", "--json", "--prores-profile=best"]);
 		expect(bad.code).toBe(2);
+	});
+
+	it("renders in chunks with --frames-per-chunk or --chunks (Motio, D-039)", async () => {
+		const { io, calls, code } = await run([
+			"render",
+			"Main",
+			"out/a.mov",
+			"--frames-per-chunk=5",
+			"--concurrency=3",
+			"--concurrency-per-chunk=2",
+			"--prores-profile=4444",
+			"--json",
+		]);
+		expect(code).toBe(0);
+		expect(validate("render", parseJson(io))).toBeNull();
+		expect(calls.renderMedia).toBeUndefined();
+		expect(calls.renderDistributed?.[0]).toMatchObject({
+			codec: "prores",
+			framesPerChunk: 5,
+			concurrency: 3,
+			concurrencyPerChunk: 2,
+			proResProfile: "4444",
+			outputLocation: join(cwd, "out", "a.mov"),
+		});
+		const both = await run(["render", "Main", "--chunks=2", "--frames-per-chunk=5", "--json"]);
+		expect(both.code).toBe(2);
+		const percent = await run(["render", "Main", "--chunks=2", "--concurrency=50%", "--json"]);
+		expect(percent.code).toBe(2);
 	});
 
 	it("renders an image sequence into a folder with --sequence or a list of frames", async () => {

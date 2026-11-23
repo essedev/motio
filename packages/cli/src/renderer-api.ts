@@ -165,6 +165,36 @@ export interface RendererApi {
 	defaultBrowserCacheDir?(): string;
 }
 
+/** Options `motio render` passes to `renderDistributed()` from `@motiojs/distributed`. */
+export interface RenderDistributedOptions
+	extends Omit<RenderMediaOptions, "concurrency" | "onProgress"> {
+	framesPerChunk?: number;
+	chunks?: number;
+	/** Chunks rendering at the same time. */
+	concurrency?: number;
+	concurrencyPerChunk?: number;
+	onProgress?: (progress: { renderedFrames: number; progress: number }) => void;
+}
+
+/** The part of `@motiojs/distributed` the CLI calls. */
+export interface DistributedApi {
+	renderDistributed(options: RenderDistributedOptions): Promise<unknown>;
+}
+
+/** Loads `@motiojs/distributed`. */
+export async function loadDistributed(): Promise<DistributedApi> {
+	try {
+		return (await import("@motiojs/distributed")) as unknown as DistributedApi;
+	} catch (error) {
+		throw new MotioError(
+			"E_RENDERER_UNAVAILABLE",
+			`@motiojs/distributed could not be loaded: ${error instanceof Error ? error.message : String(error)}`,
+			{},
+			{ cause: error },
+		);
+	}
+}
+
 const REQUIRED = [
 	"getCompositions",
 	"selectComposition",
