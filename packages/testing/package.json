@@ -16,6 +16,10 @@
 		"./oracle-errors": {
 			"types": "./dist/oracle-errors.d.ts",
 			"default": "./dist/oracle-errors.js"
+		},
+		"./oracle-values": {
+			"types": "./dist/oracle-values.d.ts",
+			"default": "./dist/oracle-values.js"
 		}
 	},
 	"files": [
