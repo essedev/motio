@@ -29,6 +29,9 @@ export const measurePath = (path: string): PathProperties => {
  */
 export const getLength = (path: string): number => measurePath(path).length;
 
+const noPointAt = (path: string, length: number) =>
+	`"${path}" has no point at length ${length}: it has no drawing command and no starting move.`;
+
 /**
  * Coordinates of the point at a length along an SVG path, compatible with
  * Remotion's `getPointAtLength()`. Returns null when the length is beyond the
@@ -43,7 +46,7 @@ export const getPointAtLength = (path: string, length: number): Point | null => 
 	const segment = properties.segments[index];
 	if (segment) return segment.pointAt(lengthIntoInstruction);
 	if (properties.initialPoint !== null) return properties.initialPoint;
-	throw new Error("Wrong function at this part.");
+	throw new Error(noPointAt(path, length));
 };
 
 /**
@@ -60,7 +63,7 @@ export const getTangentAtLength = (path: string, length: number): Point | null =
 	const segment = properties.segments[index];
 	if (segment) return segment.tangentAt(lengthIntoInstruction);
 	if (properties.initialPoint !== null) return { x: 0, y: 0 };
-	throw new Error("Wrong function at this part.");
+	throw new Error(noPointAt(path, length));
 };
 
 /**
@@ -78,7 +81,7 @@ export const getInstructionIndexAtLength = (
 	const properties = measurePath(path);
 	if (length > properties.length) {
 		throw new Error(
-			`A length of ${length} was passed to getInstructionIndexAtLength() but the total length of the path is only ${properties.length}`,
+			`getInstructionIndexAtLength() got length ${length}, past the end of the path (${properties.length}): pass a length up to getLength(path).`,
 		);
 	}
 	const { index, lengthIntoInstruction } = partAtLength(properties, length);

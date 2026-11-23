@@ -25,12 +25,17 @@ const ARITY: Record<string, number> = {
 	z: 0,
 };
 
-const malformed = (message: string): Error => new Error(`Malformed path data: ${message}`);
+const malformed = (message: string): Error => new Error(`Invalid SVG path data: ${message}`);
 
-const arityError = (command: string, tokens: string[]): Error =>
-	malformed(
-		`${command} was expected to have a multiple of ${ARITY[command.toLowerCase()]} numbers, but got "${[command, ...tokens].join(" ")} instead"`,
+const arityError = (command: string, tokens: string[]): Error => {
+	const arity = ARITY[command.toLowerCase()] as number;
+	const segment = [command, ...tokens].join(" ");
+	return malformed(
+		arity === 0
+			? `"${segment}": ${command} takes no numbers.`
+			: `"${segment}" has ${tokens.length} numbers, but ${command} takes them in groups of ${arity}.`,
 	);
+};
 
 /** Scans the arguments of an arc segment: numbers, with single-character flags. */
 const scanArcTokens = (command: string, args: string): string[] => {
@@ -45,7 +50,9 @@ const scanArcTokens = (command: string, args: string): string[] => {
 		const slot = tokens.length % 7;
 		const before = pos;
 		const invalid = () =>
-			malformed(`${command} has an invalid value at "${args.slice(before).trim()}"`);
+			malformed(
+				`the arguments of the arc ${command} cannot be read from "${args.slice(before).trim()}" (flags are 0 or 1).`,
+			);
 		skipSeparators();
 		if (pos >= args.length) break;
 		if (slot === 3 || slot === 4) {
@@ -174,9 +181,17 @@ const build = (command: string, n: number[]): Instruction => {
  * @example parsePath("M 10 10 L 20 20") // [{type: "M", x: 10, y: 10}, {type: "L", x: 20, y: 20}]
  */
 export const parsePath = (path: string): Instruction[] => {
-	if (!path) throw new Error("No path provided");
+	if (!path) {
+		throw new Error(
+			`No SVG path data was given (got ${JSON.stringify(path)}): pass a string such as "M 0 0 L 10 10".`,
+		);
+	}
 	const segments = path.match(SEGMENT);
-	if (segments === null) throw new Error(`No path elements found in string ${path}`);
+	if (segments === null) {
+		throw new Error(
+			`"${path}" holds no SVG path commands: path data starts with a command such as M.`,
+		);
+	}
 	const instructions: Instruction[] = [];
 	for (const segment of segments) {
 		const command = segment.charAt(0);
@@ -190,7 +205,7 @@ export const parsePath = (path: string): Instruction[] => {
 			continue;
 		}
 		if (tokens.length === 0) {
-			throw malformed(`${command} was expected to have numbers afterwards`);
+			throw malformed(`${command} is not followed by any numbers.`);
 		}
 		if (tokens.length % arity !== 0) throw arityError(command, tokens);
 		const numbers = tokens.map(Number);

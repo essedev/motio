@@ -6,13 +6,15 @@ import type { Instruction, Point } from "../instruction.js";
 import { arcSegment, bezierSegment, lineSegment, type Segment } from "./segments.js";
 
 /**
- * Remotion fails with this TypeError when a path it measures starts with a
- * smooth curve (S, s, T or t); the same error is thrown for compatibility.
+ * Remotion fails with a TypeError when a path it measures starts with a smooth curve (S, s, T or
+ * t); Motio throws a TypeError there too, with a message that says why.
  */
 export const assertNoLeadingSmoothCurve = (instructions: Instruction[]): void => {
 	const first = instructions[0]?.type;
 	if (first === "S" || first === "s" || first === "T" || first === "t") {
-		throw new TypeError("Cannot read properties of undefined (reading 'type')");
+		throw new TypeError(
+			`The path starts with ${first}, a smooth curve that continues a previous curve: start it with a move (M).`,
+		);
 	}
 };
 
@@ -226,7 +228,9 @@ export const partAtLength = (
 ): { index: number; lengthIntoInstruction: number } => {
 	const { partialLengths } = properties;
 	let fraction = atLength;
-	if (fraction < 0) throw new Error("Length less than 0 was passed");
+	if (fraction < 0) {
+		throw new Error(`Length ${atLength} is negative: pass a length from 0 to the path's length.`);
+	}
 	if (fraction > properties.length) fraction = properties.length;
 	let i = partialLengths.length - 1;
 	while ((partialLengths[i] as number) >= fraction && i > 0) i--;

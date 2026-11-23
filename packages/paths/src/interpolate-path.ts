@@ -107,10 +107,11 @@ const splitSegment = (
 ) => {
 	if (end.type === "L" || end.type === "C") {
 		if (start.type === "Z" && failAfterClose) {
-			// Remotion's interpolatePath() fails this way when a segment after
-			// a close has to be split in the second path; the same error is
-			// thrown for compatibility.
-			throw new TypeError("Cannot read properties of undefined (reading 'type')");
+			// Remotion's interpolatePath() fails with a TypeError when a segment after
+			// a close has to be split in the second path; Motio throws one too.
+			throw new TypeError(
+				"The second path draws after a close (Z) without a move (M), so its segments cannot be split to match the first path: start each subpath with M.",
+			);
 		}
 		const from: ReducedInstruction =
 			start.type === "Z" ? { type: "M", x: subpathStart[0], y: subpathStart[1] } : start;
@@ -184,12 +185,17 @@ const convertToSameType = (
 ): ReducedInstruction => {
 	if (a.type === b.type) return a;
 	if (b.type === "Z") return { type: "Z" };
-	if (a.type === "Z" || a.type === "M" || b.type === "M") throw new Error("mismatch");
+	if (a.type === "Z" || a.type === "M" || b.type === "M") throw new Error(MOVE_MISMATCH);
 	if (b.type === "L") return { type: "L", x: a.x, y: a.y };
 	return a.type === "L" ? toCubic(a, start) : a;
 };
 
 const mix = (a: number, b: number, t: number) => (1 - t) * a + t * b;
+
+const MOVE_MISMATCH =
+	"The two paths cannot be matched command by command: a move (M) in one meets another command in the other. Give both paths the same subpaths.";
+const CLOSE_MISMATCH =
+	"The two paths cannot be matched command by command: a close (Z) in one meets a drawing command in the other. Give both paths the same subpaths.";
 
 const interpolateInstruction = (
 	a: ReducedInstruction,
@@ -238,12 +244,12 @@ export const interpolateInstructions = (
 	a.forEach((command, i) => {
 		const counterpart = b[i] as ReducedInstruction;
 		if (command.type === counterpart.type) return;
-		if (counterpart.type === "M") throw new Error("mismatch");
-		if (counterpart.type !== "Z" && command.type === "Z") throw new Error("unexpected");
+		if (counterpart.type === "M") throw new Error(MOVE_MISMATCH);
+		if (counterpart.type !== "Z" && command.type === "Z") throw new Error(CLOSE_MISMATCH);
 	});
 	a.forEach((command, i) => {
 		if (command.type === "M" && (b[i] as ReducedInstruction).type !== "M") {
-			throw new Error("mismatch");
+			throw new Error(MOVE_MISMATCH);
 		}
 	});
 	const out: ReducedInstruction[] = [];

@@ -29,7 +29,7 @@ describe("paths (documented examples)", () => {
 			index: 1,
 			lengthIntoInstruction: 5,
 		});
-		expect(() => getLength("remotion")).toThrow("Malformed path data");
+		expect(() => getLength("remotion")).toThrow("Invalid SVG path data");
 	});
 
 	it("parses, normalizes, reduces and serializes", () => {

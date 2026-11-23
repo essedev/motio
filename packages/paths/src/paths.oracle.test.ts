@@ -2,7 +2,7 @@ import { Easing, type EasingFunction } from "@motiojs/core";
 import { describe, expect, it } from "vitest";
 import cutEvolveFixture from "./__oracle__/cut-evolve.json" with { type: "json" };
 import extendFixture from "./__oracle__/extend-viewbox.json" with { type: "json" };
-import { DeepTracker, type Outcome, outcomeOf } from "./__oracle__/fixtures.js";
+import { DeepTracker, deepError, type Outcome, outcomeOf } from "./__oracle__/fixtures.js";
 import interpolateFixture from "./__oracle__/interpolate.json" with { type: "json" };
 import keyframesFixture from "./__oracle__/interpolate-keyframes.json" with { type: "json" };
 import measureFixture from "./__oracle__/measure.json" with { type: "json" };
@@ -54,7 +54,7 @@ const check = (tracker: DeepTracker, tolerance: number) => {
 
 describe("parsePath and serializeInstructions against the Remotion oracle", () => {
 	type ParseCase = { input: string; parsed: Outcome<unknown>; serialized: string | null };
-	it(`matches ${parseFixture.cases.length} strings, error messages included`, () => {
+	it(`matches ${parseFixture.cases.length} strings, failures included`, () => {
 		const tracker = new DeepTracker();
 		for (const c of parseFixture.cases as ParseCase[]) {
 			const parsed = outcomeOf(() => parsePath(c.input));
@@ -194,10 +194,7 @@ describe("path interpolation against the Remotion oracle", () => {
 				total++;
 				const expected = c[name][i] as Outcome<string>;
 				const actual = outcomeOf(() => run(v, c));
-				if (
-					JSON.stringify(actual) !== JSON.stringify(expected) &&
-					(irregular(c.a) || irregular(c.b))
-				) {
+				if (deepError(actual, expected) !== 0 && (irregular(c.a) || irregular(c.b))) {
 					known++;
 					return;
 				}
@@ -208,11 +205,11 @@ describe("path interpolation against the Remotion oracle", () => {
 		expect(known / total).toBeLessThan(0.05);
 	};
 
-	it("matches interpolatePath, error messages included", () => {
+	it("matches interpolatePath, failures included", () => {
 		compareInterpolation("path", (v, c) => interpolatePath(v, c.a, c.b));
 	});
 
-	it("matches interpolatePaths, error messages included", () => {
+	it("matches interpolatePaths, failures included", () => {
 		compareInterpolation("paths", (v, c) => interpolatePaths(v, [0, 1], [c.a, c.b]));
 	});
 

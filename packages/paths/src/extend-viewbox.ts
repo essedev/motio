@@ -11,12 +11,14 @@ export const extendViewBox = (currentViewBox: string, scale: number): string => 
 		.split(/[\s,]+/)
 		.map((part) => Number(part));
 	if (parts.length !== 4 || !parts.every((part) => Number.isFinite(part))) {
-		throw new Error(`currentViewBox must be 4 valid numbers, but got "${currentViewBox}"`);
+		throw new Error(
+			`currentViewBox "${currentViewBox}" is not four numbers: use "minX minY width height".`,
+		);
 	}
 	const [x, y, width, height] = parts as [number, number, number, number];
 	if (width <= 0 || height <= 0) {
 		throw new Error(
-			`currentViewBox must have a positive width and height, but got "${currentViewBox}"`,
+			`currentViewBox "${currentViewBox}" has a width or height of 0 or less: both must be positive.`,
 		);
 	}
 	const widthShrink = width * (1 - scale);

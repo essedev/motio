@@ -27,19 +27,19 @@ const formatRange = (range: readonly number[]) => `[${range.join(",")}]`;
 const validate = (inputRange: readonly number[], outputRange: readonly string[]) => {
 	if (inputRange.length !== outputRange.length) {
 		throw new Error(
-			`inputRange (${inputRange.length}) and outputRange (${outputRange.length}) must have the same length`,
+			`inputRange has ${inputRange.length} values and outputRange ${outputRange.length}: give both one value per keyframe.`,
 		);
 	}
-	if (inputRange.length < 1) throw new Error("inputRange must have at least 1 element");
+	if (inputRange.length < 1) throw new Error("inputRange is empty: pass at least one input value.");
 	if (!inputRange.every(Number.isFinite)) {
 		throw new Error(
-			`inputRange must contain only finite numbers, but got ${formatRange(inputRange)}`,
+			`inputRange ${formatRange(inputRange)} holds a value that is not a finite number: every input value must be finite.`,
 		);
 	}
 	for (let i = 1; i < inputRange.length; i++) {
 		if (!((inputRange[i] as number) > (inputRange[i - 1] as number))) {
 			throw new Error(
-				`inputRange must be strictly monotonically increasing but got ${formatRange(inputRange)}`,
+				`inputRange ${formatRange(inputRange)} is not strictly increasing: each value must be greater than the one before it.`,
 			);
 		}
 	}
@@ -57,13 +57,15 @@ const locate = (
 	const right = options?.extrapolateRight ?? "extend";
 	const posterize = options?.posterize;
 	if (posterize !== undefined && !(Number.isFinite(posterize) && posterize > 0)) {
-		throw new Error(`posterize must be a positive finite number, but got ${posterize}`);
+		throw new Error(
+			`posterize is ${String(posterize)}: use a positive finite step, or leave it out.`,
+		);
 	}
 	const segments = inputRange.length - 1;
 	const easing = options?.easing;
 	if (easing !== undefined && typeof easing !== "function" && easing.length !== segments) {
 		throw new Error(
-			`When easing is an array, it must have one entry per segment between keyframes (length inputRange.length - 1 = ${segments}), but got length ${easing.length}`,
+			`easing is an array of length ${easing.length}, but inputRange has ${segments} segments between its values: pass one easing per segment, or a single function.`,
 		);
 	}
 	const first = inputRange[0] as number;
@@ -102,7 +104,8 @@ const asCubic = (i: ReducedInstruction, start: Pt): Extract<ReducedInstruction, 
 const round = (value: number): number => Number(value.toPrecision(15));
 const mix = (a: number, b: number, t: number) => round(a + (b - a) * t);
 
-const STRUCTURE_ERROR = "Cannot interpolate SVG paths with different subpath structures";
+const STRUCTURE_ERROR =
+	"The paths in outputRange have different subpaths (moves and closes): give every path the same number of subpaths, closed in the same places.";
 
 /**
  * Matches the two command lists the way d3-interpolate-path does (the shorter
@@ -122,11 +125,13 @@ const interpolateMatched = (
 	const count = (list: ReducedInstruction[], type: "M" | "Z") =>
 		list.filter((i) => i.type === type).length;
 	if (a.length === 0 || b.length === 0) {
-		// Remotion fails this way when a path is only a close.
-		throw new TypeError("Cannot read properties of undefined (reading 'type')");
+		// Remotion fails with a TypeError when a path is only a close.
+		throw new TypeError(
+			"A path in outputRange holds only a close (Z): give every path a move and at least one drawing command.",
+		);
 	}
 	if (count(a, "M") !== count(b, "M") || count(a, "Z") !== count(b, "Z")) {
-		throw new Error(STRUCTURE_ERROR);
+		throw new TypeError(STRUCTURE_ERROR);
 	}
 	// Remotion fails with a TypeError when the first path has to be split
 	// after a close; extend() reproduces it.
@@ -135,7 +140,7 @@ const interpolateMatched = (
 	a.forEach((ca, i) => {
 		const cb = b[i] as ReducedInstruction;
 		if ((ca.type === "M") !== (cb.type === "M") || (ca.type === "Z") !== (cb.type === "Z")) {
-			throw new Error(STRUCTURE_ERROR);
+			throw new TypeError(STRUCTURE_ERROR);
 		}
 	});
 	const out: ReducedInstruction[] = [];
