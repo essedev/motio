@@ -28,7 +28,7 @@ export function CameraMotionBlur({
 	checkCount("samples", samples);
 	checkNumber("shutterAngle", shutterAngle);
 	if (shutterAngle < 0 || shutterAngle > 360) {
-		throw new TypeError(`"shutterAngle" must be between 0 and 360, but got ${shutterAngle}`);
+		throw new TypeError(`shutterAngle is ${shutterAngle}: use an angle from 0 to 360 degrees.`);
 	}
 	const frame = useCurrentFrame();
 	// Sample times stop at the composition's last frame, not the enclosing Sequence's, as in

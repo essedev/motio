@@ -1,8 +1,9 @@
 // <CameraMotionBlur> and <Trail> render the same markup as the published @remotion/motion-blur
 // around a probe printing useCurrentFrame() (tools/oracle/record-motion-blur.mjs), and reject
-// invalid props with the same messages.
+// the same invalid props with the same error class (the messages are Motio's own).
 import { Sequence, useCurrentFrame } from "@motiojs/core";
 import { CompositionFrame } from "@motiojs/core/internals";
+import { compareFailure, failureOf } from "@motiojs/testing/oracle-errors";
 import { createElement as h, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -16,6 +17,7 @@ type Case = {
 	sequence?: Record<string, number>;
 	markup?: string;
 	error?: string | null;
+	errorType?: string;
 };
 
 const COMPONENTS = { CameraMotionBlur, Trail } as const;
@@ -62,6 +64,9 @@ const markupAt = (c: Case) =>
 
 const cases = fixture.cases as Case[];
 
+/** Props that a failure message should name when the recorded one does. */
+const PROPS = ["samples", "shutterAngle", "layers", "trailOpacity", "lagInFrames"];
+
 describe("motion blur markup equals @remotion/motion-blur", () => {
 	for (const component of ["CameraMotionBlur", "Trail"] as const) {
 		const own = cases.filter((c) => c.component === component && c.markup !== undefined);
@@ -75,15 +80,19 @@ describe("motion blur markup equals @remotion/motion-blur", () => {
 
 	// Motio validates before any hook, so the error surfaces without a composition (whose error
 	// boundary would swallow it in server rendering).
-	it("rejects invalid props with Remotion's messages", () => {
+	it("rejects the same invalid props, in the same order, with the same error class", () => {
 		for (const c of cases.filter((x) => x.error !== undefined)) {
-			let message: string | null = null;
-			try {
-				renderToStaticMarkup(element(c));
-			} catch (error) {
-				message = (error as Error).message;
+			const label = `${c.component} ${JSON.stringify(c.props)}`;
+			const { threw, error } = failureOf(() => renderToStaticMarkup(element(c)));
+			if (c.error === null || c.error === undefined) {
+				expect(threw, label).toBe(false);
+				continue;
 			}
-			expect(message, `${c.component} ${JSON.stringify(c.props)}`).toBe(c.error);
+			expect(threw, label).toBe(true);
+			expect(
+				compareFailure(error, { error: c.error, errorType: c.errorType }, PROPS),
+				label,
+			).toBeUndefined();
 		}
 	});
 });
