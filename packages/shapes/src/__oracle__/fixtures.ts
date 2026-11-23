@@ -2,6 +2,8 @@
 // recorded from the published Remotion package by tools/oracle-features
 // (pnpm record).
 
+import { compareFailure, errorClassOf } from "@motiojs/testing/oracle-errors";
+
 /** Fixtures store NaN, +-Infinity and -0 as strings that Number() parses back. */
 export type Encoded = number | string;
 
@@ -36,16 +38,44 @@ export class ErrorTracker {
 }
 
 /** A recorded call: either its return value or the message it threw. */
-export type Outcome<T> = { out: T; error?: undefined } | { error: string; out?: undefined };
+export type Outcome<T> =
+	| { out: T; error?: undefined }
+	| { error: string; errorType?: string | undefined; out?: undefined };
+
+// What Motio threw, kept off the outcome's own keys so it prints and compares like a recording.
+const thrown = new WeakMap<object, unknown>();
 
 /** Runs fn and returns its outcome in the shape the fixtures use. */
 export const outcomeOf = <T>(fn: () => T): Outcome<T> => {
 	try {
 		return { out: fn() };
 	} catch (e) {
-		return { error: e instanceof Error ? e.message : String(e) };
+		const outcome = {
+			error: e instanceof Error ? e.message : String(e),
+			errorType: errorClassOf(e),
+		};
+		thrown.set(outcome, e);
+		return outcome;
 	}
 };
+
+/** Options that a failure message should name when the recorded one does. */
+const NAMES = [
+	"length",
+	"headWidth",
+	"headLength",
+	"shaftWidth",
+	"points",
+	"cornerRadius",
+	"edgeRoundness",
+	"pointerPosition",
+];
+
+const isRecordedFailure = (value: unknown): value is { error: string; errorType?: string } =>
+	value !== null &&
+	typeof value === "object" &&
+	!Array.isArray(value) &&
+	typeof (value as { error?: unknown }).error === "string";
 
 const NUMERIC_TOKEN = /^[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?$|^-?Infinity$|^NaN$/i;
 
@@ -56,6 +86,15 @@ const NUMERIC_TOKEN = /^[-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?$|^-?Infinity$|^Na
  * exactly. A structural difference is an infinite error.
  */
 export const deepError = (actual: unknown, expected: unknown): number => {
+	// Failures match on behaviour (same error class, same options named), not on wording.
+	if (isRecordedFailure(expected)) {
+		if (actual === null || typeof actual !== "object" || !thrown.has(actual)) {
+			return Number.POSITIVE_INFINITY;
+		}
+		return compareFailure(thrown.get(actual), expected, NAMES) === undefined
+			? 0
+			: Number.POSITIVE_INFINITY;
+	}
 	if (typeof expected === "string" && typeof actual === "number") {
 		return errorOf(actual, Number(expected));
 	}

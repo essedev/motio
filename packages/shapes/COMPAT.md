@@ -4,13 +4,15 @@ Target: `@remotion/shapes@4.0.545`. Proof: `src/__oracle__/make.json` (150 gener
 
 | Export | Status | Tolerance |
 |---|---|---|
-| `makeRect`, `makeCircle`, `makeEllipse`, `makePie`, `makeTriangle`, `makeHeart`, `makeArrow`, `makeCallout`, `makeSpark` | within tolerance | 1e-12 relative (measured max 4.3e-14), identical errors |
+| `makeRect`, `makeCircle`, `makeEllipse`, `makePie`, `makeTriangle`, `makeHeart`, `makeArrow`, `makeCallout`, `makeSpark` | within tolerance | 1e-12 relative (measured max 4.3e-14), fail on the same options |
 | `makePolygon`, `makeStar` | within tolerance, with an edge case | 1e-10 relative (measured max 8.5e-12); see below |
 | `Rect`, `Circle`, `Ellipse`, `Pie`, `Triangle`, `Polygon`, `Star`, `Heart`, `Arrow`, `Callout`, `Spark` | within tolerance | identical markup, numbers as above |
 | `debug` overlay | exact | same elements and attributes |
 | `ShapeInfo`, `MakeXProps`, `XProps` (types) | exact | n/a |
 | `<Sequence>` props on components (`from`, `durationInFrames`, ...) | supported | wraps the svg in Motio's `<Sequence layout="none">`, so it must render inside a composition |
 | `effects`, `effectsOutputSize`, `pixelDensity` | missing | a non-empty `effects` throws with a clear message |
+
+Failures are compared on behaviour, not wording: the same options throw, with the same error class, and Motio's message names the same options. The messages are Motio's own (D-054).
 
 Polygons and stars are moved so their bounding box starts at (0, 0). Remotion computes that box with a method that overshoots when `edgeRoundness` is very close to zero (the curves degenerate into lines): at exactly 0 its box is about 4% of the radius too large, and at 1e-4 the difference is still 4e-9. Motio's box is exact, so those shapes are placed slightly differently. Visually this only matters at exactly `edgeRoundness: 0`, where Remotion leaves a margin and Motio does not.
 

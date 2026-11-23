@@ -25,7 +25,7 @@ describe("shapes (documented examples)", () => {
 
 	it("rejects corner radius and edge roundness together", () => {
 		expect(() => makeRect({ width: 10, height: 10, cornerRadius: 2, edgeRoundness: 1 })).toThrow(
-			"cannot be specified at the same time",
+			"pass one of them, not both",
 		);
 	});
 

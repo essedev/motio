@@ -61,8 +61,10 @@ export const makeTriangle = ({
 	};
 	const points = pointsByDirection[direction];
 	if (points === undefined) {
-		// Remotion fails this way on an unknown direction.
-		throw new TypeError("Cannot read properties of undefined (reading 'map')");
+		// Remotion fails with a TypeError on an unknown direction.
+		throw new TypeError(
+			`direction is ${JSON.stringify(direction)}: use "up", "down", "left" or "right".`,
+		);
 	}
 	const origins: Record<ShapeDirection, string> = {
 		up: `${width / 2} ${(height / 3) * 2}`,

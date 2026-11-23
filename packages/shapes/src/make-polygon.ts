@@ -23,7 +23,7 @@ export const makePolygon = ({
 	cornerRadius = 0,
 	edgeRoundness = null,
 }: MakePolygonProps): ShapeInfo => {
-	if (points < 3) throw new Error(`"points" should be minimum 3, got ${points}`);
+	if (points < 3) throw new Error(`points is ${points}: a polygon needs at least 3.`);
 	assertSingleRounding(cornerRadius, edgeRoundness);
 	const corners: [number, number][] = [];
 	for (let i = 0; i < points; i++) {

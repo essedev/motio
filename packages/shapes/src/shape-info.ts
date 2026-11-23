@@ -14,12 +14,14 @@ export type ShapeInfo = {
 	transformOrigin: string;
 };
 
-/** The error Remotion throws when both rounding options are given. */
+/** Throws when both rounding options are given, as Remotion does. */
 export const assertSingleRounding = (
 	cornerRadius: number,
 	edgeRoundness: number | null | undefined,
 ): void => {
 	if (cornerRadius !== 0 && edgeRoundness !== null && edgeRoundness !== undefined) {
-		throw new Error('"cornerRadius" and "edgeRoundness" cannot be specified at the same time.');
+		throw new Error(
+			"cornerRadius and edgeRoundness both round the corners: pass one of them, not both.",
+		);
 	}
 };

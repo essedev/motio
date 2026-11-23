@@ -50,15 +50,17 @@ export const makeCallout = ({
 		["pointerLength", pointerLength],
 		["pointerBaseWidth", pointerBaseWidth],
 	] as const) {
-		if (value <= 0) throw new Error(`"${name}" must be a positive number, got ${value}`);
+		if (value <= 0) throw new Error(`${name} is ${value}: it must be greater than 0.`);
 	}
 	if (pointerPosition < 0 || pointerPosition > 1) {
-		throw new Error(`"pointerPosition" must be a number between 0 and 1, got ${pointerPosition}`);
+		throw new Error(`pointerPosition is ${pointerPosition}: use a number from 0 to 1.`);
 	}
 	assertSingleRounding(cornerRadius, edgeRoundness);
 	if (!["up", "down", "left", "right"].includes(pointerDirection)) {
-		// Remotion fails this way on an unknown direction.
-		throw new TypeError("Cannot read properties of undefined (reading 'reduce')");
+		// Remotion fails with a TypeError on an unknown direction.
+		throw new TypeError(
+			`pointerDirection is ${JSON.stringify(pointerDirection)}: use "up", "down", "left" or "right".`,
+		);
 	}
 	const bx = pointerDirection === "left" ? pointerLength : 0;
 	const by = pointerDirection === "up" ? pointerLength : 0;

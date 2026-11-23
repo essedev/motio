@@ -42,17 +42,17 @@ export const makeArrow = ({
 }: MakeArrowProps): ShapeInfo => {
 	if (!(length > 0 && headWidth > 0 && headLength > 0 && shaftWidth > 0)) {
 		throw new Error(
-			'All dimension parameters ("length", "headWidth", "headLength", "shaftWidth") must be positive numbers',
+			`makeArrow() needs positive dimensions, got length ${length}, headWidth ${headWidth}, headLength ${headLength} and shaftWidth ${shaftWidth}.`,
 		);
 	}
 	if (headWidth < shaftWidth) {
 		throw new Error(
-			`"headWidth" must be greater than or equal to "shaftWidth", got headWidth=${headWidth} and shaftWidth=${shaftWidth}`,
+			`headWidth ${headWidth} is narrower than shaftWidth ${shaftWidth}: the head must be at least as wide as the shaft.`,
 		);
 	}
 	if (headLength > length) {
 		throw new Error(
-			`"headLength" must be less than or equal to "length", got headLength=${headLength} and length=${length}`,
+			`headLength ${headLength} is longer than the whole arrow (length ${length}): use a headLength up to length.`,
 		);
 	}
 	const shaftTop = (headWidth - shaftWidth) / 2;
