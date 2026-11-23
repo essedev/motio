@@ -41,7 +41,7 @@ Rules that follow from this:
 
 - Ported code keeps its copyright header, the original licence and an entry in `NOTICE`, and says what was changed (Apache-2.0, section 4).
 - Nobody working on this project reads Remotion's source, its type declarations (`.d.ts`) or its source maps. The oracle installs Remotion in `tools/oracle/`, outside the workspace and excluded from search and lint, and only calls its public API.
-- Docs prose and type signatures are not copied word for word; the API shape is reproduced, the text is ours. "Remotion" appears only as nominative compatibility wording.
+- Docs prose, type signatures and error or warning messages are not copied word for word; the API shape and behaviour are reproduced (which inputs fail, with which error class), the text is ours (D-054). "Remotion" appears only as nominative compatibility wording.
 - Oracle recordings are produced by the project author as an individual, for this personal open-source project, under Remotion's free licence for individuals, at the pinned version. Recording on behalf of a company would need a Remotion company licence.
 
 ## Packages
