@@ -16,7 +16,7 @@ Make videos with React. Motio renders a React tree frame by frame in a real head
 ## Requirements
 
 - Node 22 or later, pnpm.
-- FFmpeg with libx264 on `PATH` (`motio doctor` checks it).
+- FFmpeg 5.1 or later with libx264 on `PATH` (`motio doctor` checks it).
 - The pinned `chrome-headless-shell` is downloaded on first use (`motio browser ensure`).
 
 ## Documentation

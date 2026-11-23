@@ -16,7 +16,7 @@ Video fatti con React. Motio rende un albero React fotogramma per fotogramma in 
 ## Requisiti
 
 - Node 22 o successivo, pnpm.
-- FFmpeg con libx264 nel `PATH` (lo controlla `motio doctor`).
+- FFmpeg 5.1 o successivo con libx264 nel `PATH` (lo controlla `motio doctor`).
 - Il `chrome-headless-shell` a versione fissa viene scaricato al primo uso (`motio browser ensure`).
 
 ## Documentazione

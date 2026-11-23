@@ -50,6 +50,16 @@ describe("ffmpeg probing", () => {
 		expect(() => assertFfmpegSupports(info({ version: "4.3", release: [4, 3] }), needs)).toThrow(
 			expect.objectContaining({ code: "E_FFMPEG_VERSION" }),
 		);
+		// -fps_mode, which frame extraction passes, exists since FFmpeg 5.1 (D-051).
+		expect(() => assertFfmpegSupports(info({ version: "4.4.2", release: [4, 4] }), needs)).toThrow(
+			expect.objectContaining({ code: "E_FFMPEG_VERSION" }),
+		);
+		expect(() => assertFfmpegSupports(info({ version: "5.0.3", release: [5, 0] }), needs)).toThrow(
+			expect.objectContaining({ code: "E_FFMPEG_VERSION" }),
+		);
+		expect(() =>
+			assertFfmpegSupports(info({ version: "5.1.9", release: [5, 1] }), needs),
+		).not.toThrow();
 		expect(() => assertFfmpegSupports(info({ encoders: new Set() }), needs)).toThrow(
 			expect.objectContaining({ code: "E_FFMPEG_ENCODER_MISSING" }),
 		);

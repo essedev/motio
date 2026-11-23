@@ -28,7 +28,7 @@ export interface DoctorCheck {
 }
 
 /** Minimum FFmpeg release, used when the renderer does not export its own. */
-const FALLBACK_MIN_FFMPEG: readonly [number, number] = [6, 0];
+const FALLBACK_MIN_FFMPEG: readonly [number, number] = [5, 1];
 /** Encoders the M1 renderer needs. */
 const REQUIRED_ENCODERS = ["libx264"];
 

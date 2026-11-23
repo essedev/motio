@@ -216,36 +216,45 @@ describe("mixAudio decodes only what plays", () => {
 
 	// A seek before the input must not move the samples: WAV and MP3 decode identically, AAC
 	// within its decoder's rounding, and Matroska (whose seeks land 1 ms off) is not sought.
+	// FFmpeg before 8 places an Opus-in-WebM trim 7 ms early even without a seek (D-051).
 	const tone = resolve(media, "public/tone.wav");
+	const ffmpegMajor = Number(
+		/ffmpeg version n?(\d+)/.exec(
+			spawnSync("ffmpeg", ["-version"], { encoding: "utf8" }).stdout,
+		)?.[1],
+	);
 	for (const [ext, codec, tol] of [
 		["wav", "pcm_s16le", 0],
 		["mp3", "libmp3lame", 0],
 		["m4a", "aac", 1e-4],
 		["webm", "libopus", 0],
 	] as const) {
-		it(`places a late trim of a ${ext} source sample-accurately`, async () => {
-			const file = join(dir, `tone.${ext}`);
-			const enc = spawnSync("ffmpeg", ["-v", "error", "-y", "-i", tone, "-c:a", codec, file]);
-			if (enc.status !== 0) throw new Error(String(enc.stderr));
-			const whole = decodeAll(file);
-			const mixed = await mixAudio({
-				sources: [
-					{ src: file, startFrame: 3, trimBeforeFrames: 75, durationInFrames: 15, volume: 1 },
-				],
-				fps: 30,
-				durationInFrames: 20,
-				channels: 1,
-			});
-			const frame = 1600;
-			let worst = 0;
-			for (let i = 0; i < 15 * frame; i++) {
-				const got = mixed.samples[3 * frame + i] ?? 0;
-				worst = Math.max(worst, Math.abs(got - (whole[75 * frame + i] ?? 0)));
-			}
-			expect(worst).toBeLessThanOrEqual(tol);
-			// Nothing before the start or after the end.
-			expect(mixed.samples.subarray(0, 3 * frame).every((v) => v === 0)).toBe(true);
-			expect(mixed.samples.subarray(18 * frame).every((v) => v === 0)).toBe(true);
-		});
+		it.skipIf(ext === "webm" && !(ffmpegMajor >= 8))(
+			`places a late trim of a ${ext} source sample-accurately`,
+			async () => {
+				const file = join(dir, `tone.${ext}`);
+				const enc = spawnSync("ffmpeg", ["-v", "error", "-y", "-i", tone, "-c:a", codec, file]);
+				if (enc.status !== 0) throw new Error(String(enc.stderr));
+				const whole = decodeAll(file);
+				const mixed = await mixAudio({
+					sources: [
+						{ src: file, startFrame: 3, trimBeforeFrames: 75, durationInFrames: 15, volume: 1 },
+					],
+					fps: 30,
+					durationInFrames: 20,
+					channels: 1,
+				});
+				const frame = 1600;
+				let worst = 0;
+				for (let i = 0; i < 15 * frame; i++) {
+					const got = mixed.samples[3 * frame + i] ?? 0;
+					worst = Math.max(worst, Math.abs(got - (whole[75 * frame + i] ?? 0)));
+				}
+				expect(worst).toBeLessThanOrEqual(tol);
+				// Nothing before the start or after the end.
+				expect(mixed.samples.subarray(0, 3 * frame).every((v) => v === 0)).toBe(true);
+				expect(mixed.samples.subarray(18 * frame).every((v) => v === 0)).toBe(true);
+			},
+		);
 	}
 });

@@ -10,6 +10,7 @@ import {
 } from "@motiojs/core/protocol";
 import { FrameExtractor, type FrameSelection, selectFrame } from "@motiojs/video-frames";
 import { MotioError } from "./errors.js";
+import { assertFfmpegSupports, probeFfmpeg } from "./ffmpeg.js";
 
 /** Options of `startMediaServer()`. */
 export interface MediaServerOptions {
@@ -240,6 +241,9 @@ export async function startMediaServer(options: MediaServerOptions): Promise<Med
 			);
 			return;
 		}
+		// Renders check FFmpeg before they start; stills and frame sequences reach FFmpeg only
+		// here, when the composition shows a video (probed once per executable).
+		assertFfmpegSupports(await probeFfmpeg(options.ffmpeg), { encoders: [], decoders: [] });
 		const { timestamps } = await extractor.info(input);
 		const index = selectFrame(timestamps, t, mode);
 		if (name === MEDIA_ROUTES.locate) {

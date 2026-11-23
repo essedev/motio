@@ -3,8 +3,11 @@ import { proResProfileNumber, type ResolvedVideoEncoding } from "./codecs.js";
 import { MotioError } from "./errors.js";
 import type { ColorSpace, PixelFormat, X264Preset } from "./options.js";
 
-/** Oldest FFmpeg the renderer accepts. */
-export const MIN_FFMPEG_VERSION: readonly [number, number] = [4, 4];
+/**
+ * Oldest FFmpeg the renderer accepts: 5.1, the first release with `-fps_mode`, which frame
+ * extraction passes. Every FFmpeg-dependent integration test passes with Debian 12's 5.1 (D-051).
+ */
+export const MIN_FFMPEG_VERSION: readonly [number, number] = [5, 1];
 
 /** What `probeFfmpeg()` learned about an FFmpeg executable. */
 export interface FfmpegInfo {
