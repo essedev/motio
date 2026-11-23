@@ -37,19 +37,20 @@ The downloaded binaries are GPL-licensed builds of FFmpeg. Motio runs them as a 
 
 ## Codecs
 
-| `--codec` | Output | FFmpeg encoder | CRF range (default) | Transparency | Audio |
+| `--codec` | Output extensions | FFmpeg encoder | CRF range (default) | Transparency | Audio |
 |---|---|---|---|---|---|
-| `h264` (default) | `.mp4` | libx264 | 1 to 51 (18) | no | AAC (default), MP3 |
+| `h264` (default) | `.mp4`, `.mkv`, `.mov` | libx264 | 1 to 51 (18) | no | AAC (default), MP3 |
 | `h264-mkv` | `.mkv` | libx264 | 1 to 51 (18) | no | AAC, MP3, Opus, PCM |
 | `h264-ts` | `.ts` | libx264 | 1 to 51 (18) | no | AAC, MP3 |
-| `h265` | `.mp4` | libx265 | 0 to 51 (23) | no | AAC, MP3 |
+| `h265` | `.mp4`, `.mkv`, `.hevc` (muted) | libx265 | 0 to 51 (23) | no | AAC, MP3 |
 | `vp8` | `.webm` | libvpx | 4 to 63 (9) | `yuva420p` | Opus |
 | `vp9` | `.webm` | libvpx-vp9 | 0 to 63 (28) | `yuva420p` | Opus |
-| `av1` | `.mp4` | libsvtav1, else libaom-av1 | 0 to 63 (30) | no | AAC, MP3 |
-| `prores` | `.mov` | prores_ks | none; `--prores-profile` | `yuva444p10le` with profile `4444` or `4444-xq` | PCM, AAC |
+| `av1` | `.mp4`, `.mkv` | libsvtav1, else libaom-av1 | 0 to 63 (30) | no | AAC, MP3 |
+| `prores` | `.mov`, `.mkv` | prores_ks | none; `--prores-profile` | `yuva444p10le` with profile `4444` or `4444-xq` | PCM, AAC |
 | `gif` | `.gif` | gif | none | no | none |
-| `mp3`, `aac`, `wav` | audio only | libmp3lame, aac, pcm | none | | |
+| `mp3`, `aac`, `wav` | `.mp3`; `.aac`, `.m4a`, `.m4b`, `.3gp`; `.wav` | libmp3lame, aac, pcm | none | | |
 
+- **Output extension**: the first extension in the table is the codec's own, used when there is no output path. Any other must be listed for the codec, and it chooses the container: `--codec=h264` to `intro.mov` writes H.264 in a QuickTime file, to `intro.mkv` in Matroska. An extension that does not fit, such as `--codec=vp9` to `intro.mp4`, fails before anything renders with `E_INVALID_OPTION`, naming the extensions the codec takes and the codecs that write the one you gave. The same rule applies to `renderMedia()` and to chunked renders. An `.hevc` file holds the bare video stream, so it needs `--muted`.
 - **CRF**: lower is better quality and a bigger file. For VP9 and AV1, CRF 0 is lossless.
 - **Transparency**: render with `--image-format=png` and an alpha pixel format, for example `--codec=vp9 --pixel-format=yuva420p`, and leave the composition's background transparent.
 - **AV1**: SVT-AV1 3.0 or later is preferred; with an older SVT-AV1 Motio uses libaom when FFmpeg has it, because SVT-AV1 2.x damaged blocks of some frames in testing.

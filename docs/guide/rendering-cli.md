@@ -16,7 +16,7 @@ pnpm exec motio render src/index.ts Intro out/part.mp4 --frames=0-59
 pnpm exec motio render src/index.ts Intro out/intro.mp3        # the audio only
 ```
 
-Without an output, the video goes to `out/<composition-id>` with the codec's extension. Without `--codec`, the extension picks it: `.mp4` H.264, `.webm` VP8, `.mov` ProRes, `.mkv` H.264 in Matroska, `.ts` H.264 in MPEG-TS, `.gif` GIF, `.mp3`, `.aac`/`.m4a` and `.wav` audio only.
+Without an output, the video goes to `out/<composition-id>` with the codec's extension. Without `--codec`, the extension picks it: `.mp4` H.264, `.webm` VP8, `.mov` ProRes, `.mkv` H.264 in Matroska, `.ts` H.264 in MPEG-TS, `.gif` GIF, `.mp3`, `.aac`/`.m4a` and `.wav` audio only. With `--codec`, the extension must be one the codec can be written to, and it names the container: `--codec=h264` to `out/intro.mov` writes H.264 in a MOV file, while `--codec=vp9` to `out/intro.mp4` is refused before rendering (the table in [FFmpeg](ffmpeg.md#codecs) lists the extensions of each codec).
 
 | Flag | Meaning |
 |---|---|
