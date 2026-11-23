@@ -207,6 +207,7 @@ export async function renderCommand(
 					enforceAudioTrack: flags.boolean("enforce-audio-track") ?? config.enforceAudioTrack,
 					preferLossless: config.preferLosslessAudio,
 					sampleRate: sampleRate ?? config.sampleRate,
+					separateAudioTo: separateAudioTo ? resolvePath(ctx.io.cwd, separateAudioTo) : undefined,
 				}),
 				onProgress: (progress) => {
 					renderedFrames = progress.renderedFrames;

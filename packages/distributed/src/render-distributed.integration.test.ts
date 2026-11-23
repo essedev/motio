@@ -191,6 +191,32 @@ describe("chunked render against the single-node render", () => {
 		});
 	}
 
+	it("writes separateAudioTo as renderMedia does, and no audio track in the video", async () => {
+		const composition = await selectComposition({ serveUrl: media, id: "audio-offset" });
+		const single = join(dir, "separate-single", "audio.aac");
+		const chunkedAudio = join(dir, "separate-chunked", "nested", "audio.aac");
+		const chunked = join(dir, "separate-chunked.mp4");
+		await renderMedia({
+			serveUrl: media,
+			composition,
+			codec: "h264",
+			outputLocation: join(dir, "separate-single.mp4"),
+			separateAudioTo: single,
+		});
+		await renderDistributed({
+			serveUrl: media,
+			composition,
+			codec: "h264",
+			outputLocation: chunked,
+			chunks: 3,
+			separateAudioTo: chunkedAudio,
+		});
+		const a = audioSamples(single);
+		expect(a.length).toBeGreaterThan(0);
+		expect(audioSamples(chunkedAudio).equals(a)).toBe(true);
+		expect(probeStream(chunked, "a", "codec_name")).toEqual({});
+	});
+
 	it("validates options before any chunk renders", async () => {
 		const composition = await selectComposition({ serveUrl: protocol, id: "stamp" });
 		const attempt = (extra: Partial<Parameters<typeof renderDistributed>[0]>) =>
@@ -206,5 +232,8 @@ describe("chunked render against the single-node render", () => {
 		await expect(attempt({ codec: "prores", crf: 3 })).rejects.toThrow(/no CRF/);
 		await expect(attempt({ chunks: undefined })).rejects.toThrow(/exactly one/);
 		await expect(attempt({ frameRange: [10, 99999] })).rejects.toThrow(/outside the composition/);
+		await expect(attempt({ muted: true, separateAudioTo: join(dir, "never.aac") })).rejects.toThrow(
+			/separateAudioTo/,
+		);
 	});
 });

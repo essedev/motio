@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, rename, rm, stat } from "node:fs/promises";
 import { availableParallelism, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import type { AudioCodec } from "@motiojs/audio";
+import { type AudioCodec, audioCodecArgs } from "@motiojs/audio";
 import {
 	type BrowserSessionOptions,
 	type CancelSignal,
@@ -19,6 +19,7 @@ import { assembleChunks } from "./assemble.js";
 import { DistributedError } from "./errors.js";
 import { LocalChunkWorker } from "./local-worker.js";
 import { type Chunk, planChunks } from "./plan.js";
+import { run } from "./run.js";
 import type { ChunkJob, ChunkRenderSettings, ChunkWorker } from "./worker.js";
 
 /** Progress reported by `renderDistributed()`. */
@@ -72,6 +73,11 @@ export interface RenderDistributedOptions
 	preferLossless?: boolean;
 	enforceAudioTrack?: boolean;
 	sampleRate?: number | null;
+	/**
+	 * Write the audio to this file (its codec's format) and leave the video without an audio
+	 * track, as `renderMedia()` does. Silence is written when nothing is audible.
+	 */
+	separateAudioTo?: string | null;
 	cancelSignal?: CancelSignal;
 	onProgress?: (progress: DistributedProgress) => void;
 }
@@ -184,6 +190,21 @@ export async function renderDistributed(
 		}
 	}
 
+	const separateAudioTo = options.separateAudioTo ? resolve(options.separateAudioTo) : null;
+	if (separateAudioTo && options.overwrite === false) {
+		const exists = await stat(separateAudioTo).then(
+			() => true,
+			() => false,
+		);
+		if (exists) {
+			throw new DistributedError(
+				"E_CHUNK_PLAN",
+				`${separateAudioTo} already exists and overwrite is false.`,
+				{ output: separateAudioTo },
+			);
+		}
+	}
+
 	const settings: ChunkRenderSettings = {
 		codec: options.codec,
 		concurrency: options.concurrencyPerChunk ?? 1,
@@ -281,8 +302,9 @@ export async function renderDistributed(
 						"ffmpegExecutable",
 						"ffprobeExecutable",
 						"captureMethod",
-						"enforceAudioTrack",
 					]),
+					// separateAudioTo writes a file even when nothing is audible, as renderMedia() does.
+					enforceAudioTrack: options.enforceAudioTrack === true || separateAudioTo !== null,
 					serveUrl: options.serveUrl,
 					composition,
 					frameRange: range,
@@ -309,13 +331,38 @@ export async function renderDistributed(
 		const audio = audioResult.status === "fulfilled" ? audioResult.value : null;
 		const renderMs = performance.now() - started;
 		report("assembling");
+		if (separateAudioTo && audio?.outputLocation && plan.audio) {
+			await mkdir(dirname(separateAudioTo), { recursive: true });
+			const part = `${separateAudioTo}.${process.pid}.part${plan.audio.extension}`;
+			try {
+				await run(options.ffmpegExecutable ?? "ffmpeg", [
+					"-hide_banner",
+					"-loglevel",
+					"error",
+					"-y",
+					"-i",
+					audio.outputLocation,
+					...audioCodecArgs(plan.audio.codec, plan.audio.bitrate),
+					part,
+				]).catch((e: Error) => {
+					throw new DistributedError(
+						"E_CHUNK_ASSEMBLE",
+						`could not encode the audio into ${separateAudioTo}: ${e.message}`,
+						{ output: separateAudioTo },
+					);
+				});
+				await rename(part, separateAudioTo);
+			} finally {
+				await rm(part, { force: true });
+			}
+		}
 		await mkdir(dirname(output), { recursive: true });
 		const part = join(dirname(output), `.${process.pid}-${Date.now()}.part${plan.extension}`);
 		try {
 			await assembleChunks({
 				chunks: files,
 				output: part,
-				...(audio?.outputLocation && plan.audio
+				...(audio?.outputLocation && plan.audio && !separateAudioTo
 					? {
 							audio: audio.outputLocation,
 							audioCodec: plan.audio.codec,

@@ -4,6 +4,7 @@ import { type AudioCodec, floatWav } from "@motiojs/audio";
 import type { AudioIntent } from "@motiojs/core/protocol";
 import { silence } from "./audio.js";
 import {
+	AUDIO_EXTENSIONS,
 	assertSampleRateFits,
 	resolveAudioBitrate,
 	resolveAudioCodec,
@@ -66,6 +67,8 @@ export interface ChunkedRenderPlanOptions extends VideoPlanOptions {
 	preferLossless?: boolean | undefined;
 	sampleRate?: number | null | undefined;
 	everyNthFrame?: number | undefined;
+	/** Write the audio to this file instead of the video (`renderMedia`'s option). */
+	separateAudioTo?: string | null | undefined;
 }
 
 /** What a chunked render of a codec produces, validated before any chunk renders. */
@@ -76,8 +79,11 @@ export interface ChunkedRenderPlan {
 	extension: string;
 	/** Video codec tag the assembled output needs (`hvc1` for H.265 in MP4), or null. */
 	videoTag: string | null;
-	/** The audio to render once and encode during assembly, or null when muted or silent-only. */
-	audio: { codec: AudioCodec; bitrate: string; sampleRate: number } | null;
+	/**
+	 * The audio to render once and encode during assembly (or into `separateAudioTo`, a file with
+	 * `extension`), or null when muted.
+	 */
+	audio: { codec: AudioCodec; bitrate: string; sampleRate: number; extension: string } | null;
 }
 
 /**
@@ -95,6 +101,9 @@ export function planChunkedRender(options: ChunkedRenderPlanOptions): ChunkedRen
 			"everyNthFrame is not supported in chunked renders; render on one machine instead.",
 		);
 	}
+	if (options.separateAudioTo && options.muted === true) {
+		throw new MotioError("E_INVALID_OPTION", "separateAudioTo cannot be used with muted.");
+	}
 	const sampleRate = resolveSampleRate(options.sampleRate ?? options.composition.defaultSampleRate);
 	let audio: ChunkedRenderPlan["audio"] = null;
 	if (options.muted !== true) {
@@ -104,7 +113,12 @@ export function planChunkedRender(options: ChunkedRenderPlanOptions): ChunkedRen
 			options.preferLossless === true,
 		);
 		assertSampleRateFits(codec, sampleRate);
-		audio = { codec, bitrate: resolveAudioBitrate(options.audioBitrate), sampleRate };
+		audio = {
+			codec,
+			bitrate: resolveAudioBitrate(options.audioBitrate),
+			sampleRate,
+			extension: AUDIO_EXTENSIONS[codec],
+		};
 	}
 	const extension = video.encoding.spec.extension;
 	return {

@@ -134,6 +134,7 @@ describe("render", () => {
 			"--concurrency=3",
 			"--concurrency-per-chunk=2",
 			"--prores-profile=4444",
+			"--separate-audio-to=out/a.wav",
 			"--json",
 		]);
 		expect(code).toBe(0);
@@ -146,6 +147,7 @@ describe("render", () => {
 			concurrencyPerChunk: 2,
 			proResProfile: "4444",
 			outputLocation: join(cwd, "out", "a.mov"),
+			separateAudioTo: join(cwd, "out", "a.wav"),
 		});
 		const both = await run(["render", "Main", "--chunks=2", "--frames-per-chunk=5", "--json"]);
 		expect(both.code).toBe(2);
