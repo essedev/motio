@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@remotion/animation-utils':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/captions':
         specifier: 4.0.545
         version: 4.0.545
@@ -31,6 +34,12 @@ importers:
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
 
 packages:
+
+  '@remotion/animation-utils@4.0.545':
+    resolution: {integrity: sha512-+B+np6/zW/JbyDhViO0AqzO6E5NwDUdY4daMjqeri/5Ug/876i7rIQd/2c9X1NrmXUHEiZYnnkP7igzaFDVrbQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   '@remotion/captions@4.0.545':
     resolution: {integrity: sha512-wjNEBuLXlffeI/D2Wi/zwjNHex1AF6zx94WZbGrR5PbfTtaHvKBwkFopZWZGFZeUo9PWJJ8rm8V/xUvanxDYBA==}
@@ -69,6 +78,12 @@ packages:
     resolution: {integrity: sha512-zl/+bdSqW7HJOQ0oDbxrNYaF4F5ik0i7M6YOYmEoIJNtg16NpvWaTTM1Y7oV/7T0jFljawLgYPS81Uu2rsfo1A==}
 
 snapshots:
+
+  '@remotion/animation-utils@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
 
   '@remotion/captions@4.0.545': {}
 
