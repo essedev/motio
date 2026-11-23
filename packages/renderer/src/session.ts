@@ -3,6 +3,8 @@ import { ensureBrowser } from "./browser/ensure.js";
 import type { ChromiumOptions } from "./browser/flags.js";
 import type { BrowserLog } from "./browser-log.js";
 import { MotioError } from "./errors.js";
+import { resolveFfmpegPath, resolveFfprobePath } from "./ffmpeg.js";
+import { type MediaServer, startMediaServer } from "./media-server.js";
 import { resolveEnvVariables, resolveInputProps, resolveTimeout } from "./options.js";
 import { type PageConfig, RenderPage } from "./render-page.js";
 import { openServeUrl, type StaticServer } from "./server.js";
@@ -25,6 +27,13 @@ export interface BrowserSessionOptions {
 	onBrowserLog?: (log: BrowserLog) => void;
 	/** Accepted for compatibility; the renderer logs through `onBrowserLog` and errors. */
 	logLevel?: "trace" | "verbose" | "info" | "warn" | "error";
+	/** Motio extension: FFmpeg executable. Default `$MOTIO_FFMPEG`, else `ffmpeg` on PATH. */
+	ffmpegExecutable?: string | null;
+	/**
+	 * Motio extension: FFprobe executable. Default `$MOTIO_FFPROBE`, else `ffprobe` next to the
+	 * FFmpeg executable.
+	 */
+	ffprobeExecutable?: string | null;
 }
 
 /** A Remotion-shaped composition description returned by `getCompositions` and `selectComposition`. */
@@ -49,6 +58,10 @@ export interface VideoConfig {
 export interface BrowserSession {
 	executablePath: string;
 	server: StaticServer;
+	/** Media service for video frames and media information (D-015, D-016). */
+	media: MediaServer;
+	ffmpeg: string;
+	ffprobe: string;
 	inputProps: Record<string, unknown>;
 	envVariables: Record<string, string>;
 	timeoutInMilliseconds: number;
@@ -74,10 +87,27 @@ export async function openSession(options: BrowserSessionOptions): Promise<Brows
 		process.env.MOTIO_BROWSER_EXECUTABLE ??
 		(await ensureBrowser()).executablePath;
 	const server = await openServeUrl(options.serveUrl, options.port ?? undefined);
+	const ffmpeg = resolveFfmpegPath(options.ffmpegExecutable);
+	const ffprobe = resolveFfprobePath(options.ffprobeExecutable, ffmpeg);
+	let media: MediaServer;
+	try {
+		media = await startMediaServer({
+			bundleUrl: server.url,
+			bundleDir: /^https?:\/\//i.test(options.serveUrl) ? null : options.serveUrl,
+			ffmpeg,
+			ffprobe,
+		});
+	} catch (err) {
+		await server.close();
+		throw err;
+	}
 	const onBrowserLog = options.onBrowserLog;
 	return {
 		executablePath,
 		server,
+		media,
+		ffmpeg,
+		ffprobe,
 		inputProps,
 		envVariables,
 		timeoutInMilliseconds,
@@ -91,9 +121,12 @@ export async function openSession(options: BrowserSessionOptions): Promise<Brows
 			envVariables,
 			timeoutInMilliseconds,
 			onBrowserLog,
+			mediaBaseUrl: media.url,
 			...size,
 		}),
-		close: () => server.close(),
+		close: async () => {
+			await Promise.all([server.close(), media.close()]);
+		},
 	};
 }
 

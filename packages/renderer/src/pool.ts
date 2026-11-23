@@ -29,6 +29,8 @@ export interface PoolJob {
 	openPage: () => Promise<RenderPage>;
 	format: CaptureFormat;
 	quality: number;
+	/** False seeks without capturing (the audio pass); `image` is then empty. Default true. */
+	capture?: boolean;
 	/** Replace a page with a fresh one after this many frames; 0 never. */
 	recycleEveryNFrames: number;
 	/** Times a frame is retried after a browser crash or a watchdog timeout. */
@@ -115,7 +117,10 @@ export async function runPool(job: PoolJob): Promise<SlowFrame[]> {
 						if (stopReason !== undefined || !page) break;
 						const t0 = performance.now();
 						const report = await page.seek(frame);
-						const image = await page.capture(job.format, job.quality, frame);
+						const image =
+							job.capture === false
+								? Buffer.alloc(0)
+								: await page.capture(job.format, job.quality, frame);
 						captured = { frame, image, report, timeMs: performance.now() - t0 };
 					} catch (err) {
 						await close();

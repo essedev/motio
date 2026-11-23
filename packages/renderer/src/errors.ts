@@ -25,7 +25,9 @@ export type MotioErrorCode =
 	| "E_FFMPEG_NOT_FOUND"
 	| "E_FFMPEG_VERSION"
 	| "E_FFMPEG_ENCODER_MISSING"
-	| "E_FFMPEG_FAILED";
+	| "E_FFMPEG_FAILED"
+	| "E_MEDIA_SOURCE"
+	| "E_AUDIO_FAILED";
 
 /** Structured context attached to an error. */
 export interface MotioErrorContext {

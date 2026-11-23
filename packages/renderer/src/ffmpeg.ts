@@ -21,6 +21,17 @@ export function resolveFfmpegPath(explicit?: string | null): string {
 	return explicit ?? process.env.MOTIO_FFMPEG ?? "ffmpeg";
 }
 
+/**
+ * FFprobe executable: the explicit option, else `$MOTIO_FFPROBE`, else `ffprobe` next to the
+ * FFmpeg executable when that is a path, else `ffprobe` on PATH.
+ */
+export function resolveFfprobePath(explicit: string | null | undefined, ffmpeg: string): string {
+	if (explicit) return explicit;
+	if (process.env.MOTIO_FFPROBE) return process.env.MOTIO_FFPROBE;
+	const m = /^(.*[\\/])ffmpeg(\.exe)?$/i.exec(ffmpeg);
+	return m ? `${m[1]}ffprobe${m[2] ?? ""}` : "ffprobe";
+}
+
 function capture(cmd: string, args: string[]): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });

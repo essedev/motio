@@ -613,9 +613,15 @@ importers:
 
   packages/renderer:
     dependencies:
+      '@motiojs/audio':
+        specifier: workspace:*
+        version: link:../audio
       '@motiojs/core':
         specifier: workspace:*
         version: link:../core
+      '@motiojs/video-frames':
+        specifier: workspace:*
+        version: link:../video-frames
       '@puppeteer/browsers':
         specifier: ^3.2.7
         version: 3.2.7

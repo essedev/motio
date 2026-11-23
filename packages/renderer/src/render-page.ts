@@ -29,6 +29,8 @@ export interface PageConfig {
 	/** Transparent default background, for PNG capture with alpha. */
 	transparent: boolean;
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
+	/** Base URL of the renderer's media service, passed to the page in the run context. */
+	mediaBaseUrl?: string;
 }
 
 /** Extra time the Node watchdog gives a seek beyond the readiness timeout. */
@@ -265,6 +267,7 @@ export class RenderPage {
 			readinessTimeoutMs: c.timeoutInMilliseconds,
 			isRendering: true,
 		};
+		if (c.mediaBaseUrl !== undefined) context.mediaBaseUrl = c.mediaBaseUrl;
 		// Page.addScriptToEvaluateOnNewDocument on the page's main session, so it runs before any
 		// page script on every navigation.
 		await this.page.evaluateOnNewDocument(

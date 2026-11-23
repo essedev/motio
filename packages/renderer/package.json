@@ -16,7 +16,9 @@
 	"sideEffects": false,
 	"scripts": {},
 	"dependencies": {
+		"@motiojs/audio": "workspace:*",
 		"@motiojs/core": "workspace:*",
+		"@motiojs/video-frames": "workspace:*",
 		"@puppeteer/browsers": "^3.2.7",
 		"puppeteer-core": "^25.18.1"
 	},
