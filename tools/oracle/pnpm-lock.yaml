@@ -8,15 +8,24 @@ importers:
 
   .:
     dependencies:
+      '@remotion/elevenlabs':
+        specifier: 4.0.545
+        version: 4.0.545
       '@remotion/gif':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/install-whisper-cpp':
+        specifier: 4.0.545
+        version: 4.0.545
       '@remotion/lottie':
         specifier: 4.0.545
         version: 4.0.545(lottie-web@5.13.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/motion-blur':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/openai-whisper':
+        specifier: 4.0.545
+        version: 4.0.545
       '@remotion/player':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -69,11 +78,20 @@ packages:
     resolution: {integrity: sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==}
     engines: {node: '>=18'}
 
+  '@remotion/captions@4.0.545':
+    resolution: {integrity: sha512-wjNEBuLXlffeI/D2Wi/zwjNHex1AF6zx94WZbGrR5PbfTtaHvKBwkFopZWZGFZeUo9PWJJ8rm8V/xUvanxDYBA==}
+
+  '@remotion/elevenlabs@4.0.545':
+    resolution: {integrity: sha512-HFqaVEKTQgmzMiTXmtdHorK3oClaWSocC5iTBpX6kWdxByimLQDa8DCewEjNOIJhB+Zg01HFQSJRopyps3Ei8g==}
+
   '@remotion/gif@4.0.545':
     resolution: {integrity: sha512-Fhti3dlIt1tt5UAzA3nBUubIg/ydVxjSYdINNPED1+/vxbhkDVHQvBSjhtfgpZ0ttoEHqCGp4gX2bEbOS5m7cw==}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
+
+  '@remotion/install-whisper-cpp@4.0.545':
+    resolution: {integrity: sha512-TsMQB8qVoGOg16yJlZIgEZBXfz+lTxOux1WtFVYsBhQDHpSFeiEViuYy3G0Rdz9F8fx3iRjbSdCKKcrnjMrelg==}
 
   '@remotion/lottie@4.0.545':
     resolution: {integrity: sha512-q4F1ZhXdbvJPlcMfhKeY5Iwj5weMPztwOQwHokpjdGqWARGFqMNFM4X0jp7AhqLuG2VfN5cVps4E2BniTZfcBg==}
@@ -87,6 +105,9 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
+
+  '@remotion/openai-whisper@4.0.545':
+    resolution: {integrity: sha512-GiHmtclPq/JTzXKGMiapJxKHldJLK5KdF8mzr3D1sFqxk2wqb5ep9ZSPGRBRZ39RYmZOfHGyNDLQ5uaaKqkLTA==}
 
   '@remotion/player@4.0.545':
     resolution: {integrity: sha512-8NcZYzLR/wwprEiOReX5Hq02HJ/tTZ1JtfXz2RnnrrF/ioMC3BjY/yjuoYCqlphpfgomju3Pb45gzTJZ61lJDQ==}
@@ -255,6 +276,9 @@ packages:
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
 
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
+
 snapshots:
 
   '@asamuzakjp/css-color@3.2.0':
@@ -285,11 +309,22 @@ snapshots:
 
   '@csstools/css-tokenizer@3.0.4': {}
 
+  '@remotion/captions@4.0.545': {}
+
+  '@remotion/elevenlabs@4.0.545':
+    dependencies:
+      '@remotion/captions': 4.0.545
+      zod: 4.6.7
+
   '@remotion/gif@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
+  '@remotion/install-whisper-cpp@4.0.545':
+    dependencies:
+      '@remotion/captions': 4.0.545
 
   '@remotion/lottie@4.0.545(lottie-web@5.13.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -303,6 +338,11 @@ snapshots:
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
+  '@remotion/openai-whisper@4.0.545':
+    dependencies:
+      '@remotion/captions': 4.0.545
+      zod: 4.6.7
 
   '@remotion/player@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -455,3 +495,5 @@ snapshots:
   xml-name-validator@5.0.0: {}
 
   xmlchars@2.2.0: {}
+
+  zod@4.6.7: {}
