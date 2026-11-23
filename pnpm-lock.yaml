@@ -261,6 +261,36 @@ importers:
         specifier: ^8.3.8
         version: 8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)
 
+  fixtures/templates:
+    dependencies:
+      '@motiojs/captions':
+        specifier: workspace:*
+        version: link:../../packages/captions
+      '@motiojs/google-fonts':
+        specifier: workspace:*
+        version: link:../../packages/google-fonts
+      '@motiojs/layout-utils':
+        specifier: workspace:*
+        version: link:../../packages/layout-utils
+      '@motiojs/media-utils':
+        specifier: workspace:*
+        version: link:../../packages/media-utils
+      '@motiojs/zod-types':
+        specifier: workspace:*
+        version: link:../../packages/zod-types
+      motio:
+        specifier: workspace:*
+        version: link:../../packages/motio
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+
   packages/audio:
     devDependencies:
       '@types/node':

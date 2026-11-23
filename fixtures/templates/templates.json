@@ -1,0 +1,66 @@
+{
+	"$comment": "Official Remotion starter templates, fetched at the pinned commit into .cache/<name> by fetch.ts (never vendored). stills: composition id to frames rendered at scale 1 by Remotion (tools/oracle-render/record-templates.ts) and by Motio (packages/cli/src/templates.integration.test.ts). network: the template loads fonts from the internet while rendering. blockedBy: Motio symbols the template needs that are not implemented yet; the Motio test expects the build to fail until they land. knownMismatch: \"<composition>/<frame>\" to the reason that still does not match yet; the Motio test expects it to miss the thresholds until the cause is fixed. unsupported: the template imports Remotion packages Motio does not provide; the Motio test expects the compat plugin's build error naming one of them.",
+	"templates": {
+		"helloworld": {
+			"repository": "https://github.com/remotion-dev/template-helloworld",
+			"commit": "01cb8eba40a9e8fbf6434cad9049ddc010f44304",
+			"stills": {
+				"HelloWorld": [45, 130],
+				"Logo": [20],
+				"Title": [40]
+			},
+			"blockedBy": [
+				"remotion#Interactive",
+				"remotion#Easing.spring",
+				"remotion#interpolate (string outputRange, output: \"perceptual-scale\")"
+			]
+		},
+		"empty": {
+			"repository": "https://github.com/remotion-dev/template-empty",
+			"commit": "16562d5975253a0229609c028d8e18febfebc126",
+			"stills": {
+				"MyComp": [0]
+			}
+		},
+		"helloworld-javascript": {
+			"repository": "https://github.com/remotion-dev/template-helloworld-javascript",
+			"commit": "f3c1be7da5d6737aebd6a25e55fb1462390b2c1e",
+			"stills": {
+				"HelloWorld": [45, 90, 130],
+				"OnlyLogo": [20]
+			},
+			"knownMismatch": {
+				"OnlyLogo/20": "transparent background: the renderer's alpha at antialiased edges differs from Remotion's (the same shapes on white match at 52 dB)"
+			}
+		},
+		"still": {
+			"repository": "https://github.com/remotion-dev/template-still",
+			"commit": "5487596ac3308cb5e280bfc0849cb041b43e4035",
+			"stills": {
+				"PreviewCard": [0]
+			},
+			"network": true
+		},
+		"overlay": {
+			"repository": "https://github.com/remotion-dev/template-overlay",
+			"commit": "5f6177184a81e18f82bfa66df004bf2bb39ef016",
+			"stills": {
+				"Overlay": [10, 30]
+			},
+			"network": true,
+			"knownMismatch": {
+				"Overlay/30": "@motiojs/google-fonts loads a different Roboto woff2 than @remotion/google-fonts 4.0.545 (same v51 path, other file), so the text box is 2 px narrower"
+			}
+		},
+		"tiktok": {
+			"repository": "https://github.com/remotion-dev/template-tiktok",
+			"commit": "1d2bffac65db4938d2ac24884c0013624e6146e8",
+			"unsupported": ["@remotion/animation-utils", "@remotion/media"]
+		},
+		"three": {
+			"repository": "https://github.com/remotion-dev/template-three",
+			"commit": "691540390727b7d07daf4099c592464659a1ca64",
+			"unsupported": ["@remotion/three", "@remotion/media"]
+		}
+	}
+}

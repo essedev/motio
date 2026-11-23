@@ -11,7 +11,8 @@
 		"record:zod": "node record-zod.ts",
 		"record:layout": "node record-layout.ts",
 		"record:google-fonts": "node record-google-fonts.ts",
-		"record:media-utils": "node record-media-utils.ts"
+		"record:media-utils": "node record-media-utils.ts",
+		"record:templates": "node record-templates.ts"
 	},
 	"dependencies": {
 		"@remotion/bundler": "4.0.545",
