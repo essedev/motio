@@ -21,9 +21,37 @@ export const Cover = () => (
 
 A plain `<img>` or a CSS `background-image` also works: Motio waits for the images a page requests before each screenshot. `<Img>` adds retries (`maxRetries`, default 2) and then fails the render with the file name, instead of capturing an empty box.
 
-Animated GIF and WebP files play on real time in a plain `<img>`, so they differ from render to render. `<Gif>` from `@motiojs/gif` shows the GIF frame that matches the video frame.
+### Animated images
 
-> **Coming in M6: `<AnimatedImage>`.** A frame-accurate component for animated GIF, WebP and AVIF images, in the preview and in renders.
+A GIF or WebP in a plain `<img>` animates on the browser's own clock, so each render catches it at a different moment. `<AnimatedImage>` ties an animated GIF, APNG, WebP or AVIF file to the video's frames:
+
+<!-- example: examples/src/media.tsx#animated-image -->
+```tsx
+export const Sticker = () => (
+	<AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+		{/* public/sticker.webp on a 300x300 canvas, letterboxed if it is not square. It appears
+		    one second in (at 30 fps), plays at half speed and stays on its last frame. */}
+		<AnimatedImage
+			src={staticFile("sticker.webp")}
+			width={300}
+			height={300}
+			fit="contain"
+			from={30}
+			playbackRate={0.5}
+			loopBehavior="pause-after-finish"
+		/>
+	</AbsoluteFill>
+);
+```
+
+For every video frame it draws on a canvas the image frame on screen at that moment: each image frame is shown from the sum of the durations before it until the next one starts, and a frame with a duration of 0 lasts 100 ms, as in a browser. The render waits until that frame is decoded.
+
+- Without `width` and `height` the canvas takes the image's own size; `fit` (`"fill"`, `"contain"`, `"cover"`) places the image in it.
+- `loopBehavior` is `"loop"` (the default), `"pause-after-finish"` or `"clear-after-finish"`.
+- The `<Sequence>` timing props (`from`, `durationInFrames`, `trimBefore`, `freeze`, ...) and the crop props work as on a sequence; `ref` gives the `<canvas>`.
+- A file that cannot be loaded or decoded fails the render with its name. Pass `onError` to carry on without the image.
+
+Decoding uses the browser's `ImageDecoder`, which the renderer's Chrome has, as do Chrome and Firefox in the Player; Safari does not. `<Gif>` from `@motiojs/gif` decodes GIF files in JavaScript and works everywhere.
 
 ## Video
 

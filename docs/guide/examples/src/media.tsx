@@ -1,6 +1,7 @@
 import { Video as CanvasVideo } from "@motiojs/media";
 import {
 	AbsoluteFill,
+	AnimatedImage,
 	Audio,
 	Img,
 	interpolate,
@@ -17,6 +18,24 @@ export const Cover = () => (
 		<Img
 			src={staticFile("cover.jpg")}
 			style={{ width: "100%", height: "100%", objectFit: "cover" }}
+		/>
+	</AbsoluteFill>
+);
+// endregion
+
+// region: animated-image
+export const Sticker = () => (
+	<AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+		{/* public/sticker.webp on a 300x300 canvas, letterboxed if it is not square. It appears
+		    one second in (at 30 fps), plays at half speed and stays on its last frame. */}
+		<AnimatedImage
+			src={staticFile("sticker.webp")}
+			width={300}
+			height={300}
+			fit="contain"
+			from={30}
+			playbackRate={0.5}
+			loopBehavior="pause-after-finish"
 		/>
 	</AbsoluteFill>
 );
