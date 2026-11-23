@@ -1,6 +1,6 @@
 // D-013 proof: on a machine where the BeginFrame probe succeeds (the pinned Linux image), the
 // BeginFrame capture path gives the same decoded pixels as Page.captureScreenshot on every fixture
-// composition, and its speed-up is measured. Skipped where BeginFrame is unavailable (macOS).
+// composition, and its speed is measured. Skipped where BeginFrame is unavailable (macOS).
 import { readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -63,7 +63,8 @@ async function capture(
 		outputDir: null,
 		frames,
 		imageFormat,
-		concurrency: 2,
+		// BeginFrame capture is refused above concurrency 1 (one page at a time).
+		concurrency: method === "begin-frame" ? 1 : 2,
 		captureMethod: method,
 		onFrameBuffer: (buffer, frame) => {
 			images.set(frame, buffer);
@@ -139,7 +140,7 @@ describe.skipIf(!probe.supported)("BeginFrame capture equals the screenshot path
 		expect(await differing(serveUrl, "alpha", [0])).toEqual([]);
 	});
 
-	it("measures the speed-up at 1080p, one page", async () => {
+	it("measures BeginFrame against screenshots at 1080p, one page", async () => {
 		const serveUrl = bundles.get("protocol") as string;
 		const composition = await selectComposition({
 			serveUrl,
@@ -171,6 +172,13 @@ describe.skipIf(!probe.supported)("BeginFrame capture equals the screenshot path
 			results.push(`${imageFormat} speed-up: ${speedUp.toFixed(2)}x`);
 		}
 		console.log(`BeginFrame against screenshot, 1920x1080, 240 frames:\n${results.join("\n")}`);
-		expect(msPerFrame["png-begin-frame"]).toBeLessThan(msPerFrame["png-screenshot"] as number);
+		// Since D-041 screenshots are as fast as BeginFrame on one page (D-043), and BeginFrame now
+		// draws until the page is on screen before capturing: it must stay within 1.5 times the
+		// screenshot path (measured 0.82 to 1.02 times in the pinned image).
+		for (const format of ["png", "jpeg"]) {
+			expect(msPerFrame[`${format}-begin-frame`]).toBeLessThan(
+				1.5 * (msPerFrame[`${format}-screenshot`] as number),
+			);
+		}
 	}, 600_000);
 });

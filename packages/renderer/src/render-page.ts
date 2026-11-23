@@ -82,6 +82,14 @@ const RASTER_RESET_WORLD = `(() => {
 		if (value) style.setProperty("opacity", value, priority);
 		else style.removeProperty("opacity");
 	};
+	let frameSeen = false;
+	globalThis.watchFrame = () => {
+		frameSeen = false;
+		requestAnimationFrame(() => {
+			frameSeen = true;
+		});
+	};
+	globalThis.frameSeen = () => frameSeen;
 	globalThis.hideForOneFrame = async () => {
 		hide();
 		try {
@@ -91,6 +99,9 @@ const RASTER_RESET_WORLD = `(() => {
 		}
 	};
 })()`;
+
+/** BeginFrames a BeginFrame capture draws at most while waiting for the page to be on screen. */
+const SETTLE_ATTEMPTS = 20;
 
 /** Extra time the Node watchdog gives a seek beyond the readiness timeout. */
 export const WATCHDOG_GRACE_MS = 5_000;
@@ -580,8 +591,8 @@ export class RenderPage {
 		await this.evaluateIsolated(RASTER_RESET_WORLD);
 	}
 
-	/** Evaluates `expression` in the isolated world and awaits its promise. */
-	private async evaluateIsolated(expression: string): Promise<void> {
+	/** Evaluates `expression` in the isolated world, awaits its promise and returns its value. */
+	private async evaluateIsolated(expression: string): Promise<unknown> {
 		const contextId = this.isolatedWorld;
 		if (contextId === undefined) {
 			throw new MotioError("E_RENDER_ERROR", "The page was used before it finished loading.");
@@ -589,6 +600,7 @@ export class RenderPage {
 		const res = await this.cdp.send("Runtime.evaluate", {
 			expression,
 			awaitPromise: true,
+			returnByValue: true,
 			contextId,
 		});
 		if (res.exceptionDetails) {
@@ -597,6 +609,7 @@ export class RenderPage {
 				`Resetting the page before a frame failed: ${res.exceptionDetails.exception?.description ?? res.exceptionDetails.text}`,
 			);
 		}
+		return res.result.value;
 	}
 
 	/**
@@ -604,8 +617,8 @@ export class RenderPage {
 	 * before (ARCHITECTURE, "Raster reset"): the document, already showing the frame, is hidden
 	 * for one painted frame. BeginFrame pages draw that frame in `captureBeginFrame`.
 	 */
-	private resetRaster(): Promise<void> {
-		return this.evaluateIsolated("hideForOneFrame()");
+	private async resetRaster(): Promise<void> {
+		await this.evaluateIsolated("hideForOneFrame()");
 	}
 
 	private async call<T>(
@@ -769,12 +782,17 @@ export class RenderPage {
 		quality: number,
 		frame: number,
 	): Promise<Buffer> {
-		// One frame is drawn with the document hidden, so the captured frame is rasterised as on a
+		// One main frame runs with the document hidden, so the captured frame is rasterised as on a
 		// fresh page (ARCHITECTURE, "Raster reset"); a frame without display updates does not
-		// paint, and Blink compares the captured frame with the last paint.
-		await this.evaluateIsolated("hide()");
+		// paint, and Blink compares the captured frame with the last paint. The animation frame
+		// watched in the isolated world proves that main frame ran: a renderer that missed a
+		// BeginFrame runs it on the next one.
+		await this.evaluateIsolated("hide(); watchFrame()");
 		try {
-			await this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS });
+			for (let i = 0; i < BEGIN_FRAME_ATTEMPTS; i++) {
+				await this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS });
+				if (await this.isolatedFrameSeen()) break;
+			}
 		} finally {
 			await this.evaluateIsolated("show()");
 		}
@@ -783,6 +801,7 @@ export class RenderPage {
 		await this.awaitResources(() =>
 			this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS, noDisplayUpdates: true }),
 		);
+		await this.settleBeginFrame();
 		const screenshot = { format, ...(format === "png" ? {} : { quality }), optimizeForSpeed: true };
 		for (let attempt = 0; attempt < BEGIN_FRAME_ATTEMPTS; attempt++) {
 			const res = await this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS, screenshot });
@@ -793,6 +812,33 @@ export class RenderPage {
 			`No BeginFrame returned a screenshot of frame ${frame} in ${BEGIN_FRAME_ATTEMPTS} attempts. Retry with captureMethod "screenshot".`,
 			{ frame },
 		);
+	}
+
+	/**
+	 * Draws frames until the shown document is on screen. The display compositor draws a
+	 * BeginFrame without waiting for the page's renderer when the renderer did not receive that
+	 * BeginFrame in time (it was not observing BeginFrames yet, or was throttled) or still has an
+	 * undrawn frame: the renderer's frame then lands one BeginFrame late, and stays late on every
+	 * following frame, so the screenshot would show the hidden document or an earlier frame. This
+	 * happened on loaded machines (several pages, one browser each). Frames are drawn until a main
+	 * frame ran after `show()` (the watched animation frame, which commits it) and a later
+	 * BeginFrame finds nothing new to draw: every frame the renderer produced is on screen and the
+	 * renderer is no longer behind. A page that changes on every frame (a loop on
+	 * `requestAnimationFrame`) never settles and is captured after the last attempt, as before.
+	 */
+	private async settleBeginFrame(): Promise<void> {
+		await this.evaluateIsolated("watchFrame()");
+		let committed = false;
+		for (let i = 0; i < SETTLE_ATTEMPTS; i++) {
+			const res = await this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS });
+			if (committed && !res.hasDamage) return;
+			committed ||= await this.isolatedFrameSeen();
+		}
+	}
+
+	/** Whether an animation frame ran since the last `watchFrame()` in the isolated world. */
+	private async isolatedFrameSeen(): Promise<boolean> {
+		return (await this.evaluateIsolated("frameSeen()")) === true;
 	}
 
 	/**
