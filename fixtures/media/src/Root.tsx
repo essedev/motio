@@ -4,6 +4,7 @@ import {
 	Audio,
 	Composition,
 	interpolate,
+	Loop,
 	OffthreadVideo,
 	Sequence,
 	staticFile,
@@ -67,6 +68,25 @@ const Clicks: React.FC<{
 				{...(step ? { volume: (f: number) => (f < 30 ? 0.2 : 0.8) } : {})}
 			/>
 		</Sequence>
+	</AbsoluteFill>
+);
+
+/** Two copies of one source, the second from frame 4 at volume 0.6 (153/255, exact in Remotion). */
+const Overlap: React.FC<{ src?: string }> = ({ src = "clicks.wav" }) => (
+	<AbsoluteFill style={{ backgroundColor: "black" }}>
+		<Audio src={staticFile(src)} />
+		<Sequence from={4}>
+			<Audio src={staticFile(src)} volume={0.6} />
+		</Sequence>
+	</AbsoluteFill>
+);
+
+/** A source trimmed by 3 frames, restarted every 20 frames by a Loop. */
+const Looped: React.FC<{ src?: string }> = ({ src = "clicks.wav" }) => (
+	<AbsoluteFill style={{ backgroundColor: "black" }}>
+		<Loop durationInFrames={20}>
+			<Audio src={staticFile(src)} trimBefore={3} />
+		</Loop>
 	</AbsoluteFill>
 );
 
@@ -185,5 +205,7 @@ export const Root: React.FC = () => (
 			{...size}
 			defaultProps={{ step: true }}
 		/>
+		<Composition id="audio-overlap" component={Overlap} fps={30} durationInFrames={60} {...size} />
+		<Composition id="audio-loop" component={Looped} fps={30} durationInFrames={60} {...size} />
 	</>
 );
