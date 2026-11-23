@@ -492,6 +492,12 @@ importers:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
 
+  packages/create-motio:
+    dependencies:
+      '@motiojs/cli':
+        specifier: workspace:*
+        version: link:../cli
+
   packages/distributed:
     dependencies:
       '@motiojs/audio':

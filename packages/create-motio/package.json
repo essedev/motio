@@ -1,0 +1,27 @@
+{
+	"name": "create-motio",
+	"version": "0.0.0",
+	"description": "Create a Motio project: npm create motio, pnpm create motio",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"bin": {
+		"create-motio": "./dist/bin.js"
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"engines": {
+		"node": ">=22"
+	},
+	"dependencies": {
+		"@motiojs/cli": "workspace:*"
+	}
+}
