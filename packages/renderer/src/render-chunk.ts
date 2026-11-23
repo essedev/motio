@@ -15,7 +15,7 @@ import { captureVideo, mixTimelineAudio } from "./capture-video.js";
 import { MotioError } from "./errors.js";
 import {
 	assertFfmpegSupports,
-	pickEncoder,
+	chooseVideoEncoder,
 	probeFfmpeg,
 	resolveFfmpegPath,
 	videoArgs,
@@ -176,7 +176,7 @@ export async function renderChunk(options: RenderChunkOptions): Promise<RenderCh
 	const ffmpeg = resolveFfmpegPath(options.ffmpegExecutable);
 	const ffmpegInfo = await probeFfmpeg(ffmpeg);
 	assertFfmpegSupports(ffmpegInfo, videoCodecNeeds(video));
-	const encoder = pickEncoder(ffmpegInfo, video.encoding.spec.encoders);
+	const encoder = await chooseVideoEncoder(ffmpegInfo, video.encoding);
 	const output = resolvePath(options.outputLocation);
 	await mkdir(dirname(output), { recursive: true });
 	const part = `${output}.${process.pid}.part${container.extension}`;

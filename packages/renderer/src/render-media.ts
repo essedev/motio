@@ -23,9 +23,9 @@ import {
 import { MotioError } from "./errors.js";
 import {
 	assertFfmpegSupports,
+	chooseVideoEncoder,
 	gifEncodeArgs,
 	gifPaletteArgs,
-	pickEncoder,
 	probeFfmpeg,
 	resolveFfmpegPath,
 	runFfmpeg,
@@ -191,7 +191,7 @@ export interface VideoPlan {
 
 /**
  * The FFmpeg encoders and decoders a video plan needs; the video encoder is the list of the
- * codec's alternative encoders (`pickEncoder` chooses among them).
+ * codec's alternative encoders (`chooseVideoEncoder` picks one).
  */
 export function videoCodecNeeds(plan: VideoPlan): {
 	encoders: Array<string | readonly string[]>;
@@ -319,7 +319,7 @@ export async function renderMediaInternal(
 		encoders: [...needs.encoders, ...(audioEncoder ? [audioEncoder] : [])],
 		decoders: needs.decoders,
 	});
-	const videoEncoder = video ? pickEncoder(ffmpegInfo, video.encoding.spec.encoders) : undefined;
+	const videoEncoder = video ? await chooseVideoEncoder(ffmpegInfo, video.encoding) : undefined;
 	if (separateAudioTo) {
 		await checkOverwrite(separateAudioTo, options.overwrite ?? true);
 		// Created like the directory of the output location.

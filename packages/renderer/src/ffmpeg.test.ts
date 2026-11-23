@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveVideoEncoding, type VideoCodec } from "./codecs.js";
 import {
 	assertFfmpegSupports,
+	chooseVideoEncoder,
 	colorFilter,
 	colorTags,
 	type FfmpegInfo,
@@ -11,6 +12,7 @@ import {
 	LIBAOM_CPU_USED,
 	parseCodecList,
 	parseFfmpegVersion,
+	parseSvtAv1Version,
 	pickEncoder,
 	VP8_BITRATE_CAP,
 	videoArgs,
@@ -89,6 +91,44 @@ describe("ffmpeg probing", () => {
 			details: { encoder: "libsvtav1", alternatives: ["libsvtav1", "libaom-av1"] },
 		});
 		expect((error as Error).message).toContain("libsvtav1 or libaom-av1");
+	});
+
+	it("parses SVT-AV1's version line", () => {
+		expect(parseSvtAv1Version("Svt[info]: SVT [version]:\tSVT-AV1 Encoder Lib v4.2.0\n")).toEqual({
+			version: "4.2.0",
+			major: 4,
+		});
+		expect(parseSvtAv1Version("nothing")).toEqual({ version: null, major: null });
+	});
+
+	it("prefers SVT-AV1 3.0 or later, then libaom, then an older SVT-AV1 (D-064)", async () => {
+		const av1 = (crf?: number) => resolveVideoEncoding({ codec: "av1", imageFormat: "png", crf });
+		const svt = (version: string | null) => async () => ({
+			version,
+			major: version === null ? null : Number(version.split(".")[0]),
+		});
+		const both = info({ encoders: new Set(["libsvtav1", "libaom-av1"]) });
+		const svtOnly = info({ encoders: new Set(["libsvtav1"]) });
+		const aomOnly = info({ encoders: new Set(["libaom-av1"]) });
+		expect(await chooseVideoEncoder(both, av1(), svt("4.2.0"))).toBe("libsvtav1");
+		expect(await chooseVideoEncoder(both, av1(), svt(null))).toBe("libsvtav1");
+		expect(await chooseVideoEncoder(both, av1(), svt("2.3.0"))).toBe("libaom-av1");
+		expect(await chooseVideoEncoder(svtOnly, av1(), svt("2.3.0"))).toBe("libsvtav1");
+		await expect(chooseVideoEncoder(svtOnly, av1(0), svt("2.3.0"))).rejects.toMatchObject({
+			code: "E_FFMPEG_ENCODER_MISSING",
+			details: { svtAv1: "2.3.0" },
+		});
+		const neverProbed = async () => {
+			throw new Error("probed");
+		};
+		expect(await chooseVideoEncoder(aomOnly, av1(0), neverProbed)).toBe("libaom-av1");
+		expect(
+			await chooseVideoEncoder(
+				both,
+				resolveVideoEncoding({ codec: "h264", imageFormat: "png" }),
+				neverProbed,
+			),
+		).toBe("libx264");
 	});
 });
 
@@ -226,7 +266,7 @@ describe("encoder arguments", () => {
 		expect(av1(40, "libaom-av1")).toContain(
 			`-c:v libaom-av1 -crf 40 -b:v 0 -cpu-used ${LIBAOM_CPU_USED} -row-mt 1 -pix_fmt yuv420p`,
 		);
-		expect(av1(0, "libaom-av1")).toContain("-c:v libaom-av1 -lossless 1 -b:v 0");
+		expect(av1(0, "libaom-av1")).toContain("-c:v libaom-av1 -crf 0 -b:v 0");
 		expect(av1(undefined)).not.toContain("-tag:v");
 	});
 

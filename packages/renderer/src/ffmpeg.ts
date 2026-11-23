@@ -169,6 +169,94 @@ export function pickEncoder(info: FfmpegInfo, encoders: readonly [string, ...str
 	return encoders.find((e) => info.encoders.has(e)) ?? encoders[0];
 }
 
+/** SVT-AV1's library version as FFmpeg's `libsvtav1` reports it. */
+export interface SvtAv1Version {
+	/** E.g. `4.2.0`; null when the version line was not found. */
+	version: string | null;
+	major: number | null;
+}
+
+/** Parses the `SVT-AV1 Encoder Lib v4.2.0` line SVT-AV1 prints at its default log level. */
+export function parseSvtAv1Version(text: string): SvtAv1Version {
+	const m = /SVT-AV1 Encoder Lib v(\d+)\.(\d+)\.(\d+)/.exec(text);
+	return m
+		? { version: `${m[1]}.${m[2]}.${m[3]}`, major: Number(m[1]) }
+		: { version: null, major: null };
+}
+
+const svtCache = new Map<string, Promise<SvtAv1Version>>();
+
+/**
+ * The SVT-AV1 version linked into an FFmpeg: one 64x64 frame encoded to nothing, which makes
+ * SVT-AV1 print its version. Cached per executable.
+ */
+export function probeSvtAv1(ffmpeg: string): Promise<SvtAv1Version> {
+	let p = svtCache.get(ffmpeg);
+	if (!p) {
+		p = new Promise<SvtAv1Version>((resolve) => {
+			const child = spawn(
+				ffmpeg,
+				[
+					"-hide_banner",
+					"-f",
+					"lavfi",
+					"-i",
+					"color=s=64x64:d=0.04",
+					"-frames:v",
+					"1",
+					"-c:v",
+					"libsvtav1",
+					"-f",
+					"null",
+					"-",
+				],
+				{ stdio: ["ignore", "ignore", "pipe"], env: { ...process.env, SVT_LOG: "3" } },
+			);
+			let stderr = "";
+			child.stderr.on("data", (c: Buffer) => {
+				stderr += c.toString();
+			});
+			child.on("error", () => resolve({ version: null, major: null }));
+			child.on("close", () => resolve(parseSvtAv1Version(stderr)));
+		});
+		svtCache.set(ffmpeg, p);
+	}
+	return p;
+}
+
+/**
+ * Oldest SVT-AV1 the renderer prefers to libaom: 3.0 added lossless coding, and 2.3.0 (Debian
+ * trixie) replaced whole blocks of a frame-stamp fixture with the colour around them at CRFs from
+ * 20 to 50, where 4.2.0 is exact at every CRF and preset tried (D-064).
+ */
+export const MIN_PREFERRED_SVT_AV1_MAJOR = 3;
+
+/**
+ * The encoder of a render (call after `assertFfmpegSupports`). For AV1: SVT-AV1 3.0 or later,
+ * else libaom, else an older SVT-AV1, which cannot encode CRF 0 losslessly and fails for it.
+ */
+export async function chooseVideoEncoder(
+	info: FfmpegInfo,
+	encoding: ResolvedVideoEncoding,
+	probeSvt: (ffmpeg: string) => Promise<SvtAv1Version> = probeSvtAv1,
+): Promise<string> {
+	if (encoding.codec !== "av1" || !info.encoders.has("libsvtav1")) {
+		return pickEncoder(info, encoding.spec.encoders);
+	}
+	const svt = await probeSvt(info.path);
+	// An unparsed version line means a format newer than the ones known: treat it as recent.
+	if (svt.major === null || svt.major >= MIN_PREFERRED_SVT_AV1_MAJOR) return "libsvtav1";
+	if (info.encoders.has("libaom-av1")) return "libaom-av1";
+	if (encoding.crf === 0) {
+		throw new MotioError(
+			"E_FFMPEG_ENCODER_MISSING",
+			`CRF 0 encodes AV1 losslessly, which needs SVT-AV1 ${MIN_PREFERRED_SVT_AV1_MAJOR}.0 or later or libaom; FFmpeg at "${info.path}" has SVT-AV1 ${svt.version} only. Use a CRF of 1 or more, a newer FFmpeg, or @motiojs/ffmpeg.`,
+			{ details: { path: info.path, version: info.version, svtAv1: svt.version } },
+		);
+	}
+	return "libsvtav1";
+}
+
 /** Colour tags and conversion matrix for a `colorSpace`. */
 export interface ColorTags {
 	/** `scale` filter matrix name. */
@@ -350,13 +438,15 @@ export function codecArgs(
 				...(encoding.alpha ? ["-auto-alt-ref", "0"] : []),
 			];
 		case "av1":
-			// D-064: CRF 0, the best quality, encodes losslessly, as for VP9. SVT-AV1 reads a CRF of
-			// 0 as "not set" and would fall back to its own default.
+			// D-064: CRF 0, the best quality, encodes losslessly, as for VP9. libaom's CRF 0 is
+			// lossless (its -lossless option, in FFmpeg 7.1, was not); SVT-AV1 reads a CRF of 0 as
+			// "not set" and would fall back to its own default.
 			if (encoder === "libaom-av1") {
 				return [
 					"-c:v",
 					"libaom-av1",
-					...(encoding.crf === 0 ? ["-lossless", "1"] : ["-crf", crf]),
+					"-crf",
+					crf,
 					"-b:v",
 					"0",
 					"-cpu-used",

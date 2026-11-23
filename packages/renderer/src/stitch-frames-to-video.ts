@@ -16,10 +16,10 @@ import type { ProResProfile } from "./codecs.js";
 import { MotioError } from "./errors.js";
 import {
 	assertFfmpegSupports,
+	chooseVideoEncoder,
 	Encoder,
 	gifEncodeArgs,
 	gifPaletteArgs,
-	pickEncoder,
 	probeFfmpeg,
 	resolveFfmpegPath,
 	resolveFfprobePath,
@@ -242,7 +242,7 @@ export async function stitchFramesToVideo(
 		encoders: [...needs.encoders, ...(audioEncoder ? [audioEncoder] : [])],
 		decoders: needs.decoders,
 	});
-	const videoEncoder = pickEncoder(ffmpegInfo, video.encoding.spec.encoders);
+	const videoEncoder = await chooseVideoEncoder(ffmpegInfo, video.encoding);
 	if (separateAudioTo) await checkOverwrite(separateAudioTo, options.force ?? true);
 
 	const imagePath = (frame: number) =>
