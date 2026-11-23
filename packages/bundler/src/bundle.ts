@@ -191,14 +191,21 @@ function pagePlugin(options: PagePluginOptions): Plugin {
 			if (id === resolvedContext) {
 				const bundle = {
 					publicPath: options.publicPath,
-					staticBase: options.staticBase,
 					staticFiles: options.staticFiles.slice(0, STATIC_FILES_LIMIT),
 				};
-				// Runtime variables injected by the renderer (RunContext.env) win over build-time ones.
+				// A relative static base resolves against the page URL to a path, as Remotion's
+				// bundle does (`new URL("./public", location.href).pathname`): served from the root,
+				// staticFile("a.png") is "/public/a.png" (D-046). Without a page (Node) it stays as is.
 				return [
+					`const rawBase = ${JSON.stringify(options.staticBase)};`,
+					`const relative = rawBase.startsWith("./") || rawBase.startsWith("../");`,
+					`const staticBase = relative && typeof location !== "undefined" ? new URL(rawBase, location.href).pathname : rawBase;`,
+					`const raw = ${JSON.stringify(bundle)};`,
+					`const staticFiles = raw.staticFiles.map((file) => ({ ...file, src: staticBase + file.src.slice(rawBase.length) }));`,
+					// Runtime variables injected by the renderer (RunContext.env) win over build-time ones.
 					`const runContext = globalThis.__motioContext;`,
 					`const env = Object.freeze({ ...${JSON.stringify(options.env)}, ...(runContext?.env ?? {}), NODE_ENV: "production" });`,
-					`globalThis.${BUNDLE_GLOBAL} = Object.freeze({ ...${JSON.stringify(bundle)}, env });`,
+					`globalThis.${BUNDLE_GLOBAL} = Object.freeze({ ...raw, staticBase, staticFiles, env });`,
 					`globalThis.${PROCESS_ENV_GLOBAL} = env;`,
 				].join("\n");
 			}

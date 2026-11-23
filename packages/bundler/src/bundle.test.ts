@@ -38,15 +38,24 @@ const testOptions = (
 });
 
 /** Runs the built page entry in Node, as far as a page without a DOM can go. */
-async function runPage(outDir: string, runContextEnv: Record<string, string> = {}) {
+async function runPage(
+	outDir: string,
+	runContextEnv: Record<string, string> = {},
+	location?: { href: string },
+) {
 	const html = await readFile(join(outDir, "index.html"), "utf8");
 	const script = /<script type="module" src="\.\/([^"]+)"/.exec(html)?.[1];
 	if (!script) throw new Error(`No module script in:\n${html}`);
 	const scope = globalThis as Record<string, unknown>;
 	scope.__motioContext = { env: runContextEnv };
+	if (location) scope.location = location;
 	delete scope.__fakeRuntime;
-	await import(`${pathToFileURL(join(outDir, script)).href}?t=${Date.now()}`);
-	delete scope.__motioContext;
+	try {
+		await import(`${pathToFileURL(join(outDir, script)).href}?t=${Date.now()}`);
+	} finally {
+		delete scope.__motioContext;
+		if (location) delete scope.location;
+	}
 	return { html, result: scope.__fakeRuntime as FakeRuntimeResult };
 }
 
@@ -70,7 +79,11 @@ describe("bundle", () => {
 			}),
 		);
 		expect(serveUrl).toBe(outDir);
-		page = await runPage(outDir, { RUNTIME_ONLY: "runtime" });
+		page = await runPage(
+			outDir,
+			{ RUNTIME_ONLY: "runtime" },
+			{ href: "http://localhost:3000/sites/a/index.html" },
+		);
 	});
 
 	it("generates an index.html loading the entry chunk and the extracted CSS", async () => {
@@ -102,10 +115,11 @@ describe("bundle", () => {
 
 	it("copies public/ and resolves staticFile() with Remotion's encoding", async () => {
 		expect(await readFile(join(outDir, "public", "data", "a b#c.txt"), "utf8")).toBe("encoded\n");
-		expect(page.result.html).toContain("./public/data/a%20b%23c.txt");
+		// The relative base resolves against the page URL to a path, like Remotion's bundle.
+		expect(page.result.html).toContain("<span>/sites/a/public/data/a%20b%23c.txt");
 		expect(page.result.bundle.staticFiles.map((f) => f.src)).toEqual([
-			"./public/data/a%20b%23c.txt",
-			"./public/hello.txt",
+			"/sites/a/public/data/a%20b%23c.txt",
+			"/sites/a/public/hello.txt",
 		]);
 	});
 
