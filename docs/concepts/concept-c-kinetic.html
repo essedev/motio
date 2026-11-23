@@ -1,0 +1,1747 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Concept C - Kinetic</title>
+		<!--
+			Concept C "Kinetic": identità di marca e sito di Motio, direzione C di tre (A e B sono in file a parte).
+			Tasti: c oppure 1 2 3 per l'alternativa di logo (c1 Trail, c2 Flipbook, c3 Coil), t tema, p nasconde la barra.
+			I bottoni Brand, Landing, Docs, Promo nella barra saltano alle sezioni.
+
+			La scommessa: Motio come strumento creativo in cui il marchio stesso si muove. Il sito non descrive il
+			movimento, lo dimostra: il logo è una composizione disegnata dal numero del fotogramma con lo stesso
+			spring() della guida (damping 12, stiffness 120), e l'hero è un player con la testina trascinabile in cui
+			si vede che un fotogramma è una funzione del suo numero. Energia nella landing e nel brand, la doc resta calma.
+
+			Le scelte:
+			- Palette: carta bianca e inchiostro prugna (#2A0E2E, mai un quasi-nero), tre colori saturi usati solo come
+			  campiture piatte che si toccano bordo a bordo (Pulse #FF3D8B, Spark #FFDD3C, Drift #12B5A5). Niente
+			  gradienti. Il testo su qualunque campitura è prugna. Tema scuro: notte prugna #1C0B1F, campiture identiche.
+			- Tipografia: Anybody a larghezza variabile per i titoli (l'asse wdth è il gesto cinetico: il logo c3 si
+			  allarga a molla), Instrument Sans per il testo, IBM Plex Mono solo per codice e comandi.
+			- Densità: griglia da poster svizzero a 12 colonne, titoli enormi, blocchi grandi di colore; la doc torna
+			  ariosa, una colonna di prosa sotto i 72 caratteri.
+			- Materiale: superfici piatte con filo intero su tutto il bordo, raggi concentrici (18 = 10 + 8,
+			  10 = 6 + 4), nessuna ombra. Movimento solo come risposta (hover, click, trascinamento) più un solo
+			  momento orchestrato al caricamento; con prefers-reduced-motion si vede l'ultimo fotogramma.
+
+			Logo, tre alternative dentro la direzione:
+			- c1 Trail: tre dischi che lasciano la scia, come l'onion skin di un'animazione; il rosa è il fotogramma corrente.
+			- c2 Flipbook: tre fotogrammi a ventaglio, come il pollice su un flipbook.
+			- c3 Coil: una m geometrica che si comprime e si allunga come una molla, su campitura gialla.
+
+			Dati: README (promessa, i quattro motivi, comandi), docs/guide/README.md (ordine delle pagine),
+			getting-started.md (starter, comandi), frames-and-time.md, animation.md (testo e codice della pagina Docs,
+			il componente Badge nell'hero, la config della molla), coming-from-remotion.md (compatibilità),
+			ROADMAP.md (tabella performance), packages/*/package.json (nomi e descrizioni, riscritte in una riga).
+			Inventato: nomi dei colori e ruoli, copy di raccordo della landing (titoli di sezione, didascalie),
+			link GitHub e npm (puntano a segnaposto), il testo della ricerca, la composizione dell'hero (è il
+			Badge vero della guida con durationInFrames 60, scelto qui), i fattori di velocità calcolati dalla tabella,
+			gli hash di fotogramma nel riquadro "Deterministic by test" (illustrativi), "And 26 more" contato su packages/.
+			spring() è reimplementato nella pagina con la soluzione analitica dell'oscillatore smorzato: la forma è quella
+			della guida, i valori al millesimo possono differire da quelli del pacchetto.
+		-->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,300..900&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			:root {
+				--paper: #ffffff;
+				--plum: #2a0e2e;
+				--night: #1c0b1f;
+				--pulse: #ff3d8b;
+				--spark: #ffdd3c;
+				--drift: #12b5a5;
+				--bg: var(--paper);
+				--surface: #f7f3f6;
+				--sunk: #efe8ed;
+				--text: var(--plum);
+				--muted: #6d5770;
+				--line: rgb(42 14 46 / 0.15);
+				--code-bg: #2a0e2e;
+				--code-text: #f6eff4;
+				--code-muted: #a88fab;
+				--display: 'Anybody', system-ui, sans-serif;
+				--sans: 'Instrument Sans', system-ui, sans-serif;
+				--mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+				--r-lg: 18px;
+				--r-md: 10px;
+				--r-sm: 6px;
+				--gutter: clamp(16px, 4vw, 48px);
+				--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+			}
+			:root[data-theme='dark'] {
+				--bg: var(--night);
+				--surface: #28122c;
+				--sunk: #150717;
+				--text: #f6eff4;
+				--muted: #bea9c1;
+				--line: rgb(255 255 255 / 0.14);
+				--code-bg: #120513;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; }
+			html { scroll-behavior: smooth; }
+			@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+			body {
+				--logo-bg: var(--bg);
+				min-height: 100vh;
+				background: var(--bg);
+				color: var(--text);
+				font: 16px/1.55 var(--sans);
+				-webkit-font-smoothing: antialiased;
+				overflow-x: clip;
+			}
+			[hidden] { display: none !important; }
+			a { color: inherit; }
+			button { font: inherit; color: inherit; }
+			:focus-visible { outline: 3px solid var(--pulse); outline-offset: 2px; }
+			code, kbd, pre { font-family: var(--mono); }
+			p { margin: 0; }
+			h1, h2, h3, h4 { margin: 0; }
+
+			/* Concept chrome: the variant bar. Not part of the design. */
+			.switch { position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; background: #111; color: #aaa; font: 12px/1.4 ui-monospace, Menlo, monospace; }
+			.switch button { font: inherit; border: 0; padding: 5px 9px; border-radius: 6px; background: #262626; color: #eee; cursor: pointer; }
+			.switch button[aria-pressed='true'] { background: #eee; color: #111; }
+			.switch p { margin: 0 0 0 8px; flex: 1 1 240px; min-width: 0; }
+			.switch .jumps { display: flex; gap: 4px; flex-wrap: wrap; }
+			body[data-chrome='off'] .switch { display: none; }
+
+			/* Layout */
+			.wrap { max-width: 1360px; margin: 0 auto; padding: 0 var(--gutter); }
+			.g12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; }
+			.sheet { padding: 72px 0 96px; }
+			.sheet + .sheet { border-top: 1px solid var(--line); }
+			.sheet-head { display: grid; grid-template-columns: auto 1fr; gap: 8px 20px; align-items: end; margin-bottom: 48px; }
+			.sheet-num { font: 800 clamp(64px, 9vw, 120px)/0.8 var(--display); font-variation-settings: 'wdth' 60; color: var(--pulse); }
+			.sheet-title { font: 800 clamp(36px, 5vw, 64px)/0.95 var(--display); font-variation-settings: 'wdth' 120; letter-spacing: -0.01em; }
+			.sheet-head p { grid-column: 2; color: var(--muted); max-width: 62ch; }
+			.block { margin-top: 64px; }
+			.block-title { font: 750 26px/1.1 var(--display); font-variation-settings: 'wdth' 115; margin-bottom: 8px; }
+			.block-lede { color: var(--muted); max-width: 64ch; margin-bottom: 24px; }
+
+			/* Surfaces: every surface of the same level gets the full edge. */
+			.surface { background: var(--surface); border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px var(--line); }
+			.field { border-radius: var(--r-lg); color: var(--plum); box-shadow: inset 0 0 0 1px var(--line); }
+			.f-pulse { background: var(--pulse); }
+			.f-spark { background: var(--spark); }
+			.f-drift { background: var(--drift); }
+			.f-plum { background: var(--plum); color: #f6eff4; }
+			.f-paper { background: #fff; color: var(--plum); }
+
+			/* Logo */
+			.logo { display: inline-flex; align-items: center; gap: 0.22em; font: 800 var(--fs, 40px) / 1 var(--display); font-variation-settings: 'wdth' 112; letter-spacing: -0.015em; color: inherit; text-decoration: none; cursor: pointer; user-select: none; }
+			.logo .mk { width: 1.18em; height: 1.18em; flex: none; overflow: visible; display: block; }
+			.logo .wm { display: inline-flex; overflow: hidden; padding: 0.06em 0.02em 0.14em; margin: -0.06em 0 -0.14em; }
+			.logo .wm span { display: inline-block; will-change: transform; }
+			.logo[data-logo='mark'] .mk { width: var(--fs, 40px); height: var(--fs, 40px); }
+			.mk .gap { stroke: var(--logo-bg); }
+
+			.logo-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+			.logo-stage { grid-column: span 8; min-height: 380px; display: grid; place-items: center; padding: 40px; position: relative; --logo-bg: var(--plum); }
+			.logo-stage .logo { --fs: clamp(64px, 9vw, 128px); }
+			.logo-stage figcaption, .tile figcaption { position: absolute; left: 20px; bottom: 16px; right: 20px; font-size: 14px; display: flex; justify-content: space-between; gap: 12px; }
+			.logo-side { grid-column: span 4; display: grid; gap: 16px; grid-template-rows: 1fr auto; }
+			.mark-stage { display: grid; place-items: center; position: relative; min-height: 220px; --logo-bg: var(--spark); }
+			.mark-stage .logo { --fs: 128px; }
+			.alts { padding: 8px; display: grid; gap: 4px; }
+			.alt { display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: center; padding: 8px 12px 8px 8px; border: 0; border-radius: var(--r-md); background: transparent; text-align: left; cursor: pointer; --logo-bg: var(--surface); }
+			.alt:hover { background: var(--sunk); --logo-bg: var(--sunk); }
+			.alt[aria-pressed='true'] { background: var(--plum); color: #f6eff4; --logo-bg: var(--plum); }
+			:root[data-theme='dark'] .alt[aria-pressed='true'] { background: #f6eff4; color: var(--plum); --logo-bg: #f6eff4; }
+			.alt .logo { --fs: 40px; }
+			.alt b { display: block; font: 700 17px/1.2 var(--display); font-variation-settings: 'wdth' 110; }
+			.alt small { display: block; font-size: 13px; opacity: 0.8; line-height: 1.35; }
+			.tile { grid-column: span 3; position: relative; min-height: 200px; display: grid; place-items: center; padding: 24px 20px 48px; }
+			.tile .logo { --fs: 40px; }
+			.tile.light { background: #fff; color: var(--plum); --logo-bg: #fff; }
+			.tile.dark { background: var(--plum); color: #f6eff4; --logo-bg: var(--plum); }
+			.tile figcaption { color: inherit; opacity: 0.75; font-size: 13px; }
+			.sizes { grid-column: span 6; display: flex; align-items: flex-end; gap: 28px; padding: 28px 24px 48px; position: relative; min-height: 160px; }
+			.sizes .logo { --logo-bg: inherit; }
+			.sizes .sz { display: grid; justify-items: center; gap: 8px; font-size: 12px; }
+			.sizes.light { background: #fff; color: var(--plum); --logo-bg: #fff; }
+			.sizes.dark { background: var(--plum); color: #f6eff4; --logo-bg: var(--plum); }
+			.sizes figcaption { position: absolute; left: 20px; bottom: 16px; font-size: 13px; opacity: 0.75; }
+
+			.contact { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; padding: 8px; }
+			.contact figure { margin: 0; background: var(--bg); border-radius: var(--r-md); box-shadow: inset 0 0 0 1px var(--line); display: grid; place-items: center; gap: 6px; padding: 18px 4px 10px; --logo-bg: var(--bg); }
+			.contact .logo { --fs: 44px; }
+			.contact figcaption { font: 500 12px/1 var(--mono); color: var(--muted); }
+
+			/* Palette */
+			.palette { display: flex; gap: 0; min-height: 300px; border-radius: var(--r-lg); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+			.sw { flex: var(--w) 1 0; padding: 18px 18px 20px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; min-width: 0; color: var(--plum); }
+			.sw b { font: 750 22px/1.05 var(--display); font-variation-settings: 'wdth' 110; }
+			.sw code { font-size: 13px; }
+			.sw span { font-size: 13px; line-height: 1.35; max-width: 26ch; }
+			.sw.dark { color: #f6eff4; }
+			.palette-rules { margin-top: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; color: var(--muted); font-size: 15px; }
+			.palette-rules b { color: var(--text); font-weight: 600; }
+
+			/* Type */
+			.type-grid { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
+			.type-card { padding: 28px; position: relative; min-width: 0; overflow: hidden; }
+			.type-card h4 { font: 600 14px/1.3 var(--sans); color: var(--muted); margin-bottom: 16px; }
+			.widths { display: grid; gap: 4px; }
+			.widths div { font: 850 clamp(48px, 7vw, 104px)/0.92 var(--display); letter-spacing: -0.02em; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; white-space: nowrap; }
+			.widths small { font: 500 12px/1 var(--mono); color: var(--muted); letter-spacing: 0; }
+			.scale { margin-top: 24px; display: grid; gap: 10px; }
+			.scale div { display: grid; grid-template-columns: 56px 1fr; align-items: baseline; gap: 12px; white-space: nowrap; overflow: hidden; }
+			.scale small { font: 500 12px/1 var(--mono); color: var(--muted); }
+			.body-sample { font-size: 18px; line-height: 1.6; max-width: 46ch; }
+			.mono-sample { margin-top: 28px; font: 400 15px/1.7 var(--mono); }
+			.mono-sample span { color: var(--muted); }
+
+			/* Motion */
+			.motion-grid { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
+			.plot { padding: 8px; }
+			.plot-inner { background: var(--bg); border-radius: var(--r-md); box-shadow: inset 0 0 0 1px var(--line); padding: 20px 20px 12px; }
+			.plot svg { width: 100%; height: auto; display: block; overflow: visible; }
+			.plot .axis { stroke: var(--line); stroke-width: 1; }
+			.plot .lbl { fill: var(--muted); font: 500 11px var(--mono); }
+			.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; margin-top: 12px; }
+			.legend i { display: inline-block; width: 18px; height: 8px; border-radius: 2px; margin-right: 8px; vertical-align: middle; }
+			.ballrow { position: relative; height: 56px; margin: 16px 0 8px; border-radius: var(--r-sm); background: var(--sunk); }
+			.ballrow .ball { position: absolute; top: 8px; left: 8px; width: 40px; height: 40px; border-radius: 50%; background: var(--pulse); }
+			.ballrow .ball.b2 { background: var(--drift); width: 40px; height: 40px; border-radius: 8px; }
+			.plot-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 12px 4px; }
+			.principles { padding: 28px; display: grid; gap: 24px; align-content: start; }
+			.principles h4 { font: 750 20px/1.15 var(--display); font-variation-settings: 'wdth' 110; margin-bottom: 4px; }
+			.principles p { color: var(--muted); font-size: 15px; }
+			.dur { width: 100%; border-collapse: collapse; font-size: 14px; }
+			.dur td { padding: 8px 0; border-top: 1px solid var(--line); vertical-align: top; }
+			.dur td:last-child { text-align: right; font-family: var(--mono); font-size: 13px; white-space: nowrap; padding-left: 12px; }
+
+			/* Components */
+			.comp-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+			.comp-cell { padding: 24px; display: grid; gap: 16px; align-content: start; }
+			.comp-cell > h4 { font: 600 14px/1.3 var(--sans); color: var(--muted); }
+			.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 48px; padding: 0 22px; border: 0; border-radius: var(--r-md); font: 650 16px/1 var(--sans); text-decoration: none; cursor: pointer; white-space: nowrap; transition: transform 160ms var(--ease-out), background-color 160ms var(--ease-out); }
+			.btn:active { transform: translateY(1px) scale(0.98); }
+			.btn-primary { background: var(--pulse); color: var(--plum); box-shadow: inset 0 0 0 1px rgb(42 14 46 / 0.2); }
+			.btn-primary:hover { background: #ff5c9e; }
+			.btn-secondary { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1.5px var(--text); }
+			.btn-secondary:hover { background: var(--sunk); }
+			.btn-sm { height: 36px; padding: 0 14px; font-size: 14px; border-radius: var(--r-sm); }
+			.btn svg { width: 16px; height: 16px; flex: none; }
+			.row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+			.badge { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; font: 600 13px/1 var(--sans); background: var(--spark); color: var(--plum); box-shadow: inset 0 0 0 1px rgb(42 14 46 / 0.2); white-space: nowrap; }
+			.badge.pulse { background: var(--pulse); }
+			.badge.drift { background: var(--drift); }
+			.badge.quiet { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+			.badge .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+			.code { margin: 0; padding: 18px 20px; background: var(--code-bg); color: var(--code-text); border-radius: var(--r-md); font: 400 13.5px/1.65 var(--mono); overflow-x: auto; tab-size: 2; box-shadow: inset 0 0 0 1px var(--line); }
+			.code .k { color: #ff86b6; }
+			.code .s { color: var(--spark); }
+			.code .n { color: #5fe0d1; }
+			.code .c { color: var(--code-muted); font-style: italic; }
+			.code .t { color: #ff86b6; }
+			.code .f { color: #ffffff; font-weight: 600; }
+			.code-card { padding: 8px; }
+			.code-card .code { border-radius: var(--r-md); }
+			.code-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 8px 12px 12px; font-size: 14px; }
+			.code-head span { font: 500 13px/1 var(--mono); color: var(--muted); }
+
+			.card { padding: 8px; display: grid; gap: 0; }
+			.card-media { border-radius: var(--r-md); height: 140px; position: relative; overflow: hidden; }
+			.card-body { padding: 16px 12px 12px; }
+			.card-body h5 { font: 750 20px/1.15 var(--display); font-variation-settings: 'wdth' 110; margin: 0 0 4px; }
+			.card-body p { color: var(--muted); font-size: 15px; }
+
+			.callout { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 16px 18px; border-radius: var(--r-md); background: color-mix(in srgb, var(--drift) 16%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--drift) 45%, transparent); font-size: 15px; }
+			.callout.warn { background: color-mix(in srgb, var(--spark) 28%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--spark) 70%, var(--plum) 10%); }
+			.callout svg { width: 24px; height: 24px; }
+			.callout b { font-weight: 650; }
+
+			/* Landing */
+			.site { background: var(--bg); }
+			.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px 0; }
+			.nav .logo { --fs: 30px; }
+			.nav-links { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+			.nav-links a { text-decoration: none; padding: 8px 12px; border-radius: var(--r-sm); font-weight: 550; }
+			.nav-links a:hover { background: var(--surface); }
+			.nav-links a.ext::after { content: ''; display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: translateY(-2px); opacity: 0.6; }
+
+			.hero { padding: 40px 0 72px; }
+			.hero-title { font: 880 clamp(46px, 9.6vw, 148px)/0.86 var(--display); font-variation-settings: 'wdth' 108; letter-spacing: -0.035em; margin: 8px 0 40px; }
+			.hero-title .ln { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+			.hero-title .ln > span { display: inline-block; will-change: transform; }
+			.hero-title .ln + .ln { padding-left: 0.6em; }
+			.hero-row { align-items: start; }
+			.hero-copy { grid-column: span 4; display: grid; gap: 24px; align-content: start; padding-top: 8px; }
+			.hero-copy p { font-size: 19px; line-height: 1.5; max-width: 38ch; }
+			.hero-copy .hero-req { font-size: 14px; color: var(--muted); max-width: 40ch; }
+			.hero-copy .pre { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+			.player { grid-column: span 8; padding: 8px; }
+			.screen { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r-md); overflow: hidden; background: var(--plum); box-shadow: inset 0 0 0 1px var(--line); }
+			.screen .disc { position: absolute; left: 50%; top: 50%; width: 18.75%; aspect-ratio: 1; border-radius: 50%; background: #ffb000; transform: translate(-50%, -50%) scale(0); }
+			.screen .stamp { position: absolute; left: 14px; top: 12px; font: 500 12px/1 var(--mono); color: rgb(246 239 244 / 0.7); }
+			.screen .stamp b { color: #fff; font-weight: 600; }
+			.transport { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding: 12px 8px 8px; }
+			.readout { display: flex; flex-wrap: wrap; gap: 6px 16px; font: 500 13px/1.3 var(--mono); color: var(--muted); justify-content: flex-end; }
+			.readout b { color: var(--text); font-weight: 600; }
+			.track { position: relative; height: 96px; margin: 0 0 0; border-radius: var(--r-md); background: var(--sunk); box-shadow: inset 0 0 0 1px var(--line); touch-action: none; cursor: ew-resize; user-select: none; }
+			.track svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+			.track .tick { stroke: var(--line); }
+			.track .tick.major { stroke: var(--muted); stroke-opacity: 0.5; }
+			.track .num { fill: var(--muted); font: 500 10px var(--mono); }
+			.track .seq { fill: var(--drift); }
+			.track .seq-l { fill: var(--plum); font: 600 11px var(--sans); }
+			.playhead { position: absolute; top: 0; bottom: 0; width: 0; left: 0; outline: none; }
+			.playhead::before { content: ''; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--pulse); }
+			.playhead .knob { position: absolute; top: -10px; left: -22px; width: 44px; height: 22px; border-radius: 6px; background: var(--pulse); color: var(--plum); font: 600 12px/22px var(--mono); text-align: center; box-shadow: inset 0 0 0 1px rgb(42 14 46 / 0.25); }
+			.playhead:focus-visible .knob { outline: 3px solid var(--text); outline-offset: 2px; }
+			.player-note { padding: 12px 8px 4px; font-size: 14px; color: var(--muted); max-width: 70ch; }
+
+			.lsec { padding: 88px 0; }
+			.lsec-head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; margin-bottom: 40px; align-items: end; }
+			.lsec-head h2 { grid-column: span 7; font: 850 clamp(40px, 6vw, 88px)/0.92 var(--display); font-variation-settings: 'wdth' 112; letter-spacing: -0.025em; }
+			.lsec-head p { grid-column: span 5; color: var(--muted); font-size: 18px; max-width: 46ch; }
+
+			.install { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-radius: var(--r-lg); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+			.step { padding: 28px 24px 24px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+			.step .n { font: 850 56px/0.8 var(--display); font-variation-settings: 'wdth' 70; }
+			.step p { font-size: 15px; max-width: 34ch; }
+			.cmd { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 14px; border-radius: var(--r-md); background: var(--plum); color: #f6eff4; font: 500 14px/1.3 var(--mono); min-width: 0; }
+			.cmd code { overflow-x: auto; white-space: nowrap; }
+			.cmd code::before { content: '$ '; color: var(--code-muted); }
+			.copy { flex: none; border: 0; height: 32px; padding: 0 10px; border-radius: var(--r-sm); background: rgb(255 255 255 / 0.1); color: #f6eff4; font: 600 12px/1 var(--sans); cursor: pointer; }
+			.copy:hover { background: rgb(255 255 255 / 0.2); }
+			.install-note { margin-top: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; color: var(--muted); font-size: 15px; }
+
+			.component-row { align-items: start; }
+			.component-row .code-card { grid-column: span 7; }
+			.component-side { grid-column: span 5; display: grid; gap: 20px; align-content: start; }
+			.component-side p { font-size: 17px; max-width: 46ch; }
+			.component-side ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+			.component-side li { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 15px; }
+			.component-side li code { font-size: 13px; font-weight: 600; }
+
+			.pipeline { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; position: relative; }
+			.stage-card { padding: 8px; display: grid; grid-template-rows: auto 1fr; }
+			.stage-art { border-radius: var(--r-md); height: 220px; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px rgb(42 14 46 / 0.15); }
+			.stage-text { padding: 18px 12px 12px; display: grid; gap: 6px; align-content: start; }
+			.stage-text h3 { font: 800 24px/1.1 var(--display); font-variation-settings: 'wdth' 110; display: flex; gap: 10px; align-items: baseline; }
+			.stage-text h3 span { font-variation-settings: 'wdth' 60; color: var(--pulse); font-size: 30px; }
+			.stage-text p { color: var(--muted); font-size: 15px; }
+			.tree { position: absolute; inset: 18px; font: 500 13px/1.9 var(--mono); color: var(--plum); }
+			.tree div { white-space: nowrap; }
+			.tree .i1 { padding-left: 18px; }
+			.tree .i2 { padding-left: 36px; }
+			.tree .i3 { padding-left: 54px; }
+			.strip { position: absolute; inset: 22px 0 22px 18px; display: flex; gap: 8px; }
+			.strip .fr { flex: none; width: 104px; border-radius: 6px; background: var(--plum); position: relative; display: grid; place-items: center; }
+			.strip .fr i { display: block; border-radius: 50%; background: #ffb000; }
+			.strip .fr b { position: absolute; left: 6px; top: 5px; font: 500 10px/1 var(--mono); color: rgb(246 239 244 / 0.75); }
+			.out { position: absolute; inset: 20px; display: grid; align-content: center; gap: 10px; }
+			.out .file { font: 800 30px/1 var(--display); font-variation-settings: 'wdth' 100; color: #f6eff4; }
+			.out .meta { display: flex; flex-wrap: wrap; gap: 6px; }
+			.out .meta span { font: 500 12px/1 var(--mono); padding: 6px 8px; border-radius: 6px; background: rgb(255 255 255 / 0.12); color: #f6eff4; }
+
+			.reasons { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-rows: minmax(240px, auto); gap: 16px; }
+			.reason { padding: 28px; display: grid; align-content: space-between; gap: 24px; position: relative; overflow: hidden; }
+			.reason h3 { font: 880 clamp(40px, 5.4vw, 80px)/0.9 var(--display); letter-spacing: -0.025em; font-variation-settings: 'wdth' 100; }
+			.reason p { font-size: 17px; max-width: 40ch; }
+			.r1 { grid-column: span 7; }
+			.r2 { grid-column: span 5; }
+			.r3 { grid-column: span 7; }
+			.r4 { grid-column: span 5; }
+			.r1 h3 { font-variation-settings: 'wdth' 140; }
+			.r2 h3 { font-variation-settings: 'wdth' 80; }
+			.hashes { display: grid; gap: 4px; font: 500 12px/1.4 var(--mono); }
+			.hashes div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 10px; border-radius: 6px; background: rgb(42 14 46 / 0.1); white-space: nowrap; overflow: hidden; }
+			.reason .cmd { background: rgb(42 14 46 / 0.9); }
+
+			.perf { padding: 8px; display: grid; grid-template-columns: 1fr; }
+			.perf-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 16px 8px; }
+			.seg { display: inline-flex; padding: 4px; gap: 4px; border-radius: var(--r-md); background: var(--sunk); box-shadow: inset 0 0 0 1px var(--line); }
+			.seg button { border: 0; height: 34px; padding: 0 14px; border-radius: var(--r-sm); background: transparent; font-weight: 600; font-size: 14px; cursor: pointer; }
+			.seg button[aria-pressed='true'] { background: var(--plum); color: #f6eff4; }
+			:root[data-theme='dark'] .seg button[aria-pressed='true'] { background: #f6eff4; color: var(--plum); }
+			.bars { display: grid; gap: 8px; padding: 8px; }
+			.bar-group { display: grid; grid-template-columns: 150px 1fr 104px; gap: 8px 20px; align-items: center; padding: 18px 16px; border-radius: var(--r-md); background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); }
+			.bar-group h4 { font: 800 22px/1.05 var(--display); font-variation-settings: 'wdth' 100; }
+			.bar-group h4 small { display: block; font: 500 13px/1.3 var(--sans); color: var(--muted); margin-top: 2px; }
+			.bar-lines { display: grid; gap: 6px; }
+			.bline { display: grid; grid-template-columns: 1fr; position: relative; height: 30px; }
+			.bline i { display: block; height: 100%; border-radius: 4px; width: 0; transition: width 600ms var(--ease-out); }
+			.bline.base i { background: color-mix(in srgb, var(--text) 22%, transparent); }
+			.bline.motio i { background: var(--pulse); }
+			.bline span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font: 600 13px/1 var(--mono); white-space: nowrap; color: var(--text); }
+			.bline.motio span { color: var(--plum); }
+			.factor { font: 880 40px/0.9 var(--display); font-variation-settings: 'wdth' 70; text-align: right; }
+			.factor small { display: block; font: 500 12px/1.3 var(--sans); color: var(--muted); }
+			.perf-foot { padding: 12px 16px 12px; font-size: 13px; color: var(--muted); }
+			@media (prefers-reduced-motion: reduce) { .bline i { transition: none; } }
+
+			.pkgs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; }
+			.pkg { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 18px 0; border-top: 1px solid var(--line); min-width: 0; }
+			.pkg code { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+			.pkg p { color: var(--muted); font-size: 15px; }
+			.pkgs-more { margin-top: 24px; color: var(--muted); }
+
+			.compat { align-items: stretch; }
+			.compat-text { grid-column: span 5; display: grid; gap: 18px; align-content: start; font-size: 17px; }
+			.compat-text p { max-width: 46ch; }
+			.compat .code-card { grid-column: span 7; }
+
+			.starters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+			.starter .card-media { height: 180px; }
+			.starter .card-body { display: grid; gap: 12px; }
+			.starter .cmd { font-size: 12.5px; }
+			.starter .cmd code { white-space: normal; }
+			.sm-basic { background: var(--plum); }
+			.sm-basic b { position: absolute; left: 22px; bottom: 26px; font: 880 44px/0.9 var(--display); font-variation-settings: 'wdth' 120; color: #f6eff4; }
+			.sm-basic i { position: absolute; right: 28px; top: 26px; width: 64px; height: 64px; border-radius: 50%; background: var(--pulse); }
+			.sm-basic i + i { right: 64px; top: 70px; width: 40px; height: 40px; background: var(--spark); }
+			.sm-blank { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); display: grid; place-items: center; }
+			.sm-blank b { font: 800 30px/1 var(--display); font-variation-settings: 'wdth' 100; opacity: 0.55; }
+			.sm-captions { background: var(--drift); display: grid; place-items: center; }
+			.sm-captions p { font: 850 30px/1.1 var(--display); font-variation-settings: 'wdth' 95; color: #f6eff4; text-align: center; padding: 0 16px; }
+			.sm-captions p span { color: var(--plum); background: var(--spark); padding: 0 6px; border-radius: 6px; }
+
+			.footer { padding: 56px 0 40px; border-top: 1px solid var(--line); }
+			.footer-grid { display: grid; grid-template-columns: 5fr repeat(3, 2fr); gap: 24px; }
+			.footer .logo { --fs: 36px; }
+			.footer h4 { font: 600 14px/1.3 var(--sans); color: var(--muted); margin-bottom: 10px; }
+			.footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+			.footer a { text-decoration: none; }
+			.footer a:hover { text-decoration: underline; }
+			.legal { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--muted); }
+			.legal p { max-width: 80ch; }
+
+			/* Docs: calm. */
+			.docs { background: var(--bg); border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px var(--line); overflow: clip; }
+			.docs-head { display: flex; align-items: center; gap: 20px; padding: 14px 24px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+			.docs-head .logo { --fs: 24px; }
+			.docs-head .sect { font-weight: 600; color: var(--muted); padding-left: 16px; border-left: 1px solid var(--line); }
+			.search { flex: 1 1 260px; max-width: 420px; margin-left: auto; position: relative; }
+			.search input { width: 100%; height: 40px; border: 0; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); color: var(--text); font: 15px var(--sans); padding: 0 44px 0 40px; }
+			.search input::placeholder { color: var(--muted); }
+			.search svg { position: absolute; left: 13px; top: 12px; width: 16px; height: 16px; color: var(--muted); }
+			.search kbd { position: absolute; right: 8px; top: 8px; height: 24px; min-width: 24px; padding: 0 6px; display: grid; place-items: center; border-radius: var(--r-sm); background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); font-size: 12px; color: var(--muted); }
+			.docs-head nav { display: flex; gap: 4px; }
+			.docs-head nav a { text-decoration: none; padding: 8px 10px; border-radius: var(--r-sm); font-weight: 550; font-size: 15px; }
+			.docs-head nav a:hover { background: var(--surface); }
+			.docs-body { display: grid; grid-template-columns: 260px minmax(0, 1fr) 220px; gap: 48px; padding: 0 24px; }
+			.side { padding: 28px 0 40px; font-size: 15px; position: relative; }
+			.side ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+			.side ol ol { margin: 2px 0 6px; padding-left: 12px; }
+			.side a { display: block; text-decoration: none; padding: 6px 10px; border-radius: var(--r-sm); color: var(--muted); }
+			.side a:hover { color: var(--text); background: var(--surface); }
+			.side a[aria-current='page'] { background: var(--plum); color: #f6eff4; font-weight: 600; }
+			:root[data-theme='dark'] .side a[aria-current='page'] { background: #f6eff4; color: var(--plum); }
+			.side .grp { display: block; padding: 10px 10px 4px; color: var(--text); font-weight: 600; }
+			.side details > summary { display: none; }
+			.article { padding: 40px 0 64px; min-width: 0; }
+			.prose { max-width: 72ch; font-size: 16.5px; line-height: 1.7; }
+			.crumbs { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+			.prose h1 { font: 800 48px/1 var(--display); font-variation-settings: 'wdth' 105; letter-spacing: -0.015em; margin-bottom: 20px; }
+			.prose h2 { font: 750 28px/1.15 var(--display); font-variation-settings: 'wdth' 105; margin: 48px 0 12px; scroll-margin-top: 60px; }
+			.prose p { margin: 0 0 16px; }
+			.prose ul { margin: 0 0 16px; padding-left: 22px; }
+			.prose li { margin: 6px 0; }
+			.prose li::marker { color: var(--pulse); }
+			.prose :not(pre) > code { font-size: 0.86em; padding: 1px 5px; border-radius: 5px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+			.prose .code { margin: 0 0 20px; font-size: 13px; }
+			.prose table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 0 0 20px; }
+			.prose th, .prose td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+			.prose th { font-weight: 600; }
+			.prose .callout { margin: 0 0 20px; }
+			.table-wrap { overflow-x: auto; }
+			.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 48px; max-width: 72ch; }
+			.pager a { display: grid; gap: 2px; padding: 16px 18px; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); text-decoration: none; }
+			.pager a:hover { background: var(--sunk); }
+			.pager small { color: var(--muted); font-size: 13px; }
+			.pager b { font: 700 19px/1.2 var(--display); font-variation-settings: 'wdth' 105; }
+			.pager .next { text-align: right; }
+			.toc { padding: 40px 0; font-size: 14px; }
+			.toc-inner { position: sticky; top: 56px; }
+			.toc h4 { font: 600 14px/1.3 var(--sans); margin-bottom: 8px; }
+			.toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+			.toc a { display: block; text-decoration: none; padding: 4px 8px; border-radius: var(--r-sm); color: var(--muted); }
+			.toc a:hover { color: var(--text); }
+			.toc a.on { color: var(--text); background: var(--surface); font-weight: 600; }
+			.toc .edit { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+
+			/* Promo */
+			.promo-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 32px 24px; }
+			.promo-item { display: grid; gap: 10px; align-content: start; min-width: 0; }
+			.promo-item > p { font-size: 14px; color: var(--muted); }
+			.promo-item > p b { color: var(--text); font-weight: 600; }
+			.promo-frame { position: relative; overflow: hidden; border-radius: var(--r-md); box-shadow: 0 0 0 1px var(--line); }
+			.promo-canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; }
+			.p-social { grid-column: span 7; }
+			.p-square { grid-column: span 5; }
+			.p-banner { grid-column: span 12; }
+
+			.social { width: 1200px; height: 630px; background: var(--pulse); color: var(--plum); display: grid; grid-template-columns: 760px 1fr; }
+			.social .l { padding: 64px 0 60px 72px; display: grid; align-content: space-between; }
+			.social .logo { --fs: 54px; --logo-bg: var(--pulse); }
+			.social h3 { font: 900 96px/0.88 var(--display); font-variation-settings: 'wdth' 92; letter-spacing: -0.035em; }
+			.social .os { display: inline-block; margin-top: 18px; padding: 8px 20px 14px; background: var(--spark); border-radius: 14px; font: 880 64px/1 var(--display); font-variation-settings: 'wdth' 112; letter-spacing: -0.03em; }
+			.social .r { background: var(--plum); position: relative; overflow: hidden; }
+			.social .meta { position: absolute; left: 40px; bottom: 52px; right: 40px; display: flex; gap: 10px; flex-wrap: wrap; }
+			.social .meta span { font: 600 22px/1 var(--sans); padding: 12px 18px; border-radius: 999px; background: rgb(255 255 255 / 0.12); color: #f6eff4; }
+			.social .meta span.y { background: var(--spark); color: var(--plum); }
+
+			.square { width: 1080px; height: 1080px; background: var(--spark); color: var(--plum); position: relative; padding: 80px; display: grid; grid-template-rows: auto 1fr auto; }
+			.square .logo { --fs: 64px; --logo-bg: var(--spark); }
+			.square h3 { font: 900 140px/0.86 var(--display); font-variation-settings: 'wdth' 100; letter-spacing: -0.04em; align-self: center; }
+			.square h3 span { display: block; }
+			.square h3 span:nth-child(2) { font-variation-settings: 'wdth' 150; }
+			.square h3 span:nth-child(3) { font-variation-settings: 'wdth' 84; }
+			.square .os { display: flex; justify-content: space-between; align-items: center; }
+			.square .os b { padding: 14px 30px 22px; background: var(--pulse); border-radius: 18px; font: 880 80px/1 var(--display); font-variation-settings: 'wdth' 110; letter-spacing: -0.03em; }
+			.square .os span { font: 600 30px/1.3 var(--sans); text-align: right; }
+
+			.banner { width: 1280px; height: 320px; background: var(--plum); color: #f6eff4; display: grid; grid-template-columns: 520px 1fr; }
+			.banner .l { display: grid; place-items: center start; padding-left: 72px; background: var(--pulse); color: var(--plum); }
+			.banner .logo { --fs: 74px; --logo-bg: var(--pulse); }
+			.banner .r { padding: 56px 64px 0 56px; position: relative; }
+			.banner h3 { font: 880 60px/0.95 var(--display); font-variation-settings: 'wdth' 110; letter-spacing: -0.025em; }
+			.banner p { margin-top: 14px; font: 500 22px/1.35 var(--sans); color: rgb(246 239 244 / 0.8); }
+			.banner .ruler { position: absolute; left: 56px; right: 0; bottom: 0; height: 56px; }
+
+			/* Responsive */
+			@media (max-width: 1100px) {
+				.docs-body { grid-template-columns: 220px minmax(0, 1fr); }
+				.toc { display: none; }
+				.hero-copy { grid-column: span 12; }
+				.player { grid-column: span 12; }
+				.r1, .r2, .r3, .r4 { grid-column: span 6; }
+			}
+			@media (max-width: 900px) {
+				.g12 > *, .logo-grid > *, .comp-grid > *, .promo-grid > * { grid-column: 1 / -1 !important; }
+				.lsec-head > * { grid-column: 1 / -1 !important; }
+				.tile { grid-column: span 6 !important; }
+				.type-grid, .motion-grid { grid-template-columns: minmax(0, 1fr); }
+				.install, .pipeline, .starters { grid-template-columns: 1fr; }
+				.pkgs { grid-template-columns: 1fr 1fr; }
+				.palette { flex-wrap: wrap; }
+				.sw { flex-basis: 33%; min-height: 150px; }
+				.contact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+				.footer-grid { grid-template-columns: 1fr 1fr; }
+				.footer-grid > :first-child { grid-column: 1 / -1; }
+				.palette-rules { grid-template-columns: 1fr; }
+				.reasons > * { grid-column: 1 / -1 !important; }
+				.docs-body { grid-template-columns: minmax(0, 1fr); gap: 0; }
+				.side { padding: 16px 0 0; }
+				.side details > summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 10px 14px; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-weight: 600; list-style: none; }
+				.side details > summary::-webkit-details-marker { display: none; }
+				.side details:not([open]) > ol { display: none; }
+				.side details[open] > ol { margin-top: 8px; }
+			}
+			@media (max-width: 600px) {
+				.sheet { padding: 48px 0 64px; }
+				.sheet-head { grid-template-columns: 1fr; }
+				.sheet-head p { grid-column: 1; }
+				.tile { grid-column: 1 / -1 !important; }
+				.sizes { gap: 18px; }
+				.pkgs { grid-template-columns: 1fr; }
+				.bar-group { grid-template-columns: 1fr auto; }
+				.bar-group .bar-lines { grid-column: 1 / -1; grid-row: 2; }
+				.docs-head { padding: 12px 16px; gap: 12px; }
+				.docs-head .sect { display: none; }
+				.docs-head nav { display: none; }
+				.search { order: 3; flex-basis: 100%; max-width: none; }
+				.docs-body { padding: 0 16px; }
+				.prose h1 { font-size: 38px; }
+				.pager { grid-template-columns: 1fr; }
+				.reason { padding: 22px; }
+				.lsec { padding: 64px 0; }
+				.hero-title .ln + .ln { padding-left: 0; }
+				.transport { grid-template-columns: 1fr; }
+				.readout { justify-content: flex-start; }
+				.logo-stage { min-height: 260px; }
+				.widths div { white-space: normal; font-size: 44px; }
+				.type-card { padding: 22px; }
+			}
+		</style>
+	</head>
+	<body data-v="c1">
+		<div class="switch">
+			<span data-buttons></span>
+			<p data-desc></p>
+			<span class="jumps">
+				<button data-jump="brand">Brand</button>
+				<button data-jump="landing">Landing</button>
+				<button data-jump="docs">Docs</button>
+				<button data-jump="promo">Promo</button>
+			</span>
+			<button data-theme-toggle>t theme</button>
+		</div>
+
+		<!-- 1. Brand sheet -->
+		<section class="sheet" id="brand">
+			<div class="wrap">
+				<header class="sheet-head">
+					<span class="sheet-num">1</span>
+					<h2 class="sheet-title">Brand sheet</h2>
+					<p>The logo is a composition too. Every mark on this page is drawn from its frame number with the same <code>spring()</code> the guide teaches. Hover or click a logo to play it again.</p>
+				</header>
+
+				<div class="logo-grid">
+					<figure class="logo-stage field f-plum" style="margin: 0">
+						<span class="logo" data-logo="lockup" data-tone="color" data-anim="load"></span>
+						<figcaption><span data-logo-name></span><span>Primary lockup</span></figcaption>
+					</figure>
+					<div class="logo-side">
+						<figure class="mark-stage field f-spark" style="margin: 0">
+							<span class="logo" data-logo="mark" data-tone="ink" data-anim="load"></span>
+							<figcaption style="position: absolute; left: 20px; bottom: 16px; font-size: 14px">Mark alone, ink on a colour field</figcaption>
+						</figure>
+						<div class="alts surface" role="group" aria-label="Logo alternatives">
+							<button class="alt" data-pick="c1"><span class="logo" data-logo="mark" data-tone="color" data-fixed="c1"></span><span><b>c1 Trail</b><small>Three discs leave a trail, like onion skin. Pink is the current frame.</small></span></button>
+							<button class="alt" data-pick="c2"><span class="logo" data-logo="mark" data-tone="color" data-fixed="c2"></span><span><b>c2 Flipbook</b><small>Three frames fan out under the thumb.</small></span></button>
+							<button class="alt" data-pick="c3"><span class="logo" data-logo="mark" data-tone="color" data-fixed="c3"></span><span><b>c3 Coil</b><small>An m that compresses and stretches like a spring.</small></span></button>
+						</div>
+					</div>
+
+					<figure class="tile light field" style="margin: 0"><span class="logo" data-logo="lockup" data-tone="color" data-anim="hover"></span><figcaption><span>Colour on light</span></figcaption></figure>
+					<figure class="tile dark field" style="margin: 0"><span class="logo" data-logo="lockup" data-tone="color" data-anim="hover"></span><figcaption><span>Colour on dark</span></figcaption></figure>
+					<figure class="tile light field" style="margin: 0"><span class="logo" data-logo="lockup" data-tone="ink" data-anim="hover"></span><figcaption><span>Monochrome, ink</span></figcaption></figure>
+					<figure class="tile dark field" style="margin: 0"><span class="logo" data-logo="lockup" data-tone="paper" data-anim="hover"></span><figcaption><span>Monochrome, paper</span></figcaption></figure>
+
+					<figure class="sizes light field" style="margin: 0">
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="color" style="--fs: 16px"></span>16</div>
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="color" style="--fs: 32px"></span>32</div>
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="color" style="--fs: 64px"></span>64</div>
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="ink" style="--fs: 16px"></span>16</div>
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="ink" style="--fs: 32px"></span>32</div>
+						<figcaption>Mark at 16, 32 and 64 px, on light</figcaption>
+					</figure>
+					<figure class="sizes dark field" style="margin: 0">
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="color" style="--fs: 16px"></span>16</div>
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="color" style="--fs: 32px"></span>32</div>
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="color" style="--fs: 64px"></span>64</div>
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="paper" style="--fs: 16px"></span>16</div>
+						<div class="sz"><span class="logo" data-logo="mark" data-tone="paper" style="--fs: 32px"></span>32</div>
+						<figcaption>Mark at 16, 32 and 64 px, on dark</figcaption>
+					</figure>
+				</div>
+
+				<div class="block">
+					<h3 class="block-title">The logo, frame by frame</h3>
+					<p class="block-lede">A contact sheet of the mark, the way <code>motio frames</code> shows a whole video at once. Frame 40 is the resting logo; any other frame is the same function at an earlier number.</p>
+					<div class="contact surface" data-contact></div>
+				</div>
+
+				<div class="block">
+					<h3 class="block-title">Palette</h3>
+					<p class="block-lede">Three saturated colours, always as flat fields that meet edge to edge. Width here is roughly how much of a page each one takes.</p>
+					<div class="palette">
+						<div class="sw" style="--w: 5; background: #fff"><b>Paper</b><code>#FFFFFF</code><span>Light theme ground, docs, long reading</span></div>
+						<div class="sw dark" style="--w: 4; background: var(--plum)"><b>Plum</b><code>#2A0E2E</code><span>Ink: text, code, the player screen</span></div>
+						<div class="sw dark" style="--w: 2.4; background: var(--night)"><b>Night</b><code>#1C0B1F</code><span>Dark theme ground</span></div>
+						<div class="sw" style="--w: 3; background: var(--pulse)"><b>Pulse</b><code>#FF3D8B</code><span>Primary field, actions, the playhead, the current frame</span></div>
+						<div class="sw" style="--w: 2.2; background: var(--spark)"><b>Spark</b><code>#FFDD3C</code><span>Second field, badges, highlights</span></div>
+						<div class="sw" style="--w: 1.8; background: var(--drift)"><b>Drift</b><code>#12B5A5</code><span>Third field, sequences, second data series</span></div>
+					</div>
+					<div class="palette-rules">
+						<p><b>Text on any field is Plum.</b> Pulse, Spark and Drift all pass 4.5:1 with Plum; white text on them does not.</p>
+						<p><b>No gradients, no glows.</b> Colour changes at an edge, like a cut between two shots.</p>
+						<p><b>Fields keep their colour in both themes.</b> Only the ground and the ink swap.</p>
+					</div>
+				</div>
+
+				<div class="block">
+					<h3 class="block-title">Type</h3>
+					<p class="block-lede">Anybody has a width axis from 50 to 150. The brand uses it the way the logo uses springs: width is something that can move.</p>
+					<div class="type-grid">
+						<div class="type-card surface">
+							<h4>Display: Anybody, weight 850</h4>
+							<div class="widths">
+								<div style="font-variation-settings: 'wdth' 55">Frame by frame <small>wdth 55</small></div>
+								<div style="font-variation-settings: 'wdth' 100">Frame by frame <small>wdth 100</small></div>
+								<div style="font-variation-settings: 'wdth' 150">Frame <small>wdth 150</small></div>
+							</div>
+							<div class="scale">
+								<div><small>88</small><span style="font: 850 88px/0.95 var(--display); font-variation-settings: 'wdth' 112; letter-spacing: -0.025em">Sequences</span></div>
+								<div><small>48</small><span style="font: 800 48px/1 var(--display); font-variation-settings: 'wdth' 105">Frames and time</span></div>
+								<div><small>28</small><span style="font: 750 28px/1.15 var(--display); font-variation-settings: 'wdth' 105">interpolate() maps ranges</span></div>
+								<div><small>20</small><span style="font: 750 20px/1.2 var(--display); font-variation-settings: 'wdth' 110">Deterministic by test</span></div>
+							</div>
+						</div>
+						<div class="type-card surface">
+							<h4>Body: Instrument Sans, 16 to 19 px</h4>
+							<p class="body-sample">A video is a sequence of still images, the frames, shown at a fixed rate: 30 frames per second means frame 30 is shown at one second. In Motio a component never asks what time it is.</p>
+							<h4 style="margin-top: 32px">Mono: IBM Plex Mono, code and commands only</h4>
+							<p class="mono-sample">useCurrentFrame()<br />spring({ frame, fps })<br />motio render <span>src/index.ts Intro out/intro.mp4</span></p>
+						</div>
+					</div>
+				</div>
+
+				<div class="block">
+					<h3 class="block-title">Motion</h3>
+					<p class="block-lede">Brand motion uses the springs from the Animation guide, sampled per frame at 30 fps. The curve below is computed, not drawn by hand.</p>
+					<div class="motion-grid">
+						<div class="plot surface">
+							<div class="plot-inner">
+								<svg viewBox="0 0 600 260" data-plot role="img" aria-label="Spring curves over 60 frames"></svg>
+								<div class="ballrow" data-ballrow><span class="ball" data-ball="a"></span></div>
+								<div class="ballrow" data-ballrow><span class="ball b2" data-ball="b"></span></div>
+							</div>
+							<div class="plot-controls">
+								<div class="legend">
+									<span><i style="background: var(--pulse)"></i><code>{ damping: 12, stiffness: 120 }</code></span>
+									<span><i style="background: var(--drift)"></i><code>durationInFrames: 30, { damping: 200 }</code></span>
+								</div>
+								<button class="btn btn-secondary btn-sm" data-replay-plot>Replay</button>
+							</div>
+						</div>
+						<div class="principles surface">
+							<div><h4>Motion answers an action</h4><p>Hover, click, drag. The only unprompted movement is the logo and the hero playing once when the page loads.</p></div>
+							<div><h4>Every move is a spring</h4><p>Overshoot for the brand, no bounce for interface. The same two configs, nowhere else.</p></div>
+							<div><h4>Reduced motion shows the last frame</h4><p>With reduced motion on, every composition jumps to its resting frame. Nothing is hidden behind an animation.</p></div>
+							<table class="dur">
+								<tr><td>Brand moment: logo, hero</td><td data-settle>spring 12 / 120</td></tr>
+								<tr><td>Panels, menus</td><td>30 frames, damping 200</td></tr>
+								<tr><td>Hover, press</td><td>160 ms ease-out</td></tr>
+							</table>
+						</div>
+					</div>
+				</div>
+
+				<div class="block">
+					<h3 class="block-title">Components</h3>
+					<p class="block-lede">Radii are concentric: an 18 px card with 8 px padding holds 10 px blocks, a 10 px block with 4 px padding holds 6 px controls.</p>
+					<div class="comp-grid">
+						<div class="comp-cell surface" style="grid-column: span 5">
+							<h4>Buttons</h4>
+							<div class="row">
+								<a class="btn btn-primary" href="#docs">Read the guide</a>
+								<a class="btn btn-secondary" href="#landing">View on GitHub</a>
+							</div>
+							<div class="row">
+								<button class="btn btn-primary btn-sm">Render still</button>
+								<button class="btn btn-secondary btn-sm">Copy</button>
+							</div>
+							<h4>Badges</h4>
+							<div class="row">
+								<span class="badge"><span class="dot"></span>pre-alpha</span>
+								<span class="badge pulse">Apache-2.0</span>
+								<span class="badge drift">Node 22+</span>
+								<span class="badge quiet">v0.0.0</span>
+							</div>
+						</div>
+						<div class="code-card surface" style="grid-column: span 7">
+							<div class="code-head"><b>Clock.tsx</b><span>examples/src/frames.tsx</span></div>
+							<pre class="code" data-code="clock"></pre>
+						</div>
+						<article class="card surface" style="grid-column: span 4">
+							<div class="card-media f-drift" style="display: grid; place-items: center">
+								<svg viewBox="0 0 200 80" width="70%" aria-hidden="true"><rect x="0" y="20" width="120" height="40" rx="6" fill="#2a0e2e" /><rect x="90" y="20" width="110" height="40" rx="6" fill="#ffdd3c" /><rect x="90" y="20" width="30" height="40" fill="#ff3d8b" /></svg>
+							</div>
+							<div class="card-body"><h5>Transitions</h5><p>Fades, slides, wipes and flips between scenes in a <code>&lt;TransitionSeries&gt;</code>.</p></div>
+						</article>
+						<div class="comp-cell surface" style="grid-column: span 8">
+							<h4>Callouts</h4>
+							<div class="callout">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" stroke-linecap="round" /></svg>
+								<p><b>Every code sample in these pages is a file under <code>examples/</code>,</b> type-checked with the rest of the repository by <code>make check</code>.</p>
+							</div>
+							<div class="callout warn">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3Z" stroke-linejoin="round" /><path d="M12 10v4.5M12 17v.5" stroke-linecap="round" /></svg>
+								<p><b>Do not use <code>Math.random()</code>.</b> <code>random(seed)</code> returns the same number for the same seed everywhere.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- 2. Landing -->
+		<section class="sheet" id="landing" style="padding-bottom: 0">
+			<div class="wrap">
+				<header class="sheet-head">
+					<span class="sheet-num">2</span>
+					<h2 class="sheet-title">Landing page</h2>
+					<p>The home page at full size. The energy lives here: one orchestrated moment on load, the hero playing its composition once, then everything waits for the visitor.</p>
+				</header>
+			</div>
+			<div class="site">
+				<div class="wrap">
+					<nav class="nav" aria-label="Main">
+						<a class="logo" data-logo="lockup" data-tone="color" data-anim="load" href="#landing"></a>
+						<div class="nav-links">
+							<a href="#docs">Docs</a>
+							<a href="#docs">Guide</a>
+							<a class="ext" href="#landing">GitHub</a>
+							<a class="ext" href="#landing">npm</a>
+						</div>
+					</nav>
+
+					<div class="hero">
+						<span class="badge"><span class="dot"></span>pre-alpha, not on npm yet</span>
+						<h1 class="hero-title" data-hero-title><span class="ln"><span>Make videos</span></span><span class="ln"><span>with React.</span></span></h1>
+						<div class="g12 hero-row">
+							<div class="hero-copy">
+								<p>Motio renders a React tree frame by frame in a real headless Chrome and encodes it with FFmpeg. Open source, Apache-2.0, free for any use.</p>
+								<div class="row">
+									<a class="btn btn-primary" href="#docs">Read the guide</a>
+									<a class="btn btn-secondary" href="#landing">
+										<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0Z" /></svg>
+										View on GitHub
+									</a>
+								</div>
+								<div class="cmd"><code>pnpm create motio my-video</code><button class="copy" data-copy="pnpm create motio my-video">Copy</button></div>
+								<p class="hero-req">Node 22 or later and FFmpeg 5.1 or later. Chrome is not needed: the first render downloads a pinned headless shell.</p>
+							</div>
+							<div class="player surface">
+								<div class="screen" data-screen>
+									<span class="stamp">Badge, 1280x720, 30 fps</span>
+									<span class="disc" data-disc></span>
+								</div>
+								<div class="transport">
+									<button class="btn btn-secondary btn-sm" data-play>Play</button>
+									<div class="readout" aria-live="off">
+										<span>frame <b data-r="frame">0</b></span>
+										<span>grow <b data-r="grow">0.000</b></span>
+										<span>rise <b data-r="rise">0.000</b></span>
+									</div>
+								</div>
+								<div class="track" data-track>
+									<svg data-ruler aria-hidden="true"></svg>
+									<div class="playhead" data-playhead role="slider" tabindex="0" aria-label="Frame" aria-valuemin="0" aria-valuemax="59" aria-valuenow="0"><span class="knob" data-knob>0</span></div>
+								</div>
+								<p class="player-note">Drag the playhead, or focus it and use the arrow keys. The picture depends on nothing but the frame number: frame 18 always looks like frame 18, in any order, on any tab.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="lsec" style="padding-top: 24px">
+					<div class="wrap">
+						<div class="lsec-head">
+							<h2>Three commands to a video</h2>
+							<p>Create a project from a starter, preview it in the browser, render an MP4. Every command also runs without a terminal, for scripts and agents.</p>
+						</div>
+						<div class="install">
+							<div class="step f-pulse">
+								<span class="n">1</span>
+								<div class="cmd"><code>pnpm create motio my-video</code><button class="copy" data-copy="pnpm create motio my-video">Copy</button></div>
+								<p>Asks for the directory, the starter and the package manager, writes the project and installs it.</p>
+							</div>
+							<div class="step f-spark">
+								<span class="n">2</span>
+								<div class="cmd"><code>pnpm dev</code><button class="copy" data-copy="pnpm dev">Copy</button></div>
+								<p>A preview page with play, scrub, frame stepping, a loop range and a JSON editor for the props.</p>
+							</div>
+							<div class="step f-drift">
+								<span class="n">3</span>
+								<div class="cmd"><code>pnpm render</code><button class="copy" data-copy="pnpm render">Copy</button></div>
+								<p>Renders <code>out/intro.mp4</code>. Flags pass through: <code>--frames=0-29</code> renders the first second.</p>
+							</div>
+						</div>
+						<p class="install-note"><span class="badge"><span class="dot"></span>pre-alpha</span>Nothing is published on npm yet. Until it is, a project can only be built from a clone of the repository.</p>
+					</div>
+				</div>
+
+				<div class="lsec">
+					<div class="wrap">
+						<div class="lsec-head">
+							<h2>A video is a component</h2>
+							<p>This is the component in the player above, as it appears in the Animation guide. It reads the frame, and returns what that frame looks like.</p>
+						</div>
+						<div class="g12 component-row">
+							<div class="code-card surface">
+								<div class="code-head"><b>Badge.tsx</b><span>examples/src/animation.tsx</span></div>
+								<pre class="code" data-code="badge"></pre>
+							</div>
+							<div class="component-side">
+								<p>No timeline state, no clock. Every moving value comes from <code>useCurrentFrame()</code>, so any frame can be rendered alone and always gives the same pixels.</p>
+								<ul>
+									<li><code>useCurrentFrame()</code><span>Which frame is being drawn.</span></li>
+									<li><code>spring()</code><span>From 0 to 1 like a physical spring, with overshoot and settle.</span></li>
+									<li><code>interpolate()</code><span>Maps a range of frames to a range of values.</span></li>
+									<li><code>measureSpring()</code><span>How many frames a spring takes to settle, to size a Sequence.</span></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="lsec">
+					<div class="wrap">
+						<div class="lsec-head">
+							<h2>How a render works</h2>
+							<p>Motio sets the frame number, waits until the page is ready, takes a screenshot, and hands the screenshots to FFmpeg. Several tabs render different frames at once.</p>
+						</div>
+						<div class="pipeline">
+							<div class="stage-card surface">
+								<div class="stage-art f-spark">
+									<div class="tree">
+										<div>&lt;Composition id="Intro"&gt;</div>
+										<div class="i1">&lt;Series&gt;</div>
+										<div class="i2">&lt;Series.Sequence&gt;</div>
+										<div class="i3">&lt;Badge /&gt;</div>
+										<div class="i2">&lt;Series.Sequence&gt;</div>
+										<div class="i3">&lt;LowerThird /&gt;</div>
+									</div>
+								</div>
+								<div class="stage-text"><h3><span>1</span>React tree</h3><p>Compositions, sequences and your components, bundled with Vite.</p></div>
+							</div>
+							<div class="stage-card surface">
+								<div class="stage-art f-pulse"><div class="strip" data-strip></div></div>
+								<div class="stage-text"><h3><span>2</span>Headless Chrome, frame by frame</h3><p>A pinned chrome-headless-shell draws each frame. If it looks right in Chrome, it renders right.</p></div>
+							</div>
+							<div class="stage-card surface">
+								<div class="stage-art f-plum">
+									<div class="out"><span class="file">out/intro.mp4</span><div class="meta"><span>H.264</span><span>BT.709</span><span>AAC</span><span>120 frames</span></div></div>
+								</div>
+								<div class="stage-text"><h3><span>3</span>FFmpeg</h3><p>Encodes the frames, mixes the audio. H.264, H.265, AV1, VP8, VP9, ProRes, GIF.</p></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="lsec">
+					<div class="wrap">
+						<div class="lsec-head">
+							<h2>Why Motio</h2>
+							<p>Four promises, each one checked by the project rather than claimed.</p>
+						</div>
+						<div class="reasons">
+							<div class="reason field f-pulse r1">
+								<h3>Apache-2.0</h3>
+								<p>Open source. No per-render or per-seat fees, including distributed rendering and embedding the Player.</p>
+							</div>
+							<div class="reason surface r2">
+								<h3>Chrome pixels</h3>
+								<p>No reimplementation of CSS or layout. If it looks right in Chrome, it renders right.</p>
+							</div>
+							<div class="reason field f-spark r3">
+								<h3 style="font-variation-settings: 'wdth' 96">Deterministic by test</h3>
+								<p>The same project, props and frame give the same pixels in any order, checked on decoded frame hashes.</p>
+								<div class="hashes" data-hashes aria-hidden="true"></div>
+							</div>
+							<div class="reason field f-drift r4">
+								<h3 style="font-variation-settings: 'wdth' 92">Agent-first</h3>
+								<p>Every command has <code>--json</code> output and errors with stable codes. Stills, contact sheets, flicker and determinism checks.</p>
+								<div class="cmd"><code>pnpm exec motio doctor --json</code><button class="copy" data-copy="pnpm exec motio doctor --json">Copy</button></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="lsec">
+					<div class="wrap">
+						<div class="lsec-head">
+							<h2>Fast, measured</h2>
+							<p>Wall time to render the benchmark's motion and timeline compositions at 1920x1080, both summed, median of runs. Shorter is better.</p>
+						</div>
+						<div class="perf surface">
+							<div class="perf-top">
+								<div class="seg" role="group" aria-label="Platform">
+									<button data-plat="mac" aria-pressed="true">macOS, Apple M5</button>
+									<button data-plat="linux" aria-pressed="false">Linux image, arm64</button>
+								</div>
+								<div class="legend" style="margin: 0">
+									<span><i style="background: var(--pulse)"></i>Motio</span>
+									<span><i style="background: color-mix(in srgb, var(--text) 22%, transparent)"></i>Remotion 4.0.545</span>
+								</div>
+							</div>
+							<div class="bars" data-bars></div>
+							<p class="perf-foot" data-perf-foot></p>
+						</div>
+					</div>
+				</div>
+
+				<div class="lsec">
+					<div class="wrap">
+						<div class="lsec-head">
+							<h2>Packages</h2>
+							<p>One package per job. Install the ones you use; the core stays small.</p>
+						</div>
+						<div class="pkgs">
+							<div class="pkg"><code>@motiojs/core</code><p>Timeline, hooks, components and animation primitives.</p></div>
+							<div class="pkg"><code>@motiojs/renderer</code><p>Headless Chrome capture and FFmpeg encoding, from Node.</p></div>
+							<div class="pkg"><code>@motiojs/cli</code><p>The <code>motio</code> command: render, still, frames, checks, doctor.</p></div>
+							<div class="pkg"><code>@motiojs/player</code><p>Embed a composition in a React app, with Player and Thumbnail.</p></div>
+							<div class="pkg"><code>@motiojs/bundler</code><p>Vite bundling: entry discovery, public dir, env vars.</p></div>
+							<div class="pkg"><code>@motiojs/transitions</code><p>Transitions between scenes.</p></div>
+							<div class="pkg"><code>@motiojs/captions</code><p>Parse, page and show captions from a transcript.</p></div>
+							<div class="pkg"><code>@motiojs/media</code><p>Video and audio components, frame-exact in renders.</p></div>
+							<div class="pkg"><code>@motiojs/google-fonts</code><p>Type-safe Google Fonts that block the render until loaded.</p></div>
+							<div class="pkg"><code>@motiojs/three</code><p>React Three Fiber scenes driven by the timeline.</p></div>
+							<div class="pkg"><code>@motiojs/distributed</code><p>Render frame ranges in parallel, assemble without re-encoding.</p></div>
+							<div class="pkg"><code>@motiojs/ffmpeg</code><p>An optional pinned FFmpeg 8.1.3, verified by SHA-256.</p></div>
+						</div>
+						<p class="pkgs-more">And 26 more: Lottie, Rive, GIF, shapes, paths, noise, motion blur, text backgrounds, audio mixing, transcription with whisper.cpp, OpenAI and ElevenLabs.</p>
+					</div>
+				</div>
+
+				<div class="lsec">
+					<div class="wrap">
+						<div class="lsec-head">
+							<h2>Compatibility</h2>
+							<p>Runs projects written for Remotion's documented API, via an import alias.</p>
+						</div>
+						<div class="g12 compat">
+							<div class="compat-text">
+								<p>The bundler resolves <code>remotion</code> to <code>motio</code> and every <code>@remotion/&lt;name&gt;</code> to its Motio package while it builds, so imports can stay as they are. The <code>motio</code> command takes the same arguments and flags.</p>
+								<p>Compatibility is pinned to the 4.0.545 API and checked against recordings of that release. <code>motio doctor</code> lists every symbol a project uses: supported, approximated, stubbed or missing.</p>
+								<div class="callout">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" stroke-linecap="round" /></svg>
+									<p>Motio is an independent project, built from public API documentation. It is not affiliated with or endorsed by Remotion.</p>
+								</div>
+							</div>
+							<div class="code-card surface">
+								<div class="code-head"><b>Running an existing project</b><span>terminal</span></div>
+								<pre class="code" data-code="compat" data-lang="sh"></pre>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="lsec">
+					<div class="wrap">
+						<div class="lsec-head">
+							<h2>Start from a starter</h2>
+							<p>Each one installs, previews and renders with no edits; an integration test covers every starter.</p>
+						</div>
+						<div class="starters">
+							<article class="card surface starter">
+								<div class="card-media sm-basic"><b>Intro</b><i></i><i></i></div>
+								<div class="card-body"><h5>basic</h5><p>A four-second title animation: <code>spring()</code> and <code>interpolate()</code>, two scenes in a <code>&lt;Series&gt;</code>, an image, a local font, and a still for the thumbnail.</p><div class="cmd"><code>pnpm create motio my-video</code><button class="copy" data-copy="pnpm create motio my-video">Copy</button></div></div>
+							</article>
+							<article class="card surface starter">
+								<div class="card-media sm-blank"><b>Title</b></div>
+								<div class="card-body"><h5>blank</h5><p>One composition with a fading title, nothing else.</p><div class="cmd"><code>pnpm create motio my-video -t blank</code><button class="copy" data-copy="pnpm create motio my-video --template blank">Copy</button></div></div>
+							</article>
+							<article class="card surface starter">
+								<div class="card-media sm-captions"><p>every word <span>lands</span> on time</p></div>
+								<div class="card-body"><h5>captions</h5><p>Word-by-word captions from a JSON transcript with <code>@motiojs/captions</code>. The video length comes from the transcript.</p><div class="cmd"><code>pnpm create motio my-video -t captions</code><button class="copy" data-copy="pnpm create motio my-video --template captions">Copy</button></div></div>
+							</article>
+						</div>
+					</div>
+				</div>
+
+				<footer class="footer">
+					<div class="wrap">
+						<div class="footer-grid">
+							<div style="display: grid; gap: 16px; align-content: start">
+								<a class="logo" data-logo="lockup" data-tone="color" data-anim="hover" href="#landing"></a>
+								<p style="color: var(--muted); max-width: 34ch">Make videos with React. Open source, Apache-2.0.</p>
+								<span class="badge" style="justify-self: start"><span class="dot"></span>pre-alpha</span>
+							</div>
+							<div><h4>Learn</h4><ul><li><a href="#docs">Guide</a></li><li><a href="#docs">Getting started</a></li><li><a href="#docs">Animation</a></li><li><a href="#docs">Rendering from the CLI</a></li></ul></div>
+							<div><h4>Project</h4><ul><li><a href="#landing">GitHub</a></li><li><a href="#landing">npm</a></li><li><a href="#landing">Roadmap</a></li><li><a href="#landing">Decisions</a></li></ul></div>
+							<div><h4>Licence</h4><ul><li><a href="#landing">Apache-2.0</a></li><li><a href="#landing">NOTICE</a></li><li><a href="#landing">FFmpeg builds (GPL)</a></li></ul></div>
+						</div>
+						<div class="legal">
+							<p>Remotion is a trademark of its owner. Motio is an independent project, not affiliated with or endorsed by Remotion.</p>
+							<p>Apache-2.0</p>
+						</div>
+					</div>
+				</footer>
+			</div>
+		</section>
+
+		<!-- 3. Docs -->
+		<section class="sheet" id="docs">
+			<div class="wrap">
+				<header class="sheet-head">
+					<span class="sheet-num">3</span>
+					<h2 class="sheet-title">Docs page</h2>
+					<p>The guide stays calm: paper, one column of prose, colour only for the current page and the code. The real Animation page, in the guide's order.</p>
+				</header>
+
+				<div class="docs">
+					<header class="docs-head">
+						<a class="logo" data-logo="lockup" data-tone="color" data-anim="hover" href="#landing"></a>
+						<span class="sect">Guide</span>
+						<label class="search">
+							<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="7" cy="7" r="5" /><path d="m11 11 3.5 3.5" stroke-linecap="round" /></svg>
+							<input type="search" placeholder="Search the guide" aria-label="Search the guide" />
+							<kbd>/</kbd>
+						</label>
+						<nav aria-label="Docs"><a href="#landing">GitHub</a><a href="#landing">npm</a></nav>
+					</header>
+					<div class="docs-body">
+						<aside class="side">
+							<details data-side-details open>
+								<summary>Guide pages <span style="color: var(--muted); font-weight: 500">Animation</span></summary>
+								<ol>
+									<li><a href="#docs">Getting started</a></li>
+									<li><a href="#docs">Project structure</a></li>
+									<li>
+										<span class="grp">Core concepts</span>
+										<ol>
+											<li><a href="#docs">Frames and time</a></li>
+											<li><a href="#docs">Compositions</a></li>
+											<li><a href="#docs">Sequences and series</a></li>
+											<li><a href="#docs" aria-current="page">Animation</a></li>
+											<li><a href="#docs">Media</a></li>
+											<li><a href="#docs">Fonts and text</a></li>
+											<li><a href="#docs">Readiness</a></li>
+										</ol>
+									</li>
+									<li><a href="#docs">Rendering from the CLI</a></li>
+									<li><a href="#docs">Rendering from Node</a></li>
+									<li><a href="#docs">FFmpeg</a></li>
+									<li><a href="#docs">Testing renders in CI</a></li>
+									<li><a href="#docs">Coming from Remotion</a></li>
+								</ol>
+							</details>
+						</aside>
+						<article class="article">
+							<div class="prose">
+								<p class="crumbs">Guide / Core concepts</p>
+								<h1>Animation</h1>
+								<p>Animation in Motio is a function from the frame number to a value. Three helpers cover almost everything: <code>interpolate()</code> maps ranges, <code>spring()</code> adds physics, and <code>Easing</code> shapes the curve.</p>
+
+								<h2 id="d-interpolate">interpolate()</h2>
+								<p><code>interpolate(input, inputRange, outputRange, options)</code> maps a value from one range to another. With the frame as input, a list of frames becomes a list of positions, sizes or opacities:</p>
+								<pre class="code" data-code="lower"></pre>
+								<ul>
+									<li>The input range must be increasing, with as many entries as the output range; more than two entries give several segments.</li>
+									<li>Outside the input range the value keeps going along the first or last segment (<code>"extend"</code>, the default). <code>"clamp"</code> holds the end value, <code>"identity"</code> returns the input, <code>"wrap"</code> repeats the range. Set <code>extrapolateLeft</code> and <code>extrapolateRight</code> separately.</li>
+									<li><code>easing</code> applies a curve to each segment.</li>
+								</ul>
+
+								<h2 id="d-spring">spring()</h2>
+								<p><code>spring()</code> animates from 0 to 1 the way a physical spring would, with a natural overshoot and settle that easing curves do not reproduce:</p>
+								<pre class="code" data-code="badge"></pre>
+								<div class="table-wrap">
+									<table>
+										<thead><tr><th>Option</th><th>Meaning</th></tr></thead>
+										<tbody>
+											<tr><td><code>frame</code>, <code>fps</code></td><td>Required: the current frame and the frame rate.</td></tr>
+											<tr><td><code>config</code></td><td><code>mass</code> (default 1), <code>stiffness</code> (100), <code>damping</code> (10), <code>overshootClamping</code> (false). Higher damping bounces less; 200 does not bounce.</td></tr>
+											<tr><td><code>from</code>, <code>to</code></td><td>The values to animate between (default 0 and 1).</td></tr>
+											<tr><td><code>delay</code></td><td>Frames to wait before starting.</td></tr>
+											<tr><td><code>durationInFrames</code></td><td>Stretches the spring so it settles in exactly this many frames.</td></tr>
+											<tr><td><code>reverse</code></td><td>Plays it backwards.</td></tr>
+										</tbody>
+									</table>
+								</div>
+								<p>A spring's output is a progress value: feed it to <code>interpolate()</code> to move between any two values, as <code>rise</code> does above, or multiply it, as <code>grow</code> does. <code>measureSpring()</code> returns how many frames a spring takes to settle.</p>
+								<div class="callout">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" stroke-linecap="round" /></svg>
+									<p>Every code sample in these pages is a file under <code>examples/</code>, type-checked with the rest of the repository by <code>make check</code>.</p>
+								</div>
+
+								<h2 id="d-colours">Colours</h2>
+								<p><code>interpolateColors()</code> interpolates between CSS colours (hex, <code>rgb()</code>, <code>hsl()</code>, named colours), in RGB space with alpha:</p>
+								<pre class="code" data-code="sunset"></pre>
+
+								<h2 id="d-easing">Easing</h2>
+								<p><code>Easing</code> provides the standard curves, to pass to <code>interpolate()</code>'s <code>easing</code> option:</p>
+								<pre class="code" data-code="easing"></pre>
+								<p><code>Easing.in(curve)</code> accelerates, <code>Easing.out(curve)</code> decelerates and <code>Easing.inOut(curve)</code> does both; the curves are <code>linear</code>, <code>ease</code>, <code>quad</code>, <code>cubic</code>, <code>poly(n)</code>, <code>sin</code>, <code>circle</code>, <code>exp</code>, <code>elastic(bounciness)</code>, <code>back(overshoot)</code>, <code>bounce</code>, and <code>bezier(x1, y1, x2, y2)</code> for a CSS-style cubic Bézier.</p>
+							</div>
+							<nav class="pager" aria-label="Previous and next page">
+								<a href="#docs"><small>Previous</small><b>Sequences and series</b></a>
+								<a class="next" href="#docs"><small>Next</small><b>Media</b></a>
+							</nav>
+						</article>
+						<aside class="toc">
+							<div class="toc-inner">
+								<h4>On this page</h4>
+								<ul data-toc>
+									<li><a href="#d-interpolate" class="on">interpolate()</a></li>
+									<li><a href="#d-spring">spring()</a></li>
+									<li><a href="#d-colours">Colours</a></li>
+									<li><a href="#d-easing">Easing</a></li>
+								</ul>
+								<div class="edit">
+									<a href="#docs" style="color: var(--muted); text-decoration: none">Edit this page</a>
+									<a href="#docs" style="color: var(--muted); text-decoration: none">Report a problem</a>
+								</div>
+							</div>
+						</aside>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- 4. Promo -->
+		<section class="sheet" id="promo">
+			<div class="wrap">
+				<header class="sheet-head">
+					<span class="sheet-num">4</span>
+					<h2 class="sheet-title">Promo</h2>
+					<p>Built at their real pixel size and scaled to fit. Each one is a single frame of the brand: flat fields, the mark at rest, one line of copy.</p>
+				</header>
+				<div class="promo-grid">
+					<div class="promo-item p-social">
+						<div class="promo-frame" data-w="1200" data-h="630">
+							<div class="promo-canvas social">
+								<div class="l">
+									<span class="logo" data-logo="lockup" data-tone="ink"></span>
+									<div><h3>Make videos with React.</h3><span class="os">Open source.</span></div>
+								</div>
+								<div class="r">
+									<svg viewBox="0 0 440 630" width="440" height="630" aria-hidden="true" data-social-art></svg>
+									<div class="meta"><span class="y">pre-alpha</span><span>Apache-2.0</span></div>
+								</div>
+							</div>
+						</div>
+						<p><b>Social card</b>, 1200x630</p>
+					</div>
+					<div class="promo-item p-square">
+						<div class="promo-frame" data-w="1080" data-h="1080">
+							<div class="promo-canvas square">
+								<span class="logo" data-logo="lockup" data-tone="ink"></span>
+								<h3><span>Make</span><span>videos</span><span>with React.</span></h3>
+								<div class="os"><b>Open source.</b><span>Apache-2.0<br />pre-alpha</span></div>
+							</div>
+						</div>
+						<p><b>Square post</b>, 1080x1080</p>
+					</div>
+					<div class="promo-item p-banner">
+						<div class="promo-frame" data-w="1280" data-h="320">
+							<div class="promo-canvas banner">
+								<div class="l"><span class="logo" data-logo="lockup" data-tone="ink"></span></div>
+								<div class="r">
+									<h3>Make videos with React.</h3>
+									<p>Frame by frame in a real headless Chrome, encoded with FFmpeg. Apache-2.0.</p>
+									<svg class="ruler" data-banner-ruler aria-hidden="true"></svg>
+								</div>
+							</div>
+						</div>
+						<p><b>GitHub README banner</b>, 1280x320</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<script>
+			// Concept chrome
+			const DESC = {
+				c1: 'Trail: Kinetic with the trail mark, three discs as onion skin',
+				c2: 'Flipbook: Kinetic with the flipbook mark, three frames fanning out',
+				c3: 'Coil: Kinetic with the coil mark, an m that springs, wordmark that stretches'
+			};
+			const KEY = `concept:${location.pathname}`;
+			const root = document.documentElement;
+			const body = document.body;
+			const base = (v) => v.replace(/\d+$/, '');
+			const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+			const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; } };
+			const save = (s) => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {} };
+			const name = (v) => DESC[v].split(':')[0];
+			document.querySelector('[data-buttons]').innerHTML = Object.keys(DESC).map((v) => `<button data-v="${v}">${v.slice(-1)} C ${name(v)}</button>`).join(' ');
+
+			// Motio's animation primitives, reimplemented for the page (spring is the analytic damped oscillator).
+			const springRaw = (t, { mass = 1, stiffness = 100, damping = 10 }) => {
+				const w0 = Math.sqrt(stiffness / mass);
+				const z = damping / (2 * Math.sqrt(stiffness * mass));
+				if (t <= 0) return 0;
+				if (z < 1) {
+					const wd = w0 * Math.sqrt(1 - z * z);
+					return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + ((z * w0) / wd) * Math.sin(wd * t));
+				}
+				if (z === 1) return 1 - Math.exp(-w0 * t) * (1 + w0 * t);
+				const wd = w0 * Math.sqrt(z * z - 1);
+				const r1 = -z * w0 + wd, r2 = -z * w0 - wd;
+				// Displacement A e^(r1 t) + B e^(r2 t) from -1 with zero velocity; no cosh overflow at high damping.
+				return 1 + (-r2 / (r2 - r1)) * Math.exp(r1 * t) + (r1 / (r2 - r1)) * Math.exp(r2 * t);
+			};
+			const measureSpring = ({ fps, config, threshold = 0.005 }) => {
+				let last = 0;
+				for (let f = 0; f < 3000; f++) if (Math.abs(1 - springRaw(f / fps, config)) >= threshold) last = f;
+				return last + 1;
+			};
+			const settleCache = new Map();
+			const spring = ({ frame, fps, delay = 0, durationInFrames, config = {} }) => {
+				let f = frame - delay;
+				if (f <= 0) return 0;
+				if (durationInFrames) {
+					const k = JSON.stringify(config);
+					if (!settleCache.has(k)) settleCache.set(k, measureSpring({ fps, config }));
+					f = (f * settleCache.get(k)) / durationInFrames;
+				}
+				return springRaw(f / fps, config);
+			};
+			const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+			const interpolate = (x, [a, b], [c, d], clampIt = false) => {
+				let t = (x - a) / (b - a);
+				if (clampIt) t = clamp(t, 0, 1);
+				return c + t * (d - c);
+			};
+			const BRAND = { damping: 12, stiffness: 120 };
+			const CALM = { damping: 200 };
+
+			// Logo: each variant is a function of the frame.
+			const LOGO_END = 40;
+			const COL = { pulse: '#ff3d8b', spark: '#ffdd3c', drift: '#12b5a5', plum: '#2a0e2e', paper: '#f6eff4' };
+			const tones = (tone) =>
+				tone === 'ink' ? [COL.plum, COL.plum, COL.plum] : tone === 'paper' ? [COL.paper, COL.paper, COL.paper] : [COL.drift, COL.spark, COL.pulse];
+			const MARK = {
+				c1(f, tone) {
+					const [a, b, c] = tones(tone);
+					const r = 13 * spring({ frame: f, fps: 30, durationInFrames: 8, config: CALM });
+					const x3 = 18 + 28 * spring({ frame: f, fps: 30, delay: 2, config: BRAND });
+					const x2 = 18 + 14 * spring({ frame: f, fps: 30, delay: 6, config: BRAND });
+					const d = (x, fill) => `<circle class="gap" cx="${x.toFixed(2)}" cy="32" r="${Math.max(0, r).toFixed(2)}" fill="${fill}" stroke-width="3.5" />`;
+					return d(18, a) + d(x2, b) + d(x3, c);
+				},
+				c2(f, tone) {
+					const [a, b, c] = tones(tone);
+					const s = spring({ frame: f, fps: 30, durationInFrames: 8, config: CALM });
+					const a2 = -44 * spring({ frame: f, fps: 30, delay: 6, config: BRAND });
+					const a1 = -22 * spring({ frame: f, fps: 30, delay: 3, config: BRAND });
+					const card = (ang, fill) => `<g transform="translate(21 51) rotate(${ang.toFixed(2)}) scale(${s.toFixed(3)})"><rect class="gap" x="0" y="-26" width="34" height="26" rx="5" fill="${fill}" stroke-width="3.5" /></g>`;
+					return card(a2, a) + card(a1, b) + card(0, c);
+				},
+				c3(f, tone) {
+					const field = tone === 'ink' ? COL.plum : tone === 'paper' ? COL.paper : COL.spark;
+					const ink = tone === 'ink' ? COL.paper : COL.plum;
+					const p = spring({ frame: f, fps: 30, delay: 2, config: BRAND });
+					const sx = 0.3 + 0.7 * p;
+					const sy = clamp(1 / Math.sqrt(Math.max(sx, 0.2)), 0.7, 1.5);
+					const fs = spring({ frame: f, fps: 30, durationInFrames: 8, config: CALM });
+					return `<g transform="translate(32 32) scale(${fs.toFixed(3)}) translate(-32 -32)"><rect x="0" y="0" width="64" height="64" rx="16" fill="${field}" /></g>` +
+						`<g transform="translate(32 51) scale(${sx.toFixed(3)} ${sy.toFixed(3)}) translate(-32 -51)"><path d="M14.5 51 V29 a8.75 8.75 0 0 1 17.5 0 V51 M32 29 a8.75 8.75 0 0 1 17.5 0 V51" fill="none" stroke="${ink}" stroke-width="8" stroke-linejoin="round" /></g>`;
+				}
+			};
+			const WORD = 'motio';
+			const letterStyle = (v, f, i) => {
+				if (v === 'c3') {
+					const w = 50 + 62 * spring({ frame: f, fps: 30, delay: 4 + i * 2, config: BRAND });
+					return { transform: 'none', fontVariationSettings: `'wdth' ${clamp(w, 50, 150).toFixed(1)}` };
+				}
+				const p = spring({ frame: f, fps: 30, delay: 5 + i * 2, config: BRAND });
+				return { transform: `translateY(${((1 - p) * 110).toFixed(2)}%)`, fontVariationSettings: '' };
+			};
+			const currentLogo = () => body.dataset.v || 'c1';
+			const drawLogo = (el, f) => {
+				const v = el.dataset.fixed || currentLogo();
+				if (el.dataset.built !== v) {
+					el.innerHTML = `<svg class="mk" viewBox="0 0 64 64" aria-hidden="true"></svg>` +
+						(el.dataset.logo === 'lockup' ? `<span class="wm" aria-label="motio">${[...WORD].map((ch) => `<span>${ch}</span>`).join('')}</span>` : '');
+					el.setAttribute('role', 'img');
+					el.setAttribute('aria-label', 'Motio');
+					el.dataset.built = v;
+				}
+				el.firstChild.innerHTML = MARK[v](f, el.dataset.tone || 'color');
+				el.querySelectorAll('.wm span').forEach((s, i) => Object.assign(s.style, letterStyle(v, f, i)));
+			};
+			const playing = new Map();
+			const playLogo = (el) => {
+				if (reduced) return drawLogo(el, LOGO_END);
+				if (playing.has(el)) return;
+				const t0 = performance.now();
+				const tick = (t) => {
+					const f = ((t - t0) / 1000) * 30;
+					drawLogo(el, Math.min(f, LOGO_END + 20));
+					if (f < LOGO_END + 20) requestAnimationFrame(tick);
+					else playing.delete(el);
+				};
+				playing.set(el, true);
+				requestAnimationFrame(tick);
+			};
+			const logos = () => [...document.querySelectorAll('[data-logo]')];
+			const drawAll = () => logos().forEach((el) => drawLogo(el, LOGO_END + 20));
+			document.addEventListener('pointerenter', (e) => {
+				const el = e.target.closest?.('.logo[data-logo]');
+				if (el && el.dataset.anim) playLogo(el);
+			}, true);
+			document.addEventListener('click', (e) => {
+				const el = e.target.closest?.('.logo[data-logo]');
+				if (el && !el.closest('.alt')) { e.preventDefault(); playLogo(el); }
+			});
+
+			// Contact sheet
+			const CONTACT = [0, 3, 5, 7, 10, 14, 20, 40];
+			const contact = document.querySelector('[data-contact]');
+			contact.innerHTML = CONTACT.map((f) => `<figure><span class="logo" data-logo="mark" data-tone="color" data-frame="${f}"></span><figcaption>frame ${f}</figcaption></figure>`).join('');
+			const drawContact = () => contact.querySelectorAll('[data-frame]').forEach((el) => drawLogo(el, +el.dataset.frame));
+
+			// Spring plot
+			const plot = document.querySelector('[data-plot]');
+			const PW = 600, PH = 260, PX = 34, PY = 16, N = 60;
+			const sx = (f) => PX + (f / N) * (PW - PX - 8);
+			const sy = (v) => PH - 28 - v * (PH - 28 - PY - 34);
+			const curve = (fn) => Array.from({ length: N + 1 }, (_, f) => `${f ? 'L' : 'M'}${sx(f).toFixed(1)} ${sy(fn(f)).toFixed(1)}`).join(' ');
+			const fA = (f) => spring({ frame: f, fps: 30, delay: 4, config: BRAND });
+			const fB = (f) => spring({ frame: f, fps: 30, delay: 4, durationInFrames: 30, config: CALM });
+			plot.innerHTML =
+				[0, 0.5, 1].map((v) => `<line class="axis" x1="${PX}" x2="${PW - 8}" y1="${sy(v)}" y2="${sy(v)}" ${v === 1 ? 'stroke-dasharray="4 4"' : ''}/><text class="lbl" x="${PX - 8}" y="${sy(v) + 4}" text-anchor="end">${v}</text>`).join('') +
+				[0, 10, 20, 30, 40, 50, 60].map((f) => `<text class="lbl" x="${sx(f)}" y="${PH - 8}" text-anchor="middle">${f}</text>`).join('') +
+				`<path d="${curve(fB)}" fill="none" stroke="var(--drift)" stroke-width="3" stroke-linecap="round"/>` +
+				`<path d="${curve(fA)}" fill="none" stroke="var(--pulse)" stroke-width="3" stroke-linecap="round"/>` +
+				`<line data-plot-head x1="0" x2="0" y1="${PY}" y2="${PH - 28}" stroke="var(--text)" stroke-width="1.5" stroke-opacity=".5"/>` +
+				`<circle data-dot="a" r="6" fill="var(--pulse)" stroke="var(--bg)" stroke-width="2"/><circle data-dot="b" r="6" fill="var(--drift)" stroke="var(--bg)" stroke-width="2"/>`;
+			const settle = measureSpring({ fps: 30, config: BRAND });
+			document.querySelector('[data-settle]').textContent = `12 / 120, settles in ${settle} frames`;
+			const drawPlot = (f) => {
+				const a = fA(f), b = fB(f);
+				plot.querySelector('[data-plot-head]').setAttribute('transform', `translate(${sx(f)} 0)`);
+				plot.querySelector('[data-dot="a"]').setAttribute('cx', sx(f));
+				plot.querySelector('[data-dot="a"]').setAttribute('cy', sy(a));
+				plot.querySelector('[data-dot="b"]').setAttribute('cx', sx(f));
+				plot.querySelector('[data-dot="b"]').setAttribute('cy', sy(b));
+				document.querySelectorAll('[data-ball]').forEach((el) => {
+					const w = el.parentElement.clientWidth - 56;
+					el.style.transform = `translateX(${(w * (el.dataset.ball === 'a' ? a : b)).toFixed(1)}px)`;
+				});
+			};
+			let plotRaf = 0;
+			const playPlot = () => {
+				cancelAnimationFrame(plotRaf);
+				if (reduced) return drawPlot(N);
+				const t0 = performance.now();
+				const tick = (t) => {
+					const f = Math.min(((t - t0) / 1000) * 30, N);
+					drawPlot(f);
+					if (f < N) plotRaf = requestAnimationFrame(tick);
+				};
+				plotRaf = requestAnimationFrame(tick);
+			};
+			document.querySelector('[data-replay-plot]').addEventListener('click', playPlot);
+			drawPlot(N);
+			new IntersectionObserver((es, o) => es.forEach((e) => { if (e.isIntersecting) { playPlot(); o.disconnect(); } }), { threshold: 0.5 }).observe(plot);
+
+			// Code samples, from docs/guide/examples via the guide pages.
+			const CODE = {
+				clock: `export const Clock = () => {
+	const frame = useCurrentFrame();
+	const { fps, durationInFrames, width, height } = useVideoConfig();
+	const seconds = frame / fps;
+	return (
+		<AbsoluteFill style={{ justifyContent: "center", alignItems: "center", fontSize: 64 }}>
+			Frame {frame} of {durationInFrames} ({seconds.toFixed(2)} s) at {width}x{height}
+		</AbsoluteFill>
+	);
+};`,
+				badge: `export const Badge = () => {
+	const frame = useCurrentFrame();
+	const { fps } = useVideoConfig();
+	// From 0 to 1 with a physical spring, starting at frame 10; it overshoots, then settles.
+	const grow = spring({ frame, fps, delay: 10, config: { damping: 12, stiffness: 120 } });
+	// A spring stretched to exactly 30 frames, without bounce.
+	const rise = spring({ frame, fps, durationInFrames: 30, config: { damping: 200 } });
+	return (
+		<AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+			<div
+				style={{
+					width: 240 * grow,
+					height: 240 * grow,
+					borderRadius: "50%",
+					backgroundColor: "#ffb000",
+					marginTop: interpolate(rise, [0, 1], [200, 0]),
+				}}
+			/>
+		</AbsoluteFill>
+	);
+};
+
+// How many frames the spring takes to settle, for example to size a Sequence.
+export const badgeFrames = measureSpring({ fps: 30, config: { damping: 12, stiffness: 120 } });`,
+				lower: `export const LowerThird = ({ name }: { name: string }) => {
+	const frame = useCurrentFrame();
+	const { durationInFrames } = useVideoConfig();
+	// Slides in during frames 10-25, stays, slides out during the last 15 frames.
+	const left = interpolate(
+		frame,
+		[10, 25, durationInFrames - 15, durationInFrames],
+		[-600, 60, 60, -600],
+		{ easing: Easing.out(Easing.quad), extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+	);
+	// Without clamping, the bar would keep growing after frame 40.
+	const barWidth = interpolate(frame, [18, 40], [0, 420], {
+		extrapolateLeft: "clamp",
+		extrapolateRight: "clamp",
+	});
+	return (
+		<AbsoluteFill>
+			<div style={{ position: "absolute", left, bottom: 120, fontSize: 56, color: "white" }}>
+				{name}
+				<div style={{ width: barWidth, height: 6, backgroundColor: "#ffb000" }} />
+			</div>
+		</AbsoluteFill>
+	);
+};`,
+				sunset: `export const Sunset = () => {
+	const frame = useCurrentFrame();
+	const backgroundColor = interpolateColors(frame, [0, 60, 120], ["#87ceeb", "#ff8c42", "#2b1055"]);
+	return <AbsoluteFill style={{ backgroundColor }} />;
+};`,
+				easing: `// Built-in curves, composable: Easing.in, Easing.out and Easing.inOut wrap any of them.
+export const curves = [
+	Easing.linear,
+	Easing.out(Easing.quad),
+	Easing.inOut(Easing.exp),
+	Easing.bezier(0.33, 1, 0.68, 1),
+	Easing.elastic(1),
+];`,
+				compat: `# Install Motio next to the project's dependencies
+pnpm add motio
+pnpm add -D @motiojs/cli @motiojs/transitions
+
+# Imports stay as they are. Check them, then render
+pnpm exec motio doctor
+pnpm exec motio render src/index.ts Intro out/intro.mp4`
+			};
+			const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			const TOK = /(\/\/.*$|#.*$)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|(<\/?[A-Za-z][\w.]*)|\b(const|let|export|import|from|return|type|as|new|if|else|function|await|async)\b|\b(\d+(?:\.\d+)?)\b|([A-Za-z_$][\w$]*)(?=\()/gm;
+			const highlight = (src, lang) => {
+				let out = '', i = 0;
+				src.replace(TOK, (m, c, s, t, k, n, f, at) => {
+					if (c && lang !== 'sh' && c.startsWith('#')) return m;
+					if (c && lang === 'sh' && c.startsWith('//')) return m;
+					out += esc(src.slice(i, at));
+					const cls = c ? 'c' : s ? 's' : t ? 't' : k ? 'k' : n ? 'n' : 'f';
+					out += `<span class="${cls}">${esc(m)}</span>`;
+					i = at + m.length;
+					return m;
+				});
+				return out + esc(src.slice(i));
+			};
+			const fillCode = () => document.querySelectorAll('[data-code]').forEach((el) => {
+				const src = CODE[el.dataset.code];
+				if (src) el.innerHTML = `<code>${highlight(src.replace(/\t/g, '  '), el.dataset.lang)}</code>`;
+			});
+
+			const AFTER = [];
+
+			// Hero: the Badge composition, 60 frames, driven by the playhead.
+			const DUR = 60;
+			const screen = document.querySelector('[data-screen]');
+			const disc = document.querySelector('[data-disc]');
+			const track = document.querySelector('[data-track]');
+			const ruler = document.querySelector('[data-ruler]');
+			const head = document.querySelector('[data-playhead]');
+			const knob = document.querySelector('[data-knob]');
+			const playBtn = document.querySelector('[data-play]');
+			const R = Object.fromEntries([...document.querySelectorAll('[data-r]')].map((el) => [el.dataset.r, el]));
+			const badgeAt = (f) => ({
+				grow: spring({ frame: f, fps: 30, delay: 10, config: BRAND }),
+				rise: spring({ frame: f, fps: 30, durationInFrames: 30, config: CALM })
+			});
+			const PAD = 26;
+			const fx = (f) => PAD + (f / (DUR - 1)) * (track.clientWidth - PAD * 2);
+			let heroFrame = 0;
+			const drawHero = (f) => {
+				heroFrame = clamp(f, 0, DUR - 1);
+				const shown = Math.round(heroFrame);
+				const { grow, rise } = badgeAt(heroFrame);
+				const k = screen.clientWidth / 1280;
+				const dy = (interpolate(rise, [0, 1], [200, 0]) / 2) * k;
+				disc.style.transform = `translate(-50%, calc(-50% + ${dy.toFixed(2)}px)) scale(${grow.toFixed(4)})`;
+				head.style.left = `${fx(heroFrame)}px`;
+				knob.textContent = shown;
+				head.setAttribute('aria-valuenow', shown);
+				R.frame.textContent = shown;
+				R.grow.textContent = badgeAt(shown).grow.toFixed(3);
+				R.rise.textContent = badgeAt(shown).rise.toFixed(3);
+			};
+			const drawRuler = () => {
+				const w = track.clientWidth, h = track.clientHeight;
+				ruler.setAttribute('viewBox', `0 0 ${w} ${h}`);
+				let s = '';
+				for (let f = 0; f < DUR; f++) {
+					const x = fx(f).toFixed(1);
+					const major = f % 10 === 0;
+					if (w < 500 && !major && f % 5) continue;
+					s += `<line class="tick${major ? ' major' : ''}" x1="${x}" x2="${x}" y1="${major ? 16 : 20}" y2="26" />`;
+					if (major) s += `<text class="num" x="${x}" y="12" text-anchor="middle">${f}</text>`;
+				}
+				s += `<rect class="seq" x="${fx(0) - 6}" y="32" width="${fx(DUR - 1) - fx(0) + 12}" height="18" rx="4" /><text class="seq-l" x="${fx(0)}" y="45">Badge</text>`;
+				const line = (key) => Array.from({ length: DUR }, (_, f) => `${f ? 'L' : 'M'}${fx(f).toFixed(1)} ${(h - 10 - badgeAt(f)[key] * 30).toFixed(1)}`).join(' ');
+				s += `<path d="${line('rise')}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 3" />`;
+				s += `<path d="${line('grow')}" fill="none" stroke="var(--pulse)" stroke-width="2.5" />`;
+				ruler.innerHTML = s;
+			};
+			let heroRaf = 0;
+			const stopHero = () => { cancelAnimationFrame(heroRaf); heroRaf = 0; playBtn.textContent = 'Play'; };
+			const playHero = () => {
+				if (heroRaf) return stopHero();
+				if (reduced) return drawHero(DUR - 1);
+				const start = heroFrame >= DUR - 1 ? 0 : heroFrame;
+				const t0 = performance.now();
+				playBtn.textContent = 'Pause';
+				const tick = (t) => {
+					const f = start + ((t - t0) / 1000) * 30;
+					drawHero(Math.min(f, DUR - 1));
+					if (f < DUR - 1) heroRaf = requestAnimationFrame(tick);
+					else stopHero();
+				};
+				heroRaf = requestAnimationFrame(tick);
+			};
+			playBtn.addEventListener('click', playHero);
+			const frameAt = (clientX) => {
+				const r = track.getBoundingClientRect();
+				return Math.round(clamp(((clientX - r.left - PAD) / (r.width - PAD * 2)) * (DUR - 1), 0, DUR - 1));
+			};
+			track.addEventListener('pointerdown', (e) => {
+				stopHero();
+				track.setPointerCapture(e.pointerId);
+				drawHero(frameAt(e.clientX));
+				head.focus({ preventScroll: true });
+			});
+			track.addEventListener('pointermove', (e) => { if (track.hasPointerCapture(e.pointerId)) drawHero(frameAt(e.clientX)); });
+			head.addEventListener('keydown', (e) => {
+				const step = e.shiftKey ? 10 : 1;
+				const map = { ArrowRight: step, ArrowUp: step, ArrowLeft: -step, ArrowDown: -step };
+				if (e.key in map) drawHero(Math.round(heroFrame) + map[e.key]);
+				else if (e.key === 'Home') drawHero(0);
+				else if (e.key === 'End') drawHero(DUR - 1);
+				else if (e.key === ' ') playHero();
+				else return;
+				if (e.key !== ' ') stopHero();
+				e.preventDefault();
+			});
+
+			// Hero title: the one orchestrated entrance.
+			const titleLines = [...document.querySelectorAll('[data-hero-title] .ln > span')];
+			const playTitle = () => {
+				if (reduced) return;
+				const t0 = performance.now();
+				const tick = (t) => {
+					const f = ((t - t0) / 1000) * 30;
+					titleLines.forEach((s, i) => {
+						const p = spring({ frame: f, fps: 30, delay: 2 + i * 5, config: BRAND });
+						s.style.transform = `translateY(${((1 - p) * 105).toFixed(2)}%)`;
+					});
+					if (f < 50) requestAnimationFrame(tick);
+				};
+				titleLines.forEach((s) => (s.style.transform = 'translateY(105%)'));
+				requestAnimationFrame(tick);
+			};
+
+			// Pipeline strip: real frames of the Badge.
+			document.querySelector('[data-strip]').innerHTML = [8, 11, 14, 17, 20, 23, 26]
+				.map((f) => { const { grow, rise } = badgeAt(f); const d = 46 * grow; return `<div class="fr"><b>${f}</b><i style="width:${d.toFixed(1)}px;height:${d.toFixed(1)}px;transform:translateY(${((1 - rise) * 20).toFixed(1)}px)"></i></div>`; })
+				.join('');
+
+			// Determinism: the same hash in any order (illustrative values).
+			document.querySelector('[data-hashes]').innerHTML = [['1 tab, in order', '7c1e4a90 ... 0d94ab'], ['4 tabs, shuffled', '7c1e4a90 ... 0d94ab'], ['8 tabs, reversed', '7c1e4a90 ... 0d94ab']]
+				.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('');
+
+			// Performance, from docs/ROADMAP.md (D-044).
+			const PERF = {
+				mac: { rows: [[1, 6.54, 1.75], [4, 2.13, 1.21], [8, 1.58, 1.31]], foot: 'Measured with make bench against Remotion 4.0.545 on macOS, Apple M5, 1920x1080. H.264 CRF 18, muted, medians.' },
+				linux: { rows: [[1, 7.56, 2.11], [4, 2.54, 1.32], [8, 1.91, 1.3]], foot: 'Measured with make bench against Remotion 4.0.545 in the pinned Linux image (linux-arm64), 1920x1080. H.264 CRF 18, muted, medians.' }
+			};
+			const PMAX = 7.56;
+			const bars = document.querySelector('[data-bars]');
+			bars.innerHTML = PERF.mac.rows.map(([c]) => `<div class="bar-group" data-c="${c}"><h4>${c} ${c === 1 ? 'tab' : 'tabs'}<small>concurrency ${c}</small></h4><div class="bar-lines"><div class="bline motio"><i></i><span></span></div><div class="bline base"><i></i><span></span></div></div><div class="factor"><span></span><small>faster</small></div></div>`).join('');
+			let perfShown = false;
+			const drawPerf = (plat) => {
+				document.querySelectorAll('[data-plat]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.plat === plat)));
+				document.querySelector('[data-perf-foot]').textContent = PERF[plat].foot;
+				PERF[plat].rows.forEach(([c, base, mot], i) => {
+					const g = bars.children[i];
+					const [m, b] = g.querySelectorAll('.bline');
+					m.querySelector('span').textContent = `Motio ${mot.toFixed(2)} s`;
+					b.querySelector('span').textContent = `Remotion ${base.toFixed(2)} s`;
+					m.querySelector('i').style.width = perfShown ? `${(mot / PMAX) * 100}%` : '0';
+					b.querySelector('i').style.width = perfShown ? `${(base / PMAX) * 100}%` : '0';
+					g.querySelector('.factor span').textContent = `${(base / mot).toFixed(1)}x`;
+				});
+			};
+			let plat = 'mac';
+			document.querySelector('.seg').addEventListener('click', (e) => { const b = e.target.closest('[data-plat]'); if (b) drawPerf((plat = b.dataset.plat)); });
+			drawPerf(plat);
+			new IntersectionObserver((es, o) => es.forEach((e) => { if (e.isIntersecting) { perfShown = true; drawPerf(plat); o.disconnect(); } }), { threshold: 0.3 }).observe(bars);
+
+			// Copy buttons
+			document.addEventListener('click', async (e) => {
+				const b = e.target.closest('[data-copy]');
+				if (!b) return;
+				try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'Copied'; }
+				catch { b.textContent = 'Select it'; }
+				setTimeout(() => (b.textContent = 'Copy'), 1400);
+			});
+
+			// Docs: on-page table of contents follows the reading position.
+			const tocLinks = [...document.querySelectorAll('[data-toc] a')];
+			const tocObs = new IntersectionObserver((es) => es.forEach((e) => {
+				if (e.isIntersecting) tocLinks.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === `#${e.target.id}`));
+			}), { rootMargin: '0px 0px -70% 0px' });
+			document.querySelectorAll('.prose h2[id]').forEach((h) => tocObs.observe(h));
+			const sideDetails = document.querySelector('[data-side-details]');
+			const wide = matchMedia('(min-width: 901px)');
+			const syncSide = () => (sideDetails.open = wide.matches);
+			wide.addEventListener('change', syncSide);
+			syncSide();
+
+			// Promo: real pixel sizes, scaled to the column.
+			const promoFrames = [...document.querySelectorAll('.promo-frame')];
+			const fitPromo = () => promoFrames.forEach((fr) => {
+				const w = +fr.dataset.w, h = +fr.dataset.h, s = fr.clientWidth / w;
+				fr.style.height = `${h * s}px`;
+				Object.assign(fr.firstElementChild.style, { width: `${w}px`, height: `${h}px`, transform: `scale(${s})` });
+			});
+			const socialArt = document.querySelector('[data-social-art]');
+			AFTER.push((v) => {
+				socialArt.style.setProperty('--logo-bg', COL.plum);
+				socialArt.innerHTML = `<g transform="translate(-40 150) scale(8)">${MARK[v](LOGO_END + 20, 'color')}</g>`;
+			});
+			const br = document.querySelector('[data-banner-ruler]');
+			br.setAttribute('viewBox', '0 0 704 56');
+			br.innerHTML = Array.from({ length: 89 }, (_, i) => { const x = i * 8 + 0.5; const m = i % 10 === 0; return `<line x1="${x}" x2="${x}" y1="${m ? 22 : 34}" y2="56" stroke="#f6eff4" stroke-opacity="${m ? 0.6 : 0.25}" />` + (m ? `<text x="${x + 4}" y="18" fill="#f6eff4" fill-opacity=".6" font-family="IBM Plex Mono" font-size="12">${i}</text>` : ''); }).join('') + `<rect x="327" y="0" width="3" height="56" fill="#ff3d8b" /><rect x="312" y="0" width="33" height="16" rx="4" fill="#ff3d8b" /><text x="328.5" y="12" fill="#2a0e2e" font-family="IBM Plex Mono" font-size="11" font-weight="600" text-anchor="middle">41</text>`;
+
+			const onResize = () => { drawRuler(); drawHero(heroFrame); fitPromo(); };
+			new ResizeObserver(onResize).observe(document.body);
+
+			// Variant picking
+			const pick = (v) => {
+				if (v === 'c') v = load().v || 'c1';
+				if (!DESC[v]) return;
+				body.dataset.v = v;
+				document.querySelectorAll('.switch [data-v]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+				document.querySelectorAll('[data-pick]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === v)));
+				document.querySelector('[data-desc]').textContent = DESC[v];
+				document.querySelectorAll('[data-logo-name]').forEach((el) => (el.textContent = `${v} ${name(v)}`));
+				save({ ...load(), v });
+				history.replaceState(null, '', `${location.search}#${v}`);
+				logos().forEach((el) => { if (!el.dataset.fixed) el.dataset.built = ''; });
+				drawAll();
+				drawContact();
+				logos().filter((el) => el.dataset.anim === 'load').forEach(playLogo);
+				AFTER.forEach((fn) => fn(v));
+			};
+			const setTheme = (t) => { root.dataset.theme = t; save({ ...load(), theme: t }); };
+			document.querySelector('.switch').addEventListener('click', (e) => {
+				const b = e.target.closest('[data-v]');
+				if (b) pick(b.dataset.v);
+				const j = e.target.closest('[data-jump]');
+				if (j) document.getElementById(j.dataset.jump)?.scrollIntoView();
+			});
+			document.addEventListener('click', (e) => {
+				const b = e.target.closest('[data-pick]');
+				if (b) pick(b.dataset.pick);
+			});
+			document.querySelector('[data-theme-toggle]').addEventListener('click', () => setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'));
+			addEventListener('keydown', (e) => {
+				if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest('input, textarea, select, [contenteditable], [role="slider"]')) return;
+				const k = e.key.toLowerCase();
+				if (k === 't') setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+				else if (k === 'p') body.dataset.chrome = body.dataset.chrome === 'off' ? 'on' : 'off';
+				else if (/^[1-3]$/.test(k)) pick(`c${k}`);
+				else if (k === 'c') pick('c');
+			});
+
+			const saved = load();
+			root.dataset.theme = saved.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+			fillCode();
+			const h = location.hash.slice(1);
+			pick(DESC[h] ? h : saved.v || 'c1');
+			if (h && !DESC[h]) document.getElementById(h)?.scrollIntoView();
+			onResize();
+			if (reduced) drawHero(DUR - 1);
+			else {
+				playTitle();
+				drawHero(0);
+				setTimeout(playHero, 500);
+			}
+			document.fonts?.ready.then(onResize);
+			addEventListener('keydown', (e) => {
+				if (e.key === '/' && !e.target.closest('input, textarea')) { e.preventDefault(); document.querySelector('.search input').focus(); }
+			});
+		</script>
+	</body>
+</html>

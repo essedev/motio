@@ -1,0 +1,1556 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Concept B - Terminal</title>
+		<!--
+			Concept B "Terminal": una delle tre direzioni di brand e sito per Motio (A e C sono in file a parte).
+			Tasti: 1 2 3 cambiano il logo (b1 b2 b3) su tutta la pagina, t tema, p nasconde la barra, / cerca nella pagina docs.
+
+			La scommessa: Motio come infrastruttura di ingegneria per il video, non come strumento creativo.
+			Chi lo sceglie lo fa perché si fida: CLI prima di tutto, --json ovunque, codici d'errore stabili,
+			determinismo e flicker verificati da test, CI e agent AI come utenti di prima classe. Il materiale
+			da eroe è l'output vero della CLI: sessioni di terminale e JSON validi contro gli schemi del pacchetto.
+
+			Scelte:
+			- Palette: grafite fredda (#121418) e carta calda per il testo (#E7E5DF); un solo segnale, l'ambra
+			  "tally" (#F5A524), la luce che sulle telecamere dice "sta registrando". Usata poco: il cursore,
+			  il frame corrente, le barre di Motio nel benchmark, il bottone primario. Niente verde su nero.
+			  I terminali restano scuri anche nel tema chiaro: sono un materiale, non una superficie del tema.
+			- Tipografia: Martian Mono è il carattere di prima classe (titoli, UI, codice), con l'asse di larghezza:
+			  112.5 per il titolo dell'eroe, 87.5 per il codice così le righe stanno nei blocchi. Hanken Grotesk
+			  per il testo lungo, sobrio, misura di riga sotto i 70 caratteri.
+			- Densità: alta ma calma. Tabelle, liste a due colonne in stile `ls`, poche card; lo spazio separa
+			  le sezioni, i fili da 1px separano le righe.
+			- Materiale: superfici piatte con filo chiaro uniforme su tutto il bordo, raggi concentrici
+			  (finestra 14, interno 8 = 14 - 6 di padding), nessuna ombra morbida, nessun gradiente.
+
+			Logo (sottovarianti):
+			b1 prompt: quadrato con il chevron del prompt e il trattino del cursore in ambra; il prompt è il prodotto.
+			b2 onion: tre frame sovrapposti come l'onion skin di un'animazione, l'ultimo in ambra è il frame corrente.
+			b3 viewfinder: la "m" minuscola dentro i crocini di un mirino, con la spia ambra di registrazione.
+
+			Dati: README.md (promessa, i quattro perché, requisiti, FFmpeg fissato), docs/guide/README.md (ordine
+			delle pagine), frames-and-time.md (pagina docs intera, codice Clock e Stars), getting-started.md (starter,
+			flag di create), testing-in-ci.md (exit code, determinismo, flicker, job di CI), docs/ROADMAP.md (tabella
+			delle prestazioni), packages/cli/schemas (forma dei JSON), package.json dei pacchetti (nomi e descrizioni,
+			riscritte), codici d'errore presi dai sorgenti (E_READINESS_TIMEOUT, E_COMPOSITION_NOT_FOUND, ...).
+			Inventato: le righe di output umano di create e render, durationMs 2140, serveUrl, il path di FFmpeg,
+			gli hash del determinismo, il messaggio di E_READINESS_TIMEOUT, l'output di doctor, i conteggi di stelle
+			assenti (non ce ne sono: il progetto non è pubblicato). Tutto il resto è testo vero del repo.
+			Remotion compare solo nella sezione compatibilità (descrittivo) e come baseline misurata nel benchmark.
+		-->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400..700;1,400&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			/* Tokens. Dark first; light overrides. Terminals keep the ink material in both themes. */
+			:root {
+				--bg: #121418;
+				--bg-2: #161920;
+				--surface: #1b1f26;
+				--raised: #232831;
+				--text: #e7e5df;
+				--muted: #959aa3;
+				--faint: #646a74;
+				--edge: rgb(255 255 255 / 0.085);
+				--edge-strong: rgb(255 255 255 / 0.16);
+				--accent: #f5a524;
+				--accent-text: #f5a524;
+				--accent-ink: #1d1404;
+				--accent-soft: rgb(245 165 36 / 0.12);
+				--ok: #8cc4ae;
+				--err: #f07a72;
+				--term: #0d0f12;
+				--term-2: #14171c;
+				--term-text: #dcdad3;
+				--term-muted: #7f858f;
+				--term-edge: rgb(255 255 255 / 0.09);
+				--j-key: #dcdad3;
+				--j-str: #a9bccf;
+				--j-num: #e9c98d;
+				--j-punc: #6c727c;
+				--sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+				--mono: 'Martian Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+				--r-xl: 14px;
+				--r-lg: 10px;
+				--r: 8px;
+				--r-sm: 6px;
+				--r-xs: 4px;
+				--gutter: 24px;
+				--mk-acc: var(--accent);
+				color-scheme: dark;
+			}
+			:root[data-theme='light'] {
+				--bg: #eceef1;
+				--bg-2: #e3e6ea;
+				--surface: #ffffff;
+				--raised: #f4f5f7;
+				--text: #15181d;
+				--muted: #575d67;
+				--faint: #868c96;
+				--edge: rgb(10 20 35 / 0.11);
+				--edge-strong: rgb(10 20 35 / 0.2);
+				--accent: #f0a020;
+				--accent-text: #9a5a00;
+				--accent-ink: #1d1404;
+				--accent-soft: rgb(240 160 32 / 0.16);
+				--ok: #2f7d63;
+				--err: #c2362f;
+				color-scheme: light;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; }
+			html { scroll-padding-top: 56px; -webkit-text-size-adjust: 100%; }
+			body { min-height: 100vh; background: var(--bg); color: var(--text); font: 16px/1.6 var(--sans); overflow-x: hidden; }
+			[hidden] { display: none !important; }
+			a { color: inherit; }
+			code, kbd, pre, .mono { font-family: var(--mono); }
+			:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-xs); }
+			::selection { background: var(--accent-soft); }
+			button { font: inherit; color: inherit; }
+			p { margin: 0 0 1em; }
+			h1, h2, h3, h4 { margin: 0; font-weight: 500; }
+
+			/* Concept chrome: the variant bar and the part dividers. Not part of the design. */
+			.switch { position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; background: #0a0a0a; color: #aaa; font: 12px/1.4 ui-monospace, Menlo, monospace; }
+			.switch button { font: inherit; border: 0; padding: 5px 9px; border-radius: 6px; background: #262626; color: #eee; cursor: pointer; }
+			.switch button[aria-pressed='true'] { background: #eee; color: #111; }
+			.switch p { margin: 0 0 0 8px; flex: 1 1 240px; min-width: 0; }
+			.switch nav { display: flex; gap: 10px; }
+			.switch nav a { color: #ccc; text-decoration: none; }
+			.switch nav a:hover { color: #fff; }
+			body[data-chrome='off'] .switch, body[data-chrome='off'] .part { display: none; }
+			.part { margin: 0; padding: 10px 16px; background: #0a0a0a; color: #9a9a9a; font: 12px/1.4 ui-monospace, Menlo, monospace; border-top: 1px solid #222; }
+
+			/* Layout */
+			.wrap { max-width: 1200px; margin: 0 auto; padding: 0 var(--gutter); }
+			.measure { max-width: 66ch; }
+			.lead { font-size: 18px; line-height: 1.6; color: var(--muted); }
+			.muted { color: var(--muted); }
+			.small { font-size: 14px; }
+			.h2 { font-family: var(--mono); font-stretch: 92%; font-weight: 500; font-size: clamp(24px, 3vw, 36px); line-height: 1.15; letter-spacing: -0.03em; }
+			.h3 { font-family: var(--mono); font-stretch: 92%; font-weight: 500; font-size: 17px; line-height: 1.3; letter-spacing: -0.01em; }
+			.sec { padding: 88px 0; }
+			.sec + .sec { border-top: 1px solid var(--edge); }
+			.sec-head { display: grid; gap: 14px; margin-bottom: 40px; }
+			.sec-head .cmdline { font: 13px/1.4 var(--mono); font-stretch: 87.5%; color: var(--faint); }
+			.cols { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 32px; }
+
+			/* Surfaces: one uniform 1px edge on every surface of the same level. */
+			.surface { background: var(--surface); border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px var(--edge); }
+
+			/* Components */
+			.btn { display: inline-flex; align-items: center; gap: 10px; height: 42px; padding: 0 18px; border-radius: var(--r-sm); border: 0; font: 500 14px/1 var(--mono); font-stretch: 92%; letter-spacing: -0.01em; text-decoration: none; cursor: pointer; white-space: nowrap; }
+			.btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
+			.btn-primary:hover { filter: brightness(1.06); }
+			.btn-secondary { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--edge-strong); }
+			.btn-secondary:hover { background: var(--raised); }
+			.btn-small { height: 32px; padding: 0 12px; font-size: 12px; }
+			.badge { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: var(--r-xs); font: 500 11px/1 var(--mono); font-stretch: 87.5%; background: var(--raised); color: var(--muted); box-shadow: inset 0 0 0 1px var(--edge); white-space: nowrap; }
+			.badge-signal { background: var(--accent-soft); color: var(--accent-text); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); }
+			.badge-signal::before { content: ''; width: 6px; height: 6px; border-radius: 1px; background: var(--accent); }
+			.badge-err { color: var(--err); }
+			.badge-ok { color: var(--ok); }
+			kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: var(--r-xs); font-size: 11px; font-stretch: 87.5%; color: var(--muted); background: var(--raised); box-shadow: inset 0 0 0 1px var(--edge-strong); }
+			.callout { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 16px 18px; border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1px var(--edge); font-size: 15px; }
+			.callout .mark-i { width: 20px; height: 20px; border-radius: var(--r-xs); display: grid; place-items: center; font: 600 12px/1 var(--mono); background: var(--accent-soft); color: var(--accent-text); }
+			.callout p:last-child { margin: 0; }
+			.callout strong { font-weight: 600; }
+			.card { padding: 20px; }
+			.inline-code, p code, li code, td code { font-size: 0.84em; font-stretch: 87.5%; padding: 1px 5px; border-radius: var(--r-xs); background: var(--raised); box-shadow: inset 0 0 0 1px var(--edge); }
+
+			/* Code and terminal: the ink material. Window r 14, inner panel r 8 inside 6px padding. */
+			.win { background: var(--term); color: var(--term-text); border-radius: var(--r-xl); box-shadow: inset 0 0 0 1px var(--term-edge); padding: 6px; min-width: 0; }
+			.win-bar { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; font: 11px/1 var(--mono); font-stretch: 87.5%; color: var(--term-muted); }
+			.win-bar .dots { display: flex; gap: 6px; }
+			.win-bar .dots i { width: 9px; height: 9px; border-radius: 50%; background: #2a2e35; }
+			.win-bar .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.win-bar .copy { font: inherit; color: var(--term-muted); background: transparent; border: 0; padding: 6px 8px; border-radius: var(--r-xs); cursor: pointer; }
+			.win-bar .copy:hover { color: var(--term-text); background: var(--term-2); }
+			.win-body { background: var(--term-2); border-radius: var(--r); box-shadow: inset 0 0 0 1px var(--term-edge); padding: 16px 18px; overflow-x: auto; }
+			.code { margin: 0; font: 13px/1.7 var(--mono); font-stretch: 87.5%; tab-size: 2; white-space: pre; color: var(--term-text); }
+			.code .k { color: #c9b8e8; }
+			.code .t { color: #e9c98d; }
+			.code .s { color: var(--j-str); }
+			.code .c { color: var(--term-muted); font-style: normal; }
+			.code .f { color: #e7e5df; font-weight: 600; }
+			.code .a { color: #b4c7a8; }
+			.code .del { color: #f0918a; }
+			.code .ins { color: #9fd0bb; }
+			.j-key { color: var(--j-key); }
+			.j-str { color: var(--j-str); }
+			.j-num { color: var(--j-num); }
+			.j-p { color: var(--j-punc); }
+
+			.term { font: 13px/1.65 var(--mono); font-stretch: 87.5%; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+			.term .ps { color: var(--term-muted); }
+			.term .cmd { color: #f3f1ea; }
+			.term .out { color: var(--term-text); }
+			.term .err { color: var(--term-muted); }
+			.term .err .tag { float: right; margin-left: 12px; font-size: 10px; color: #4f555e; }
+			.term .ok { color: var(--ok); }
+			.term .ans { color: #f3f1ea; font-weight: 600; }
+			.term .bar { display: inline-block; vertical-align: -1px; width: 16ch; height: 10px; border-radius: 2px; background: #262a31; overflow: hidden; margin: 0 1ch; }
+			.term .bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+			.cursor { display: inline-block; width: 0.62em; height: 1.15em; vertical-align: -0.2em; background: var(--accent); animation: blink 1.05s steps(1) infinite; }
+			@keyframes blink { 50% { opacity: 0; } }
+			@media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+
+			/* Tabs (segmented, state by background, never by a stripe) */
+			.tabs { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--r); background: var(--term); box-shadow: inset 0 0 0 1px var(--term-edge); max-width: 100%; overflow-x: auto; }
+			.tabs button { border: 0; background: transparent; color: var(--term-muted); font: 12px/1 var(--mono); font-stretch: 87.5%; padding: 8px 10px; border-radius: 5px; cursor: pointer; white-space: nowrap; }
+			.tabs button[aria-selected='true'] { background: var(--term-2); color: var(--term-text); box-shadow: inset 0 0 0 1px var(--term-edge); }
+			.win .tabs { background: transparent; box-shadow: none; padding: 0; }
+
+			/* Logo */
+			.mk { display: block; flex: none; }
+			.lockup { display: inline-flex; align-items: center; gap: 0.42em; font: 600 22px/1 var(--mono); font-stretch: 100%; letter-spacing: -0.045em; color: var(--text); text-decoration: none; }
+			.lockup .mk { width: 1.25em; height: 1.25em; }
+			.mono-mk { --mk-acc: currentColor; }
+
+			/* Brand sheet */
+			.sheet { padding: 72px 0 88px; }
+			.sheet h2.h2 { margin-bottom: 10px; }
+			.sheet-block { margin-top: 56px; }
+			.sheet-block > .h3 { margin-bottom: 16px; }
+			.logo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+			.tile { border-radius: var(--r-lg); padding: 28px 20px; min-height: 150px; display: grid; place-items: center; gap: 12px; box-shadow: inset 0 0 0 1px var(--edge); position: relative; }
+			.tile figcaption { position: absolute; left: 12px; bottom: 10px; font: 11px/1 var(--mono); font-stretch: 87.5%; color: var(--faint); }
+			.tile.dark { background: #121418; color: #e7e5df; --mk-acc: #f5a524; }
+			.tile.dark figcaption { color: #646a74; }
+			.tile.light { background: #ffffff; color: #15181d; --mk-acc: #f0a020; box-shadow: inset 0 0 0 1px rgb(10 20 35 / 0.11); }
+			.tile.light figcaption { color: #868c96; }
+			.tile.wide { grid-column: span 2; }
+			.tile .lockup { color: inherit; font-size: 34px; }
+			.sizes { display: flex; align-items: flex-end; gap: 22px; }
+			.alts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+			.alt { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; padding: 16px; border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1px var(--edge); cursor: pointer; text-align: left; border: 0; color: var(--text); }
+			.alt[aria-pressed='true'] { background: var(--raised); box-shadow: inset 0 0 0 1px var(--edge-strong); }
+			.alt .mk { width: 40px; height: 40px; }
+			.alt strong { display: block; font: 500 14px/1.3 var(--mono); font-stretch: 92%; }
+			.alt span { font-size: 14px; color: var(--muted); line-height: 1.45; }
+			.swatches { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+			.sw { border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1px var(--edge); padding: 6px; }
+			.sw .chip { height: 72px; border-radius: var(--r-xs); box-shadow: inset 0 0 0 1px rgb(128 128 128 / 0.22); }
+			.sw dl { margin: 10px 6px 6px; font-size: 13px; line-height: 1.4; }
+			.sw dt { font: 500 12px/1.3 var(--mono); font-stretch: 87.5%; }
+			.sw dd { margin: 2px 0 0; color: var(--muted); }
+			.sw .hex { color: var(--faint); font: 11px/1.3 var(--mono); font-stretch: 87.5%; }
+			.type-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+			.specimen { padding: 24px; }
+			.specimen .big { font-size: 56px; line-height: 1; letter-spacing: -0.04em; margin: 10px 0 18px; }
+			.specimen .meta { font: 11px/1.4 var(--mono); font-stretch: 87.5%; color: var(--faint); }
+			.widths { display: grid; gap: 6px; font-family: var(--mono); font-size: 22px; letter-spacing: -0.03em; }
+			.widths span { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+			.widths small { font-size: 11px; color: var(--faint); letter-spacing: 0; font-stretch: 87.5%; }
+			.comp-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+			.comp-grid > * { min-width: 0; }
+			.comp { padding: 20px; display: grid; gap: 14px; align-content: start; }
+			.comp .label { font: 11px/1 var(--mono); font-stretch: 87.5%; color: var(--faint); }
+			.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+			@media (max-width: 900px) {
+				.logo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+				.swatches { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+				.alts, .type-grid { grid-template-columns: 1fr; }
+				.comp-grid > * { grid-column: 1 / -1 !important; }
+			}
+			@media (max-width: 560px) {
+				:root { --gutter: 16px; }
+				.logo-grid { grid-template-columns: 1fr; }
+				.tile.wide { grid-column: auto; }
+				.swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+				.specimen .big { font-size: 40px; }
+				.sec { padding: 64px 0; }
+			}
+			/* Landing */
+			.site { background: var(--bg); }
+			.nav { display: flex; align-items: center; gap: 20px; height: 68px; }
+			.nav .lockup { font-size: 20px; }
+			.nav-links { display: flex; gap: 4px; margin-left: 12px; }
+			.nav-links a { padding: 8px 10px; border-radius: var(--r-sm); font: 13px/1 var(--mono); font-stretch: 92%; color: var(--muted); text-decoration: none; }
+			.nav-links a:hover { color: var(--text); background: var(--surface); }
+			.nav-links a[aria-current='page'] { color: var(--text); background: var(--surface); box-shadow: inset 0 0 0 1px var(--edge); }
+			.nav-end { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+			.menu-btn { display: none; }
+			.menu-panel { display: none; }
+			.hero { padding: 56px 0 96px; }
+			.display { font: 600 clamp(34px, 5.6vw, 68px)/1.02 var(--mono); font-stretch: 112.5%; letter-spacing: -0.06em; margin: 0 0 40px; }
+			.hero-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start; }
+			.hero-copy .lead { color: var(--text); opacity: 0.86; }
+			.status { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 28px; font-size: 14px; color: var(--muted); }
+			.hero-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 32px; }
+			.facts { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; margin: 0; padding: 18px 0 0; border-top: 1px solid var(--edge); font-size: 14px; }
+			.facts dt { font: 12px/1.6 var(--mono); font-stretch: 87.5%; color: var(--faint); }
+			.facts dd { margin: 0; color: var(--muted); }
+			.hero-term .win-body { height: 540px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2a2f37 transparent; }
+			.replay { font: 11px/1 var(--mono); font-stretch: 87.5%; color: var(--term-muted); background: transparent; border: 0; padding: 6px 8px; border-radius: var(--r-xs); cursor: pointer; }
+			.replay:hover { color: var(--term-text); background: var(--term-2); }
+
+			.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start; }
+			.split > * { min-width: 0; }
+			.reqs { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 10px; font-size: 15px; color: var(--muted); }
+			.reqs li { display: grid; grid-template-columns: 9ch 1fr; gap: 12px; }
+			.reqs b { font: 500 12px/1.9 var(--mono); font-stretch: 87.5%; color: var(--text); }
+
+			.frame-demo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 20px; align-items: start; }
+			.viewer { padding: 6px; border-radius: var(--r-xl); }
+			.viewer-frame { container-type: inline-size; aspect-ratio: 16 / 9; border-radius: var(--r); background: #fff; color: #000; display: grid; place-items: center; font-family: 'Times New Roman', Times, serif; box-shadow: inset 0 0 0 1px var(--edge); overflow: hidden; text-align: center; padding: 0 2cqw; }
+			.viewer-frame span { font-size: calc(64 / 1920 * 100cqw); line-height: 1.2; }
+			.scrub { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 12px 8px 6px; }
+			.scrub .readout { font: 12px/1 var(--mono); font-stretch: 87.5%; color: var(--muted); min-width: 13ch; text-align: right; }
+			.play { width: 32px; height: 32px; border-radius: var(--r-sm); border: 0; display: grid; place-items: center; background: var(--raised); box-shadow: inset 0 0 0 1px var(--edge); cursor: pointer; }
+			.play svg { width: 12px; height: 12px; fill: var(--text); }
+			input[type='range'] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; cursor: pointer; }
+			input[type='range']::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--raised); box-shadow: inset 0 0 0 1px var(--edge-strong); }
+			input[type='range']::-moz-range-track { height: 4px; border-radius: 2px; background: var(--raised); }
+			input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 6px; height: 18px; margin-top: -7px; border-radius: 2px; background: var(--accent); border: 0; }
+			input[type='range']::-moz-range-thumb { width: 6px; height: 18px; border-radius: 2px; background: var(--accent); border: 0; }
+			.viewer-note { font-size: 14px; color: var(--muted); padding: 6px 10px 10px; margin: 0; }
+
+			.pipeline { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; counter-reset: stage; }
+			.stage { padding: 22px; display: grid; gap: 12px; align-content: start; position: relative; }
+			.stage .num { font: 12px/1 var(--mono); color: var(--faint); }
+			.stage p { margin: 0; color: var(--muted); font-size: 15px; }
+			.stage .viz { margin-top: 6px; padding: 12px; border-radius: var(--r-xs); background: var(--term); color: var(--term-text); font: 12px/1.6 var(--mono); font-stretch: 87.5%; box-shadow: inset 0 0 0 1px var(--term-edge); white-space: pre; overflow-x: auto; }
+			.tabsviz { display: grid; gap: 6px; }
+			.tabsviz div { display: flex; align-items: center; gap: 5px; }
+			.tabsviz span:first-child { width: 6ch; color: var(--term-muted); }
+			.tabsviz i { font-style: normal; display: grid; place-items: center; width: 26px; height: 20px; border-radius: 3px; background: #1f2329; font-size: 10px; color: var(--term-muted); }
+			.tabsviz i.done { background: #2a2f37; color: var(--term-text); }
+			.tabsviz i.now { background: var(--accent); color: var(--accent-ink); }
+
+			.reasons { margin: 0; display: grid; }
+			.reason { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 6fr) minmax(0, 3fr); gap: 24px; padding: 22px 0; border-top: 1px solid var(--edge); align-items: baseline; }
+			.reason:last-child { border-bottom: 1px solid var(--edge); }
+			.reason dt { font: 500 19px/1.3 var(--mono); font-stretch: 92%; letter-spacing: -0.02em; }
+			.reason dd { margin: 0; color: var(--muted); }
+			.reason .proof { font: 12px/1.6 var(--mono); font-stretch: 87.5%; color: var(--faint); }
+
+			.perf { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+			.perf-card { padding: 22px; }
+			.perf-card h3 { margin-bottom: 4px; }
+			.perf-card .sub { font-size: 14px; color: var(--muted); margin: 0 0 18px; }
+			.bars { display: grid; gap: 18px; }
+			.bargroup { display: grid; grid-template-columns: 6ch 1fr; gap: 6px 12px; align-items: center; }
+			.bargroup > .c { grid-row: span 2; font: 12px/1.2 var(--mono); font-stretch: 87.5%; color: var(--muted); }
+			.bargroup > .c b { display: block; font-weight: 500; color: var(--text); font-size: 15px; }
+			.bar-row { display: grid; grid-template-columns: 1fr 9ch; gap: 10px; align-items: center; font: 12px/1 var(--mono); font-stretch: 87.5%; }
+			.bar-row .track { height: 14px; }
+			.bar-row .fill { height: 100%; border-radius: 2px; }
+			.bar-row.base .fill { background: color-mix(in srgb, var(--muted) 45%, transparent); }
+			.bar-row.motio .fill { background: var(--accent); }
+			.bar-row .v { color: var(--muted); }
+			.bar-row.motio .v { color: var(--text); }
+			.legend { display: flex; flex-wrap: wrap; gap: 18px; margin: 18px 0 0; font: 12px/1 var(--mono); font-stretch: 87.5%; color: var(--muted); }
+			.legend span { display: inline-flex; gap: 8px; align-items: center; }
+			.legend i { width: 14px; height: 10px; border-radius: 2px; }
+			.footnote { font-size: 13px; color: var(--faint); margin: 18px 0 0; max-width: 80ch; }
+			.big-ratio { font: 600 clamp(40px, 5vw, 60px)/1 var(--mono); font-stretch: 100%; letter-spacing: -0.05em; }
+
+			.codes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+			.exit { width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 8px; }
+			.exit td { padding: 9px 0; border-top: 1px solid var(--edge); vertical-align: baseline; }
+			.exit tr:last-child td { border-bottom: 1px solid var(--edge); }
+			.exit td:first-child { width: 4ch; font: 500 14px/1 var(--mono); }
+			.exit td:last-child { color: var(--muted); }
+			.schemas { columns: 2; column-gap: 24px; list-style: none; padding: 0; margin: 12px 0 0; font: 12px/2 var(--mono); font-stretch: 87.5%; color: var(--muted); }
+			.subhead { font: 500 13px/1.3 var(--mono); font-stretch: 92%; margin: 32px 0 4px; }
+			.ci-win .win-body { min-height: 340px; }
+			.exitline { font: 12px/1 var(--mono); font-stretch: 87.5%; color: var(--term-muted); padding: 10px 12px 6px; display: flex; justify-content: space-between; gap: 12px; }
+			.exitline b { font-weight: 500; color: var(--term-text); }
+
+			.pkgs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; margin: 0; }
+			.pkg { display: grid; grid-template-columns: minmax(0, 22ch) minmax(0, 1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--edge); align-items: baseline; }
+			.pkg dt { font: 500 13px/1.5 var(--mono); font-stretch: 87.5%; overflow-wrap: anywhere; }
+			.pkg dd { margin: 0; font-size: 15px; color: var(--muted); }
+
+			.compat-tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+			.compat-tbl th, .compat-tbl td { text-align: left; padding: 10px 12px 10px 0; border-top: 1px solid var(--edge); vertical-align: baseline; }
+			.compat-tbl th { font: 500 12px/1.5 var(--mono); font-stretch: 87.5%; width: 12ch; color: var(--text); }
+			.compat-tbl td { color: var(--muted); }
+
+			.starters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+			.starter { padding: 6px; display: grid; grid-template-rows: auto 1fr; border-radius: var(--r-xl); }
+			.starter .thumb { aspect-ratio: 16 / 9; border-radius: var(--r); background: var(--term); box-shadow: inset 0 0 0 1px var(--term-edge); position: relative; overflow: hidden; container-type: inline-size; }
+			.starter .info { padding: 16px 14px 14px; display: grid; gap: 10px; align-content: start; }
+			.starter .info p { margin: 0; color: var(--muted); font-size: 15px; }
+			.starter code.cmd { font: 11.5px/1.5 var(--mono); font-stretch: 87.5%; color: var(--muted); background: var(--raised); padding: 8px 10px; border-radius: var(--r-xs); box-shadow: inset 0 0 0 1px var(--edge); overflow-wrap: anywhere; }
+			.th-basic { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; }
+			.th-basic div { display: grid; place-items: center; font: 600 7cqw/1 var(--mono); letter-spacing: -0.05em; color: #e7e5df; }
+			.th-basic div + div { background: #1b1f26; box-shadow: inset 1px 0 0 var(--term-edge); }
+			.th-basic img, .th-basic .pic { width: 34%; aspect-ratio: 1; border-radius: 4px; background: #2a2f37; }
+			.th-blank { position: absolute; inset: 0; display: grid; place-items: center; font: 600 8cqw/1 var(--mono); letter-spacing: -0.05em; color: #e7e5df; }
+			.th-blank span { opacity: 0.55; }
+			.th-caps { position: absolute; inset: 0; display: grid; place-items: end center; padding-bottom: 12cqw; font: 700 6.4cqw/1.2 var(--sans); color: #e7e5df; }
+			.th-caps b { color: var(--accent); font-weight: 700; }
+
+			.foot { padding: 56px 0 40px; border-top: 1px solid var(--edge); background: var(--bg-2); }
+			.foot-grid { display: grid; grid-template-columns: minmax(0, 4fr) repeat(3, minmax(0, 2fr)); gap: 32px; }
+			.foot h4 { font: 500 12px/1.4 var(--mono); font-stretch: 87.5%; color: var(--faint); margin-bottom: 12px; }
+			.foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 15px; }
+			.foot a { color: var(--muted); text-decoration: none; }
+			.foot a:hover { color: var(--text); }
+			.legal { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--edge); font-size: 13px; color: var(--faint); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+
+			@media (max-width: 960px) {
+				.hero-grid, .split, .frame-demo, .perf, .pipeline, .starters { grid-template-columns: 1fr; }
+				.reason { grid-template-columns: 1fr; gap: 6px; }
+				.pkgs { grid-template-columns: 1fr; }
+				.foot-grid { grid-template-columns: 1fr 1fr; }
+				.foot-grid > :first-child { grid-column: 1 / -1; }
+			}
+			@media (max-width: 760px) {
+				.nav-links, .nav-end .btn-secondary { display: none; }
+				.menu-btn { display: inline-flex; }
+				.menu-panel[data-open='true'] { display: grid; gap: 2px; padding: 8px; margin: 0 0 16px; border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1px var(--edge); }
+				.menu-panel a { padding: 10px 12px; border-radius: var(--r-xs); font: 14px/1 var(--mono); text-decoration: none; color: var(--text); }
+				.hero-term .win-body { height: 460px; padding: 14px; }
+				.pkg { grid-template-columns: 1fr; gap: 2px; }
+				.schemas { columns: 1; }
+				.ci-win .win-body { min-height: 0; }
+			}
+			/* Docs */
+			.docs { background: var(--bg); }
+			.docs-top { position: relative; display: flex; align-items: center; gap: 16px; height: 64px; padding: 0 var(--gutter); border-bottom: 1px solid var(--edge); background: var(--bg); }
+			.docs-top .lockup { font-size: 18px; }
+			.docs-top .section-name { font: 13px/1 var(--mono); font-stretch: 92%; color: var(--muted); }
+			.search { position: relative; flex: 0 1 360px; margin-left: auto; }
+			.search input { width: 100%; height: 36px; padding: 0 40px 0 34px; border-radius: var(--r-sm); border: 0; background: var(--surface); color: var(--text); font: 14px/1 var(--sans); box-shadow: inset 0 0 0 1px var(--edge-strong); }
+			.search input::placeholder { color: var(--faint); }
+			.search input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+			.search svg { position: absolute; left: 11px; top: 11px; width: 14px; height: 14px; stroke: var(--faint); fill: none; stroke-width: 2; }
+			.search kbd { position: absolute; right: 8px; top: 8px; }
+			.docs-top .gh { font: 13px/1 var(--mono); font-stretch: 92%; color: var(--muted); text-decoration: none; }
+			.docs-grid { display: grid; grid-template-columns: 260px minmax(0, 1fr) 220px; gap: 48px; max-width: 1320px; margin: 0 auto; padding: 0 var(--gutter); }
+			.side { padding: 28px 0 40px; position: relative; }
+			.side-toggle { display: none; }
+			.side ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+			.side ol ol { margin: 2px 0 6px 12px; }
+			.side a { display: block; padding: 7px 10px; border-radius: var(--r-sm); font-size: 14.5px; line-height: 1.35; color: var(--muted); text-decoration: none; }
+			.side a:hover { color: var(--text); background: var(--surface); }
+			.side a[aria-current='page'] { color: var(--text); background: var(--surface); font-weight: 600; box-shadow: inset 0 0 0 1px var(--edge); }
+			.side .group { display: block; padding: 12px 10px 4px; font: 12px/1.3 var(--mono); font-stretch: 87.5%; color: var(--faint); }
+			.side .none { padding: 10px; font-size: 14px; color: var(--faint); }
+			.article { padding: 36px 0 72px; min-width: 0; }
+			.article > * { max-width: 70ch; }
+			.article > .win, .article > .callout { max-width: 78ch; }
+			.crumbs { font: 12px/1.4 var(--mono); font-stretch: 87.5%; color: var(--faint); margin-bottom: 14px; }
+			.article h1 { font: 600 clamp(30px, 4vw, 42px)/1.1 var(--mono); font-stretch: 100%; letter-spacing: -0.05em; margin-bottom: 20px; }
+			.article h2 { font: 500 22px/1.25 var(--mono); font-stretch: 92%; letter-spacing: -0.025em; margin: 48px 0 14px; scroll-margin-top: 56px; }
+			.article p, .article li { font-size: 16.5px; line-height: 1.7; }
+			.article ul { padding-left: 20px; margin: 0 0 1.2em; }
+			.article li { margin-bottom: 0.5em; }
+			.article li::marker { color: var(--faint); }
+			.article .win, .article .callout { margin: 24px 0; }
+			.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 56px; }
+			.pager a { display: grid; gap: 4px; padding: 16px 18px; border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1px var(--edge); text-decoration: none; }
+			.pager a:hover { background: var(--raised); }
+			.pager small { font: 12px/1 var(--mono); font-stretch: 87.5%; color: var(--faint); }
+			.pager span { font: 500 15px/1.3 var(--mono); font-stretch: 92%; }
+			.pager a + a { text-align: right; }
+			.edit { margin-top: 24px; font-size: 14px; color: var(--faint); }
+			.toc { padding: 40px 0; }
+			.toc-in { position: sticky; top: 56px; }
+			.toc h4 { font: 12px/1.3 var(--mono); font-stretch: 87.5%; color: var(--faint); margin-bottom: 10px; }
+			.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+			.toc a { display: block; padding: 5px 0; font-size: 14px; line-height: 1.35; color: var(--muted); text-decoration: none; }
+			.toc a:hover { color: var(--text); }
+			.toc a[aria-current='true'] { color: var(--text); font-weight: 600; }
+			.toc .related { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--edge); font-size: 14px; color: var(--muted); }
+			.toc .related code { font-size: 12px; }
+
+			@media (max-width: 1100px) {
+				.docs-grid { grid-template-columns: 230px minmax(0, 1fr); gap: 36px; }
+				.toc { display: none; }
+			}
+			@media (max-width: 760px) {
+				.docs-grid { grid-template-columns: 1fr; gap: 0; }
+				.docs-top { flex-wrap: wrap; height: auto; padding: 12px var(--gutter); gap: 10px 16px; }
+				.docs-top .gh { margin-left: auto; }
+				.search { flex: 1 1 100%; order: 3; }
+				.side { padding: 16px 0 0; }
+				.side-toggle { display: flex; width: 100%; justify-content: space-between; }
+				.side-list { display: none; margin-top: 8px; padding: 6px; border-radius: var(--r-lg); background: var(--surface); box-shadow: inset 0 0 0 1px var(--edge); }
+				.side-list[data-open='true'] { display: block; }
+				.side-list a[aria-current='page'] { background: var(--raised); }
+				.pager { grid-template-columns: 1fr; }
+				.pager a + a { text-align: left; }
+			}
+
+			/* Promo: brand assets, fixed dark material whatever the page theme. */
+			.promo { padding: 72px 0 120px; }
+			.promo-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 24px; align-items: start; }
+			.promo-grid figure { margin: 0; min-width: 0; }
+			.promo-grid figcaption { font: 12px/1.4 var(--mono); font-stretch: 87.5%; color: var(--faint); margin-top: 10px; }
+			.promo-grid .full { grid-column: 1 / -1; }
+			.scaler { position: relative; width: 100%; overflow: hidden; border-radius: var(--r-lg); box-shadow: 0 0 0 1px var(--edge); }
+			.art { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: #121418; color: #e7e5df; --mk-acc: #f5a524; overflow: hidden; font-family: var(--mono); }
+			.art .lockup { color: #e7e5df; }
+			.art-social { width: 1200px; height: 630px; padding: 72px 80px; display: grid; grid-template-rows: auto 1fr auto; }
+			.art-social .lockup { font-size: 40px; }
+			.art-social h3 { align-self: center; font: 600 92px/1.02 var(--mono); font-stretch: 112.5%; letter-spacing: -0.06em; max-width: 960px; }
+			.art-social .row-b { display: flex; justify-content: space-between; align-items: center; font-size: 24px; font-stretch: 87.5%; color: #959aa3; }
+			.art-social .cmd { color: #e7e5df; padding: 14px 20px; border-radius: 10px; background: #1b1f26; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.09); }
+			.art-social .cmd b { font-weight: 400; color: #646a74; }
+			.art-banner { width: 1280px; height: 320px; padding: 0 72px; display: grid; grid-template-columns: auto 1fr auto; gap: 56px; align-items: center; }
+			.art-banner .lockup { font-size: 56px; }
+			.art-banner p { margin: 0; font: 400 22px/1.4 var(--sans); color: #959aa3; }
+			.art-banner p b { display: block; font: 600 30px/1.2 var(--mono); font-stretch: 100%; letter-spacing: -0.04em; color: #e7e5df; margin-bottom: 6px; }
+			.strip { display: flex; gap: 10px; }
+			.strip div { width: 84px; height: 124px; border-radius: 10px; background: #1b1f26; box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.08); display: grid; place-items: end start; padding: 10px 12px; font-size: 16px; font-stretch: 87.5%; color: #646a74; }
+			.strip div.now { background: #f5a524; color: #1d1404; box-shadow: none; }
+			.art-square { width: 1080px; height: 1080px; padding: 96px; display: grid; grid-template-rows: auto 1fr auto; }
+			.art-square .lockup { font-size: 48px; }
+			.art-square h3 { align-self: center; font: 600 100px/1.04 var(--mono); font-stretch: 100%; letter-spacing: -0.06em; }
+			.art-square h3 span { display: block; color: #959aa3; font-weight: 500; }
+			.art-square .json { font-size: 24px; line-height: 1.55; font-stretch: 87.5%; padding: 28px 34px; border-radius: 16px; background: #0d0f12; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.09); white-space: pre; }
+			@media (max-width: 900px) { .promo-grid { grid-template-columns: 1fr; } }
+		</style>
+	</head>
+	<body data-v="b1">
+		<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+			<!-- b1 prompt: the prompt chevron and an amber cursor bar in a rounded square. -->
+			<symbol id="m-b1" viewBox="0 0 32 32">
+				<rect x="1.5" y="1.5" width="29" height="29" rx="7.5" style="fill: none; stroke: currentColor; stroke-width: 2.6" />
+				<path d="M9.2 10.2 L15 16 L9.2 21.8" style="fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round" />
+				<rect x="17" y="19.4" width="7.2" height="3.2" rx="1" style="fill: var(--mk-acc)" />
+			</symbol>
+			<!-- b2 onion: two onion-skin frames and the current frame in amber. -->
+			<symbol id="m-b2" viewBox="0 0 32 32">
+				<rect x="2.2" y="6.2" width="15" height="19.6" rx="3" style="fill: none; stroke: currentColor; stroke-width: 2.2; opacity: 0.38" />
+				<rect x="8.2" y="6.2" width="15" height="19.6" rx="3" style="fill: none; stroke: currentColor; stroke-width: 2.2; opacity: 0.72" />
+				<rect x="14" y="5" width="16" height="22" rx="3.6" style="fill: var(--mk-acc)" />
+			</symbol>
+			<!-- b3 viewfinder: a lowercase m inside crop corners, with the amber recording light. -->
+			<symbol id="m-b3" viewBox="0 0 32 32">
+				<path d="M2.5 10 V6 a3.5 3.5 0 0 1 3.5 -3.5 H10 M22 2.5 H26 a3.5 3.5 0 0 1 3.5 3.5 V10 M29.5 22 V26 a3.5 3.5 0 0 1 -3.5 3.5 H22 M10 29.5 H6 a3.5 3.5 0 0 1 -3.5 -3.5 V22" style="fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round" />
+				<path d="M10.2 22.5 V13 M10.2 16.2 c0 -2.4 1.3 -3.4 2.9 -3.4 s2.9 1 2.9 3.4 V22.5 M16 16.2 c0 -2.4 1.3 -3.4 2.9 -3.4 s2.9 1 2.9 3.4 V22.5" style="fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round" />
+				<circle cx="23.6" cy="8.4" r="2.2" style="fill: var(--mk-acc)" />
+			</symbol>
+		</svg>
+
+		<div class="switch">
+			<span data-buttons></span>
+			<p data-desc></p>
+			<nav aria-label="Concept parts"><a href="#brand">brand</a><a href="#landing">landing</a><a href="#docs">docs</a><a href="#promo">promo</a></nav>
+			<button data-theme-toggle>t theme</button>
+		</div>
+
+		<p class="part">1 / 4 Brand sheet</p>
+		<section class="sheet" id="brand">
+			<div class="wrap">
+				<h2 class="h2">Motio, direction B: Terminal</h2>
+				<p class="lead measure">Engineering infrastructure for video. The CLI is the product surface, JSON is the interface, and one amber signal marks what is live: the cursor, the current frame, the primary action.</p>
+
+				<div class="sheet-block">
+					<h3 class="h3">Logo</h3>
+					<div class="logo-grid">
+						<figure class="tile dark wide" style="margin: 0">
+							<span class="lockup"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</span>
+							<figcaption>Primary lockup on ink</figcaption>
+						</figure>
+						<figure class="tile light wide" style="margin: 0">
+							<span class="lockup"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</span>
+							<figcaption>Primary lockup on paper</figcaption>
+						</figure>
+						<figure class="tile dark" style="margin: 0">
+							<svg class="mk" viewBox="0 0 32 32" width="72" height="72"><use data-mark href="#m-b1" /></svg>
+							<figcaption>Mark</figcaption>
+						</figure>
+						<figure class="tile light" style="margin: 0">
+							<svg class="mk" viewBox="0 0 32 32" width="72" height="72"><use data-mark href="#m-b1" /></svg>
+							<figcaption>Mark</figcaption>
+						</figure>
+						<figure class="tile dark mono-mk" style="margin: 0">
+							<span class="lockup" style="font-size: 26px"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</span>
+							<figcaption>Monochrome</figcaption>
+						</figure>
+						<figure class="tile light mono-mk" style="margin: 0">
+							<span class="lockup" style="font-size: 26px"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</span>
+							<figcaption>Monochrome</figcaption>
+						</figure>
+						<figure class="tile dark wide" style="margin: 0">
+							<div class="sizes">
+								<svg class="mk" viewBox="0 0 32 32" width="16" height="16"><use data-mark href="#m-b1" /></svg>
+								<svg class="mk" viewBox="0 0 32 32" width="32" height="32"><use data-mark href="#m-b1" /></svg>
+								<svg class="mk" viewBox="0 0 32 32" width="64" height="64"><use data-mark href="#m-b1" /></svg>
+							</div>
+							<figcaption>16, 32, 64 px</figcaption>
+						</figure>
+						<figure class="tile light wide" style="margin: 0">
+							<div class="sizes">
+								<svg class="mk" viewBox="0 0 32 32" width="16" height="16"><use data-mark href="#m-b1" /></svg>
+								<svg class="mk" viewBox="0 0 32 32" width="32" height="32"><use data-mark href="#m-b1" /></svg>
+								<svg class="mk" viewBox="0 0 32 32" width="64" height="64"><use data-mark href="#m-b1" /></svg>
+							</div>
+							<figcaption>16, 32, 64 px</figcaption>
+						</figure>
+					</div>
+					<div class="alts" data-alts>
+						<button class="alt" data-pick="b1"><svg class="mk" viewBox="0 0 32 32"><use href="#m-b1" /></svg><span><strong>1 prompt</strong>The prompt chevron and an amber cursor. The CLI is the product.</span></button>
+						<button class="alt" data-pick="b2"><svg class="mk" viewBox="0 0 32 32"><use href="#m-b2" /></svg><span><strong>2 onion</strong>Onion-skin frames; the amber one is the frame being drawn.</span></button>
+						<button class="alt" data-pick="b3"><svg class="mk" viewBox="0 0 32 32"><use href="#m-b3" /></svg><span><strong>3 viewfinder</strong>A mono m in crop corners, with the recording light.</span></button>
+					</div>
+				</div>
+
+				<div class="sheet-block">
+					<h3 class="h3">Palette</h3>
+					<div class="swatches">
+						<div class="sw"><div class="chip" style="background: #121418"></div><dl><dt>Graphite</dt><dd class="hex">#121418</dd><dd>Page in dark theme, every terminal in both themes.</dd></dl></div>
+						<div class="sw"><div class="chip" style="background: #1b1f26"></div><dl><dt>Slate</dt><dd class="hex">#1B1F26</dd><dd>Surfaces: cards, docs sidebar, swatches.</dd></dl></div>
+						<div class="sw"><div class="chip" style="background: #e7e5df"></div><dl><dt>Paper</dt><dd class="hex">#E7E5DF</dd><dd>Text on graphite. Warm so long reading stays soft.</dd></dl></div>
+						<div class="sw"><div class="chip" style="background: #eceef1"></div><dl><dt>Fog</dt><dd class="hex">#ECEEF1</dd><dd>Page in light theme, with white surfaces.</dd></dl></div>
+						<div class="sw"><div class="chip" style="background: #959aa3"></div><dl><dt>Steel</dt><dd class="hex">#959AA3</dd><dd>Secondary text, stderr, captions.</dd></dl></div>
+						<div class="sw"><div class="chip" style="background: #f5a524"></div><dl><dt>Tally</dt><dd class="hex">#F5A524</dd><dd>The one signal: what is live or what to do next. Text on paper uses #9A5A00.</dd></dl></div>
+					</div>
+					<p class="small muted measure" style="margin-top: 14px">Status colours exist only inside output: <span style="color: var(--ok)">#8CC4AE ok</span> and <span style="color: var(--err)">#F07A72 error</span>. They never decorate.</p>
+				</div>
+
+				<div class="sheet-block">
+					<h3 class="h3">Type</h3>
+					<div class="type-grid">
+						<div class="surface specimen">
+							<div class="meta">Martian Mono, 300 to 700, width 75 to 112.5. Headlines, interface, code.</div>
+							<div class="big mono" style="font-weight: 600; font-stretch: 112.5%">frame 42</div>
+							<div class="widths">
+								<span style="font-stretch: 112.5%; font-weight: 600">motio render <small>112.5 hero</small></span>
+								<span style="font-stretch: 92%; font-weight: 500">motio render <small>92 headings</small></span>
+								<span style="font-stretch: 87.5%; font-weight: 400">motio render <small>87.5 code</small></span>
+							</div>
+						</div>
+						<div class="surface specimen">
+							<div class="meta">Hanken Grotesk, 400 to 700. Long text: guide, explanations.</div>
+							<div class="big" style="font-weight: 500">Frames, not time</div>
+							<p class="measure" style="margin: 0">A video is a sequence of still images, the frames, shown at a fixed rate: 30 frames per second means frame 30 is shown at one second. In Motio a component never asks what time it is. It asks which frame it is drawing.</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="sheet-block">
+					<h3 class="h3">Components</h3>
+					<div class="comp-grid">
+						<div class="surface comp" style="grid-column: span 4">
+							<span class="label">Buttons</span>
+							<div class="row"><a class="btn btn-primary" href="#landing">Read the guide</a><a class="btn btn-secondary" href="#landing">View on GitHub</a></div>
+							<span class="label">Badges</span>
+							<div class="row"><span class="badge badge-signal">pre-alpha</span><span class="badge">Apache-2.0</span><span class="badge badge-ok">deterministic</span><span class="badge badge-err">E_READINESS_TIMEOUT</span></div>
+						</div>
+						<div class="surface comp" style="grid-column: span 8">
+							<span class="label">Callout</span>
+							<div class="callout"><span class="mark-i">i</span><p>CSS transitions start when a style changes, which depends on the previous frame. Use keyframe animations or derive the value from <code>useCurrentFrame()</code>.</p></div>
+							<span class="label">Card</span>
+							<div class="surface card" style="background: var(--raised)">
+								<div class="h3" style="margin-bottom: 6px">@motiojs/ffmpeg</div>
+								<p class="small muted" style="margin: 0">The same FFmpeg 8.1.3 build for every render, downloaded on first use and checked against a SHA-256 committed in the package.</p>
+							</div>
+						</div>
+						<div style="grid-column: span 6">
+							<div class="win">
+								<div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="title">src/Clock.tsx</span></div>
+								<div class="win-body"><pre class="code"><span class="k">export const</span> <span class="f">Clock</span> = () =&gt; {
+	<span class="k">const</span> frame = <span class="f">useCurrentFrame</span>();
+	<span class="k">const</span> { fps } = <span class="f">useVideoConfig</span>();
+	<span class="k">return</span> &lt;<span class="t">AbsoluteFill</span>&gt;{(frame / fps).<span class="f">toFixed</span>(<span class="t">2</span>)} s&lt;/<span class="t">AbsoluteFill</span>&gt;;
+};</pre></div>
+							</div>
+						</div>
+						<div style="grid-column: span 6">
+							<div class="win">
+								<div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="title">zsh, my-video</span></div>
+								<div class="win-body"><pre class="term"><span class="ps">$ </span><span class="cmd">pnpm exec motio check flicker src/index.ts Intro</span>
+<span class="out">Checked 120 frames at threshold 0.02.</span>
+<span class="ok">No flicker.</span>
+<span class="ps">$ </span><span class="cmd">echo $?</span>
+<span class="out">0</span></pre></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<p class="part">2 / 4 Landing page</p>
+		<div class="site" id="landing">
+			<header class="wrap">
+				<div class="nav">
+					<a class="lockup" href="#landing" aria-label="Motio home"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</a>
+					<span class="badge badge-signal">pre-alpha</span>
+					<nav class="nav-links" aria-label="Main">
+						<a href="#docs">Docs</a>
+						<a href="#docs">Guide</a>
+						<a href="#landing">GitHub</a>
+						<a href="#landing">npm</a>
+					</nav>
+					<div class="nav-end">
+						<a class="btn btn-secondary btn-small" href="#landing">View on GitHub</a>
+						<button class="btn btn-secondary btn-small menu-btn" data-menu aria-expanded="false">Menu</button>
+					</div>
+				</div>
+				<div class="menu-panel" data-menu-panel>
+					<a href="#docs">Docs</a><a href="#docs">Guide</a><a href="#landing">GitHub</a><a href="#landing">npm</a>
+				</div>
+			</header>
+
+			<section class="hero">
+				<div class="wrap">
+					<h1 class="display">Make videos with React.</h1>
+					<div class="hero-grid">
+						<div class="hero-copy">
+							<p class="lead">Motio renders a React tree frame by frame in a real headless Chrome and encodes it with FFmpeg. Every command answers in JSON, every error has a stable code, and determinism is checked by test.</p>
+							<div class="status"><span class="badge badge-signal">pre-alpha</span><span>Under active development. Nothing is published on npm yet.</span></div>
+							<div class="hero-cta">
+								<a class="btn btn-primary" href="#docs">Read the guide</a>
+								<a class="btn btn-secondary" href="#landing">View on GitHub</a>
+							</div>
+							<dl class="facts">
+								<dt>licence</dt><dd>Apache-2.0, free for any use</dd>
+								<dt>output</dt><dd>One JSON object on stdout, logs on stderr</dd>
+								<dt>exit codes</dt><dd>0 ok, 1 error, 2 bad arguments, 3 a check found a problem</dd>
+							</dl>
+						</div>
+						<div class="win hero-term">
+							<div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="title">zsh, ~/projects</span><button class="replay" data-replay>Replay</button></div>
+							<div class="win-body"><pre class="term" data-term aria-live="off"></pre></div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="sec" id="install">
+				<div class="wrap split">
+					<div>
+						<div class="sec-head">
+							<h2 class="h2">From nothing to a render in four commands</h2>
+						</div>
+						<p class="measure muted">The create command asks for the directory, the starter and the package manager, writes the project and installs its dependencies. Every question has a flag, so scripts and agents can run it without a terminal.</p>
+						<ul class="reqs">
+							<li><b>Node</b><span>22 or later</span></li>
+							<li><b>FFmpeg</b><span>5.1 or later with libx264 on <code>PATH</code>, or the pinned build in <code>@motiojs/ffmpeg</code></span></li>
+							<li><b>Chrome</b><span>Not needed. A pinned <code>chrome-headless-shell</code> is downloaded on first use.</span></li>
+						</ul>
+					</div>
+					<div class="win">
+						<div class="win-bar">
+							<div class="tabs" role="tablist" data-tabs="pm">
+								<button role="tab" aria-selected="true" data-tab="pnpm">pnpm</button>
+								<button role="tab" aria-selected="false" data-tab="npm">npm</button>
+								<button role="tab" aria-selected="false" data-tab="yarn">yarn</button>
+								<button role="tab" aria-selected="false" data-tab="bun">bun</button>
+							</div>
+							<span class="title"></span>
+							<button class="copy" data-copy="install">Copy</button>
+						</div>
+						<div class="win-body"><pre class="term" data-install></pre></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="sec" id="component">
+				<div class="wrap">
+					<div class="sec-head">
+						<h2 class="h2">A video is a React component</h2>
+						<p class="measure muted" style="margin: 0">A component never asks what time it is. It asks which frame it is drawing, with <code>useCurrentFrame()</code>, and returns what that frame looks like. Drag the playhead: frame 42 is always the same picture.</p>
+					</div>
+					<div class="frame-demo">
+						<div class="win">
+							<div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="title">src/Clock.tsx</span><button class="copy" data-copy="clock">Copy</button></div>
+							<div class="win-body"><pre class="code" data-code="clock"><span class="k">import</span> { AbsoluteFill, useCurrentFrame, useVideoConfig } <span class="k">from</span> <span class="s">"motio"</span>;
+
+<span class="k">export const</span> <span class="f">Clock</span> = () =&gt; {
+	<span class="k">const</span> frame = <span class="f">useCurrentFrame</span>();
+	<span class="k">const</span> { fps, durationInFrames, width, height } = <span class="f">useVideoConfig</span>();
+	<span class="k">const</span> seconds = frame / fps;
+	<span class="k">return</span> (
+		&lt;<span class="t">AbsoluteFill</span> <span class="a">style</span>={{ justifyContent: <span class="s">"center"</span>, alignItems: <span class="s">"center"</span>, fontSize: <span class="t">64</span> }}&gt;
+			Frame {frame} of {durationInFrames} ({seconds.<span class="f">toFixed</span>(<span class="t">2</span>)} s) at {width}x{height}
+		&lt;/<span class="t">AbsoluteFill</span>&gt;
+	);
+};</pre></div>
+						</div>
+						<div class="surface viewer">
+							<div class="viewer-frame"><span data-clock>Frame 42 of 120 (1.40 s) at 1920x1080</span></div>
+							<div class="scrub">
+								<button class="play" data-play aria-label="Play"><svg viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11 Z" /></svg></button>
+								<input type="range" min="0" max="119" value="42" data-scrub aria-label="Frame" />
+								<span class="readout" data-readout>42 / 119</span>
+							</div>
+							<p class="viewer-note">Intro, 1920x1080 at 30 fps, 120 frames. Each frame is a function of its number, so any frame can be rendered alone, in any order, on any number of tabs.</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="sec" id="how">
+				<div class="wrap">
+					<div class="sec-head">
+						<h2 class="h2">React tree in, video file out</h2>
+						<p class="measure muted" style="margin: 0">No reimplementation of CSS or layout: the pixels come from Chrome, the encoding from FFmpeg. Motio sets the frame, waits until the page is ready, and takes the screenshot.</p>
+					</div>
+					<div class="pipeline">
+						<div class="surface stage">
+							<span class="num">1</span>
+							<h3 class="h3">React tree</h3>
+							<p>Your composition is a component. Motio tells it which frame to draw; it returns what that frame looks like.</p>
+							<div class="viz">&lt;Composition
+  id="Intro"
+  fps={30}
+  durationInFrames={120}
+  width={1920} height={1080}
+/&gt;</div>
+						</div>
+						<div class="surface stage">
+							<span class="num">2</span>
+							<h3 class="h3">Headless Chrome, frame by frame</h3>
+							<p>Several tabs render different frames at the same time, in whatever order is fastest. A failed frame is retried on a fresh tab.</p>
+							<div class="viz tabsviz" data-tabsviz></div>
+						</div>
+						<div class="surface stage">
+							<span class="num">3</span>
+							<h3 class="h3">FFmpeg</h3>
+							<p>The screenshots are encoded with FFmpeg: H.264 by default, also H.265, AV1, VP8, VP9 and ProRes, with explicit BT.709 colour.</p>
+							<div class="viz">120 frames
+  -&gt; libx264, crf 18, bt709
+  -&gt; out/intro.mp4</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="sec" id="why">
+				<div class="wrap">
+					<div class="sec-head"><h2 class="h2">Why Motio</h2></div>
+					<dl class="reasons">
+						<div class="reason"><dt>Open source</dt><dd>Apache-2.0. No per-render or per-seat fees, including distributed rendering and embedding the Player.</dd><span class="proof">LICENSE, NOTICE</span></div>
+						<div class="reason"><dt>Chrome pixels</dt><dd>No reimplementation of CSS or layout. If it looks right in Chrome, it renders right.</dd><span class="proof">pinned chrome-headless-shell</span></div>
+						<div class="reason"><dt>Deterministic by test</dt><dd>The same project, props and frame give the same pixels in any order, checked on decoded frame hashes.</dd><span class="proof">motio check determinism</span></div>
+						<div class="reason"><dt>Agent-first</dt><dd>Every command has <code>--json</code> output, errors with stable codes, stills, contact sheets, flicker and determinism checks.</dd><span class="proof">12 JSON schemas in the CLI</span></div>
+					</dl>
+				</div>
+			</section>
+
+			<section class="sec" id="performance">
+				<div class="wrap">
+					<div class="sec-head">
+						<span class="cmdline">make bench</span>
+						<h2 class="h2">Less wall time at every concurrency</h2>
+						<p class="measure muted" style="margin: 0">Motio renders the benchmark in 0.27 to 0.83 of the baseline's wall time on macOS, and 0.28 to 0.68 in the pinned Linux image. Medians, two 1920x1080 compositions summed, H.264 CRF 18, muted.</p>
+					</div>
+					<div class="perf" data-perf></div>
+					<div class="legend"><span><i style="background: color-mix(in srgb, var(--muted) 45%, transparent)"></i>Remotion 4.0.545</span><span><i style="background: var(--accent)"></i>Motio</span></div>
+					<p class="footnote">Measured with make bench against Remotion 4.0.545 on macOS, Apple M5, 1920x1080. The Linux figures come from the same benchmark in Motio's pinned linux-arm64 image.</p>
+				</div>
+			</section>
+
+			<section class="sec" id="ci">
+				<div class="wrap split">
+					<div>
+						<div class="sec-head">
+							<h2 class="h2">Checked by machines, not by watching</h2>
+							<p class="measure muted" style="margin: 0">With <code>--json</code>, a command prints exactly one JSON object on stdout and nothing else there; progress and logs go to stderr. A CI step fails on anything but 0 without parsing the output.</p>
+						</div>
+						<table class="exit">
+							<tr><td>0</td><td>Success</td></tr>
+							<tr><td>1</td><td>Error, with a stable <code>code</code>, a message and a <code>context</code></td></tr>
+							<tr><td>2</td><td>Invalid arguments</td></tr>
+							<tr><td>3</td><td>A check ran and found a problem</td></tr>
+						</table>
+						<h3 class="subhead">Error codes stay stable across releases</h3>
+						<div class="codes">
+							<span class="badge">E_COMPOSITION_NOT_FOUND</span><span class="badge">E_READINESS_TIMEOUT</span><span class="badge">E_FFMPEG_NOT_FOUND</span><span class="badge">E_FFMPEG_ENCODER_MISSING</span><span class="badge">E_BROWSER_CRASHED</span><span class="badge">E_CAPTURE_FAILED</span><span class="badge">E_ODD_DIMENSIONS</span><span class="badge">E_INVALID_OPTION</span>
+						</div>
+						<h3 class="subhead">Schemas ship with the CLI</h3>
+						<ul class="schemas">
+							<li>render.schema.json</li><li>still.schema.json</li><li>frames.schema.json</li><li>compositions.schema.json</li><li>check-determinism.schema.json</li><li>check-flicker.schema.json</li><li>doctor.schema.json</li><li>init.schema.json</li><li>dev.schema.json</li><li>browser-ensure.schema.json</li><li>ffmpeg-ensure.schema.json</li><li>help.schema.json</li>
+						</ul>
+					</div>
+					<div class="win ci-win">
+						<div class="win-bar">
+							<div class="tabs" role="tablist" data-tabs="ci">
+								<button role="tab" aria-selected="true" data-tab="job">ci.sh</button>
+								<button role="tab" aria-selected="false" data-tab="det">determinism.json</button>
+								<button role="tab" aria-selected="false" data-tab="flk">flicker.json</button>
+								<button role="tab" aria-selected="false" data-tab="err">error.json</button>
+							</div>
+							<span class="title"></span>
+						</div>
+						<div class="win-body"><pre class="code" data-ci style="white-space: pre"></pre></div>
+						<div class="exitline" data-ci-exit></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="sec" id="packages">
+				<div class="wrap">
+					<div class="sec-head">
+						<h2 class="h2">Packages</h2>
+						<p class="measure muted" style="margin: 0">One package to start with, <code>motio</code>. The rest are added when a project needs them.</p>
+					</div>
+					<dl class="pkgs">
+						<div class="pkg"><dt>motio</dt><dd>Components, hooks and animation functions: everything a composition imports.</dd></div>
+						<div class="pkg"><dt>@motiojs/cli</dt><dd>The <code>motio</code> command: render, still, frames, check, doctor, dev.</dd></div>
+						<div class="pkg"><dt>create-motio</dt><dd>Creates a project from a starter: <code>pnpm create motio</code>.</dd></div>
+						<div class="pkg"><dt>@motiojs/renderer</dt><dd>Headless Chrome capture and FFmpeg encoding, as a Node library.</dd></div>
+						<div class="pkg"><dt>@motiojs/bundler</dt><dd>Vite bundler: entry discovery, public folder, environment variables.</dd></div>
+						<div class="pkg"><dt>@motiojs/player</dt><dd>Plays a composition inside a React app, with thumbnails.</dd></div>
+						<div class="pkg"><dt>@motiojs/preview</dt><dd>The page served by <code>motio dev</code>: compositions, player, props editor.</dd></div>
+						<div class="pkg"><dt>@motiojs/transitions</dt><dd>Transitions between scenes: fades, slides, wipes and more.</dd></div>
+						<div class="pkg"><dt>@motiojs/captions</dt><dd>Parses, writes and pages captions for word-by-word subtitles.</dd></div>
+						<div class="pkg"><dt>@motiojs/media</dt><dd>Video and audio components, frame-exact in renders.</dd></div>
+						<div class="pkg"><dt>@motiojs/google-fonts</dt><dd>Type-safe Google Fonts that block the render until they load.</dd></div>
+						<div class="pkg"><dt>@motiojs/ffmpeg</dt><dd>An optional pinned FFmpeg, verified by SHA-256.</dd></div>
+						<div class="pkg"><dt>@motiojs/distributed</dt><dd>Chunked rendering: plan frame ranges, render in parallel, join without re-encoding.</dd></div>
+						<div class="pkg"><dt>@motiojs/three</dt><dd>React Three Fiber scenes driven by the timeline.</dd></div>
+					</dl>
+				</div>
+			</section>
+
+			<section class="sec" id="compat">
+				<div class="wrap split">
+					<div>
+						<div class="sec-head">
+							<h2 class="h2">Compatibility</h2>
+							<p class="measure muted" style="margin: 0">Runs projects written for Remotion's documented API, via an import alias. The bundler resolves those imports to Motio's packages while it builds, so the code can stay as it is; or replace the imports and let TypeScript check the project against Motio's own types.</p>
+						</div>
+						<table class="compat-tbl">
+							<tr><th>API</th><td>Pinned to version 4.0.545 of that documented API, guarded by tests, updated on a schedule.</td></tr>
+							<tr><th>Node</th><td>22 or later. pnpm, npm, yarn and bun.</td></tr>
+							<tr><th>FFmpeg</th><td>5.1 or later, or the pinned 8.1.3 build.</td></tr>
+							<tr><th>Platforms</th><td>Benchmarked on macOS and linux-arm64. Pixels match on the same OS, CPU architecture and Chrome build.</td></tr>
+						</table>
+					</div>
+					<div style="display: grid; gap: 12px; min-width: 0">
+						<div class="win">
+							<div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="title">src/Intro.tsx, replacing the imports</span></div>
+							<div class="win-body"><pre class="code"><span class="del">- import { useCurrentFrame } from "remotion";</span>
+<span class="ins">+ import { useCurrentFrame } from "motio";</span>
+<span class="del">- import { fade } from "@remotion/transitions/fade";</span>
+<span class="ins">+ import { fade } from "@motiojs/transitions/fade";</span></pre></div>
+						</div>
+						<div class="win">
+							<div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="title">zsh, my-video</span></div>
+							<div class="win-body"><pre class="term"><span class="ps">$ </span><span class="cmd">pnpm exec motio doctor</span>
+<span class="out">ffmpeg    8.1.3, pinned build        </span><span class="ok">ok</span>
+<span class="out">browser   chrome-headless-shell      </span><span class="ok">ok</span>
+<span class="out">project   src/index.ts, 3 compositions</span>
+<span class="out">symbols   41 used: 39 supported, 1 approximated, 1 stubbed</span></pre></div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="sec" id="starters">
+				<div class="wrap">
+					<div class="sec-head">
+						<h2 class="h2">Three starters</h2>
+						<p class="measure muted" style="margin: 0"><code>motio init</code> and <code>pnpm create motio</code> start from one of these.</p>
+					</div>
+					<div class="starters">
+						<div class="surface starter">
+							<div class="thumb"><div class="th-basic"><div>Intro</div><div><span class="pic"></span></div></div></div>
+							<div class="info"><h3 class="h3">basic <span class="badge" style="margin-left: 6px">default</span></h3><p>A four-second title animation: <code>spring()</code> and <code>interpolate()</code>, two scenes in a <code>&lt;Series&gt;</code>, an image, a local font, and a still for the thumbnail.</p><code class="cmd">pnpm create motio my-video</code></div>
+						</div>
+						<div class="surface starter">
+							<div class="thumb"><div class="th-blank"><span>Title</span></div></div>
+							<div class="info"><h3 class="h3">blank</h3><p>One composition with a fading title, nothing else.</p><code class="cmd">pnpm create motio my-video --template blank</code></div>
+						</div>
+						<div class="surface starter">
+							<div class="thumb"><div class="th-caps"><span>make videos <b>with</b> react</span></div></div>
+							<div class="info"><h3 class="h3">captions</h3><p>Word-by-word captions read from a JSON transcript with <code>@motiojs/captions</code>; the video length comes from the transcript.</p><code class="cmd">pnpm create motio my-video --template captions</code></div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<footer class="foot">
+				<div class="wrap">
+					<div class="foot-grid">
+						<div>
+							<a class="lockup" href="#landing"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</a>
+							<p class="small muted" style="margin-top: 14px; max-width: 36ch">Make videos with React. Open source under Apache-2.0. Pre-alpha: nothing is published on npm yet.</p>
+						</div>
+						<div><h4>Guide</h4><ul><li><a href="#docs">Getting started</a></li><li><a href="#docs">Frames and time</a></li><li><a href="#docs">Rendering from the CLI</a></li><li><a href="#docs">Testing renders in CI</a></li></ul></div>
+						<div><h4>Project</h4><ul><li><a href="#landing">GitHub</a></li><li><a href="#landing">npm</a></li><li><a href="#landing">Roadmap</a></li><li><a href="#landing">Decisions</a></li></ul></div>
+						<div><h4>Reference</h4><ul><li><a href="#landing">Architecture</a></li><li><a href="#ci">JSON schemas</a></li><li><a href="#landing">Licence</a></li><li><a href="#landing">Notice</a></li></ul></div>
+					</div>
+					<div class="legal">
+						<span>Apache-2.0. Remotion is a trademark of its owner. Motio is an independent project, not affiliated with or endorsed by Remotion.</span>
+						<span>FFmpeg builds in @motiojs/ffmpeg are GPL-3.0-or-later and run as a separate program.</span>
+					</div>
+				</div>
+			</footer>
+		</div>
+
+		<p class="part">3 / 4 Docs page</p>
+		<div class="docs" id="docs">
+			<header class="docs-top">
+				<a class="lockup" href="#landing"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</a>
+				<span class="section-name">Guide</span>
+				<span class="badge badge-signal">pre-alpha</span>
+				<label class="search">
+					<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" /><path d="M11 11 L14.5 14.5" /></svg>
+					<input type="search" placeholder="Search the guide" aria-label="Search the guide" data-search />
+					<kbd>/</kbd>
+				</label>
+				<a class="gh" href="#landing">GitHub</a>
+			</header>
+			<div class="docs-grid">
+				<nav class="side" aria-label="Guide">
+					<button class="btn btn-secondary btn-small side-toggle" data-side-toggle aria-expanded="false"><span>Guide pages</span><span class="muted">Frames and time</span></button>
+					<div class="side-list" data-side-list>
+						<ol data-side>
+							<li><a href="#docs">Getting started</a></li>
+							<li><a href="#docs">Project structure</a></li>
+							<li>
+								<span class="group">Core concepts</span>
+								<ol>
+									<li><a href="#docs" aria-current="page">Frames and time</a></li>
+									<li><a href="#docs">Compositions</a></li>
+									<li><a href="#docs">Sequences and series</a></li>
+									<li><a href="#docs">Animation</a></li>
+									<li><a href="#docs">Media</a></li>
+									<li><a href="#docs">Fonts and text</a></li>
+									<li><a href="#docs">Readiness</a></li>
+								</ol>
+							</li>
+							<li><a href="#docs">Rendering from the CLI</a></li>
+							<li><a href="#docs">Rendering from Node</a></li>
+							<li><a href="#docs">FFmpeg</a></li>
+							<li><a href="#docs">Testing renders in CI</a></li>
+							<li><a href="#docs">Coming from Remotion</a></li>
+						</ol>
+						<p class="none" data-side-none hidden>No page matches. Try "render", "fonts" or "CI".</p>
+					</div>
+				</nav>
+
+				<article class="article">
+					<div class="crumbs">Guide / Core concepts</div>
+					<h1>Frames and time</h1>
+					<p>A video is a sequence of still images, the frames, shown at a fixed rate: 30 frames per second (fps) means frame 30 is shown at one second. In Motio a component never asks what time it is. It asks which frame it is drawing, with <code>useCurrentFrame()</code>, and returns what that frame looks like:</p>
+					<div class="win">
+						<div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="title">examples/src/frames.tsx</span><button class="copy" data-copy="clock">Copy</button></div>
+						<div class="win-body"><pre class="code"><span class="k">export const</span> <span class="f">Clock</span> = () =&gt; {
+	<span class="k">const</span> frame = <span class="f">useCurrentFrame</span>();
+	<span class="k">const</span> { fps, durationInFrames, width, height } = <span class="f">useVideoConfig</span>();
+	<span class="k">const</span> seconds = frame / fps;
+	<span class="k">return</span> (
+		&lt;<span class="t">AbsoluteFill</span> <span class="a">style</span>={{ justifyContent: <span class="s">"center"</span>, alignItems: <span class="s">"center"</span>, fontSize: <span class="t">64</span> }}&gt;
+			Frame {frame} of {durationInFrames} ({seconds.<span class="f">toFixed</span>(<span class="t">2</span>)} s) at {width}x{height}
+		&lt;/<span class="t">AbsoluteFill</span>&gt;
+	);
+};</pre></div>
+					</div>
+					<p><code>useVideoConfig()</code> gives the composition's <code>fps</code>, <code>durationInFrames</code>, <code>width</code>, <code>height</code>, <code>id</code>, and its props. Time in seconds is <code>frame / fps</code>; a duration of 4 seconds at 30 fps is 120 frames, numbered 0 to 119.</p>
+
+					<h2 id="why-frames">Why frames and not time</h2>
+					<p>Motio renders a frame by setting the frame number, waiting until the page is ready, and taking a screenshot. Several browser tabs render different frames at the same time, in whatever order is fastest, and a failed frame is retried on a fresh tab. That only works if the pixels of a frame depend on nothing but its number and the props. So:</p>
+					<ul>
+						<li>Derive every moving value from <code>useCurrentFrame()</code>: positions, opacities, which word is highlighted.</li>
+						<li>Do not keep animation state between frames (a counter incremented in an effect, a value accumulated in a ref): frame 50 may be the first frame a tab ever renders.</li>
+						<li>Do not use <code>Math.random()</code>. <code>random(seed)</code> returns the same number for the same seed everywhere:</li>
+					</ul>
+					<div class="win">
+						<div class="win-bar"><span class="dots"><i></i><i></i><i></i></span><span class="title">examples/src/frames.tsx</span></div>
+						<div class="win-body"><pre class="code"><span class="k">export const</span> <span class="f">Stars</span> = () =&gt; {
+	<span class="k">const</span> { width, height } = <span class="f">useVideoConfig</span>();
+	<span class="c">// random(seed) returns the same number between 0 and 1 for the same seed, on every frame,</span>
+	<span class="c">// page and machine. Math.random() would change on every render.</span>
+	<span class="k">const</span> stars = Array.<span class="f">from</span>({ length: <span class="t">50</span> }, (_, i) =&gt; ({
+		x: <span class="f">random</span>(<span class="s">`x-${i}`</span>) * width,
+		y: <span class="f">random</span>(<span class="s">`y-${i}`</span>) * height,
+	}));
+	<span class="k">return</span> (
+		&lt;<span class="t">AbsoluteFill</span> <span class="a">style</span>={{ backgroundColor: <span class="s">"black"</span> }}&gt;
+			{stars.<span class="f">map</span>((star, i) =&gt; (
+				&lt;<span class="t">div</span>
+					<span class="a">key</span>={<span class="s">`${star.x}-${star.y}`</span>}
+					<span class="a">style</span>={{
+						position: <span class="s">"absolute"</span>,
+						left: star.x,
+						top: star.y,
+						width: <span class="t">3</span>,
+						height: <span class="t">3</span>,
+						borderRadius: <span class="t">2</span>,
+						backgroundColor: <span class="s">"white"</span>,
+						opacity: <span class="f">random</span>(<span class="s">`o-${i}`</span>),
+					}}
+				/&gt;
+			))}
+		&lt;/<span class="t">AbsoluteFill</span>&gt;
+	);
+};</pre></div>
+					</div>
+					<div class="callout"><span class="mark-i">i</span><p><strong>Keyframes yes, transitions no.</strong> CSS keyframe animations and the Web Animations API are fine: before each screenshot Motio pauses every animation on the page and sets it to the time of the frame, measured from the start of the enclosing <code>&lt;Sequence&gt;</code>. CSS transitions are not: they start when a style changes, which depends on the previous frame.</p></div>
+					<p>CSS transforms, filters and other styles can change freely from frame to frame: Motio draws every captured frame as if on a freshly loaded page, so a frame never depends on the one the tab rendered before it.</p>
+					<p><code>motio check determinism</code> renders frames in different orders and with different numbers of tabs and compares the pixels, so a component that breaks these rules is caught in a test (see <a href="#ci">Testing renders in CI</a>).</p>
+
+					<h2 id="clock">Code that reads the clock</h2>
+					<p>Some libraries animate on their own clock: GSAP, canvas loops driven by <code>requestAnimationFrame</code>, anything reading <code>Date.now()</code>. Motio does not change the page's clock, so left alone they run on real time and give different pixels on every render. Drive them from the frame instead: pause the library's timeline and seek it to <code>frame / fps</code> on every render.</p>
+					<div class="callout"><span class="mark-i">i</span><p>A mode that makes the clock follow the frame time is designed but not available in this release.</p></div>
+
+					<h2 id="rate">Frame rate and length</h2>
+					<p>The frame rate and the length are set per composition (next page). <code>--fps</code> and <code>--duration</code> on the CLI override them for one render; inside a component always read them from <code>useVideoConfig()</code> instead of hard-coding 30.</p>
+
+					<nav class="pager" aria-label="Previous and next page">
+						<a href="#docs"><small>Previous</small><span>Project structure</span></a>
+						<a href="#docs"><small>Next</small><span>Compositions</span></a>
+					</nav>
+					<p class="edit">Every code sample is a file under <code>examples/</code>, type-checked with the repository. <a href="#landing">Edit this page on GitHub</a></p>
+				</article>
+
+				<aside class="toc">
+					<div class="toc-in">
+						<h4>On this page</h4>
+						<ol>
+							<li><a href="#why-frames" aria-current="true">Why frames and not time</a></li>
+							<li><a href="#clock">Code that reads the clock</a></li>
+							<li><a href="#rate">Frame rate and length</a></li>
+						</ol>
+						<div class="related">Checked by <code>motio check determinism</code> and <code>motio check flicker</code>.</div>
+					</div>
+				</aside>
+			</div>
+		</div>
+
+		<p class="part">4 / 4 Promo</p>
+		<section class="promo" id="promo">
+			<div class="wrap">
+				<div class="promo-grid">
+					<figure>
+						<div class="scaler" data-scale="1200x630">
+							<div class="art art-social">
+								<span class="lockup"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</span>
+								<h3>Make videos with React.</h3>
+								<div class="row-b"><span class="cmd"><b>$ </b>pnpm create motio my-video</span><span>Apache-2.0, pre-alpha</span></div>
+							</div>
+						</div>
+						<figcaption>Social card, 1200x630</figcaption>
+					</figure>
+					<figure>
+						<div class="scaler" data-scale="1080x1080">
+							<div class="art art-square">
+								<span class="lockup"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</span>
+								<h3>Make videos with React. <span>Open source.</span></h3>
+								<div class="json" data-square-json></div>
+							</div>
+						</div>
+						<figcaption>Square post, 1080x1080</figcaption>
+					</figure>
+					<figure class="full">
+						<div class="scaler" data-scale="1280x320">
+							<div class="art art-banner">
+								<span class="lockup"><svg class="mk" viewBox="0 0 32 32"><use data-mark href="#m-b1" /></svg>motio</span>
+								<p><b>Make videos with React.</b>Rendered in headless Chrome, encoded with FFmpeg, checked by test.</p>
+								<div class="strip" aria-hidden="true"><div>41</div><div class="now">42</div><div>43</div></div>
+							</div>
+						</div>
+						<figcaption>GitHub README banner, 1280x320</figcaption>
+					</figure>
+				</div>
+			</div>
+		</section>
+
+		<script>
+			const DESC = {
+				b1: 'prompt: the prompt chevron and an amber cursor; the CLI is the product',
+				b2: 'onion: onion-skin frames, the amber one is the frame being drawn',
+				b3: 'viewfinder: a mono m in crop corners with the recording light'
+			};
+			const KEY = `concept:${location.pathname}`;
+			const root = document.documentElement;
+			const body = document.body;
+			const base = (v) => v.replace(/\d+$/, '');
+			const load = () => {
+				try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; }
+			};
+			const save = (state) => {
+				try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+			};
+			const name = (v) => DESC[v].split(':')[0];
+			const label = (v) => `${v.slice(-1)} B ${name(v)}`;
+			document.querySelector('[data-buttons]').innerHTML = Object.keys(DESC)
+				.map((v) => `<button data-v="${v}">${label(v)}</button>`)
+				.join(' ');
+
+			const pick = (v) => {
+				if (!DESC[v]) return;
+				body.dataset.v = v;
+				body.dataset.base = base(v);
+				document.querySelectorAll('.switch [data-v]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+				document.querySelectorAll('[data-pick]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === v)));
+				document.querySelector('[data-desc]').textContent = DESC[v];
+				document.querySelectorAll('use[data-mark]').forEach((u) => u.setAttribute('href', `#m-${v}`));
+				document.querySelectorAll('[data-only]').forEach((el) => {
+					const list = el.dataset.only.split(/\s+/);
+					el.hidden = !list.includes(v) && !list.includes(base(v));
+				});
+				history.replaceState(null, '', `${location.search}#${v}`);
+				save({ ...load(), v });
+			};
+			const setTheme = (t) => {
+				root.dataset.theme = t;
+				save({ ...load(), theme: t });
+			};
+
+			document.querySelector('.switch').addEventListener('click', (e) => {
+				const b = e.target.closest('[data-v]');
+				if (b) pick(b.dataset.v);
+			});
+			document.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => pick(b.dataset.pick)));
+			document.querySelector('[data-theme-toggle]').addEventListener('click', () => setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'));
+			addEventListener('keydown', (e) => {
+				if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest('input, textarea, select, [contenteditable]')) return;
+				const k = e.key.toLowerCase();
+				if (k === 't') setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+				else if (k === 'p') body.dataset.chrome = body.dataset.chrome === 'off' ? 'on' : 'off';
+				else if (/^[1-3]$/.test(k)) pick(`b${k}`);
+				else if (k === 'b') pick('b1');
+			});
+
+			const saved = load();
+			root.dataset.theme = saved.theme || 'dark';
+			const fromHash = location.hash.slice(1);
+			pick(DESC[fromHash] ? fromHash : DESC[saved.v] ? saved.v : 'b1');
+
+			// JSON printer: one object per line where a real CLI user would want it compact.
+			const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			const P = (s) => `<span class="j-p">${s}</span>`;
+			const INLINE = new Set(['composition', 'ffmpeg', 'context']);
+			const isPrim = (x) => x === null || typeof x !== 'object';
+			const fmt = (v, ind = 0, inline = false) => {
+				const pad = (n) => '  '.repeat(n);
+				if (v === null || typeof v === 'number' || typeof v === 'boolean') return `<span class="j-num">${v}</span>`;
+				if (typeof v === 'string') return `<span class="j-str">${esc(JSON.stringify(v))}</span>`;
+				if (Array.isArray(v)) {
+					if (!v.length) return P('[]');
+					if (inline || v.every(isPrim)) return P('[') + v.map((x) => fmt(x, 0, true)).join(P(', ')) + P(']');
+					return P('[') + '\n' + v.map((x) => pad(ind + 1) + fmt(x, ind + 1, true)).join(P(',') + '\n') + '\n' + pad(ind) + P(']');
+				}
+				const e = Object.entries(v);
+				const key = (k) => `<span class="j-key">${esc(JSON.stringify(k))}</span>${P(': ')}`;
+				if (inline) return P('{ ') + e.map(([k, x]) => key(k) + fmt(x, 0, true)).join(P(', ')) + P(' }');
+				return P('{') + '\n' + e.map(([k, x]) => pad(ind + 1) + key(k) + fmt(x, ind + 1, INLINE.has(k))).join(P(',') + '\n') + '\n' + pad(ind) + P('}');
+			};
+
+			const COMP = { id: 'Intro', width: 1920, height: 1080, fps: 30, durationInFrames: 120 };
+			const RENDER = {
+				ok: true,
+				command: 'render',
+				composition: COMP,
+				output: '/Users/you/projects/my-video/out/intro.mp4',
+				codec: 'h264',
+				renderedFrames: 120,
+				durationMs: 2140,
+				serveUrl: 'http://127.0.0.1:52817',
+				ffmpeg: { path: '/opt/homebrew/bin/ffmpeg', version: '8.0', source: 'path' },
+				warnings: []
+			};
+
+			// Hero terminal: the one blinking cursor of the page.
+			const term = document.querySelector('[data-term]');
+			const termBody = term.parentElement;
+			const CUR = '<span class="cursor" aria-hidden="true"></span>';
+			const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+			const ps = (dir) => `<span class="ps">${dir} $ </span>`;
+			const err = (t) => `<span class="err"><span>${t}</span><span class="tag">stderr</span></span>`;
+			const bar = (n) => err(`Rendering frames<span class="bar"><i style="width:${(n / 120) * 100}%"></i></span>${String(n).padStart(3, ' ')}/120`);
+			const SCRIPT = [
+				{ type: ps('~/projects'), cmd: 'pnpm create motio my-video' },
+				{ out: '<span class="out">? Starter          </span><span class="ans">basic</span>', wait: 500 },
+				{ out: '<span class="out">? Package manager  </span><span class="ans">pnpm</span>', wait: 450 },
+				{ out: '<span class="out">Wrote 14 files to ./my-video</span>', wait: 350 },
+				{ out: '<span class="out">Installed dependencies with pnpm</span>', wait: 900 },
+				{ out: '<span class="out">Next: cd my-video, then pnpm dev</span>', wait: 200 },
+				{ type: ps('~/projects'), cmd: 'cd my-video', wait: 500 },
+				{ type: ps('~/projects/my-video'), cmd: 'pnpm exec motio render src/index.ts Intro out/intro.mp4 --json', wait: 400 },
+				{ out: err('Bundling src/index.ts'), wait: 500 },
+				{ out: err('Intro, 1920x1080, 30 fps, 120 frames'), wait: 300 },
+				{ progress: true },
+				{ out: err('Encoding H.264 with FFmpeg 8.0'), wait: 500 },
+				{ out: fmt(RENDER), wait: 300 },
+				{ prompt: ps('~/projects/my-video'), wait: 200 }
+			];
+			let lines = [];
+			let run = 0;
+			const paint = (tail = '') => {
+				term.innerHTML = lines.join('\n') + (lines.length ? '\n' : '') + tail + CUR;
+				termBody.scrollTop = termBody.scrollHeight;
+			};
+			const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+			const finalState = () => {
+				lines = [];
+				for (const s of SCRIPT) {
+					if (s.type) lines.push(s.type + `<span class="cmd">${esc(s.cmd)}</span>`);
+					else if (s.out) lines.push(s.out);
+					else if (s.progress) lines.push(bar(120));
+				}
+				term.innerHTML = lines.join('\n') + '\n' + ps('~/projects/my-video') + CUR;
+				termBody.scrollTop = termBody.scrollHeight;
+			};
+			const play = async () => {
+				const id = ++run;
+				lines = [];
+				paint();
+				for (const s of SCRIPT) {
+					if (id !== run) return;
+					await sleep(s.wait ?? 600);
+					if (s.type) {
+						for (let i = 1; i <= s.cmd.length; i++) {
+							if (id !== run) return;
+							paint(s.type + `<span class="cmd">${esc(s.cmd.slice(0, i))}</span>`);
+							await sleep(24 + Math.random() * 40);
+						}
+						await sleep(280);
+						lines.push(s.type + `<span class="cmd">${esc(s.cmd)}</span>`);
+						paint();
+					} else if (s.out) {
+						lines.push(s.out);
+						paint();
+					} else if (s.progress) {
+						lines.push(bar(0));
+						for (let n = 0; n <= 120; n += 3) {
+							if (id !== run) return;
+							lines[lines.length - 1] = bar(n);
+							paint();
+							await sleep(28);
+						}
+					} else if (s.prompt) {
+						paint(s.prompt);
+					}
+				}
+			};
+			if (reduce) finalState();
+			else play();
+			document.querySelector('[data-replay]').addEventListener('click', () => (reduce ? finalState() : play()));
+
+			// Install tabs
+			const PM = {
+				pnpm: ['pnpm create motio my-video', 'cd my-video', 'pnpm dev', 'pnpm render'],
+				npm: ['npm create motio@latest my-video', 'cd my-video', 'npm run dev', 'npm run render'],
+				yarn: ['yarn create motio my-video', 'cd my-video', 'yarn dev', 'yarn render'],
+				bun: ['bun create motio my-video', 'cd my-video', 'bun run dev', 'bun run render']
+			};
+			const NOTE = ['', '', '# preview in the browser', '# render out/intro.mp4'];
+			const installEl = document.querySelector('[data-install]');
+			const showPm = (pm) => {
+				installEl.innerHTML = PM[pm]
+					.map((c, i) => `<span class="ps">$ </span><span class="cmd">${c}</span>${NOTE[i] ? `<span class="ps">${' '.repeat(Math.max(2, 30 - c.length))}${NOTE[i]}</span>` : ''}`)
+					.join('\n');
+				installEl.dataset.pm = pm;
+			};
+			showPm('pnpm');
+
+			const CI = {
+				job: {
+					html: [
+						'pnpm install --frozen-lockfile',
+						'pnpm typecheck',
+						'pnpm exec motio check determinism src/index.ts Intro --frames=0- --json &gt; determinism.json',
+						'pnpm exec motio check flicker src/index.ts Intro --frames=0- --json &gt; flicker.json',
+						'pnpm exec motio render src/index.ts Intro out/intro.mp4 --json &gt; render.json'
+					]
+						.map((l) => `<span class="c">$</span> ${l}`)
+						.join('\n'),
+					exit: ['Any exit code but 0 fails the job', '']
+				},
+				det: {
+					json: {
+						ok: true,
+						command: 'check determinism',
+						composition: COMP,
+						frames: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59],
+						reference: 'runs',
+						runs: [
+							{ order: 'ascending', concurrency: 1 },
+							{ order: 'descending', concurrency: 1 },
+							{ order: 'ascending', concurrency: 4 },
+							{ order: 'descending', concurrency: 4 }
+						],
+						deterministic: false,
+						mismatches: [51, 52, 53, 54, 55].map((f, i) => {
+							const a = ['3f9c2a71', '8d01e6b4', 'c27a5f90', '19be4d3c', 'e604a8f2'][i];
+							const b = ['b0e4d158', '4a7f02c9', '71d93be0', 'f2c86a15', '0b5e7d64'][i];
+							return { frame: f, hashes: [a, b, a, b] };
+						}),
+						warnings: []
+					},
+					exit: ['motio check determinism ... --frames=48-59 --json', 'exit 3']
+				},
+				flk: {
+					json: { ok: true, command: 'check flicker', composition: COMP, frames: 120, threshold: 0.02, clean: true, flagged: [], warnings: [] },
+					exit: ['motio check flicker ... --frames=0- --json', 'exit 0']
+				},
+				err: {
+					json: {
+						ok: false,
+						command: 'render',
+						error: { code: 'E_READINESS_TIMEOUT', message: 'delayRender() was not resolved within 30000 ms.', context: { composition: 'Intro', frame: 48, label: 'Loading transcript' } }
+					},
+					exit: ['motio render ... --json', 'exit 1']
+				}
+			};
+			const ciEl = document.querySelector('[data-ci]');
+			const ciExit = document.querySelector('[data-ci-exit]');
+			const showCi = (k) => {
+				const c = CI[k];
+				ciEl.innerHTML = c.html || fmt(c.json);
+				ciExit.innerHTML = `<span>${c.exit[0]}</span>${c.exit[1] ? `<b>${c.exit[1]}</b>` : ''}`;
+			};
+			showCi('job');
+
+			document.querySelectorAll('[data-tabs]').forEach((list) => {
+				list.addEventListener('click', (e) => {
+					const b = e.target.closest('[data-tab]');
+					if (!b) return;
+					list.querySelectorAll('[data-tab]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+					if (list.dataset.tabs === 'pm') showPm(b.dataset.tab);
+					else showCi(b.dataset.tab);
+				});
+			});
+
+			// Copy buttons
+			const COPY = {
+				install: () => PM[installEl.dataset.pm].join('\n'),
+				clock: () => document.querySelector('[data-code="clock"]').textContent
+			};
+			document.querySelectorAll('[data-copy]').forEach((b) =>
+				b.addEventListener('click', async () => {
+					try {
+						await navigator.clipboard.writeText(COPY[b.dataset.copy]());
+						b.textContent = 'Copied';
+					} catch {
+						b.textContent = 'Copy failed';
+					}
+					setTimeout(() => (b.textContent = 'Copy'), 1400);
+				})
+			);
+
+			// Frame scrubber: the frame is a function of its number.
+			const scrub = document.querySelector('[data-scrub]');
+			const clock = document.querySelector('[data-clock]');
+			const readout = document.querySelector('[data-readout]');
+			const playBtn = document.querySelector('[data-play]');
+			const ICON_PLAY = '<svg viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11 Z" /></svg>';
+			const ICON_PAUSE = '<svg viewBox="0 0 12 12"><path d="M2 1 H5 V11 H2 Z M7 1 H10 V11 H7 Z" /></svg>';
+			const drawFrame = (f) => {
+				clock.textContent = `Frame ${f} of 120 (${(f / 30).toFixed(2)} s) at 1920x1080`;
+				readout.textContent = `${f} / 119`;
+			};
+			let playing = null;
+			const stop = () => {
+				clearInterval(playing);
+				playing = null;
+				playBtn.innerHTML = ICON_PLAY;
+				playBtn.setAttribute('aria-label', 'Play');
+			};
+			scrub.addEventListener('input', () => {
+				stop();
+				drawFrame(+scrub.value);
+			});
+			playBtn.addEventListener('click', () => {
+				if (playing) return stop();
+				playBtn.innerHTML = ICON_PAUSE;
+				playBtn.setAttribute('aria-label', 'Pause');
+				playing = setInterval(() => {
+					scrub.value = (+scrub.value + 1) % 120;
+					drawFrame(+scrub.value);
+				}, 1000 / 30);
+			});
+
+			// Tabs rendering frames out of order.
+			document.querySelector('[data-tabsviz]').innerHTML = [0, 1, 2]
+				.map((t) => `<div><span>tab ${t + 1}</span>${[0, 1, 2, 3, 4].map((k) => {
+					const f = 40 + t + k * 3;
+					const cls = f === 46 ? 'now' : f < 46 ? 'done' : '';
+					return `<i class="${cls}">${f}</i>`;
+				}).join('')}</div>`)
+				.join('');
+
+			// Performance, from docs/ROADMAP.md (D-044), medians in seconds.
+			const PERF = [
+				{ name: 'macOS, Apple M5', rows: [[1, 6.54, 1.75], [4, 2.13, 1.21], [8, 1.58, 1.31]] },
+				{ name: 'Pinned image, linux-arm64', rows: [[1, 7.56, 2.11], [4, 2.54, 1.32], [8, 1.91, 1.3]] }
+			];
+			const MAX = 7.56;
+			document.querySelector('[data-perf]').innerHTML = PERF.map(
+				(p) => `<div class="surface perf-card">
+					<h3 class="h3">${p.name}</h3>
+					<p class="sub">Wall time in seconds at concurrency 1, 4 and 8. Shorter is faster.</p>
+					<div class="bars">${p.rows
+						.map(
+							([c, r, m]) => `<div class="bargroup">
+								<span class="c"><b>${c}</b>${(m / r).toFixed(2)}x</span>
+								<div class="bar-row base"><div class="track"><div class="fill" style="width:${(r / MAX) * 100}%"></div></div><span class="v">${r.toFixed(2)} s</span></div>
+								<div class="bar-row motio"><div class="track"><div class="fill" style="width:${(m / MAX) * 100}%"></div></div><span class="v">${m.toFixed(2)} s</span></div>
+							</div>`
+						)
+						.join('')}</div>
+				</div>`
+			).join('');
+
+			// Square post: a real result shape.
+			document.querySelector('[data-square-json]').innerHTML = fmt({ ok: true, command: 'render', renderedFrames: 120, codec: 'h264' });
+
+			// Landing menu and docs sidebar on phones.
+			const menuBtn = document.querySelector('[data-menu]');
+			const menuPanel = document.querySelector('[data-menu-panel]');
+			menuBtn.addEventListener('click', () => {
+				const open = menuPanel.dataset.open !== 'true';
+				menuPanel.dataset.open = String(open);
+				menuBtn.setAttribute('aria-expanded', String(open));
+			});
+			const sideBtn = document.querySelector('[data-side-toggle]');
+			const sideList = document.querySelector('[data-side-list]');
+			sideBtn.addEventListener('click', () => {
+				const open = sideList.dataset.open !== 'true';
+				sideList.dataset.open = String(open);
+				sideBtn.setAttribute('aria-expanded', String(open));
+			});
+
+			// Docs search: filters the guide pages; "/" focuses it.
+			const search = document.querySelector('[data-search]');
+			const sideNone = document.querySelector('[data-side-none]');
+			search.addEventListener('input', () => {
+				const q = search.value.trim().toLowerCase();
+				let shown = 0;
+				document.querySelectorAll('[data-side] a').forEach((a) => {
+					const hit = !q || a.textContent.toLowerCase().includes(q);
+					a.parentElement.hidden = !hit;
+					if (hit) shown++;
+				});
+				document.querySelector('[data-side] .group').hidden = !!q;
+				sideNone.hidden = shown > 0;
+				if (q) {
+					sideList.dataset.open = 'true';
+					sideBtn.setAttribute('aria-expanded', 'true');
+				}
+			});
+			search.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape') {
+					search.value = '';
+					search.dispatchEvent(new Event('input'));
+					search.blur();
+				}
+			});
+			addEventListener('keydown', (e) => {
+				if (e.key !== '/' || e.target.closest('input, textarea, select, [contenteditable]')) return;
+				e.preventDefault();
+				search.focus({ preventScroll: true });
+				search.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+			});
+
+			// Promo assets render at native size and scale to their column.
+			document.querySelectorAll('[data-scale]').forEach((box) => {
+				const [w, h] = box.dataset.scale.split('x').map(Number);
+				const art = box.firstElementChild;
+				box.style.aspectRatio = `${w} / ${h}`;
+				new ResizeObserver(() => (art.style.transform = `scale(${box.clientWidth / w})`)).observe(box);
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,1517 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Concept A - Frame</title>
+		<!--
+			Concept A "Frame": identità di marca e sito di Motio, direzione A di tre (B e C sono in file a parte).
+			Tasti: a direzione, 1 2 3 alternativa di logo (a1 Gate, a2 Leader, a3 Onion), t tema, p nasconde la barra.
+			Frecce sinistra e destra spostano di un fotogramma il visore dell'hero, spazio lo avvia o lo ferma.
+
+			La scommessa: Motio come mestiere di precisione, dove il fotogramma è l'unità di verità. Il sito parla
+			la lingua del montaggio (numeri di fotogramma, timecode, provini a contatto, crocini di registro,
+			ritmo della pellicola) perché è esattamente il modello di Motio: ogni frame è una funzione del suo numero.
+
+			Le scelte:
+			- Palette: carta fotografica fredda (#ECEDE8, non il crema caldo) e inchiostro grafite; un solo accento,
+			  l'ambra #FFB000, presa dagli esempi veri della guida (la barra del LowerThird), usata come campitura
+			  e mai come testo su carta (per il testo c'è l'ambra scura #8A5200). Tema scuro: la sala di montaggio,
+			  grafite #141517, l'accento resta lo stesso.
+			- Tipografia: Archivo a larghezza variabile, condensato e pesante per i titoli (la scritta sul bordo
+			  della pellicola, i cartelli); Newsreader per la prosa, perché la guida è testo da leggere; Martian Mono
+			  per timecode, numeri di fotogramma e codice, ristretto in larghezza.
+			- Densità: editoriale, molto bianco, colonne di prosa sotto i 70 caratteri; la densità alta solo dove
+			  il dato la chiede (tabelle dei pacchetti, provino a contatto).
+			- Materiale: superfici piatte con filo intero su tutto il bordo, raggi piccoli e concentrici
+			  (14 = 6 + 8, 10 = 6 + 4), nessuna ombra morbida, nessun gradiente. L'unico movimento non richiesto
+			  è il visore dell'hero, che riproduce frame per frame il componente vero della guida.
+
+			Logo, tre alternative dentro la direzione:
+			- a1 Gate: il quadro di proiezione con le perforazioni ai lati e la finestra in ambra.
+			- a2 Leader: il crocino della coda di partenza (countdown leader) con lo spicchio che scorre; nel
+			  lockup sostituisce la "o" finale di motio.
+			- a3 Onion: tre fotogrammi sfalsati come in onion skin, l'ultimo pieno; il movimento come sequenza di frame.
+
+			Dati: README (promessa, i quattro motivi, requisiti, licenza), docs/guide/README.md (ordine delle
+			pagine), frames-and-time.md (testo e codice integrali della pagina docs), getting-started.md (comandi,
+			starter), examples/src/animation.tsx (LowerThird, riprodotto in JS nel visore con la stessa
+			interpolate ed Easing.out(Easing.quad)), ROADMAP.md (tabella performance, D-044), package.json dei
+			pacchetti (descrizioni, riscritte senza il riferimento a Remotion fuori da compatibilità e performance).
+			Inventato e plausibile: l'output JSON di check determinism, render --json e doctor; l'URL GitHub
+			(github.com/motiojs/motio) e npm; il testo dei promo; l'import di LowerThird ridotto ai soli simboli usati.
+			La pagina docs usa i titoli veri della guida, compreso "Coming from Remotion" nella sidebar.
+			Remotion compare solo nella sezione compatibilità, come baseline della performance e nel footer.
+			Il logo nel wordmark usa Archivo da Google Fonts, non è vettorializzato. Nei promo il nome del LowerThird è ingrandito 2,75 volte perché si legga a misura di card.
+		-->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Martian+Mono:wdth,wght@75..112.5,300..700&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			:root {
+				--paper: #ecede8;
+				--sheet: #f7f7f4;
+				--ink: #16171a;
+				--ink-2: #55575c;
+				--ink-3: #8a8c90;
+				--line: rgb(22 23 26 / 0.14);
+				--line-2: rgb(22 23 26 / 0.07);
+				--amber: #ffb000;
+				--amber-ink: #8a5200;
+				--on-amber: #16171a;
+				--plate: #1f2124;
+				--sel: rgb(255 176 0 / 0.22);
+				--logo-ink: var(--ink);
+				--logo-paper: var(--paper);
+				--logo-acc: var(--amber);
+				--display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+				--serif: 'Newsreader', Georgia, serif;
+				--mono: 'Martian Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+				--r-sm: 4px;
+				--r-md: 6px;
+				--r-lg: 10px;
+				--r-xl: 14px;
+				color-scheme: light;
+			}
+			:root[data-theme='dark'] {
+				--paper: #141517;
+				--sheet: #1c1d20;
+				--ink: #e7e6e0;
+				--ink-2: #a3a39d;
+				--ink-3: #74746f;
+				--line: rgb(255 255 255 / 0.13);
+				--line-2: rgb(255 255 255 / 0.06);
+				--amber-ink: #ffc24d;
+				--plate: #0f1012;
+				--sel: rgb(255 176 0 / 0.16);
+				color-scheme: dark;
+			}
+			* { box-sizing: border-box; }
+			html, body { margin: 0; }
+			html { scroll-behavior: smooth; }
+			body { min-height: 100vh; background: var(--paper); color: var(--ink); font: 400 18px/1.6 var(--serif); font-optical-sizing: auto; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+			[hidden] { display: none !important; }
+			a { color: inherit; }
+			button { font: inherit; color: inherit; }
+			::selection { background: var(--amber); color: var(--on-amber); }
+			:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+			@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+			/* Concept chrome: variant bar. Not part of the design. */
+			.switch { position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; background: #0e0e0e; color: #aaa; font: 11px/1.4 var(--mono); }
+			.switch button { font: inherit; border: 0; padding: 5px 9px; border-radius: 6px; background: #262626; color: #eee; cursor: pointer; }
+			.switch button[aria-pressed='true'] { background: #eee; color: #111; }
+			.switch p { margin: 0 0 0 8px; flex: 1 1 240px; min-width: 0; }
+			.switch .jump { display: flex; gap: 4px; flex-wrap: wrap; }
+			body[data-chrome='off'] .switch { display: none; }
+
+			/* Shared type */
+			.display { font-family: var(--display); font-stretch: 68%; font-weight: 800; line-height: 0.92; letter-spacing: -0.005em; margin: 0; }
+			h2.display { font-size: clamp(34px, 5vw, 56px); }
+			h3 { font: 700 21px/1.2 var(--display); font-stretch: 80%; margin: 0 0 8px; }
+			.mono { font-family: var(--mono); font-stretch: 85%; }
+			.muted { color: var(--ink-2); }
+			.lede { font-size: 21px; line-height: 1.5; max-width: 34em; }
+			p { margin: 0 0 1em; }
+			code { font: 500 0.74em/1 var(--mono); font-stretch: 85%; padding: 0.15em 0.35em; border-radius: var(--r-sm); background: var(--line-2); box-shadow: inset 0 0 0 1px var(--line-2); }
+
+			/* Shared components */
+			.btn { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; border: 0; border-radius: 8px; font: 600 15px/1 var(--display); font-stretch: 90%; text-decoration: none; cursor: pointer; white-space: nowrap; }
+			.btn-primary { background: var(--amber); color: var(--on-amber); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
+			.btn-primary:hover { background: #ffbd2e; }
+			.btn-secondary { background: var(--sheet); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+			.btn-secondary:hover { background: var(--paper); }
+			.btn svg { width: 16px; height: 16px; }
+			.badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 12px; font: 500 11px/1 var(--mono); font-stretch: 85%; background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); white-space: nowrap; }
+			.badge-amber { background: var(--amber); color: var(--on-amber); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
+			.badge .dot { width: 6px; height: 6px; border-radius: 3px; background: currentColor; }
+			.card { background: var(--sheet); border-radius: var(--r-xl); box-shadow: inset 0 0 0 1px var(--line); padding: 8px; }
+			.card-body { padding: 14px 14px 10px; }
+			.callout { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 16px 18px; border-radius: var(--r-lg); background: var(--sel); box-shadow: inset 0 0 0 1px rgb(255 176 0 / 0.45); font-size: 17px; line-height: 1.55; }
+			.callout p:last-child { margin: 0; }
+			.callout strong { font-family: var(--display); font-stretch: 85%; font-weight: 700; }
+			.callout svg { width: 24px; height: 24px; margin-top: 2px; }
+
+			/* Code block: the frame inside a card is concentric (14 = 6 + 8). */
+			.code { margin: 0; border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); padding: 8px; min-width: 0; }
+			.code-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 8px 10px; font: 500 11px/1.3 var(--mono); font-stretch: 85%; color: var(--ink-2); }
+			.code-head button { border: 0; background: transparent; cursor: pointer; color: var(--ink-2); font: inherit; padding: 4px 6px; border-radius: var(--r-sm); }
+			.code-head button:hover { background: var(--line-2); color: var(--ink); }
+			.code pre { margin: 0; padding: 14px 16px; border-radius: var(--r-md); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line-2); overflow-x: auto; font: 400 13px/1.7 var(--mono); font-stretch: 82%; tab-size: 2; color: var(--ink); }
+			:root[data-theme='dark'] .code pre { background: #111214; }
+			.code pre .k { color: var(--ink); font-weight: 600; }
+			.code pre .s { color: var(--amber-ink); }
+			.code pre .n { color: var(--amber-ink); }
+			.code pre .c { color: var(--ink-3); font-style: italic; }
+			.code pre .t { color: var(--ink-2); }
+			.code pre .p { color: var(--ink-3); user-select: none; }
+
+			/* Logo plumbing */
+			.lg-ink { fill: var(--logo-ink); }
+			.lg-paper { fill: var(--logo-paper); }
+			.lg-acc { fill: var(--logo-acc); }
+			.lg-s-ink { stroke: var(--logo-ink); fill: none; }
+			.lockup { display: inline-flex; align-items: center; gap: 0.32em; color: var(--logo-ink); text-decoration: none; line-height: 1; }
+			.lockup svg { width: 1.15em; height: 1.15em; flex: none; }
+			.wm { font-family: var(--display); font-weight: 800; font-stretch: 72%; letter-spacing: -0.01em; }
+			.lockup.v-a2 { gap: 0.02em; }
+			.lockup.v-a2 svg { width: 0.6em; height: 0.6em; margin: 0.2em 0 0 0.03em; }
+			.lockup.v-a2 .wm { font-weight: 650; font-stretch: 100%; letter-spacing: -0.03em; }
+			.lockup.v-a3 .wm { font-weight: 700; font-stretch: 88%; letter-spacing: -0.02em; }
+
+			/* Page scaffolding */
+			.wrap { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+			.part { border-top: 1px solid var(--line); }
+			.part-head { display: flex; align-items: baseline; gap: 16px; padding: 40px 0 0; flex-wrap: wrap; }
+			.part-head .tc { font: 500 12px/1 var(--mono); font-stretch: 85%; color: var(--ink-2); }
+			.part-head h2 { font: 700 15px/1 var(--display); font-stretch: 90%; margin: 0; }
+			.part-head p { margin: 0; color: var(--ink-2); font-size: 16px; }
+
+			/* Registration mark */
+			.reg { position: absolute; width: 18px; height: 18px; color: var(--ink-3); pointer-events: none; }
+			.reg svg { width: 100%; height: 100%; display: block; }
+
+			@media (max-width: 720px) {
+				.wrap { padding: 0 16px; }
+				body { font-size: 17px; }
+				.lede { font-size: 19px; }
+			}
+		</style>
+		<style id="brand-css">
+			/* Brand sheet */
+			.brand { padding-top: 32px; padding-bottom: 96px; }
+			.brand h3.sec { font: 700 28px/1 var(--display); font-stretch: 72%; margin: 64px 0 20px; }
+			.logo-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+			.logo-col { display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); }
+			.logo-col.is-on { background: var(--sel); box-shadow: inset 0 0 0 1px rgb(255 176 0 / 0.5); }
+			.logo-col header { padding: 8px 8px 4px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+			.logo-col header b { font: 700 18px/1.1 var(--display); font-stretch: 80%; }
+			.logo-col header span { font: 500 11px/1 var(--mono); font-stretch: 85%; color: var(--ink-2); }
+			.logo-col > p { padding: 0 8px; margin: 0 0 4px; font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+			.tile { border-radius: var(--r-md); padding: 28px 20px; display: flex; align-items: center; justify-content: center; min-height: 120px; box-shadow: inset 0 0 0 1px var(--line); }
+			.tile .lockup { font-size: 46px; }
+			.tile-light { --logo-ink: #16171a; --logo-paper: #ecede8; --logo-acc: #ffb000; background: #ecede8; }
+			.tile-dark { --logo-ink: #e7e6e0; --logo-paper: #141517; --logo-acc: #ffb000; background: #141517; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1); }
+			.tile-amber { --logo-ink: #16171a; --logo-paper: #ffb000; --logo-acc: #16171a; background: #ffb000; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
+			.tile-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+			.tile { min-width: 0; }
+			.tile-pair .tile { min-height: 96px; padding: 20px 12px; }
+			.tile-pair .tile .lockup { font-size: 30px; }
+			.sizes { display: flex; align-items: flex-end; justify-content: center; gap: 20px; }
+			.sizes figure { margin: 0; display: grid; justify-items: center; gap: 6px; }
+			.sizes figcaption { font: 500 10px/1 var(--mono); font-stretch: 85%; opacity: 0.6; color: var(--logo-ink); }
+			.sizes svg { display: block; }
+
+			.palette { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+			.swatch { border-radius: var(--r-lg); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); padding: 4px; }
+			.swatch i { display: block; height: 88px; border-radius: var(--r-md); box-shadow: inset 0 0 0 1px var(--line-2); }
+			.swatch div { padding: 10px 8px 6px; }
+			.swatch b { display: block; font: 700 15px/1.2 var(--display); font-stretch: 85%; }
+			.swatch code { background: none; box-shadow: none; padding: 0; color: var(--ink-2); font-size: 11px; }
+			.swatch p { margin: 6px 0 0; font-size: 14px; line-height: 1.4; color: var(--ink-2); }
+
+			.specimen { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+			.spec { border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); padding: 24px; min-width: 0; }
+			.spec .meta { font: 500 11px/1.4 var(--mono); font-stretch: 85%; color: var(--ink-2); margin-bottom: 14px; }
+			.spec-display { font: 800 clamp(64px, 9vw, 124px)/0.86 var(--display); font-stretch: 64%; letter-spacing: -0.01em; }
+			.spec-display span { display: block; font-stretch: 100%; font-weight: 300; font-size: 0.42em; letter-spacing: 0; margin-top: 10px; }
+			.spec-scale { display: grid; gap: 10px; margin-top: 22px; }
+			.spec-scale div { display: grid; grid-template-columns: 56px 1fr; align-items: baseline; gap: 12px; }
+			.spec-scale small { font: 500 10px/1 var(--mono); color: var(--ink-3); }
+			.spec-body p { font-size: 19px; line-height: 1.6; max-width: 36em; }
+			.spec-mono { font: 400 13px/1.8 var(--mono); font-stretch: 82%; }
+			.spec-mono .big { font-size: 34px; font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; display: block; margin: 4px 0 10px; }
+			.spec-mono .big b { color: var(--amber-ink); font-weight: 500; }
+
+			.components { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+			.comp-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+			.comp-group { display: grid; gap: 16px; }
+			.comp-label { font: 500 11px/1 var(--mono); font-stretch: 85%; color: var(--ink-2); margin: 0 0 10px; }
+
+			@media (max-width: 960px) {
+				.logo-cols, .specimen, .components { grid-template-columns: minmax(0, 1fr); }
+				.palette { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			}
+			@media (max-width: 480px) {
+				.tile-pair .tile .lockup { font-size: 24px; }
+				.sizes { gap: 12px; }
+			}
+		</style>
+		<style id="landing-css">
+			/* Landing */
+			.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 72px; }
+			.nav .lockup { font-size: 30px; }
+			.nav-left { display: flex; align-items: center; gap: 14px; }
+			.nav-links { display: flex; align-items: center; gap: 4px; font: 500 15px/1 var(--display); font-stretch: 90%; }
+			.nav-links a { text-decoration: none; padding: 9px 11px; border-radius: 8px; color: var(--ink-2); }
+			.nav-links a:hover { color: var(--ink); background: var(--line-2); }
+			.nav-links a[aria-current] { color: var(--ink); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); }
+
+			.hero { padding: 56px 32px 72px; }
+			.hero-top { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: end; }
+			.hero-h1 { font-size: clamp(64px, 10.4vw, 148px); }
+			.hero-side .lede { margin-bottom: 24px; }
+			.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+			.status { display: flex; align-items: center; gap: 10px; margin: 22px 0 0; font-size: 15px; color: var(--ink-2); line-height: 1.4; }
+			.status .badge { flex: none; }
+
+			.viewer-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; margin-top: 56px; align-items: start; }
+			.viewer { position: relative; padding: 8px; border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); min-width: 0; }
+			.screen { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r-md); overflow: hidden; background: var(--plate); container-type: inline-size; }
+			.thumb .screen { border-radius: 2px; }
+			.lt { position: absolute; left: var(--x, -31.25cqw); bottom: 6.25cqw; font: 400 2.9167cqw/1.15 'Times New Roman', Times, serif; color: white; white-space: nowrap; }
+			.lt i { display: block; width: var(--bar, 0cqw); height: 0.3125cqw; background: #ffb000; }
+			.safe { position: absolute; inset: 5% 5%; border: 1px dashed rgb(255 255 255 / 0.14); pointer-events: none; }
+			.safe::after { content: ''; position: absolute; inset: 3.5% 3.7%; border: 1px dashed rgb(255 255 255 / 0.09); }
+			.burn { position: absolute; left: 50%; top: 4.5%; transform: translateX(-50%); padding: 0.5cqw 1cqw; background: rgb(0 0 0 / 0.72); color: #f2f2ee; font: 500 clamp(10px, 1.55cqw, 15px)/1 var(--mono); font-stretch: 85%; letter-spacing: 0.02em; border-radius: 2px; white-space: nowrap; }
+			.screen .reg { color: rgb(255 255 255 / 0.32); width: 2.4cqw; height: 2.4cqw; min-width: 12px; min-height: 12px; }
+
+			.transport { display: flex; align-items: center; gap: 10px; padding: 10px 6px 6px; }
+			.transport button { display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; cursor: pointer; color: var(--ink); flex: none; }
+			.transport button:hover { background: var(--line-2); }
+			.transport button.play { background: var(--amber); color: var(--on-amber); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
+			.transport svg { width: 16px; height: 16px; }
+			.scrub { flex: 1; min-width: 60px; accent-color: #ffb000; height: 22px; }
+			.tcode { font: 500 13px/1 var(--mono); font-stretch: 85%; white-space: nowrap; }
+			.tcode b { color: var(--amber-ink); font-weight: 500; }
+
+			.strip { position: relative; margin-top: 8px; padding: 13px 8px; border-radius: var(--r-md); background: var(--plate); display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; }
+			.strip::before, .strip::after { content: ''; position: absolute; left: 8px; right: 8px; height: 5px; background-image: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.22) 0 7px, transparent 7px 16px); border-radius: 1px; }
+			.strip::before { top: 4px; }
+			.strip::after { bottom: 4px; }
+			.thumb { all: unset; display: grid; gap: 4px; cursor: pointer; padding: 3px; border-radius: 4px; }
+			.thumb:hover { background: rgb(255 255 255 / 0.08); }
+			.thumb.is-on { background: #ffb000; }
+			.thumb.is-on > span { color: #16171a; }
+			.thumb > span { font: 500 9px/1 var(--mono); font-stretch: 80%; color: rgb(255 255 255 / 0.6); text-align: center; padding-bottom: 1px; }
+			.thumb:focus-visible { outline: 2px solid #ffb000; outline-offset: 1px; }
+
+			.readout { border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); padding: 8px; }
+			.readout dl { margin: 0; padding: 6px 10px; display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font: 400 12.5px/1.35 var(--mono); font-stretch: 85%; }
+			.readout dt { color: var(--ink-2); }
+			.readout dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+			.readout dd b { font-weight: 600; color: var(--amber-ink); }
+			.readout hr { border: 0; border-top: 1px solid var(--line); margin: 6px 10px; }
+			.readout p { margin: 8px 10px 6px; font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+			.readout .bigframe { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 12px 12px; border-radius: var(--r-md); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line-2); }
+			.readout .bigframe span { font: 500 11px/1 var(--mono); color: var(--ink-2); font-stretch: 85%; }
+			.readout .bigframe b { font: 800 64px/0.8 var(--display); font-stretch: 62%; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+			.block { padding: 104px 32px 0; }
+			.block-head { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 48px; margin-bottom: 40px; align-items: start; }
+			.block-head .tc { font: 500 12px/1 var(--mono); font-stretch: 85%; color: var(--ink-2); display: block; margin-top: 10px; }
+			.block-head .lede { margin: 0; }
+			.split { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 32px; align-items: start; }
+
+			.term pre .p { color: var(--ink-3); }
+			.notes h3 { margin-top: 4px; }
+			.notes ul { margin: 0 0 20px; padding-left: 1.1em; }
+			.notes li { margin-bottom: 6px; }
+
+			.stills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 20px 0 8px; }
+			.still { padding: 4px; border-radius: var(--r-lg); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); }
+			.still .screen { border-radius: var(--r-md); }
+			.still figcaption { padding: 8px 6px 4px; font: 400 11px/1.5 var(--mono); font-stretch: 82%; color: var(--ink-2); }
+			.still figcaption b { color: var(--ink); font-weight: 600; }
+
+			.pipeline { display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1.25fr) 40px minmax(0, 1fr); align-items: stretch; }
+			.stage { padding: 8px; border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); display: flex; flex-direction: column; min-width: 0; }
+			.stage .art { border-radius: var(--r-md); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line-2); padding: 16px; min-height: 172px; font: 400 12px/1.7 var(--mono); font-stretch: 82%; overflow-x: auto; }
+			.stage .txt { padding: 16px 10px 8px; }
+			.stage .num { font: 800 44px/0.8 var(--display); font-stretch: 62%; color: var(--ink-3); display: block; margin-bottom: 10px; }
+			.stage p { font-size: 16px; line-height: 1.5; color: var(--ink-2); margin: 0; }
+			.link { position: relative; align-self: center; height: 2px; margin: 0 6px; background: repeating-linear-gradient(90deg, var(--ink-3) 0 3px, transparent 3px 7px); }
+			.link::after { content: ''; position: absolute; right: -2px; top: -4px; border: 5px solid transparent; border-left: 7px solid var(--ink-3); border-right: 0; }
+			.tabs { display: grid; gap: 7px; }
+			.tabrow { display: grid; grid-template-columns: 44px 1fr; gap: 8px; align-items: center; }
+			.tabrow > span { color: var(--ink-2); }
+			.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+			.chip { font-style: normal; display: inline-block; min-width: 30px; text-align: center; padding: 3px 5px; border-radius: 3px; background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); font-variant-numeric: tabular-nums; }
+			.chip.done { background: var(--ink); color: var(--paper); box-shadow: none; }
+			.chip.retry { background: var(--amber); color: #16171a; box-shadow: none; }
+			.tree .t { color: var(--ink-2); }
+			.tree .s { color: var(--amber-ink); }
+			.file { display: grid; gap: 10px; }
+			.file .mp4 { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--r-sm); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); }
+			.file .mp4 i { width: 28px; height: 34px; border-radius: 2px; background: var(--plate); position: relative; flex: none; }
+			.file .mp4 i::after { content: ''; position: absolute; inset: 9px 8px 9px 11px; background: #ffb000; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+
+			.reasons { border-top: 1px solid var(--line); }
+			.reason { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) minmax(0, 5fr); gap: 32px; padding: 32px 0; border-bottom: 1px solid var(--line); align-items: start; }
+			.reason h3 { font-size: 32px; font-stretch: 68%; font-weight: 800; line-height: 0.95; margin: 0; }
+			.reason p { margin: 0; }
+			.reason .code pre { font-size: 12px; }
+
+			.perf { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 32px; align-items: start; }
+			.chart { padding: 24px 24px 18px; border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); }
+			.chart-row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line-2); }
+			.chart-row:last-of-type { border-bottom: 0; }
+			.chart-row > b { font: 700 15px/1.2 var(--display); font-stretch: 85%; padding-top: 2px; }
+			.chart-row > b small { display: block; font: 400 11px/1.4 var(--mono); color: var(--ink-2); margin-top: 3px; }
+			.bars { display: grid; gap: 6px; }
+			.bar { display: grid; grid-template-columns: minmax(0, 1fr) 64px; gap: 10px; align-items: center; font: 400 12px/1 var(--mono); font-stretch: 85%; }
+			.bar i { display: block; height: 22px; border-radius: 3px; background: var(--ink-3); width: var(--w); position: relative; }
+			.bar.motio i { background: #ffb000; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1); }
+			.bar i em { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-style: normal; font-size: 11px; color: #fff; white-space: nowrap; }
+			.bar.motio i em { color: #16171a; }
+			.bar.base i em { color: var(--paper); }
+			.bar > span { text-align: right; font-variant-numeric: tabular-nums; }
+			.bar.motio > span b { color: var(--amber-ink); font-weight: 600; }
+			.chart-foot { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; font: 400 11px/1.5 var(--mono); font-stretch: 85%; color: var(--ink-2); }
+			.chart-foot i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+			.ratio { font: 800 clamp(72px, 9vw, 120px)/0.82 var(--display); font-stretch: 62%; letter-spacing: -0.01em; }
+			.ratio small { font: 400 15px/1.4 var(--serif); display: block; letter-spacing: 0; margin-top: 12px; color: var(--ink-2); max-width: 22em; }
+			table.data { width: 100%; border-collapse: collapse; font: 400 12.5px/1.4 var(--mono); font-stretch: 85%; margin-top: 28px; }
+			table.data th { text-align: left; font: 600 13px/1.2 var(--display); font-stretch: 85%; padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line); }
+			table.data td { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--line-2); font-variant-numeric: tabular-nums; }
+			table.data td:not(:first-child), table.data th:not(:first-child) { text-align: right; }
+			.foot { font-size: 14px; line-height: 1.5; color: var(--ink-2); margin-top: 16px; }
+
+			.pkgs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; border-top: 1px solid var(--line); }
+			.pkg { display: grid; grid-template-columns: minmax(0, 210px) minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+			.pkg code { background: none; box-shadow: none; padding: 0; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+			.pkg span { font-size: 16px; line-height: 1.45; color: var(--ink-2); }
+			.pkgs-more { margin-top: 18px; font-size: 16px; color: var(--ink-2); }
+
+			.starters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+			.starters > .card { min-width: 0; }
+			.sheet4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: var(--r-lg); background: var(--plate); }
+			.sheet4 .screen { border-radius: var(--r-md); }
+			.sheet4 .screen > div { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 700 9cqw/1 var(--display); font-stretch: 75%; }
+			.sheet4 .screen > em { position: absolute; left: 4cqw; bottom: 4cqw; font: 500 6cqw/1 var(--mono); font-style: normal; color: rgb(255 255 255 / 0.55); }
+			.starters .card-body p { font-size: 16px; line-height: 1.5; color: var(--ink-2); }
+			.starters .card-body code.cmd { display: block; margin-top: 14px; padding: 8px 10px; border-radius: var(--r-md); font-size: 11.5px; line-height: 1.4; overflow-x: auto; white-space: nowrap; }
+
+			.footer { margin-top: 120px; border-top: 1px solid var(--line); padding: 48px 32px 40px; }
+			.footer-top { display: grid; grid-template-columns: minmax(0, 5fr) repeat(2, minmax(0, 2fr)); gap: 32px; }
+			.footer .lockup { font-size: 40px; }
+			.footer h4 { font: 600 14px/1 var(--display); font-stretch: 90%; margin: 6px 0 14px; }
+			.footer ul { list-style: none; margin: 0; padding: 0; font-size: 16px; line-height: 2; }
+			.footer ul a { text-decoration: none; color: var(--ink-2); }
+			.footer ul a:hover { color: var(--ink); text-decoration: underline; }
+			.legal { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line-2); font-size: 14px; color: var(--ink-2); line-height: 1.5; display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+			.legal .mono { font-size: 11px; }
+
+			@media (max-width: 1024px) {
+				.viewer-grid { grid-template-columns: 1fr; }
+				.readout dl { grid-template-columns: repeat(2, auto 1fr); }
+				.pipeline { grid-template-columns: 1fr; }
+				.link { width: 2px; height: 28px; margin: 6px auto; justify-self: center; background: repeating-linear-gradient(180deg, var(--ink-3) 0 3px, transparent 3px 7px); }
+				.link::after { right: auto; left: -4px; top: auto; bottom: -3px; border: 5px solid transparent; border-top: 7px solid var(--ink-3); border-bottom: 0; }
+				.reason { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+				.reason .code { grid-column: 1 / -1; }
+			}
+			@media (max-width: 860px) {
+				.hero-top, .block-head, .split, .perf, .footer-top { grid-template-columns: 1fr; gap: 24px; }
+				.pkgs { grid-template-columns: 1fr; }
+				.starters { grid-template-columns: minmax(0, 1fr); }
+			}
+			@media (max-width: 720px) {
+				.hero, .block, .footer { padding-left: 16px; padding-right: 16px; }
+				.hero { padding-top: 32px; }
+				.block { padding-top: 72px; }
+				.nav { height: auto; padding-top: 14px; padding-bottom: 6px; flex-wrap: wrap; row-gap: 6px; }
+				.nav .lockup { font-size: 26px; }
+				.nav-links { width: 100%; margin-left: -11px; }
+				.nav-links a { padding: 8px 11px; }
+				.viewer-grid { margin-top: 32px; }
+				.strip { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+				.readout dl { grid-template-columns: auto 1fr; }
+				.reason { grid-template-columns: 1fr; gap: 14px; padding: 26px 0; }
+				.pkg { grid-template-columns: 1fr; gap: 4px; }
+				.stills { grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+				.still figcaption { font-size: 9.5px; }
+				.chart { padding: 16px 14px 12px; }
+				.chart-row { grid-template-columns: 1fr; gap: 8px; }
+				.transport { gap: 4px; }
+			}
+		</style>
+	</head>
+	<body data-v="a">
+		<div class="switch">
+			<span data-buttons></span>
+			<p data-desc></p>
+			<span class="jump">
+				<button data-jump="brand">Brand</button>
+				<button data-jump="landing">Landing</button>
+				<button data-jump="docs">Docs</button>
+				<button data-jump="promo">Promo</button>
+			</span>
+			<button data-theme-toggle>t theme</button>
+		</div>
+
+		<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+			<defs>
+				<symbol id="reg" viewBox="0 0 18 18"><circle cx="9" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="1" /><path d="M9 0v18M0 9h18" stroke="currentColor" stroke-width="1" /></symbol>
+				<symbol id="i-gh" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></symbol>
+				<symbol id="i-copy" viewBox="0 0 16 16"><rect x="5" y="5" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M11 3.5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+				<symbol id="i-note" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v6.5M12 16.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+				<symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.6 10.6 3.4 3.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+			</defs>
+		</svg>
+
+		<!-- 1. Brand sheet -->
+		<section id="brand" class="part" style="border-top: 0">
+			<div class="wrap brand">
+				<div class="part-head"><span class="tc">00:00:00:00</span><h2>Brand sheet</h2><p>Direction A, Frame: the frame is the unit of truth.</p></div>
+
+				<h3 class="sec">Logo</h3>
+				<div class="logo-cols" data-logo-cols></div>
+
+				<h3 class="sec">Palette</h3>
+				<div class="palette">
+					<div class="swatch"><i style="background: #ecede8"></i><div><b>Paper</b><code>#ECEDE8 / dark #141517</code><p>Page background. Cool photographic paper, not cream.</p></div></div>
+					<div class="swatch"><i style="background: #f7f7f4"></i><div><b>Sheet</b><code>#F7F7F4 / dark #1C1D20</code><p>Raised surfaces: cards, code frames, the docs sidebar.</p></div></div>
+					<div class="swatch"><i style="background: #16171a"></i><div><b>Ink</b><code>#16171A / dark #E7E6E0</code><p>Text, the logo, keywords in code.</p></div></div>
+					<div class="swatch"><i style="background: #55575c"></i><div><b>Graphite</b><code>#55575C / dark #A3A39D</code><p>Secondary text, timecodes, the baseline in charts.</p></div></div>
+					<div class="swatch"><i style="background: #ffb000"></i><div><b>Leader amber</b><code>#FFB000</code><p>The one accent. Fills only: primary button, current frame, Motio in charts. Ink on top.</p></div></div>
+					<div class="swatch"><i style="background: #8a5200"></i><div><b>Amber ink</b><code>#8A5200 / dark #FFC24D</code><p>Amber as text: strings and numbers in code, figures that matter.</p></div></div>
+					<div class="swatch"><i style="background: #1f2124"></i><div><b>Plate</b><code>#1F2124 / dark #0F1012</code><p>The viewer: where a composition is shown, in both themes.</p></div></div>
+					<div class="swatch"><i style="background: rgb(22 23 26 / 0.14)"></i><div><b>Edge</b><code>ink at 14% / white at 13%</code><p>The 1px inset line on every surface, on the whole border.</p></div></div>
+				</div>
+
+				<h3 class="sec">Type</h3>
+				<div class="specimen">
+					<div class="spec">
+						<div class="meta">Archivo, variable width 62 to 125. Display at width 64 to 72, weight 800.</div>
+						<div class="spec-display">Frame 0 to 119<span>4 seconds at 30 fps</span></div>
+						<div class="spec-scale">
+							<div><small>56</small><span class="display" style="font-size: 56px">Make videos</span></div>
+							<div><small>28</small><span class="display" style="font-size: 28px; font-stretch: 72%">How a frame is made</span></div>
+							<div><small>15</small><span style="font: 600 15px/1.2 var(--display); font-stretch: 90%">Buttons, navigation, labels</span></div>
+						</div>
+					</div>
+					<div class="comp-group">
+						<div class="spec spec-body">
+							<div class="meta">Newsreader, optical size 6 to 72. Body 18 to 19 px, line height 1.6.</div>
+							<p>A video is a sequence of still images, the frames, shown at a fixed rate. In Motio a component never asks what time it is. It asks which frame it is drawing, and returns what that frame looks like.</p>
+						</div>
+						<div class="spec spec-mono">
+							<div class="meta">Martian Mono, width 82 to 85. Timecodes, frame numbers, code.</div>
+							<span class="big">00:00:01:<b>12</b></span>
+							const frame = useCurrentFrame();<br />motio render src/index.ts Intro out/intro.mp4
+						</div>
+					</div>
+				</div>
+
+				<h3 class="sec">Components</h3>
+				<div class="components">
+					<div class="comp-group">
+						<div>
+							<p class="comp-label">Buttons</p>
+							<div class="comp-row">
+								<a class="btn btn-primary" href="#">Read the guide</a>
+								<a class="btn btn-secondary" href="#"><svg><use href="#i-gh" /></svg>GitHub</a>
+							</div>
+						</div>
+						<div>
+							<p class="comp-label">Badges</p>
+							<div class="comp-row">
+								<span class="badge badge-amber"><span class="dot"></span>pre-alpha</span>
+								<span class="badge">Apache-2.0</span>
+								<span class="badge">Node 22+</span>
+								<span class="badge">frame 42 of 120</span>
+							</div>
+						</div>
+						<div class="card">
+							<div class="card-body">
+								<h3>basic</h3>
+								<p class="muted" style="font-size: 16px; margin: 0">A four-second title animation: <code>spring()</code> and <code>interpolate()</code>, two scenes in a <code>&lt;Series&gt;</code>, an image from <code>public/</code>, a local font, and a still for the thumbnail.</p>
+							</div>
+						</div>
+						<div class="callout">
+							<svg><use href="#i-note" /></svg>
+							<p><strong>Not in this release.</strong> A mode that makes the page clock follow the frame time is designed but not available yet. Drive clock-based libraries from the frame instead.</p>
+						</div>
+					</div>
+					<figure class="code">
+						<figcaption class="code-head"><span>examples/src/frames.tsx</span><button type="button" data-copy><svg width="14" height="14" style="vertical-align: -2px"><use href="#i-copy" /></svg> Copy</button></figcaption>
+<pre><span class="k">export const</span> Clock = () =&gt; {
+	<span class="k">const</span> frame = useCurrentFrame();
+	<span class="k">const</span> { fps, durationInFrames, width, height } = useVideoConfig();
+	<span class="k">const</span> seconds = frame / fps;
+	<span class="k">return</span> (
+		<span class="t">&lt;AbsoluteFill</span> style={{ justifyContent: <span class="s">"center"</span>, alignItems: <span class="s">"center"</span>, fontSize: <span class="n">64</span> }}<span class="t">&gt;</span>
+			Frame {frame} of {durationInFrames} ({seconds.toFixed(<span class="n">2</span>)} s) at {width}x{height}
+		<span class="t">&lt;/AbsoluteFill&gt;</span>
+	);
+};</pre>
+					</figure>
+				</div>
+			</div>
+		</section>
+
+		<!-- 2. Landing page -->
+		<section id="landing" class="part">
+			<div class="wrap part-head" style="padding-bottom: 24px"><span class="tc">00:00:01:00</span><h2>Landing page</h2><p>motio.dev, as it would ship.</p></div>
+			<div class="part" style="max-width: 100%">
+				<header class="nav wrap">
+					<div class="nav-left">
+						<a href="#" data-logo="lockup" aria-label="Motio home"></a>
+						<span class="badge badge-amber"><span class="dot"></span>pre-alpha</span>
+					</div>
+					<nav class="nav-links" aria-label="Main">
+						<a href="#docs">Docs</a>
+						<a href="#docs">Guide</a>
+						<a href="https://github.com/motiojs/motio">GitHub</a>
+						<a href="https://www.npmjs.com/package/motio">npm</a>
+					</nav>
+				</header>
+
+				<div class="hero wrap">
+					<div class="hero-top">
+						<h1 class="display hero-h1">Make videos with React.</h1>
+						<div class="hero-side">
+							<p class="lede">Motio renders a React tree frame by frame in a real headless Chrome and encodes it with FFmpeg. Apache-2.0, free for any use.</p>
+							<div class="actions">
+								<a class="btn btn-primary" href="#docs">Read the guide</a>
+								<a class="btn btn-secondary" href="https://github.com/motiojs/motio"><svg><use href="#i-gh" /></svg>GitHub</a>
+							</div>
+							<p class="status"><span class="badge">pre-alpha</span>Under active development. Nothing is published on npm yet.</p>
+						</div>
+					</div>
+
+					<div class="viewer-grid">
+						<div class="viewer" data-viewer>
+							<div class="screen" data-comp>
+								<div class="lt"><span>Launch day</span><i></i></div>
+								<div class="safe"></div>
+								<div class="burn" data-burn>00:00:00:00</div>
+								<span class="reg" style="left: 1.2cqw; top: 1.2cqw"><svg><use href="#reg" /></svg></span>
+								<span class="reg" style="right: 1.2cqw; top: 1.2cqw"><svg><use href="#reg" /></svg></span>
+								<span class="reg" style="left: 1.2cqw; bottom: 1.2cqw"><svg><use href="#reg" /></svg></span>
+								<span class="reg" style="right: 1.2cqw; bottom: 1.2cqw"><svg><use href="#reg" /></svg></span>
+							</div>
+							<div class="transport">
+								<button type="button" data-step="-1" aria-label="Previous frame"><svg viewBox="0 0 16 16"><path d="M4 3v10M13 3 6 8l7 5z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg></button>
+								<button type="button" class="play" data-play aria-label="Pause"><svg viewBox="0 0 16 16" data-icon-pause><path d="M4.5 3h2.5v10H4.5zM9 3h2.5v10H9z" fill="currentColor" /></svg><svg viewBox="0 0 16 16" data-icon-play hidden><path d="M4.5 2.5v11l9-5.5z" fill="currentColor" /></svg></button>
+								<button type="button" data-step="1" aria-label="Next frame"><svg viewBox="0 0 16 16"><path d="M12 3v10M3 3l7 5-7 5z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg></button>
+								<input class="scrub" type="range" min="0" max="119" value="0" data-scrub aria-label="Frame" />
+								<span class="tcode" data-tcode>frame <b>0</b> of 120</span>
+							</div>
+							<div class="strip" data-strip></div>
+						</div>
+
+						<aside class="readout" aria-label="Values for the current frame">
+							<div class="bigframe"><span>useCurrentFrame()</span><b data-ro="frame">0</b></div>
+							<dl>
+								<dt>composition</dt><dd>LowerThird</dd>
+								<dt>size</dt><dd>1920x1080</dd>
+								<dt>fps</dt><dd>30</dd>
+								<dt>durationInFrames</dt><dd>120</dd>
+								<dt>props.name</dt><dd>"Launch day"</dd>
+							</dl>
+							<hr />
+							<dl>
+								<dt>frame / fps</dt><dd data-ro="sec">0.00 s</dd>
+								<dt>left</dt><dd><b data-ro="left">-600</b></dd>
+								<dt>barWidth</dt><dd><b data-ro="bar">0</b></dd>
+							</dl>
+							<p>Every value is a function of the frame number. Step back and forth, or jump to any frame: the picture is the same each time.</p>
+						</aside>
+					</div>
+				</div>
+
+				<section class="block wrap" id="l-install">
+					<div class="block-head">
+						<div><span class="tc">00:00:02:00</span><h2 class="display">Three commands to an MP4.</h2></div>
+						<p class="lede">Create a project from a starter, preview it in the browser, render it. No Chrome to install: the first render downloads a pinned <code>chrome-headless-shell</code>.</p>
+					</div>
+					<div class="split">
+						<figure class="code term">
+							<figcaption class="code-head"><span>Terminal</span><button type="button" data-copy><svg width="14" height="14" style="vertical-align: -2px"><use href="#i-copy" /></svg> Copy</button></figcaption>
+<pre><span class="p">$ </span>pnpm create motio my-video     <span class="c"># or: npm create motio@latest my-video</span>
+<span class="p">$ </span>cd my-video
+<span class="p">$ </span>pnpm dev                       <span class="c"># preview in the browser</span>
+<span class="p">$ </span>pnpm render                    <span class="c"># render out/intro.mp4</span></pre>
+						</figure>
+						<div class="notes">
+							<h3>Requirements</h3>
+							<ul>
+								<li>Node 22 or later, pnpm.</li>
+								<li>FFmpeg 5.1 or later with libx264 on <code>PATH</code>, or the pinned build from <code>@motiojs/ffmpeg</code>. <code>motio doctor</code> checks it.</li>
+								<li>The pinned <code>chrome-headless-shell</code> is downloaded on first use.</li>
+							</ul>
+							<div class="callout"><svg><use href="#i-note" /></svg><p><strong>Not on npm yet.</strong> These are the commands that will work once Motio is published. Until then, a project can only be built from a clone of the repository.</p></div>
+						</div>
+					</div>
+				</section>
+
+				<section class="block wrap" id="l-component">
+					<div class="block-head">
+						<div><span class="tc">00:00:03:00</span><h2 class="display">A video is a React component.</h2></div>
+						<p class="lede">It never asks what time it is. It asks which frame it is drawing, with <code>useCurrentFrame()</code>, and returns what that frame looks like. The viewer above plays this component from the guide, frames 0 to 119.</p>
+					</div>
+					<div class="split">
+						<figure class="code">
+							<figcaption class="code-head"><span>examples/src/animation.tsx</span><button type="button" data-copy><svg width="14" height="14" style="vertical-align: -2px"><use href="#i-copy" /></svg> Copy</button></figcaption>
+<pre><span class="k">import</span> { AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig } <span class="k">from</span> <span class="s">"motio"</span>;
+
+<span class="k">export const</span> LowerThird = ({ name }: { name: string }) =&gt; {
+	<span class="k">const</span> frame = useCurrentFrame();
+	<span class="k">const</span> { durationInFrames } = useVideoConfig();
+	<span class="c">// Slides in during frames 10-25, stays, slides out during the last 15 frames.</span>
+	<span class="k">const</span> left = interpolate(
+		frame,
+		[<span class="n">10</span>, <span class="n">25</span>, durationInFrames - <span class="n">15</span>, durationInFrames],
+		[<span class="n">-600</span>, <span class="n">60</span>, <span class="n">60</span>, <span class="n">-600</span>],
+		{ easing: Easing.out(Easing.quad), extrapolateLeft: <span class="s">"clamp"</span>, extrapolateRight: <span class="s">"clamp"</span> },
+	);
+	<span class="c">// Without clamping, the bar would keep growing after frame 40.</span>
+	<span class="k">const</span> barWidth = interpolate(frame, [<span class="n">18</span>, <span class="n">40</span>], [<span class="n">0</span>, <span class="n">420</span>], {
+		extrapolateLeft: <span class="s">"clamp"</span>,
+		extrapolateRight: <span class="s">"clamp"</span>,
+	});
+	<span class="k">return</span> (
+		<span class="t">&lt;AbsoluteFill&gt;</span>
+			<span class="t">&lt;div</span> style={{ position: <span class="s">"absolute"</span>, left, bottom: <span class="n">120</span>, fontSize: <span class="n">56</span>, color: <span class="s">"white"</span> }}<span class="t">&gt;</span>
+				{name}
+				<span class="t">&lt;div</span> style={{ width: barWidth, height: <span class="n">6</span>, backgroundColor: <span class="s">"#ffb000"</span> }} <span class="t">/&gt;</span>
+			<span class="t">&lt;/div&gt;</span>
+		<span class="t">&lt;/AbsoluteFill&gt;</span>
+	);
+};</pre>
+						</figure>
+						<div>
+							<h3>Three frames, three answers</h3>
+							<p class="muted" style="font-size: 17px">The same function, asked for three frame numbers. No state is kept between them, so a tab can start at frame 40 and get the same pixels as one that played from 0.</p>
+							<div class="stills" data-stills></div>
+							<p class="muted" style="font-size: 15px; margin-top: 18px">Do not use <code>Math.random()</code>: <code>random(seed)</code> returns the same number for the same seed on every frame, page and machine.</p>
+						</div>
+					</div>
+				</section>
+
+				<section class="block wrap" id="l-how">
+					<div class="block-head">
+						<div><span class="tc">00:00:04:00</span><h2 class="display">How a frame is made.</h2></div>
+						<p class="lede">Each frame is rendered alone, in any order, on any number of browser tabs, and always gives the same pixels.</p>
+					</div>
+					<div class="pipeline">
+						<div class="stage">
+							<div class="art tree"><span class="t">&lt;Composition</span> id=<span class="s">"Intro"</span><br />&nbsp;&nbsp;fps={30} durationInFrames={120}<span class="t">&gt;</span><br />&nbsp;&nbsp;<span class="t">&lt;Series&gt;</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="t">&lt;Title /&gt;</span><br />&nbsp;&nbsp;&nbsp;&nbsp;<span class="t">&lt;LowerThird</span> name=<span class="s">"Launch day"</span> <span class="t">/&gt;</span><br />&nbsp;&nbsp;<span class="t">&lt;/Series&gt;</span><br /><span class="t">&lt;/Composition&gt;</span></div>
+							<div class="txt"><span class="num">1</span><h3>A React tree</h3><p>Your components read <code>useCurrentFrame()</code> and return what that frame looks like.</p></div>
+						</div>
+						<div class="link" aria-hidden="true"></div>
+						<div class="stage">
+							<div class="art">
+								<div class="tabs">
+									<div class="tabrow"><span>tab 1</span><span class="chips"><i class="chip done">0</i><i class="chip done">4</i><i class="chip done">8</i><i class="chip">12</i></span></div>
+									<div class="tabrow"><span>tab 2</span><span class="chips"><i class="chip done">1</i><i class="chip done">5</i><i class="chip">9</i></span></div>
+									<div class="tabrow"><span>tab 3</span><span class="chips"><i class="chip done">2</i><i class="chip retry">6</i><i class="chip">10</i></span></div>
+									<div class="tabrow"><span>tab 4</span><span class="chips"><i class="chip done">3</i><i class="chip done">7</i><i class="chip">11</i></span></div>
+								</div>
+							</div>
+							<div class="txt"><span class="num">2</span><h3>Headless Chrome, frame by frame</h3><p>Motio sets the frame number, waits until the page is ready and takes a screenshot. Tabs render different frames at once, in whatever order is fastest; a failed frame is retried on a fresh tab.</p></div>
+						</div>
+						<div class="link" aria-hidden="true"></div>
+						<div class="stage">
+							<div class="art file">
+								<div class="mp4"><i></i><span>out/intro.mp4</span></div>
+								<div>H.264, bt709, tv range<br />120 frames at 30 fps</div>
+							</div>
+							<div class="txt"><span class="num">3</span><h3>FFmpeg</h3><p>The screenshots are encoded with FFmpeg: H.264 by default, also H.265, AV1, VP8, VP9, ProRes and GIF, with alpha where the codec has it.</p></div>
+						</div>
+					</div>
+				</section>
+
+				<section class="block wrap" id="l-why">
+					<div class="block-head">
+						<div><span class="tc">00:00:05:00</span><h2 class="display">Why Motio.</h2></div>
+						<p class="lede">Four commitments, each one checked by something you can run.</p>
+					</div>
+					<div class="reasons">
+						<div class="reason">
+							<h3>Open source</h3>
+							<p>Apache-2.0, no per-render or per-seat fees, including distributed rendering and embedding the Player.</p>
+							<figure class="code"><figcaption class="code-head"><span>packages/motio/package.json</span></figcaption><pre>{
+	<span class="s">"name"</span>: <span class="s">"motio"</span>,
+	<span class="s">"description"</span>: <span class="s">"Make videos with React."</span>,
+	<span class="s">"license"</span>: <span class="s">"Apache-2.0"</span>
+}</pre></figure>
+						</div>
+						<div class="reason">
+							<h3>Chrome pixels</h3>
+							<p>No reimplementation of CSS or layout. If it looks right in Chrome, it renders right, because the frame is Chrome's own screenshot.</p>
+							<figure class="code"><figcaption class="code-head"><span>Terminal</span></figcaption><pre><span class="p">$ </span>motio browser ensure
+<span class="c">chrome-headless-shell, pinned version</span>
+<span class="c">~/.cache/motio/browsers</span></pre></figure>
+						</div>
+						<div class="reason">
+							<h3>Deterministic by test</h3>
+							<p>The same project, props and frame give the same pixels in any order, checked on decoded frame hashes.</p>
+							<figure class="code"><figcaption class="code-head"><span>motio check determinism src/index.ts Intro --json</span></figcaption><pre>{
+	<span class="s">"ok"</span>: <span class="n">true</span>,
+	<span class="s">"frames"</span>: <span class="n">120</span>,
+	<span class="s">"orders"</span>: [<span class="s">"sequential"</span>, <span class="s">"shuffled"</span>],
+	<span class="s">"concurrency"</span>: [<span class="n">1</span>, <span class="n">4</span>, <span class="n">8</span>],
+	<span class="s">"mismatches"</span>: <span class="n">0</span>
+}</pre></figure>
+						</div>
+						<div class="reason">
+							<h3>Agent-first</h3>
+							<p>Every command has <code>--json</code> output and errors with stable codes. Stills, contact sheets, flicker and determinism checks let an agent see a video without watching it.</p>
+							<figure class="code"><figcaption class="code-head"><span>motio still src/index.ts Intro out/f40.png --frame=40 --json</span></figcaption><pre>{
+	<span class="s">"ok"</span>: <span class="n">false</span>,
+	<span class="s">"error"</span>: {
+		<span class="s">"code"</span>: <span class="s">"READINESS_TIMEOUT"</span>,
+		<span class="s">"label"</span>: <span class="s">"Loading transcript"</span>,
+		<span class="s">"frame"</span>: <span class="n">40</span>
+	}
+}</pre></figure>
+						</div>
+					</div>
+				</section>
+
+				<section class="block wrap" id="l-perf">
+					<div class="block-head">
+						<div><span class="tc">00:00:06:00</span><h2 class="display">Measured, not promised.</h2></div>
+						<p class="lede">Wall time to render the benchmark at 1920x1080, lower is better. Motio takes 0.27 to 0.83 of the baseline's time on macOS, 0.28 to 0.68 on Linux.</p>
+					</div>
+					<div class="perf">
+						<div class="chart" data-chart></div>
+						<div>
+							<div class="ratio">0.27&times;<small>the baseline's wall time with one tab, macOS on Apple M5: 1.75 s against 6.54 s.</small></div>
+							<table class="data">
+								<thead><tr><th>linux-arm64, pinned image</th><th>Baseline</th><th>Motio</th><th>Ratio</th></tr></thead>
+								<tbody>
+									<tr><td>Concurrency 1</td><td>7.56 s</td><td>2.11 s</td><td>0.28</td></tr>
+									<tr><td>Concurrency 4</td><td>2.54 s</td><td>1.32 s</td><td>0.52</td></tr>
+									<tr><td>Concurrency 8</td><td>1.91 s</td><td>1.30 s</td><td>0.68</td></tr>
+								</tbody>
+							</table>
+							<p class="foot">Measured with <code>make bench</code> against Remotion 4.0.545 on macOS, Apple M5, 1920x1080. Medians, the motion and timeline compositions summed, H.264 CRF 18, muted. Linux figures from the same benchmark in the pinned linux-arm64 image.</p>
+						</div>
+					</div>
+				</section>
+
+				<section class="block wrap" id="l-packages">
+					<div class="block-head">
+						<div><span class="tc">00:00:07:00</span><h2 class="display">Packages.</h2></div>
+						<p class="lede">One import for the video, separate packages for what only some videos need.</p>
+					</div>
+					<div class="pkgs">
+						<div class="pkg"><code>motio</code><span>Components, hooks, <code>interpolate()</code>, <code>spring()</code>: the package your video imports.</span></div>
+						<div class="pkg"><code>@motiojs/cli</code><span>The <code>motio</code> command: dev, render, still, frames, check, doctor.</span></div>
+						<div class="pkg"><code>create-motio</code><span><code>pnpm create motio</code>: a new project from a starter.</span></div>
+						<div class="pkg"><code>@motiojs/renderer</code><span>Headless Chrome capture and FFmpeg encoding, as a Node library.</span></div>
+						<div class="pkg"><code>@motiojs/player</code><span>Embed compositions in a React app: Player and Thumbnail.</span></div>
+						<div class="pkg"><code>@motiojs/media</code><span>Video and audio components, frame-exact in renders.</span></div>
+						<div class="pkg"><code>@motiojs/transitions</code><span>Transitions between scenes.</span></div>
+						<div class="pkg"><code>@motiojs/captions</code><span>Caption parsing, serialization and paging.</span></div>
+						<div class="pkg"><code>@motiojs/audio</code><span>Mixes sources with sample-accurate offsets and volume envelopes, encodes once.</span></div>
+						<div class="pkg"><code>@motiojs/distributed</code><span>Plans frame ranges, renders chunks in parallel, assembles without re-encoding.</span></div>
+						<div class="pkg"><code>@motiojs/ffmpeg</code><span>Optional pinned FFmpeg 8.1.3, downloaded on first use and verified by SHA-256.</span></div>
+						<div class="pkg"><code>@motiojs/three</code><span>React Three Fiber scenes driven by the timeline.</span></div>
+					</div>
+					<p class="pkgs-more">Also fonts, Google Fonts, Lottie, Rive, GIF, shapes, paths, noise, motion blur and transcription with whisper.cpp. <a href="https://github.com/motiojs/motio/tree/main/packages">All packages on GitHub</a>.</p>
+				</section>
+
+				<section class="block wrap" id="l-compat">
+					<div class="block-head">
+						<div><span class="tc">00:00:08:00</span><h2 class="display">Compatibility.</h2></div>
+						<p class="lede">Runs projects written for Remotion's documented API, via an import alias. The API is pinned at version 4.0.545 and checked by tests against recordings of that release.</p>
+					</div>
+					<div class="split">
+						<figure class="code">
+							<figcaption class="code-head"><span>src/Intro.tsx, unchanged</span></figcaption>
+<pre><span class="c">// The bundler resolves these imports while it builds:</span>
+<span class="c">// "remotion" to motio, "@remotion/&lt;name&gt;" to "@motiojs/&lt;name&gt;".</span>
+<span class="k">import</span> { useCurrentFrame, spring } <span class="k">from</span> <span class="s">"remotion"</span>;
+<span class="k">import</span> { TransitionSeries } <span class="k">from</span> <span class="s">"@remotion/transitions"</span>;</pre>
+						</figure>
+						<div class="notes">
+							<p>Run <code>motio</code> in place of the original command: <code>render</code>, <code>still</code>, <code>compositions</code> and <code>dev</code> take the same arguments and flags, and the existing config file is read.</p>
+							<p><code>motio doctor</code> scans the project's imports and lists every symbol with its status: supported, approximated, stubbed or missing. A package Motio does not provide fails the build with its name, not the render.</p>
+							<p style="margin: 0"><a href="#docs">Moving an existing project</a></p>
+						</div>
+					</div>
+				</section>
+
+				<section class="block wrap" id="l-starters">
+					<div class="block-head">
+						<div><span class="tc">00:00:09:00</span><h2 class="display">Starters.</h2></div>
+						<p class="lede"><code>pnpm create motio</code> asks for one. Every question has a flag, so a script or an agent can run it without a terminal.</p>
+					</div>
+					<div class="starters">
+						<div class="card">
+							<div class="sheet4" aria-hidden="true">
+								<div class="screen"><div style="transform: scale(0.2); opacity: 0.4">Launch</div><em>0</em></div>
+								<div class="screen"><div style="transform: scale(1.08)">Launch</div><em>30</em></div>
+								<div class="screen" style="background: #2b2d31"><div style="font-size: 6cqw; place-items: end start; padding: 8cqw">Scene two</div><em>60</em></div>
+								<div class="screen" style="background: #ffb000"><div style="color: #16171a">Thumbnail</div><em style="color: rgb(0 0 0 / 0.5)">still</em></div>
+							</div>
+							<div class="card-body"><h3>basic <span class="badge" style="margin-left: 6px; vertical-align: 3px">default</span></h3><p>A four-second title animation: <code>spring()</code> and <code>interpolate()</code>, two scenes in a <code>&lt;Series&gt;</code>, an image from <code>public/</code>, a local font, and a still for the thumbnail.</p><code class="cmd">pnpm create motio my-video</code></div>
+						</div>
+						<div class="card">
+							<div class="sheet4" aria-hidden="true">
+								<div class="screen"><div style="opacity: 0">Hello</div><em>0</em></div>
+								<div class="screen"><div style="opacity: 0.35">Hello</div><em>10</em></div>
+								<div class="screen"><div style="opacity: 0.8">Hello</div><em>20</em></div>
+								<div class="screen"><div>Hello</div><em>30</em></div>
+							</div>
+							<div class="card-body"><h3>blank</h3><p>One composition with a fading title, nothing else.</p><code class="cmd">pnpm create motio my-video --template blank</code></div>
+						</div>
+						<div class="card">
+							<div class="sheet4" aria-hidden="true">
+								<div class="screen"><div style="font-size: 7cqw"><span>Every <span style="color: #ffb000">frame</span> is</span></div><em>0</em></div>
+								<div class="screen"><div style="font-size: 7cqw"><span>Every frame <span style="color: #ffb000">is</span></span></div><em>12</em></div>
+								<div class="screen"><div style="font-size: 7cqw"><span><span style="color: #ffb000">a function</span></span></div><em>24</em></div>
+								<div class="screen"><div style="font-size: 7cqw"><span>of its <span style="color: #ffb000">number</span></span></div><em>36</em></div>
+							</div>
+							<div class="card-body"><h3>captions</h3><p>Word-by-word captions read from a JSON transcript with <code>@motiojs/captions</code>; the video length comes from the transcript.</p><code class="cmd">pnpm create motio my-video --template captions</code></div>
+						</div>
+					</div>
+				</section>
+
+				<footer class="footer wrap">
+					<div class="footer-top">
+						<div>
+							<a href="#" data-logo="lockup" aria-label="Motio home"></a>
+							<p class="muted" style="margin-top: 16px; font-size: 16px; max-width: 26em">Make videos with React. Open source, Apache-2.0.</p>
+						</div>
+						<div>
+							<h4>Documentation</h4>
+							<ul><li><a href="#docs">Guide</a></li><li><a href="#">Architecture</a></li><li><a href="#">Roadmap</a></li><li><a href="#">Decisions</a></li></ul>
+						</div>
+						<div>
+							<h4>Project</h4>
+							<ul><li><a href="https://github.com/motiojs/motio">GitHub</a></li><li><a href="https://www.npmjs.com/package/motio">npm</a></li><li><a href="#">Licence</a></li><li><a href="#">Conventions</a></li></ul>
+						</div>
+					</div>
+					<div class="legal">
+						<span>Remotion is a trademark of its owner. Motio is an independent project, not affiliated with or endorsed by Remotion.</span>
+						<span class="mono">Apache-2.0</span>
+					</div>
+				</footer>
+			</div>
+		</section>
+
+		<!-- 3. Docs page -->
+		<style>
+			.docs-head { position: sticky; top: 0; z-index: 5; background: var(--paper); border-bottom: 1px solid var(--line); }
+			body:not([data-chrome='off']) .docs-head { top: 39px; }
+			.docs-head .wrap { display: flex; align-items: center; gap: 20px; height: 64px; max-width: 1440px; }
+			.docs-head .lockup { font-size: 26px; }
+			.docs-head .section-name { font: 600 15px/1 var(--display); font-stretch: 90%; color: var(--ink-2); padding-left: 16px; box-shadow: inset 1px 0 0 var(--line); }
+			.search { flex: 1; max-width: 420px; margin-left: auto; position: relative; }
+			.search input { width: 100%; height: 38px; padding: 0 40px 0 36px; border: 0; border-radius: 8px; background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); font: 400 15px/1 var(--serif); }
+			.search input::placeholder { color: var(--ink-3); }
+			.search input:focus { outline: 2px solid var(--amber); outline-offset: 0; }
+			.search > svg { position: absolute; left: 12px; top: 11px; width: 16px; height: 16px; color: var(--ink-2); pointer-events: none; }
+			.search kbd { position: absolute; right: 8px; top: 8px; height: 22px; min-width: 22px; padding: 0 6px; display: grid; place-items: center; border-radius: 4px; font: 500 11px/1 var(--mono); color: var(--ink-2); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+			.docs-head .gh { color: var(--ink-2); display: grid; place-items: center; width: 38px; height: 38px; border-radius: 8px; }
+			.docs-head .gh:hover { background: var(--line-2); color: var(--ink); }
+			.docs-head .gh svg { width: 18px; height: 18px; }
+
+			.docs-body { display: grid; grid-template-columns: 256px minmax(0, 1fr) 208px; gap: 56px; max-width: 1440px; padding-top: 40px; padding-bottom: 96px; }
+			.side summary { display: none; }
+			.side nav { position: sticky; top: 140px; font: 400 15px/1.3 var(--display); font-stretch: 92%; }
+			.side ol { list-style: none; margin: 0; padding: 0; counter-reset: g; }
+			.side > nav > ol > li { counter-increment: g; }
+			.side a { display: grid; grid-template-columns: 22px 1fr; gap: 4px; padding: 7px 10px; border-radius: 8px; text-decoration: none; color: var(--ink-2); }
+			.side > nav > ol > li > a::before, .side > nav > ol > li > span::before { content: counter(g); font: 500 11px/1.6 var(--mono); color: var(--ink-3); }
+			.side li > span { display: grid; grid-template-columns: 22px 1fr; gap: 4px; padding: 14px 10px 6px; color: var(--ink); font-weight: 600; }
+			.side ol ol { padding-left: 26px; }
+			.side ol ol a { grid-template-columns: 1fr; }
+			.side a:hover { color: var(--ink); background: var(--line-2); }
+			.side a[aria-current='page'] { color: var(--ink); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); font-weight: 600; }
+
+			.doc { min-width: 0; }
+			.crumbs { font: 500 13px/1 var(--display); font-stretch: 90%; color: var(--ink-2); margin-bottom: 18px; display: flex; gap: 8px; }
+			.crumbs a { text-decoration: none; }
+			.crumbs a:hover { text-decoration: underline; }
+			.doc h1 { font-size: clamp(48px, 6vw, 76px); margin-bottom: 24px; }
+			.doc h2 { font: 800 34px/1 var(--display); font-stretch: 70%; margin: 56px 0 16px; scroll-margin-top: 140px; }
+			.prose { max-width: 40em; }
+			.prose p, .prose li { font-size: 19px; line-height: 1.65; }
+			.prose ul { padding-left: 1.1em; margin: 0 0 1em; }
+			.prose li { margin-bottom: 10px; }
+			.prose a { text-decoration-color: var(--amber); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+			.doc .code { margin: 24px 0 28px; }
+			.doc .code pre { font-size: 13px; }
+			.ruler { margin: 28px 0 32px; padding: 8px; border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); }
+			.ruler-in { position: relative; border-radius: var(--r-md); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line-2); padding: 34px 20px 16px; }
+			.ruler-track { position: relative; height: 40px; }
+			.ruler-ticks { position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, var(--ink-3) 0 1px, transparent 1px calc(100% / 120)); -webkit-mask: linear-gradient(#000 0 0) top / 100% 40% no-repeat; mask: linear-gradient(#000 0 0) top / 100% 40% no-repeat; }
+			.ruler-major { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink); }
+			.ruler-major span { position: absolute; top: -22px; left: 0; transform: translateX(-50%); font: 500 11px/1 var(--mono); font-stretch: 85%; color: var(--ink); white-space: nowrap; }
+			.ruler-major em { position: absolute; bottom: -2px; left: 6px; font: 400 10.5px/1 var(--mono); font-style: normal; color: var(--ink-2); white-space: nowrap; }
+			.ruler-head { position: absolute; top: 0; bottom: 0; width: 2px; background: #ffb000; left: var(--p, 35%); }
+			.ruler-head::before { content: ''; position: absolute; top: -8px; left: -5px; width: 12px; height: 9px; background: #ffb000; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+			.ruler figcaption { padding: 12px 8px 4px; font-size: 15px; color: var(--ink-2); line-height: 1.45; }
+			.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 64px; max-width: 46em; }
+			.pager a { display: block; padding: 18px 20px; border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); text-decoration: none; }
+			.pager a:hover { background: var(--paper); }
+			.pager small { display: block; font: 500 12px/1 var(--display); font-stretch: 90%; color: var(--ink-2); margin-bottom: 8px; }
+			.pager b { font: 800 24px/1 var(--display); font-stretch: 72%; }
+			.pager a:last-child { text-align: right; }
+			.edit { margin-top: 28px; font-size: 15px; color: var(--ink-2); }
+
+			.toc { position: sticky; top: 140px; align-self: start; font: 400 14px/1.35 var(--display); font-stretch: 92%; }
+			.toc b { display: block; font-weight: 600; margin-bottom: 10px; }
+			.toc ol { list-style: none; margin: 0; padding: 0; }
+			.toc a { display: block; padding: 6px 10px; margin-left: -10px; border-radius: 6px; text-decoration: none; color: var(--ink-2); }
+			.toc a:hover { color: var(--ink); }
+			.toc a.is-on { color: var(--ink); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); }
+
+			@media (max-width: 1180px) {
+				.docs-body { grid-template-columns: 232px minmax(0, 1fr); gap: 40px; }
+				.toc { display: none; }
+			}
+			@media (max-width: 860px) {
+				.docs-head .section-name { display: none; }
+				.docs-head .wrap { gap: 10px; }
+				.search kbd { display: none; }
+				.search input { padding-right: 12px; }
+				.docs-body { grid-template-columns: 1fr; gap: 20px; padding-top: 16px; }
+				.side { border-radius: var(--r-xl); background: var(--sheet); box-shadow: inset 0 0 0 1px var(--line); padding: 4px; }
+				.side summary { display: flex; justify-content: space-between; padding: 12px 12px; cursor: pointer; font: 600 15px/1 var(--display); font-stretch: 90%; list-style: none; }
+				.side summary::-webkit-details-marker { display: none; }
+				.side summary span { color: var(--ink-2); font-weight: 400; }
+				.side nav { position: static; padding: 0 0 6px; }
+				.prose p, .prose li { font-size: 18px; }
+				.pager { grid-template-columns: 1fr; }
+				.ruler-major em { display: none; }
+			}
+		</style>
+		<section id="docs" class="part">
+			<div class="wrap part-head" style="padding-bottom: 24px"><span class="tc">00:00:10:00</span><h2>Docs page</h2><p>The guide, page 3: Frames and time.</p></div>
+			<div class="part">
+				<header class="docs-head">
+					<div class="wrap">
+						<a href="#" data-logo="lockup" aria-label="Motio home"></a>
+						<span class="section-name">Guide</span>
+						<label class="search">
+							<svg><use href="#i-search" /></svg>
+							<input type="search" placeholder="Search the guide" aria-label="Search the guide" data-search />
+							<kbd>/</kbd>
+						</label>
+						<a class="gh" href="https://github.com/motiojs/motio" aria-label="GitHub"><svg><use href="#i-gh" /></svg></a>
+					</div>
+				</header>
+				<div class="wrap docs-body">
+					<details class="side" open data-side>
+						<summary>Guide pages <span>Frames and time</span></summary>
+						<nav aria-label="Guide">
+							<ol>
+								<li><a href="#">Getting started</a></li>
+								<li><a href="#">Project structure</a></li>
+								<li>
+									<span>Core concepts</span>
+									<ol>
+										<li><a href="#" aria-current="page">Frames and time</a></li>
+										<li><a href="#">Compositions</a></li>
+										<li><a href="#">Sequences and series</a></li>
+										<li><a href="#">Animation</a></li>
+										<li><a href="#">Media</a></li>
+										<li><a href="#">Fonts and text</a></li>
+										<li><a href="#">Readiness</a></li>
+									</ol>
+								</li>
+								<li><a href="#">Rendering from the CLI</a></li>
+								<li><a href="#">Rendering from Node</a></li>
+								<li><a href="#">FFmpeg</a></li>
+								<li><a href="#">Testing renders in CI</a></li>
+								<li><a href="#">Coming from Remotion</a></li>
+							</ol>
+						</nav>
+					</details>
+
+					<article class="doc">
+						<div class="crumbs"><a href="#">Guide</a><span aria-hidden="true">/</span><span>Core concepts</span></div>
+						<h1 class="display">Frames and time</h1>
+						<div class="prose">
+							<p>A video is a sequence of still images, the frames, shown at a fixed rate: 30 frames per second (fps) means frame 30 is shown at one second. In Motio a component never asks what time it is. It asks which frame it is drawing, with <code>useCurrentFrame()</code>, and returns what that frame looks like:</p>
+						</div>
+						<figure class="code">
+							<figcaption class="code-head"><span>examples/src/frames.tsx</span><button type="button" data-copy><svg width="14" height="14" style="vertical-align: -2px"><use href="#i-copy" /></svg> Copy</button></figcaption>
+<pre><span class="k">export const</span> Clock = () =&gt; {
+	<span class="k">const</span> frame = useCurrentFrame();
+	<span class="k">const</span> { fps, durationInFrames, width, height } = useVideoConfig();
+	<span class="k">const</span> seconds = frame / fps;
+	<span class="k">return</span> (
+		<span class="t">&lt;AbsoluteFill</span> style={{ justifyContent: <span class="s">"center"</span>, alignItems: <span class="s">"center"</span>, fontSize: <span class="n">64</span> }}<span class="t">&gt;</span>
+			Frame {frame} of {durationInFrames} ({seconds.toFixed(<span class="n">2</span>)} s) at {width}x{height}
+		<span class="t">&lt;/AbsoluteFill&gt;</span>
+	);
+};</pre>
+						</figure>
+						<div class="prose">
+							<p><code>useVideoConfig()</code> gives the composition's <code>fps</code>, <code>durationInFrames</code>, <code>width</code>, <code>height</code>, <code>id</code>, and its props. Time in seconds is <code>frame / fps</code>; a duration of 4 seconds at 30 fps is 120 frames, numbered 0 to 119.</p>
+						</div>
+						<figure class="ruler">
+							<div class="ruler-in">
+								<div class="ruler-track" data-ruler>
+									<div class="ruler-ticks"></div>
+									<div class="ruler-head" style="--p: calc(42 / 119 * 100%)"></div>
+								</div>
+							</div>
+							<figcaption>4 seconds at 30 fps. Frame 42 is shown at 1.40 s; the last frame is 119, not 120.</figcaption>
+						</figure>
+
+						<h2 id="why-frames" class="display">Why frames and not time</h2>
+						<div class="prose">
+							<p>Motio renders a frame by setting the frame number, waiting until the page is ready, and taking a screenshot. Several browser tabs render different frames at the same time, in whatever order is fastest, and a failed frame is retried on a fresh tab. That only works if the pixels of a frame depend on nothing but its number and the props. So:</p>
+							<ul>
+								<li>Derive every moving value from <code>useCurrentFrame()</code>: positions, opacities, which word is highlighted.</li>
+								<li>Do not keep animation state between frames (a counter incremented in an effect, a value accumulated in a ref): frame 50 may be the first frame a tab ever renders.</li>
+								<li>Do not use <code>Math.random()</code>. <code>random(seed)</code> returns the same number for the same seed everywhere:</li>
+							</ul>
+						</div>
+						<figure class="code">
+							<figcaption class="code-head"><span>examples/src/frames.tsx</span><button type="button" data-copy><svg width="14" height="14" style="vertical-align: -2px"><use href="#i-copy" /></svg> Copy</button></figcaption>
+<pre><span class="k">export const</span> Stars = () =&gt; {
+	<span class="k">const</span> { width, height } = useVideoConfig();
+	<span class="c">// random(seed) returns the same number between 0 and 1 for the same seed, on every frame,</span>
+	<span class="c">// page and machine. Math.random() would change on every render.</span>
+	<span class="k">const</span> stars = Array.from({ length: <span class="n">50</span> }, (_, i) =&gt; ({
+		x: random(<span class="s">`x-${i}`</span>) * width,
+		y: random(<span class="s">`y-${i}`</span>) * height,
+	}));
+	<span class="k">return</span> (
+		<span class="t">&lt;AbsoluteFill</span> style={{ backgroundColor: <span class="s">"black"</span> }}<span class="t">&gt;</span>
+			{stars.map((star, i) =&gt; (
+				<span class="t">&lt;div</span>
+					key={<span class="s">`${star.x}-${star.y}`</span>}
+					style={{
+						position: <span class="s">"absolute"</span>,
+						left: star.x,
+						top: star.y,
+						width: <span class="n">3</span>,
+						height: <span class="n">3</span>,
+						borderRadius: <span class="n">2</span>,
+						backgroundColor: <span class="s">"white"</span>,
+						opacity: random(<span class="s">`o-${i}`</span>),
+					}}
+				<span class="t">/&gt;</span>
+			))}
+		<span class="t">&lt;/AbsoluteFill&gt;</span>
+	);
+};</pre>
+						</figure>
+						<div class="prose">
+							<ul>
+								<li>CSS keyframe animations and the Web Animations API are fine: before each screenshot Motio pauses every animation on the page and sets it to the time of the frame, measured from the start of the enclosing <code>&lt;Sequence&gt;</code>. CSS transitions are not: they start when a style changes, which depends on the previous frame.</li>
+							</ul>
+							<p>CSS transforms, filters and other styles can change freely from frame to frame: Motio draws every captured frame as if on a freshly loaded page, so a frame never depends on the one the tab rendered before it.</p>
+							<p><code>motio check determinism</code> renders frames in different orders and with different numbers of tabs and compares the pixels, so a component that breaks these rules is caught in a test (see <a href="#">Testing renders in CI</a>).</p>
+						</div>
+
+						<h2 id="clock" class="display">Code that reads the clock</h2>
+						<div class="prose">
+							<p>Some libraries animate on their own clock: GSAP, canvas loops driven by <code>requestAnimationFrame</code>, anything reading <code>Date.now()</code>. Motio does not change the page's clock, so left alone they run on real time and give different pixels on every render. Drive them from the frame instead: pause the library's timeline and seek it to <code>frame / fps</code> on every render.</p>
+							<div class="callout"><svg><use href="#i-note" /></svg><p><strong>Not in this release.</strong> A mode that makes the clock follow the frame time is designed but not available in this release.</p></div>
+						</div>
+
+						<h2 id="rate" class="display">Frame rate and length</h2>
+						<div class="prose">
+							<p>The frame rate and the length are set per composition (next page). <code>--fps</code> and <code>--duration</code> on the CLI override them for one render; inside a component always read them from <code>useVideoConfig()</code> instead of hard-coding 30.</p>
+						</div>
+
+						<nav class="pager" aria-label="Previous and next page">
+							<a href="#"><small>Previous</small><b>Project structure</b></a>
+							<a href="#"><small>Next</small><b>Compositions</b></a>
+						</nav>
+						<p class="edit">Every code sample in the guide is a file under <code>examples/</code>, type-checked with the rest of the repository by <code>make check</code>. <a href="#">Edit this page on GitHub</a></p>
+					</article>
+
+					<aside class="toc" aria-label="On this page">
+						<b>On this page</b>
+						<ol>
+							<li><a href="#docs" class="is-on" data-toc="top">Frames and time</a></li>
+							<li><a href="#why-frames" data-toc="why-frames">Why frames and not time</a></li>
+							<li><a href="#clock" data-toc="clock">Code that reads the clock</a></li>
+							<li><a href="#rate" data-toc="rate">Frame rate and length</a></li>
+						</ol>
+					</aside>
+				</div>
+			</div>
+		</section>
+
+		<!-- 4. Promo -->
+		<style>
+			.promo { padding-top: 32px; padding-bottom: 120px; }
+			.promo-list { display: grid; gap: 40px; margin-top: 24px; }
+			.promo-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr); gap: 32px; align-items: start; }
+			.promo-item figcaption { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; font: 600 15px/1.2 var(--display); font-stretch: 90%; }
+			.promo-item figcaption span { font: 500 11px/1.6 var(--mono); font-stretch: 85%; color: var(--ink-2); font-weight: 500; }
+			.scaler { position: relative; overflow: hidden; border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px var(--line), 0 0 0 1px var(--line); }
+			.scaler > .art { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; }
+
+			.art-social { width: 1200px; height: 630px; background: #1f2124; color: #ecede8; --logo-ink: #ecede8; --logo-paper: #1f2124; --logo-acc: #ffb000; display: grid; grid-template-columns: 1fr 300px; }
+			.art-social .left { padding: 64px 0 56px 72px; display: flex; flex-direction: column; }
+			.art-social .lockup { font-size: 52px; }
+			.art-social h3 { font: 800 112px/0.88 var(--display); font-stretch: 64%; letter-spacing: -0.01em; margin: auto 0 36px; color: #f7f7f4; }
+			.art-social .row { display: flex; gap: 14px; align-items: center; font: 500 20px/1 var(--mono); font-stretch: 85%; }
+			.pill { padding: 12px 18px; border-radius: 10px; background: rgb(255 255 255 / 0.07); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14); }
+			.pill.amber { background: #ffb000; color: #16171a; box-shadow: none; }
+			.vstrip { position: relative; margin: 0 56px 0 0; padding: 0 30px; background: #111214; display: grid; align-content: center; gap: 14px; }
+			.vstrip::before, .vstrip::after { content: ''; position: absolute; top: 0; bottom: 0; width: 12px; background-image: repeating-linear-gradient(180deg, rgb(255 255 255 / 0.2) 0 16px, transparent 16px 36px); border-radius: 2px; }
+			.vstrip::before { left: 9px; }
+			.vstrip::after { right: 9px; }
+			.vframe { position: relative; }
+			.vframe .screen { border-radius: 2px; }
+			.vframe > span { position: absolute; right: 6px; top: 6px; font: 500 12px/1 var(--mono); color: rgb(255 255 255 / 0.7); }
+
+			.art-banner { width: 1280px; height: 320px; background: #ecede8; color: #16171a; --logo-ink: #16171a; --logo-paper: #ecede8; --logo-acc: #ffb000; display: grid; grid-template-columns: 500px 1fr; align-items: center; }
+			.art-banner .left { padding: 0 0 0 64px; }
+			.art-banner .lockup { font-size: 92px; }
+			.art-banner p { margin: 22px 0 0; font: 500 28px/1.2 var(--serif); color: #3a3c40; }
+			.art-banner .hstrip { position: relative; margin-right: 48px; padding: 26px 14px; background: #1f2124; border-radius: 6px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+			.art-banner .hstrip::before, .art-banner .hstrip::after { content: ''; position: absolute; left: 14px; right: 14px; height: 9px; background-image: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.22) 0 12px, transparent 12px 26px); }
+			.art-banner .hstrip::before { top: 8px; }
+			.art-banner .hstrip::after { bottom: 8px; }
+			.art-banner .hstrip > div { display: grid; gap: 6px; }
+			.art-banner .hstrip > div > span { font: 500 12px/1 var(--mono); color: rgb(255 255 255 / 0.6); text-align: center; }
+			.art-banner .reg { color: #8a8c90; width: 22px; height: 22px; }
+
+			.art-square { width: 1080px; height: 1080px; background: #ffb000; color: #16171a; --logo-ink: #16171a; --logo-paper: #ffb000; --logo-acc: #16171a; padding: 80px; display: flex; flex-direction: column; }
+			.art-square .top { display: flex; justify-content: space-between; align-items: center; font: 500 22px/1 var(--mono); font-stretch: 85%; }
+			.art-square .lockup { font-size: 60px; }
+			.art-square h3 { font: 800 168px/0.84 var(--display); font-stretch: 62%; letter-spacing: -0.012em; margin: 64px 0 0; }
+			.art-square .sheet { margin-top: auto; padding: 10px; border-radius: 12px; background: #1f2124; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+			.art-square .sheet > div { position: relative; }
+			.art-square .sheet .screen { border-radius: 2px; }
+			.art-square .sheet > div > span { position: absolute; left: 8px; bottom: 6px; font: 500 13px/1 var(--mono); color: rgb(255 255 255 / 0.6); }
+			.art-square .bottom { display: flex; justify-content: space-between; margin-top: 28px; font: 500 22px/1 var(--mono); font-stretch: 85%; }
+
+			/* Promo frames: the same LowerThird, its name set 2.75 times larger so it reads at card size. */
+			.art .lt { font-size: 8cqw; bottom: 9cqw; }
+			.art .lt i { width: calc(var(--bar, 0cqw) * 2.75); height: 0.9cqw; }
+			@media (max-width: 860px) { .promo-pair { grid-template-columns: 1fr; } }
+		</style>
+		<section id="promo" class="part">
+			<div class="wrap promo">
+				<div class="part-head"><span class="tc">00:00:11:00</span><h2>Promo</h2><p>Make videos with React. Open source.</p></div>
+				<div class="promo-list">
+					<figure class="promo-item" style="margin: 0">
+						<figcaption>Social card <span>1200 x 630</span></figcaption>
+						<div class="scaler" data-scale="1200x630">
+							<div class="art art-social">
+								<div class="left">
+									<span data-logo="lockup"></span>
+									<h3>Make videos with React. Open source.</h3>
+									<div class="row"><span class="pill">pnpm create motio my-video</span><span class="pill amber">Apache-2.0</span><span style="opacity: 0.6">pre-alpha</span></div>
+								</div>
+								<div class="vstrip" data-vstrip></div>
+							</div>
+						</div>
+					</figure>
+					<figure class="promo-item" style="margin: 0">
+						<figcaption>GitHub README banner <span>1280 x 320</span></figcaption>
+						<div class="scaler" data-scale="1280x320">
+							<div class="art art-banner">
+								<div class="left">
+									<span data-logo="lockup"></span>
+									<p>Make videos with React. Open source.</p>
+								</div>
+								<div class="hstrip" data-hstrip></div>
+								<span class="reg" style="left: 20px; top: 20px"><svg><use href="#reg" /></svg></span>
+								<span class="reg" style="right: 20px; bottom: 20px"><svg><use href="#reg" /></svg></span>
+							</div>
+						</div>
+					</figure>
+					<div class="promo-pair">
+						<figure class="promo-item" style="margin: 0">
+							<figcaption>Square post <span>1080 x 1080</span></figcaption>
+							<div class="scaler" data-scale="1080x1080">
+								<div class="art art-square">
+									<div class="top"><span data-logo="lockup"></span><span>pre-alpha</span></div>
+									<h3>Make videos with React. Open source.</h3>
+									<div class="sheet" data-sheet></div>
+									<div class="bottom"><span>github.com/motiojs/motio</span><span>Apache-2.0</span></div>
+								</div>
+							</div>
+						</figure>
+						<div class="prose" style="padding-top: 30px">
+							<h3>Post copy</h3>
+							<p>Motio is out in the open. Make videos with React: a component draws one frame, a real headless Chrome takes the screenshot, FFmpeg encodes the result. Apache-2.0, no per-render fees. Pre-alpha, not on npm yet.</p>
+							<p class="muted" style="font-size: 16px">The frames in every promo are the guide's <code>LowerThird</code> at frames 10, 18, 25, 32 and 40, drawn by the same function as the viewer on the landing page.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<script>
+			// One line per variant, "name: what it bets on". a is the direction; digits pick the logo.
+			const DESC = {
+				a: 'Frame: Motio as precise craft, the frame as the unit of truth. Paper and ink, one amber accent, film-editing marks',
+				a1: 'Gate: the logo is a projector gate, sprocket holes and an amber aperture',
+				a2: 'Leader: the logo is a countdown-leader crosshair, its sweep stands in for the o of motio',
+				a3: 'Onion: the logo is three frames in onion skin, the last one filled'
+			};
+			const KEY = `concept:${location.pathname}`;
+			const root = document.documentElement;
+			const body = document.body;
+			const base = (v) => v.replace(/\d+$/, '');
+			const load = () => {
+				try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch { return {}; }
+			};
+			const save = (state) => {
+				try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+			};
+
+			// Logos
+			const MARK = {
+				a1: (mono) =>
+					`<svg viewBox="0 0 32 32" aria-hidden="true"><rect class="lg-ink" width="32" height="32" rx="7"/><rect class="${mono ? 'lg-paper' : 'lg-acc'}" x="9" y="6.5" width="14" height="19" rx="2"/>${[6, 14, 22]
+						.map((y) => `<rect class="lg-paper" x="2.5" y="${y}" width="3.5" height="4" rx="1"/><rect class="lg-paper" x="26" y="${y}" width="3.5" height="4" rx="1"/>`)
+						.join('')}</svg>`,
+				a2: (mono) =>
+					`<svg viewBox="0 0 32 32" aria-hidden="true"><path class="${mono ? 'lg-ink' : 'lg-acc'}" d="M16 16V4.5A11.5 11.5 0 0 1 27.5 16Z"/><circle class="lg-s-ink" cx="16" cy="16" r="11.5" stroke-width="3"/><path class="lg-s-ink" d="M16 1.5v29M1.5 16h29" stroke-width="2"/></svg>`,
+				a3: (mono) =>
+					`<svg viewBox="0 0 32 32" aria-hidden="true"><rect class="lg-s-ink" x="2" y="2" width="17" height="17" rx="3.5" stroke-width="2" opacity=".3"/><rect class="lg-s-ink" x="7.5" y="7.5" width="17" height="17" rx="3.5" stroke-width="2" opacity=".6"/><rect class="${mono ? 'lg-ink' : 'lg-acc'}" x="13" y="13" width="17" height="17" rx="3.5"/><rect class="lg-s-ink" x="13" y="13" width="17" height="17" rx="3.5" stroke-width="2"/></svg>`
+			};
+			const lockup = (v, mono = false) =>
+				v === 'a2'
+					? `<span class="lockup v-a2"><span class="wm">moti</span>${MARK.a2(mono)}</span>`
+					: `<span class="lockup v-${v}">${MARK[v](mono)}<span class="wm">motio</span></span>`;
+			const sized = (v, mono) => [16, 32, 64].map((s) => `<figure>${MARK[v](mono).replace('<svg ', `<svg width="${s}" height="${s}" `)}<figcaption>${s}</figcaption></figure>`).join('');
+			const LOGO_INFO = {
+				a1: ['Gate', 'The projector gate: the frame is the product. Solid at every size, reads as one block at 16 px.'],
+				a2: ['Leader', 'The countdown-leader crosshair; its sweep is time measured in frames. Becomes the o of the wordmark.'],
+				a3: ['Onion', 'Three frames in onion skin, the last one drawn. Motion as a sequence of stills.']
+			};
+			const logoVariant = () => (/\d$/.test(body.dataset.v) ? body.dataset.v : 'a1');
+			const renderLogos = () => {
+				const v = logoVariant();
+				document.querySelectorAll('[data-logo="lockup"]').forEach((el) => (el.innerHTML = lockup(v)));
+				document.querySelector('[data-logo-cols]').innerHTML = ['a1', 'a2', 'a3']
+					.map(
+						(k) => `<div class="logo-col ${k === v ? 'is-on' : ''}">
+							<header><b>${LOGO_INFO[k][0]}</b><span>${k}${k === v ? ', in use below' : ', press ' + k.slice(1)}</span></header>
+							<p>${LOGO_INFO[k][1]}</p>
+							<div class="tile tile-light">${lockup(k)}</div>
+							<div class="tile-pair"><div class="tile tile-dark">${lockup(k)}</div><div class="tile tile-amber">${lockup(k, true)}</div></div>
+							<div class="tile-pair"><div class="tile tile-light">${lockup(k, true)}</div><div class="tile tile-dark">${lockup(k, true)}</div></div>
+							<div class="tile-pair"><div class="tile tile-light"><div class="sizes">${sized(k)}</div></div><div class="tile tile-dark"><div class="sizes">${sized(k)}</div></div></div>
+						</div>`
+					)
+					.join('');
+			};
+
+			// Variant bar
+			const name = (v) => DESC[v].split(':')[0];
+			const label = (v) => (/\d$/.test(v) ? `${v.slice(-1)} ${name(v)}` : `${v.toUpperCase()} ${name(v)}`);
+			document.querySelector('[data-buttons]').innerHTML = Object.keys(DESC).map((v) => `<button data-v="${v}">${label(v)}</button>`).join(' ');
+			const pick = (v) => {
+				if (!DESC[v]) return;
+				body.dataset.v = v;
+				body.dataset.base = base(v);
+				document.querySelectorAll('.switch [data-v]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+				document.querySelector('[data-desc]').textContent = DESC[v];
+				document.querySelectorAll('[data-only]').forEach((el) => {
+					const list = el.dataset.only.split(/\s+/);
+					el.hidden = !list.includes(v) && !list.includes(base(v));
+				});
+				history.replaceState(null, '', `${location.search}#${v}`);
+				renderLogos();
+			};
+			const setTheme = (t) => {
+				root.dataset.theme = t;
+				save({ ...load(), theme: t });
+			};
+			document.querySelector('.switch').addEventListener('click', (e) => {
+				const b = e.target.closest('[data-v]');
+				if (b) pick(b.dataset.v);
+				const j = e.target.closest('[data-jump]');
+				if (j) document.getElementById(j.dataset.jump).scrollIntoView();
+			});
+			document.querySelector('[data-theme-toggle]').addEventListener('click', () => setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+			// In-page links scroll without touching the hash, which holds the variant.
+			document.addEventListener('click', (e) => {
+				const a = e.target.closest('a[href^="#"]');
+				if (!a) return;
+				e.preventDefault();
+				const id = a.getAttribute('href').slice(1);
+				if (id) document.getElementById(id)?.scrollIntoView();
+			});
+
+			// The composition: the guide's LowerThird, with the same interpolate() and easing.
+			const FPS = 30;
+			const DURATION = 120;
+			const quadOut = (t) => 1 - (1 - t) * (1 - t);
+			const interpolate = (x, input, output, easing = (t) => t) => {
+				if (x <= input[0]) return output[0];
+				if (x >= input[input.length - 1]) return output[output.length - 1];
+				let i = 0;
+				while (x > input[i + 1]) i++;
+				const t = easing((x - input[i]) / (input[i + 1] - input[i]));
+				return output[i] + (output[i + 1] - output[i]) * t;
+			};
+			const values = (f) => ({
+				left: interpolate(f, [10, 25, DURATION - 15, DURATION], [-600, 60, 60, -600], quadOut),
+				bar: interpolate(f, [18, 40], [0, 420])
+			});
+			const paint = (screen, f) => {
+				const { left, bar } = values(f);
+				screen.style.setProperty('--x', `${left / 19.2}cqw`);
+				screen.style.setProperty('--bar', `${bar / 19.2}cqw`);
+			};
+			const screenHTML = (f) => `<div class="screen" data-f="${f}"><div class="lt"><span>Launch day</span><i></i></div></div>`;
+			const pad = (n) => String(n).padStart(2, '0');
+			const timecode = (f) => `${pad(Math.floor(f / FPS / 3600))}:${pad(Math.floor(f / FPS / 60) % 60)}:${pad(Math.floor(f / FPS) % 60)}:${pad(f % FPS)}`;
+			const fmt = (n) => (Math.round(n * 10) / 10).toString().replace('-', '−');
+
+			// Hero viewer
+			const comp = document.querySelector('[data-comp]');
+			const scrub = document.querySelector('[data-scrub]');
+			const strip = document.querySelector('[data-strip]');
+			const playBtn = document.querySelector('[data-play]');
+			const STRIP = Array.from({ length: 12 }, (_, i) => i * 10);
+			strip.innerHTML = STRIP.map((f) => `<button class="thumb" type="button" data-seek="${f}" aria-label="Frame ${f}">${screenHTML(f)}<span>${f}</span></button>`).join('');
+			strip.querySelectorAll('.screen').forEach((s) => paint(s, +s.dataset.f));
+			let frame = 0;
+			let playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+			const show = (f) => {
+				frame = ((f % DURATION) + DURATION) % DURATION;
+				paint(comp, frame);
+				const { left, bar } = values(frame);
+				scrub.value = frame;
+				document.querySelector('[data-burn]').textContent = timecode(frame);
+				document.querySelector('[data-tcode]').innerHTML = `frame <b>${frame}</b> of ${DURATION}`;
+				document.querySelector('[data-ro="frame"]').textContent = frame;
+				document.querySelector('[data-ro="sec"]').textContent = `${(frame / FPS).toFixed(2)} s`;
+				document.querySelector('[data-ro="left"]').textContent = fmt(left);
+				document.querySelector('[data-ro="bar"]').textContent = fmt(bar);
+				strip.querySelectorAll('.thumb').forEach((t) => t.classList.toggle('is-on', +t.dataset.seek === Math.floor(frame / 10) * 10));
+			};
+			const setPlaying = (p) => {
+				playing = p;
+				playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
+				playBtn.querySelector('[data-icon-pause]').hidden = !p;
+				playBtn.querySelector('[data-icon-play]').hidden = p;
+			};
+			let last = 0;
+			const tick = (now) => {
+				if (playing && now - last >= 1000 / FPS) {
+					last = now;
+					show(frame + 1);
+				}
+				requestAnimationFrame(tick);
+			};
+			setPlaying(playing);
+			show(playing ? 0 : 42);
+			requestAnimationFrame(tick);
+			playBtn.addEventListener('click', () => setPlaying(!playing));
+			document.querySelectorAll('[data-step]').forEach((b) => b.addEventListener('click', () => (setPlaying(false), show(frame + +b.dataset.step))));
+			scrub.addEventListener('input', () => (setPlaying(false), show(+scrub.value)));
+			strip.addEventListener('click', (e) => {
+				const t = e.target.closest('[data-seek]');
+				if (t) (setPlaying(false), show(+t.dataset.seek));
+			});
+
+			// Three stills under the component
+			document.querySelector('[data-stills]').innerHTML = [10, 25, 40]
+				.map((f) => {
+					const { left, bar } = values(f);
+					return `<figure class="still" style="margin:0">${screenHTML(f)}<figcaption><b>frame ${f}</b><br>left ${fmt(left)}<br>barWidth ${fmt(bar)}</figcaption></figure>`;
+				})
+				.join('');
+
+			// Docs ruler: major ticks every second.
+			document.querySelector('[data-ruler]').insertAdjacentHTML(
+				'beforeend',
+				[0, 30, 60, 90, 119].map((f) => `<div class="ruler-major" style="left:calc(${f} / 120 * 100%)"><span>${f}</span>${f < 119 ? `<em>${f / 30} s</em>` : ''}</div>`).join('')
+			);
+
+			// Performance chart: macOS, Apple M5, from docs/ROADMAP.md (D-044).
+			const PERF = [
+				[1, 6.54, 1.75],
+				[4, 2.13, 1.21],
+				[8, 1.58, 1.31]
+			];
+			const max = 6.54;
+			document.querySelector('[data-chart]').innerHTML =
+				`<h3 style="margin-bottom:4px">macOS, Apple M5</h3><p class="muted" style="font-size:15px;margin:0 0 8px">Wall time in seconds, both compositions summed.</p>` +
+				PERF.map(
+					([c, base, m]) => `<div class="chart-row"><b>${c} ${c === 1 ? 'tab' : 'tabs'}<small>concurrency ${c}</small></b><div class="bars">
+						<div class="bar base"><i style="--w:${(base / max) * 100}%"></i><span>${base.toFixed(2)} s</span></div>
+						<div class="bar motio"><i style="--w:${(m / max) * 100}%"></i><span><b>${m.toFixed(2)} s</b></span></div>
+					</div></div>`
+				).join('') +
+				`<div class="chart-foot"><span><i style="background:var(--ink-3)"></i>Remotion 4.0.545</span><span><i style="background:#ffb000"></i>Motio</span></div>`;
+
+			// Promo frames
+			const PROMO = [10, 18, 25, 32, 40];
+			document.querySelector('[data-vstrip]').innerHTML = [10, 25, 40].map((f) => `<div class="vframe">${screenHTML(f)}<span>${pad(f)}</span></div>`).join('');
+			document.querySelector('[data-hstrip]').innerHTML = PROMO.map((f) => `<div>${screenHTML(f)}<span>${timecode(f)}</span></div>`).join('');
+			document.querySelector('[data-sheet]').innerHTML = [0, 10, 14, 18, 25, 32, 40, 60].map((f) => `<div>${screenHTML(f)}<span>${f}</span></div>`).join('');
+			document.querySelectorAll('.art .screen').forEach((s) => paint(s, +s.dataset.f));
+			document.querySelectorAll('.still .screen').forEach((s) => paint(s, +s.dataset.f));
+
+			const scalers = [...document.querySelectorAll('[data-scale]')];
+			const fit = () =>
+				scalers.forEach((s) => {
+					const [w, h] = s.dataset.scale.split('x').map(Number);
+					const k = s.clientWidth / w;
+					s.style.height = `${h * k}px`;
+					s.firstElementChild.style.transform = `scale(${k})`;
+				});
+			new ResizeObserver(fit).observe(document.body);
+			fit();
+
+			// Copy buttons
+			document.addEventListener('click', async (e) => {
+				const b = e.target.closest('[data-copy]');
+				if (!b) return;
+				const pre = b.closest('.code').querySelector('pre');
+				const text = [...pre.childNodes].map((n) => (n.classList?.contains('p') ? '' : n.textContent)).join('');
+				try {
+					await navigator.clipboard.writeText(text);
+					b.lastChild.textContent = ' Copied';
+				} catch {
+					b.lastChild.textContent = ' Select and copy';
+				}
+				setTimeout(() => (b.lastChild.textContent = ' Copy'), 1600);
+			});
+
+			// Docs: mobile collapses the page list; the table of contents follows the scroll.
+			if (matchMedia('(max-width: 860px)').matches) document.querySelector('[data-side]').open = false;
+			const tocLinks = [...document.querySelectorAll('[data-toc]')];
+			const heads = ['why-frames', 'clock', 'rate'].map((id) => document.getElementById(id));
+			addEventListener(
+				'scroll',
+				() => {
+					let on = 'top';
+					heads.forEach((h) => {
+						if (h.getBoundingClientRect().top < 200) on = h.id;
+					});
+					tocLinks.forEach((a) => a.classList.toggle('is-on', a.dataset.toc === on));
+				},
+				{ passive: true }
+			);
+
+			addEventListener('keydown', (e) => {
+				if (e.metaKey || e.ctrlKey || e.altKey) return;
+				if (e.key === '/' && !e.target.closest('input, textarea')) {
+					e.preventDefault();
+					document.querySelector('[data-search]').focus();
+					return;
+				}
+				if (e.target.closest('input, textarea, select, [contenteditable]')) return;
+				const k = e.key.toLowerCase();
+				if (k === 'arrowleft' || k === 'arrowright') {
+					e.preventDefault();
+					setPlaying(false);
+					show(frame + (k === 'arrowleft' ? -1 : 1));
+				} else if (k === ' ') {
+					if (e.target.closest('button, a')) return;
+					e.preventDefault();
+					setPlaying(!playing);
+				} else if (k === 't') setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+				else if (k === 'p') body.dataset.chrome = body.dataset.chrome === 'off' ? 'on' : 'off';
+				else if (/^[1-3]$/.test(k)) pick(`a${k}`);
+				else if (k === 'a') pick('a');
+			});
+
+			root.dataset.theme = load().theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+			pick(DESC[location.hash.slice(1)] ? location.hash.slice(1) : 'a');
+		</script>
+	</body>
+</html>

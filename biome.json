@@ -17,7 +17,8 @@
 			"!packages/google-fonts/src/font-list.ts",
 			"!packages/google-fonts/generate-report.json",
 			"!**/__golden__",
-			"!**/__oracle__"
+			"!**/__oracle__",
+			"!docs/concepts"
 		]
 	},
 	"formatter": {
