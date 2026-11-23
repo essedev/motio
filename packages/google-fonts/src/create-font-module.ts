@@ -93,7 +93,7 @@ function loadFaces(
 	const doc = options.document ?? document;
 	if (faces.length > MAX_REQUESTS_WITHOUT_WARNING && !options.ignoreTooManyRequestsWarning) {
 		console.warn(
-			`Made ${faces.length} network requests to load ${family}. Pass weights and subsets to loadFont() to load only what you use, or set ignoreTooManyRequestsWarning to silence this warning.`,
+			`Loading ${family} takes ${faces.length} requests, one per font file. Pass weights and subsets to loadFont() to load only what the video uses, or set ignoreTooManyRequestsWarning: true to hide this warning.`,
 		);
 	}
 	const handle = delayRender(`Fetching ${family} from Google Fonts`);
