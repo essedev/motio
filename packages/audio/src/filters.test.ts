@@ -31,4 +31,20 @@ describe("sourceFilter", () => {
 			sourceFilter({ trimSeconds: 0, playbackRate: 1, toneFrequency: 2, sampleRate: 48000 }),
 		).toBe("aresample=48000,asetrate=96000,aresample=48000,atempo=0.5");
 	});
+	it("resamples instead of stretching when the pitch follows the rate", () => {
+		expect(
+			sourceFilter({
+				trimSeconds: 0,
+				playbackRate: 2,
+				toneFrequency: 1,
+				sampleRate: 48000,
+				preservePitch: false,
+			}),
+		).toBe("aresample=48000,asetrate=96000,aresample=48000");
+	});
+	it("rejects a non-positive playback rate", () => {
+		expect(() =>
+			sourceFilter({ trimSeconds: 0, playbackRate: 0, toneFrequency: 1, sampleRate: 48000 }),
+		).toThrow(RangeError);
+	});
 });

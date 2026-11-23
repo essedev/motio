@@ -1,14 +1,14 @@
 import { spawn } from "node:child_process";
 import { AudioError } from "./errors.js";
 
-/** Number of channels of the first audio stream of `src`, read with ffprobe. */
-export function probeChannels(ffprobe: string, src: string): Promise<number> {
+/** Number of channels of audio stream `stream` (default the first) of `src`, read with ffprobe. */
+export function probeChannels(ffprobe: string, src: string, stream = 0): Promise<number> {
 	return new Promise((resolve, reject) => {
 		const args = [
 			"-v",
 			"error",
 			"-select_streams",
-			"a:0",
+			`a:${stream}`,
 			"-show_entries",
 			"stream=channels",
 			"-of",
@@ -55,9 +55,12 @@ export function decodeToFloat(options: {
 	filter: string;
 	sampleRate: number;
 	channels: number;
+	/** Zero-based audio stream. Default 0. */
+	stream?: number;
 }): Promise<Float32Array> {
 	const { ffmpeg, src, sampleRate, channels, filter } = options;
-	const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-i", src, "-vn", "-af", filter];
+	const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-i", src, "-vn"];
+	args.push("-map", `0:a:${options.stream ?? 0}`, "-af", filter);
 	args.push("-ac", String(channels), "-ar", String(sampleRate), "-f", "f32le", "-");
 	return new Promise((resolve, reject) => {
 		const child = spawn(ffmpeg, args, { stdio: ["ignore", "pipe", "pipe"] });

@@ -17,6 +17,13 @@ export interface MixSource {
 	/** Pitch factor. Default 1. */
 	toneFrequency?: number;
 	/**
+	 * Keep the pitch when `playbackRate` is not 1 (time stretch). False resamples instead, so the
+	 * pitch follows the rate. Default true.
+	 */
+	preservePitch?: boolean;
+	/** Zero-based audio stream of the file. Default 0. */
+	audioStreamIndex?: number;
+	/**
 	 * Volume: a constant, or one value per composition frame starting at `startFrame` (index 0 is
 	 * the first frame the source plays). Frames past the end of the array keep the last value.
 	 */
@@ -82,12 +89,15 @@ export async function mixAudio(options: MixOptions): Promise<MixedAudio> {
 				trimSeconds: source.trimBeforeFrames / fps,
 				playbackRate: source.playbackRate ?? 1,
 				toneFrequency: source.toneFrequency ?? 1,
+				preservePitch: source.preservePitch ?? true,
 				sampleRate,
 			});
-			// Fails with a clear error when the file has no audio stream.
-			await probeChannels(ffprobe, source.src);
+			const stream = source.audioStreamIndex ?? 0;
+			// Fails with a clear error when the stream does not exist.
+			await probeChannels(ffprobe, source.src, stream);
 			const decoded = await decodeToFloat({
 				ffmpeg,
+				stream,
 				src: source.src,
 				filter,
 				sampleRate,

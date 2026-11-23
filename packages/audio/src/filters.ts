@@ -24,15 +24,20 @@ export function atempoChain(rate: number): number[] {
 /**
  * The filter chain that turns a source into the samples to place on the timeline: trim, then
  * pitch shift (`toneFrequency`, as a sample-rate change compensated in tempo), then tempo
- * (`playbackRate`, pitch preserved), then resampling to the mix rate.
+ * (`playbackRate`, pitch preserved; or, with `preservePitch: false`, a sample-rate change so
+ * the pitch follows the rate), then resampling to the mix rate.
  */
 export function sourceFilter(options: {
 	trimSeconds: number;
 	playbackRate: number;
 	toneFrequency: number;
 	sampleRate: number;
+	preservePitch?: boolean;
 }): string {
 	const { trimSeconds, playbackRate, toneFrequency, sampleRate } = options;
+	if (!Number.isFinite(playbackRate) || playbackRate <= 0) {
+		throw new RangeError(`playback rate must be a positive finite number, got ${playbackRate}`);
+	}
 	if (!Number.isFinite(toneFrequency) || toneFrequency <= 0) {
 		throw new RangeError(`toneFrequency must be a positive finite number, got ${toneFrequency}`);
 	}
@@ -43,6 +48,12 @@ export function sourceFilter(options: {
 		parts.push(`asetrate=${Math.round(sampleRate * toneFrequency)}`, `aresample=${sampleRate}`);
 		for (const s of atempoChain(1 / toneFrequency)) parts.push(`atempo=${s}`);
 	}
-	for (const s of atempoChain(playbackRate)) parts.push(`atempo=${s}`);
+	if (options.preservePitch === false) {
+		if (playbackRate !== 1) {
+			parts.push(`asetrate=${Math.round(sampleRate * playbackRate)}`, `aresample=${sampleRate}`);
+		}
+	} else {
+		for (const s of atempoChain(playbackRate)) parts.push(`atempo=${s}`);
+	}
 	return parts.join(",");
 }

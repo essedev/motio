@@ -12,16 +12,24 @@ const CODEC_ARGS: Record<AudioCodec, string[]> = {
 	"pcm-16": ["-c:a", "pcm_s16le"],
 };
 
-/** Encodes mixed samples once to `output` (the container follows the file extension). */
+/**
+ * Encodes mixed samples once to `output` (the container follows the file extension). With
+ * `video`, that file's video stream is copied into `output` next to the audio: encoding and
+ * muxing in one FFmpeg run keeps the encoder delay (AAC priming) compensated in the container.
+ */
 export function encodeAudio(
 	audio: MixedAudio,
-	options: { output: string; codec: AudioCodec; bitrate?: string; ffmpeg?: string },
+	options: { output: string; codec: AudioCodec; bitrate?: string; ffmpeg?: string; video?: string },
 ): Promise<void> {
 	const ffmpeg = options.ffmpeg ?? "ffmpeg";
-	const args = ["-hide_banner", "-loglevel", "error", "-y", "-f", "f32le"];
-	args.push("-ar", String(audio.sampleRate), "-ac", String(audio.channels), "-i", "-");
+	const args = ["-hide_banner", "-loglevel", "error", "-y"];
+	if (options.video) args.push("-i", options.video);
+	args.push("-f", "f32le", "-ar", String(audio.sampleRate), "-ac", String(audio.channels));
+	args.push("-i", "-");
+	if (options.video) args.push("-map", "0:v", "-map", "1:a", "-c:v", "copy");
 	args.push(...CODEC_ARGS[options.codec]);
 	if (options.bitrate && options.codec !== "pcm-16") args.push("-b:a", options.bitrate);
+	if (options.video) args.push("-movflags", "+faststart");
 	args.push(options.output);
 	return new Promise((resolve, reject) => {
 		const child = spawn(ffmpeg, args, { stdio: ["pipe", "ignore", "pipe"] });
