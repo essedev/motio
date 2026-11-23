@@ -110,6 +110,20 @@ describe("encoder arguments", () => {
 		expect(args.slice(-4)).toEqual(["-f", "mp4", "-y", "/tmp/out.mp4"]);
 	});
 
+	it("reads the image pipe without probing ahead, so encoding starts with the first frame", () => {
+		const args = videoArgs({
+			output: "/tmp/out.mp4",
+			fps: 30,
+			imageFormat: "png",
+			encoding: resolveVideoEncoding({ codec: "h264", imageFormat: "png" }),
+			preset: "medium",
+			colorSpace: "default",
+			frameCount: 10,
+		});
+		const input = args.slice(0, args.indexOf("-i"));
+		expect(input.join(" ")).toContain("-probesize 32 -analyzeduration 0");
+	});
+
 	const encode = (
 		codec: VideoCodec,
 		extra: Parameters<typeof resolveVideoEncoding>[0] | object = {},

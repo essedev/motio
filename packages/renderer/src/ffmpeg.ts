@@ -229,8 +229,13 @@ export function gifRgbFilter(imageFormat: "jpeg" | "png"): string {
 		: `scale=in_color_matrix=bt601:in_range=pc:${SWS},format=rgb24`;
 }
 
-/** Arguments reading the image pipe on stdin. */
-function pipeInput(fps: number, imageFormat: "jpeg" | "png"): string[] {
+/**
+ * Arguments reading the image pipe on stdin. The probe is cut to the minimum: by default FFmpeg
+ * reads up to 5 MB of input to find the stream parameters before it decodes anything, which on a
+ * short or small-framed render means encoding starts only when stdin closes, after the last
+ * capture (D-040). The codec and frame rate are given, and the size comes from the first image.
+ */
+export function pipeInput(fps: number, imageFormat: "jpeg" | "png"): string[] {
 	return [
 		"-hide_banner",
 		"-loglevel",
@@ -238,6 +243,10 @@ function pipeInput(fps: number, imageFormat: "jpeg" | "png"): string[] {
 		"-progress",
 		"pipe:1",
 		"-nostats",
+		"-probesize",
+		"32",
+		"-analyzeduration",
+		"0",
 		"-f",
 		"image2pipe",
 		"-framerate",
