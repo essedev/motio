@@ -212,9 +212,29 @@ export class RenderPage {
 
 	/**
 	 * Opens a page on a pooled browser (or launches its own), loads the bundle and completes the
-	 * protocol handshake.
+	 * protocol handshake. A pooled browser can die between two pages before its disconnection is
+	 * observed (the process exits, the CDP connection closes a moment later), so the pool hands it
+	 * out and opening the tab fails with "Target closed": the page is then opened once more on a
+	 * new browser, and a browser that dies again fails with `E_BROWSER_CRASHED`.
 	 */
 	static async open(config: PageConfig): Promise<RenderPage> {
+		try {
+			return await RenderPage.openOnce(config);
+		} catch (err) {
+			if (!(err instanceof BrowserGoneError)) throw err;
+			if (config.browsers) {
+				try {
+					return await RenderPage.openOnce(config);
+				} catch (again) {
+					if (!(again instanceof BrowserGoneError)) throw again;
+					throw again.crash;
+				}
+			}
+			throw err.crash;
+		}
+	}
+
+	private static async openOnce(config: PageConfig): Promise<RenderPage> {
 		const launch: LaunchOptions = {
 			executablePath: config.executablePath,
 			chromiumOptions: config.chromiumOptions,
@@ -240,10 +260,23 @@ export class RenderPage {
 			await rp.prepare();
 			return rp;
 		} catch (err) {
+			const gone = !browserAlive(browser);
 			if (rp) await rp.close();
 			else if (lease) {
 				await closeTab(page, lease);
 			} else await killBrowser(browser);
+			if (gone) {
+				// Taken out of the pool now, whether or not its disconnection was delivered yet.
+				if (lease) await lease.kill();
+				throw new BrowserGoneError(
+					new MotioError(
+						"E_BROWSER_CRASHED",
+						`The browser process exited while a page was opening: ${err instanceof Error ? err.message : String(err)}`,
+						{},
+						err,
+					),
+				);
+			}
 			throw err;
 		}
 	}
@@ -777,6 +810,19 @@ export class RenderPage {
 		}
 		return this.closing;
 	}
+}
+
+/** A page could not open because its browser process is gone; `crash` is the error to report. */
+class BrowserGoneError extends Error {
+	constructor(readonly crash: MotioError) {
+		super(crash.message);
+	}
+}
+
+/** Whether the browser is still connected and its process (when known) has not exited. */
+function browserAlive(browser: Browser): boolean {
+	const proc = browser.process();
+	return browser.connected && (!proc || (proc.exitCode === null && proc.signalCode === null));
 }
 
 /**

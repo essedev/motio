@@ -138,6 +138,9 @@ describe("openBrowser", () => {
 			const [first] = browserPids();
 			expect(first).toBeDefined();
 			process.kill(first as number, "SIGKILL");
+			// The killed process turns into a zombie at once, which `ps` no longer reports as the
+			// browser, so the render below usually starts before Puppeteer has seen the connection
+			// close: the pool hands out the dead browser and opening the tab must recover from it.
 			for (let i = 0; i < 50 && browserPids().includes(first as number); i++) {
 				await new Promise((ok) => setTimeout(ok, 50));
 			}
