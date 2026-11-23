@@ -1,8 +1,9 @@
-// getGifDurationInSeconds() returns what the published package returns, or rejects with its
-// message, for every recorded URL: delays, content types, a 404, a PNG, a truncated and an empty
+// getGifDurationInSeconds() returns what the published package returns, or rejects where it
+// rejects (same error class, Motio's own message), for every recorded URL: delays, content types, a 404, a PNG, a truncated and an empty
 // file (tools/oracle-render/record-gif.ts). fetch() is replaced by the recorded server's answers.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { compareFailure } from "@motiojs/testing/oracle-errors";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import oracle from "./__oracle__/gif.json" with { type: "json" };
 import { getGifDurationInSeconds } from "./get-gif-duration-in-seconds.js";
@@ -59,9 +60,17 @@ describe("getGifDurationInSeconds matches @remotion/gif", () => {
 			vi.stubGlobal("fetch", async (input: string) => respond(input));
 			const got = await getGifDurationInSeconds(url).then(
 				(out) => ({ out }),
-				(error: Error) => ({ error: `${error.name}: ${error.message}` }),
+				(error: unknown) => ({ error }),
 			);
-			expect(got).toEqual(expected);
+			if (expected.error === undefined) {
+				expect(got).toEqual(expected);
+				return;
+			}
+			expect("error" in got, `${url} should reject`).toBe(true);
+			const [, errorType, message = expected.error] =
+				/^(\w+): ([\s\S]*)$/.exec(expected.error) ?? [];
+			const error = (got as { error: unknown }).error;
+			expect(compareFailure(error, { error: message, errorType })).toBeUndefined();
 		});
 	}
 

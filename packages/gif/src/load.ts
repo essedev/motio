@@ -9,7 +9,7 @@ export interface GifLoadOptions {
 /**
  * Fetches and decodes a GIF. The response must be served as `image/gif`, as the published
  * @remotion/gif requires: any other content type, including the type of an error page, rejects
- * with `Wrong content type: "<type>"`.
+ * with an `Error` naming the URL and the type served.
  */
 export async function fetchGif(
 	src: string,
@@ -18,7 +18,11 @@ export async function fetchGif(
 ): Promise<DecodedGif> {
 	const response = await fetch(src, { ...options.requestInit, signal: signal ?? null });
 	const type = response.headers.get("content-type");
-	if (type !== "image/gif") throw new Error(`Wrong content type: "${type}"`);
+	if (type !== "image/gif") {
+		throw new Error(
+			`${src} is served ${type === null ? "without a content type" : `as "${type}"`}, not as image/gif: GIFs must be served with the content type image/gif.`,
+		);
+	}
 	return decodeGif(await response.arrayBuffer());
 }
 

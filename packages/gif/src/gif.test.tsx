@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 // <Gif> in a simulated DOM: readiness while loading, the onLoad payload, onError and the thrown
-// error with the published package's messages (__oracle__/gif.json), unmount-after-finish, the
+// error where the published package has them (__oracle__/gif.json), unmount-after-finish, the
 // premount and crop styles, and prop validation. jsdom has no 2D canvas, so drawing is covered by
 // the golden test (golden.integration.test.ts).
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { CompositionFrame, RemotionEnvironmentContext, readiness } from "@motiojs/core/internals";
+import { compareFailure, failureOf, type RecordedFailure } from "@motiojs/testing/oracle-errors";
 import { act, createRef, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -13,6 +14,12 @@ import oracle from "./__oracle__/gif.json" with { type: "json" };
 import { Gif, type GifLoadInfo } from "./index.js";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+/** The recorder writes failures as "Name: message". */
+const recordedFailure = (recorded: string): RecordedFailure => {
+	const [, errorType, error = recorded] = /^(\w+): ([\s\S]*)$/.exec(recorded) ?? [];
+	return { error, errorType };
+};
 
 const counter = readFileSync(join(import.meta.dirname, "../../../fixtures/gif/public/counter.gif"));
 
@@ -119,21 +126,20 @@ describe("Gif", () => {
 		view.unmount();
 	});
 
-	it("calls onError with the published message and keeps rendering", async () => {
+	it("calls onError with an Error naming the source and keeps rendering", async () => {
 		vi.stubGlobal("fetch", async () => new Response("Not Found", { status: 404 }));
 		const errors: Error[] = [];
 		const view = mount(<Gif src="/missing-1.gif" onError={(e) => errors.push(e)} />, 0);
 		await settle();
 		const recorded = (oracle.loads["/missing.gif"] as unknown as { error: string }).error;
-		// The fixture server answered text/plain; Response() here sends text/plain;charset=UTF-8.
-		expect(`${errors[0]?.name}: ${errors[0]?.message}`).toBe(
-			recorded.replace('"text/plain"', '"text/plain;charset=UTF-8"'),
-		);
+		expect(compareFailure(errors[0], recordedFailure(recorded))).toBeUndefined();
+		// Response() sends text/plain;charset=UTF-8.
+		expect(errors[0]?.message).toMatch(/\/missing-1\.gif.*"text\/plain;charset=UTF-8"/);
 		expect(readiness.openHandles()).toEqual([]);
 		view.unmount();
 	});
 
-	it("throws the published message when loading fails without onError", async () => {
+	it("throws an Error naming the source when loading fails without onError", async () => {
 		vi.stubGlobal("fetch", async () => new Response(counter));
 		const spy = vi.spyOn(console, "error").mockImplementation(() => {});
 		const caught: unknown[] = [];
@@ -146,9 +152,10 @@ describe("Gif", () => {
 			thrown = error;
 		}
 		const error = (thrown ?? caught[0]) as Error;
-		expect(error.message).toBe(
-			'Failed to render GIF with source /no-type.gif: "Error: Wrong content type: "null"".',
-		);
+		const recorded = (oracle.invalid.find((i) => i.error?.includes('"null"')) as { error: string })
+			.error;
+		expect(compareFailure(error, recordedFailure(recorded))).toBeUndefined();
+		expect(error.message).toMatch(/\/no-type\.gif.*without a content type.*onError/);
 		spy.mockRestore();
 		view.unmount();
 	});
@@ -203,16 +210,18 @@ describe("Gif", () => {
 		view.unmount();
 	});
 
-	it("rejects invalid props with the published messages", () => {
+	it("rejects the same invalid props, with the same error class", () => {
 		const spy = vi.spyOn(console, "error").mockImplementation(() => {});
 		for (const c of oracle.invalid.filter((i) => "playbackRate" in i.props)) {
-			let message: string | null = null;
-			try {
-				mount(<Gif src="/x.gif" {...(c.props as object)} />, 0).unmount();
-			} catch (error) {
-				message = `${(error as Error).name}: ${(error as Error).message}`;
-			}
-			expect(message, JSON.stringify(c.props)).toBe(c.error);
+			const label = JSON.stringify(c.props);
+			const { threw, error } = failureOf(() =>
+				mount(<Gif src="/x.gif" {...(c.props as object)} />, 0).unmount(),
+			);
+			expect(threw, label).toBe(true);
+			expect(
+				compareFailure(error, recordedFailure(c.error as string), ["playbackRate"]),
+				label,
+			).toBeUndefined();
 		}
 		expect(() => mount(<Gif src="/x.gif" effects={[{}]} />, 0)).toThrow(/effects/);
 		spy.mockRestore();

@@ -108,7 +108,9 @@ export function fitRect(
 	canvasHeight: number,
 ): { x: number; y: number; width: number; height: number } {
 	if (fit === "fill") return { x: 0, y: 0, width: canvasWidth, height: canvasHeight };
-	if (fit !== "contain" && fit !== "cover") throw new Error(`Unknown fit: ${fit}`);
+	if (fit !== "contain" && fit !== "cover") {
+		throw new Error(`<Gif>: fit is ${JSON.stringify(fit)}: use "fill", "contain" or "cover".`);
+	}
 	const ratio = (fit === "contain" ? Math.min : Math.max)(
 		canvasWidth / gifWidth,
 		canvasHeight / gifHeight,
@@ -210,7 +212,7 @@ const GifCanvas = forwardRef(function GifCanvas(
 				const { onError: handler } = callbacks.current;
 				if (handler) {
 					setState({ status: "failed" });
-					handler(new Error(String(reason)));
+					handler(new Error(loadFailure(src, reason), { cause: reason }));
 					continueRender(handle);
 				} else {
 					setError(reason);
@@ -225,7 +227,10 @@ const GifCanvas = forwardRef(function GifCanvas(
 	}, [src, handle]);
 
 	if (error !== null) {
-		throw new Error(`Failed to render GIF with source ${src}: "${String(error)}".`);
+		throw new Error(
+			`${loadFailure(src, error)} Pass onError to handle a failed load without failing the render.`,
+			{ cause: error },
+		);
 	}
 
 	const loaded = state.status === "loaded" ? state.value : null;
@@ -279,13 +284,16 @@ const GifCanvas = forwardRef(function GifCanvas(
 	);
 });
 
+const loadFailure = (src: string, reason: unknown) =>
+	`<Gif> could not load ${src}: ${reason instanceof Error ? reason.message : String(reason)}`;
+
 function validatePlaybackRate(playbackRate: unknown): void {
 	if (
 		playbackRate !== undefined &&
 		(typeof playbackRate !== "number" || !Number.isFinite(playbackRate) || playbackRate <= 0)
 	) {
 		throw new TypeError(
-			`The "playbackRate" prop of <Sequence /> must be a positive finite number, but got ${String(playbackRate)}.`,
+			`<Gif>: playbackRate is ${String(playbackRate)}: pass a positive finite number.`,
 		);
 	}
 }
