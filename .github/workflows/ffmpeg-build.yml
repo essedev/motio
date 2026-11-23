@@ -1,0 +1,131 @@
+# Builds the FFmpeg archives of @motiojs/ffmpeg for every platform (D-065) and, when asked,
+# creates a draft GitHub Release with the archives, their digests, the exact sources, the build
+# scripts and the licence texts. Run it by hand: Actions > ffmpeg-build > Run workflow.
+name: ffmpeg-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Create a draft release ffmpeg-<version>-<build> with the results"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  sources:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and verify the pinned sources
+        run: tools/ffmpeg-build/fetch-sources.sh sources
+      - name: Check FFmpeg's release signature
+        run: |
+          . tools/ffmpeg-build/build.env
+          curl -fsSLo sources/ffmpeg.asc "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz.asc"
+          curl -fsSL https://ffmpeg.org/ffmpeg-devel.asc | gpg --import
+          gpg --status-fd 1 --verify sources/ffmpeg.asc "sources/ffmpeg-${FFMPEG_VERSION}.tar.xz" \
+            | grep -q "VALIDSIG FCF986EA15E6E293A5644F10B4322F04D67658D8"
+          rm sources/ffmpeg.asc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sources
+          path: |
+            sources/*.tar.*
+            sources/SHA256SUMS
+          if-no-files-found: error
+
+  linux:
+    needs: sources
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sources
+          path: sources
+      - name: Build in the pinned Alpine image
+        run: tools/ffmpeg-build/build-linux.sh ${{ matrix.arch }} sources out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: archive-linux-${{ matrix.arch }}
+          path: out/*.tar.gz
+          if-no-files-found: error
+
+  macos:
+    needs: sources
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [arm64, x86_64]
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sources
+          path: sources
+      - name: Build tools
+        run: brew install cmake ninja meson
+      - name: Rosetta, to check the x86_64 build
+        if: matrix.target == 'x86_64'
+        run: sudo softwareupdate --install-rosetta --agree-to-license
+      - name: Build
+        run: TARGET_ARCH=${{ matrix.target }} tools/ffmpeg-build/build.sh sources work out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: archive-macos-${{ matrix.target }}
+          path: out/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    if: inputs.release
+    needs: [sources, linux, macos]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Assemble the release
+        run: |
+          set -eu
+          . tools/ffmpeg-build/build.env
+          mkdir -p release/sources
+          cp artifacts/archive-*/*.tar.gz release/
+          (cd release && sha256sum ffmpeg-*.tar.gz > SHA256SUMS)
+          cp artifacts/sources/*.tar.* release/sources/
+          cp artifacts/sources/SHA256SUMS release/sources/SOURCES-SHA256SUMS
+          git archive --format=tar.gz --prefix=ffmpeg-build/ -o release/ffmpeg-build-scripts.tar.gz HEAD:tools/ffmpeg-build
+          first=$(ls release/ffmpeg-*-linux-amd64.tar.gz release/ffmpeg-*-linux-x64.tar.gz 2>/dev/null | head -1)
+          mkdir -p licence && tar -xzf "$first" -C licence --strip-components 1
+          tar -czf release/licenses.tar.gz -C licence LICENSE.md licenses
+          cp licence/LICENSE.md release/LICENSE.md
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          . tools/ffmpeg-build/build.env
+          tag="ffmpeg-${FFMPEG_VERSION}-${BUILD}"
+          {
+            echo "FFmpeg ${FFMPEG_VERSION} (build ${BUILD}) for @motiojs/ffmpeg."
+            echo
+            echo "The binaries are GPL-3.0-or-later (see LICENSE.md and licenses.tar.gz). The exact sources are in sources/ with SOURCES-SHA256SUMS; ffmpeg-build-scripts.tar.gz holds the scripts that built the archives from them, at commit ${GITHUB_SHA}."
+            echo
+            echo "Before publishing: run node tools/ffmpeg-build/update-manifest.mjs on these archives and commit the manifest, so @motiojs/ffmpeg pins their digests."
+          } > notes.md
+          gh release create "$tag" --draft --title "$tag" --notes-file notes.md --target "$GITHUB_SHA" \
+            release/*.tar.gz release/SHA256SUMS release/LICENSE.md release/sources/*
