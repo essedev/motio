@@ -80,6 +80,9 @@
 			"path": "packages/shapes"
 		},
 		{
+			"path": "packages/text"
+		},
+		{
 			"path": "packages/media"
 		},
 		{

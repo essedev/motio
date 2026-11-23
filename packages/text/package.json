@@ -1,0 +1,39 @@
+{
+	"name": "@motiojs/text",
+	"version": "0.0.0",
+	"description": "Text helpers for Motio videos: a background shape that follows the lines of a text block (TextBackground), with @remotion/rounded-text-box as a preset",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./rounded-text-box": {
+			"types": "./dist/rounded-text-box.d.ts",
+			"default": "./dist/rounded-text-box.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*",
+		"@motiojs/paths": "workspace:*"
+	},
+	"devDependencies": {
+		"@motiojs/testing": "workspace:*",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"esbuild": "0.28.1",
+		"puppeteer-core": "25.18.1",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0"
+	}
+}
