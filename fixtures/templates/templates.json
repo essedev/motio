@@ -30,7 +30,7 @@
 				"OnlyLogo": [20]
 			},
 			"knownMismatch": {
-				"OnlyLogo/20": "transparent background: the renderer's alpha at antialiased edges differs from Remotion's (the same shapes on white match at 52 dB)"
+				"OnlyLogo/20": "antialiased edges of a scaled element over a transparent background differ from Remotion's (D-031); the same shapes on white match at 52 dB"
 			}
 		},
 		"still": {
@@ -49,7 +49,7 @@
 			},
 			"network": true,
 			"knownMismatch": {
-				"Overlay/30": "@motiojs/google-fonts loads a different Roboto woff2 than @remotion/google-fonts 4.0.545 (same v51 path, other file), so the text box is 2 px narrower"
+				"Overlay/30": "antialiased edges of a scaled element over a transparent background carry a faint resampling halo in Remotion's render and not in Motio's (D-031); the fonts now match (D-027)"
 			}
 		},
 		"tiktok": {
