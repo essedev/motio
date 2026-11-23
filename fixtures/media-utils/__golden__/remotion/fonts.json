@@ -130,6 +130,7 @@
 				"url": "/f/missing.woff2"
 			},
 			"error": "Failed to load font \"/f/missing.woff2\": 404 Not Found",
+			"name": "Error",
 			"faces": []
 		},
 		{
@@ -138,6 +139,7 @@
 				"url": "/f/missing.ttf"
 			},
 			"error": "Failed to load font \"/f/missing.ttf\": 404 Not Found",
+			"name": "Error",
 			"faces": []
 		},
 		{
@@ -146,6 +148,7 @@
 				"url": "/f/inter400"
 			},
 			"error": "Could not automatically derive font format from the URL \"/f/inter400\". Pass the \"format\" parameter explicitly (\"woff2\", \"woff\", \"opentype\" or \"truetype\").",
+			"name": "Error",
 			"faces": []
 		},
 		{
@@ -154,6 +157,7 @@
 				"url": "/f/inter.eot"
 			},
 			"error": "Could not automatically derive font format from the URL \"/f/inter.eot\". Pass the \"format\" parameter explicitly (\"woff2\", \"woff\", \"opentype\" or \"truetype\").",
+			"name": "Error",
 			"faces": []
 		},
 		{
@@ -162,6 +166,7 @@
 				"url": "/f/INTER.WOFF2"
 			},
 			"error": "Failed to load font \"/f/INTER.WOFF2\": 404 Not Found",
+			"name": "Error",
 			"faces": []
 		}
 	],

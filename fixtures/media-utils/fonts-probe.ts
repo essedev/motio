@@ -39,7 +39,11 @@ export async function runFontsProbe(loadFont: LoadFont) {
 			const value = await loadFont(options);
 			outcome = { resolved: value === undefined ? "undefined" : typeof value };
 		} catch (e) {
-			outcome = { error: e instanceof Error ? e.message : String(e) };
+			// The class is recorded so the tests compare failures on behaviour, not on wording.
+			outcome =
+				e instanceof Error
+					? { error: e.message, name: e.name }
+					: { error: String(e), name: typeof e };
 		}
 		const faces = [...document.fonts]
 			.filter((f) => f.family.replace(/^"|"$/g, "") === options.family)
