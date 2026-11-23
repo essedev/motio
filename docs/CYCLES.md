@@ -2,6 +2,13 @@
 
 Progress log, newest first. One entry per unit of work: what changed, what was measured, what is next.
 
+## 2026-11-23: M3 closed, templates, motio dev
+
+- M3 done: `@motiojs/media` (D-029), media service, audio pass, muxing and audio codecs (D-030), the Player's media playback, `motio dev` with a render check (D-026); 907 tests green in `make check`.
+- Official templates fetched at pinned commits and rendered unmodified (D-025): Blank, Hello World JS, Still and Overlay build with Remotion's metadata; two stills differ only at transparent edges of scaled layers (D-031, open).
+- Google Fonts now fetch the same files as Remotion (D-027); mono audio upmix corrected against the oracle (D-028).
+- Next: core API gaps for the Hello World template; BeginFrame on Linux, remaining codecs and chunked rendering (M2, M5).
+
 ## 2026-11-23: M1 closed, M2 and M3 largely in place
 
 - M1 done (D-024): core timeline and page runtime, renderer, bundler, compat, CLI, testing utilities; every criterion backed by a committed test, `make check` green (705 tests including integration), clean build and render inside the pinned Linux image.
