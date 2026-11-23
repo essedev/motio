@@ -399,7 +399,13 @@ const setters = {
 	// Misc
 	setLogLevel: supported("setLogLevel", "logLevel", oneOf(LOG_LEVELS), LOG_LEVELS.join(", ")),
 	setRendererPort: recorded("setRendererPort", "rendererPort", nullable(isPositiveInteger)),
-	setStudioPort: recorded("setStudioPort", "studioPort", nullable(isPositiveInteger), "studio"),
+	// Read by `motio dev` (D-026).
+	setStudioPort: supported(
+		"setStudioPort",
+		"studioPort",
+		nullable(isPositiveInteger),
+		"a positive integer port, or null",
+	),
 	setPort: recorded(
 		"setPort",
 		"rendererPort",
