@@ -126,7 +126,9 @@ const ImgInner = forwardRef<HTMLImageElement, InnerProps>(function ImgInner(prop
 			}, delay);
 			return;
 		}
-		const error = new Error(`Error loading image with src=${src}`);
+		const error = new Error(
+			`<Img> could not load "${src}" after ${maxRetries + 1} attempts. Check that the file exists and is reachable from the render, or pass onError to handle it.`,
+		);
 		onImageError?.(error);
 		if (onError) {
 			onError(event);
