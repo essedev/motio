@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { decodeImage, type RgbaImage, ssim } from "@motiojs/testing";
 import puppeteer, { type Browser, type Page } from "puppeteer-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { testChromeArgs } from "../../testing/src/browser.js";
 import { defaultDeps, runCli } from "./main.js";
 import { type TestIo, testIo, validator } from "./test-support/fakes.js";
 
@@ -90,12 +91,12 @@ beforeAll(async () => {
 		executablePath: chrome,
 		headless: true,
 		// The renderer's pixel flags, so text and colours match the render check.
-		args: [
+		args: testChromeArgs([
 			"--font-render-hinting=none",
 			"--disable-lcd-text",
 			"--force-color-profile=srgb",
 			"--force-device-scale-factor=1",
-		],
+		]),
 	});
 	page = await browser.newPage();
 	await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 1 });

@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { build } from "esbuild";
 import puppeteer, { type Browser, type Page } from "puppeteer-core";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { testChromeArgs } from "../../testing/src/browser.js";
 
 const chrome =
 	process.env.MOTIO_BROWSER_EXECUTABLE ??
@@ -70,7 +71,7 @@ beforeAll(async () => {
 	browser = await puppeteer.launch({
 		executablePath: chrome,
 		headless: true,
-		args: ["--autoplay-policy=no-user-gesture-required"],
+		args: testChromeArgs(["--autoplay-policy=no-user-gesture-required"]),
 	});
 	page = await browser.newPage();
 	await page.setViewport({ width: 1024, height: 768 });

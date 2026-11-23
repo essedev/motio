@@ -1,3 +1,4 @@
+export { testChromeArgs } from "./browser.js";
 export {
 	decodeFrameStamp,
 	FRAME_STAMP_BITS,

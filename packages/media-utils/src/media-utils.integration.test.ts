@@ -8,6 +8,7 @@ import { build } from "esbuild";
 import puppeteer, { type Browser } from "puppeteer-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type LoggedRequest, startFixtureServer } from "../../../fixtures/media-utils/server.ts";
+import { testChromeArgs } from "../../testing/src/browser.js";
 
 const root = resolve(import.meta.dirname, "../../..");
 const fixtures = join(root, "fixtures/media-utils");
@@ -93,7 +94,7 @@ window.runProbe = (other) => runProbe({ M, React, createRoot, flushSync }, other
 	browser = await puppeteer.launch({
 		executablePath: chrome,
 		headless: true,
-		args: ["--autoplay-policy=no-user-gesture-required"],
+		args: testChromeArgs(["--autoplay-policy=no-user-gesture-required"]),
 	});
 	const page = await browser.newPage();
 	await page.goto(`${main.origin}/`);

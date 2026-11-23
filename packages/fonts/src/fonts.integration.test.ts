@@ -8,6 +8,7 @@ import { build } from "esbuild";
 import puppeteer, { type Browser } from "puppeteer-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type LoggedRequest, startFixtureServer } from "../../../fixtures/media-utils/server.ts";
+import { testChromeArgs } from "../../testing/src/browser.js";
 
 const root = resolve(import.meta.dirname, "../../..");
 const fixtures = join(root, "fixtures/media-utils");
@@ -45,7 +46,11 @@ beforeAll(async () => {
 	const html = `<!doctype html><html><body><script>${out.outputFiles[0]?.text ?? ""}</script></body></html>`;
 	const started = await startFixtureServer(html, { cors: false, log });
 	server = started.server;
-	browser = await puppeteer.launch({ executablePath: chrome, headless: true });
+	browser = await puppeteer.launch({
+		executablePath: chrome,
+		headless: true,
+		args: testChromeArgs(),
+	});
 	const page = await browser.newPage();
 	await page.goto(`${started.origin}/`);
 	got = (await page.evaluate(() =>

@@ -6,6 +6,7 @@ import { join, resolve } from "node:path";
 import { build } from "esbuild";
 import puppeteer, { type Browser } from "puppeteer-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { testChromeArgs } from "../../testing/src/browser.js";
 
 const root = resolve(import.meta.dirname, "../../..");
 const chrome =
@@ -55,12 +56,12 @@ beforeAll(async () => {
 	browser = await puppeteer.launch({
 		executablePath: chrome,
 		headless: true,
-		args: [
+		args: testChromeArgs([
 			"--font-render-hinting=none",
 			"--disable-lcd-text",
 			"--force-color-profile=srgb",
 			"--force-device-scale-factor=1",
-		],
+		]),
 	});
 	const page = await browser.newPage();
 	await page.goto(`http://127.0.0.1:${port}/`);
