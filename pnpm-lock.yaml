@@ -517,6 +517,9 @@ importers:
       '@motiojs/core':
         specifier: workspace:*
         version: link:../core
+      '@motiojs/media':
+        specifier: workspace:*
+        version: link:../media
     devDependencies:
       '@motiojs/bundler':
         specifier: workspace:*

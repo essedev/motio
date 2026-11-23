@@ -61,4 +61,14 @@ export {
 	useVideoConfig,
 	type VideoConfig,
 } from "@motiojs/core";
+export {
+	Html5Audio as Audio,
+	Html5Audio,
+	type Html5AudioProps,
+	Html5Video,
+	Html5Video as Video,
+	type Html5VideoProps,
+	OffthreadVideo,
+	type OffthreadVideoProps,
+} from "@motiojs/media";
 export { VERSION } from "./version.js";

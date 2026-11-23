@@ -20,7 +20,8 @@
 	"sideEffects": false,
 	"scripts": {},
 	"dependencies": {
-		"@motiojs/core": "workspace:*"
+		"@motiojs/core": "workspace:*",
+		"@motiojs/media": "workspace:*"
 	},
 	"devDependencies": {
 		"@motiojs/bundler": "workspace:*",
