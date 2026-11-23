@@ -1,6 +1,6 @@
 # Compatibility with Remotion
 
-How the pure functions of `@motiojs/core` compare with the published `remotion` package. Every row is checked by the co-located tests against fixtures recorded from Remotion's public API by `tools/oracle` (`pnpm install && pnpm record` there), never from its source code.
+How the pure functions of `@motiojs/core`, and what `Interactive` renders, compare with the published `remotion` package. Every row is checked by the co-located tests against fixtures recorded from Remotion's public API by `tools/oracle` (`pnpm install && pnpm record` there), never from its source code.
 
 Recorded version: **remotion 4.0.545** (stamped in every fixture under `src/__oracle__/`).
 
@@ -16,6 +16,7 @@ Error is relative for values with magnitude at least 1 and absolute below.
 | `interpolateColors` | exact            | identical string | 0                           | 3836 outputs: hex 3/4/6/8, rgb/rgba, hsl/hsla, all 148 named colors and `transparent`, oklch/oklab/lab/lch/hwb (1250 random colors) and 250 random hsl, easing, `posterize`, multi-stop ranges; 56 accepted/rejected strings; 24 edge and error cases   |
 | `spring`            | within tolerance | 1e-12            | 5.9e-15                     | 51060 frames: 240 physical configs (under and overdamped, `overshootClamping`), `from`/`to`, fps 24/25/29.97/30/60, `durationInFrames`, `durationRestThreshold`, `delay`, `reverse`, negative and fractional frames, 16 validation and degenerate cases |
 | `measureSpring`     | exact            | identical number | 0                           | 2898 cases: config grid x fps x threshold, deprecated `from`/`to`, validation messages                                                                                                                                                                  |
+| `Interactive`       | exact            | identical markup | 0                           | 65 scenes rendered at chosen frames inside `@remotion/player`'s `Thumbnail`: all 35 elements, timing props, premount and postmount, crop (with radius, overlapping), loop, freeze, nesting, `withSchema()` with and without `wrapInSequence`, `create()` with both layouts; element names and display names; the 13 schema helpers deep-equal |
 
 No function is approximated.
 
@@ -37,6 +38,8 @@ These are the places where the docs alone did not determine the numbers; each wa
 - `interpolate`, easings that extend right (`remotionShouldExtendRight === true`, as `Easing.spring({ allowTail: true })` sets): every earlier segment with such an easing adds `value(p) - end value`, with p computed from the unclamped input and the value after `perceptual-scale`; an active segment with such an easing is not clamped on the right.
 - `interpolate`, font weights (`outputType: "font-weight"`): numbers and numeric strings from 1 to 1000, `normal` (400) and `bold` (700) in any case, no surrounding spaces; the result is a number, not rounded.
 
+- `Interactive`: an element renders itself, with every prop except the timing ones, like a `<Sequence layout="none">` around it; its children see the shifted timeline. Crops become `clip-path: inset(...)` with unrounded percentages, overlapping opposite crops both 50%, rounded with the border radius. Premounted and postmounted elements get `opacity: 0; pointer-events: none`, then `styleWhilePremounted`/`styleWhilePostmounted`. `withSchema()` without `wrapInSequence` passes every prop through plus `controls: null`; with it, and with `create()`, the component receives its own props, `style` (with the crop) and `ref`. `create({ layout: "absolute-fill" })` renders a full-size container with `overflow: hidden` that takes `style` and the crop.
+
 ## Deliberate differences
 
 - `Easing.spring` with `stiffness: 0` or `durationRestThreshold: 0` throws on first use. Remotion never returns (and later `Easing.spring` calls in the same page fail with `RangeError: Too many properties to enumerate`).
@@ -45,5 +48,7 @@ These are the places where the docs alone did not determine the numbers; each wa
 ## Not implemented yet
 
 Parts of the 4.0.545 API outside the current scope:
+
+- `Interactive`: the Studio's editing (selection, dragging, controls). Schemas are exported as data and ignored.
 
 - `interpolateColors`: none of the documented formats is missing; `color()` and space-separated `rgb()`/`hsl()` are rejected, as in Remotion.

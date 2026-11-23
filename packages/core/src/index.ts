@@ -20,6 +20,21 @@ export {
 	useRemotionEnvironment,
 } from "./environment.js";
 export {
+	Interactive,
+	type InteractiveBaseProps,
+	type InteractiveComponent,
+	type InteractiveCreateOptions,
+	type InteractiveCropProps,
+	type InteractiveElement,
+	type InteractiveElementProps,
+	type InteractivePremountProps,
+	type InteractiveProps,
+	type InteractiveTransformProps,
+	type InteractivitySchema,
+	type InteractivitySchemaField,
+	type WithSchemaOptions,
+} from "./interactive.js";
+export {
 	type ExtrapolateType,
 	type InterpolateOptions,
 	type InterpolateOutput,
