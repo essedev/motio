@@ -1,7 +1,7 @@
 // CSS transform strings as interpolate() outputs: parsing into numeric
 // components, normalising a whole output range to one shape, and formatting
 // interpolated components back into a string. The rules (accepted forms,
-// defaults, units, messages) follow remotion.dev/docs/interpolate and were
+// defaults, units, which inputs fail) follow remotion.dev/docs/interpolate and were
 // completed black-box against the oracle recordings (COMPAT.md).
 
 /** The `outputType` values of `interpolate()`. */

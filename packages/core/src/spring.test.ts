@@ -57,7 +57,7 @@ describe("spring against the Remotion oracle", () => {
 		expect(tracker.max, tracker.worst).toBeLessThanOrEqual(TOLERANCE);
 	});
 
-	it("throws the same messages and returns the same degenerate values", () => {
+	it("throws for the same arguments and returns the same degenerate values", () => {
 		for (const c of errorFixture.cases as ResultCase[]) {
 			const call = () => spring(decodeParams(c.params) as SpringOptions);
 			if (c.error !== undefined) {

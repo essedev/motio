@@ -1,7 +1,7 @@
 // Builders of CSS transform functions, as in @remotion/animation-utils: numbers get a default
 // unit (`px` for lengths, `deg` for angles), unit strings are checked and passed through, and a
-// unit argument is appended as given. Argument checks and messages match the published package
-// over the grid in __oracle__/transforms.json.
+// unit argument is appended as given. Argument checks fail where the published package fails, with
+// the same error class, over the grid in __oracle__/transforms.json; the messages are Motio's own.
 import {
 	ANGLE_UNITS,
 	type AngleUnit,
