@@ -22,7 +22,7 @@ pnpm dev                       # preview in the browser
 pnpm render                    # render out/intro.mp4
 ```
 
-`motio init` (the same command inside the CLI) creates a project from one of Motio's starters: `basic`, `blank` or `captions`. The [guide](docs/guide/README.md) starts from there: project structure, frames and time, compositions, sequences, animation, media, fonts, readiness, rendering from the CLI and from Node, FFmpeg, testing renders in CI, and coming from Remotion.
+`motio init` (the same command inside the CLI) creates a project from one of Motio's starters: `basic`, `blank` or `captions`. The [guide](docs/guide/README.md) starts from there: project structure, frames and time, compositions, sequences, animation, media (animated images, preloading for the Player), fonts and text backgrounds, readiness, rendering from the CLI and from Node (media functions, one browser for many renders), FFmpeg, testing renders in CI, and coming from Remotion.
 
 ## Requirements
 
