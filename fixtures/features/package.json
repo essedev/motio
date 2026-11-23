@@ -4,5 +4,14 @@
 	"private": true,
 	"type": "module",
 	"license": "Apache-2.0",
-	"description": "Feature-package fixtures (transitions, shapes, paths, noise) written against the Remotion API, for M2 golden comparison"
+	"description": "Feature-package fixtures (transitions, shapes, paths, noise) written against the Remotion API, for M2 golden comparison",
+	"dependencies": {
+		"motio": "workspace:*",
+		"@motiojs/transitions": "workspace:*",
+		"@motiojs/shapes": "workspace:*",
+		"@motiojs/paths": "workspace:*",
+		"@motiojs/noise": "workspace:*",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	}
 }
