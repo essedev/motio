@@ -59,7 +59,7 @@ export const CODECS = [
 	"wav",
 	"aac",
 ] as const;
-/** Codec names accepted by Remotion's `renderMedia`; Motio M1 encodes `h264` only. */
+/** Codec names accepted by Remotion's `renderMedia`; Motio encodes all but `av1` (D-037). */
 export type Codec = (typeof CODECS)[number];
 
 function invalid(message: string): MotioError {
@@ -187,15 +187,6 @@ export function resolveJpegQuality(imageFormat: string, jpegQuality: number | un
 		throw invalid(`jpegQuality must be an integer between 0 and 100, got ${jpegQuality}`);
 	}
 	return jpegQuality;
-}
-
-/** Validates `crf` for H.264 (1 to 51); default 18. */
-export function resolveCrf(crf: number | null | undefined): number {
-	if (crf === null || crf === undefined) return 18;
-	if (!Number.isInteger(crf) || crf < 1 || crf > 51) {
-		throw invalid(`crf for h264 must be an integer between 1 and 51, got ${crf}`);
-	}
-	return crf;
 }
 
 /** Validates `scale`; default 1. */

@@ -176,6 +176,39 @@ function AlphaScene() {
 	);
 }
 
+/**
+ * Transparent output: an opaque frame stamp, a red band whose alpha ramps from 0 to 1 across the
+ * width, and a half-transparent blue box moving with the frame, on a transparent background.
+ */
+function AlphaGradientScene() {
+	const frame = useCurrentFrame();
+	return (
+		<>
+			<Stamp frame={frame} />
+			<div
+				style={{
+					position: "absolute",
+					left: 0,
+					top: 64,
+					width: 448,
+					height: 32,
+					background: "linear-gradient(to right, rgba(255, 0, 0, 0), rgba(255, 0, 0, 1))",
+				}}
+			/>
+			<div
+				style={{
+					position: "absolute",
+					left: 8 + frame * 8,
+					top: 104,
+					width: 64,
+					height: 16,
+					background: "rgba(0, 0, 255, 0.5)",
+				}}
+			/>
+		</>
+	);
+}
+
 export const compositions: FixtureComposition[] = [
 	{
 		id: "stamp",
@@ -248,6 +281,15 @@ export const compositions: FixtureComposition[] = [
 		durationInFrames: 1,
 		defaultProps: {},
 		component: AlphaScene,
+	},
+	{
+		id: "alpha-gradient",
+		width: 448,
+		height: 128,
+		fps: 30,
+		durationInFrames: 30,
+		defaultProps: { stamp: STAMP },
+		component: AlphaGradientScene,
 	},
 	{
 		id: "odd",

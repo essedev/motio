@@ -22,6 +22,14 @@ export {
 	probeBeginFrame,
 } from "./capture-method.js";
 export {
+	PRORES_PROFILES,
+	type ProResProfile,
+	VIDEO_CODEC_SPECS,
+	VIDEO_CODECS,
+	type VideoCodec,
+	type VideoCodecSpec,
+} from "./codecs.js";
+export {
 	type GetCompositionsOptions,
 	getCompositions,
 	type SelectCompositionOptions,

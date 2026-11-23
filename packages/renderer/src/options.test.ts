@@ -4,7 +4,6 @@ import {
 	defaultConcurrency,
 	oneOf,
 	resolveConcurrency,
-	resolveCrf,
 	resolveFrames,
 	resolveInputProps,
 	resolveJpegQuality,
@@ -102,13 +101,6 @@ describe("encoding options", () => {
 		expect(resolveJpegQuality("jpeg", 95)).toBe(95);
 		expect(() => resolveJpegQuality("png", 90)).toThrow(/only valid with imageFormat "jpeg"/);
 		expect(() => resolveJpegQuality("jpeg", 101)).toThrow(code("E_INVALID_OPTION"));
-	});
-
-	it("defaults crf to 18 and bounds it to 1..51", () => {
-		expect(resolveCrf(undefined)).toBe(18);
-		expect(resolveCrf(null)).toBe(18);
-		expect(() => resolveCrf(0)).toThrow(code("E_INVALID_OPTION"));
-		expect(() => resolveCrf(52)).toThrow(code("E_INVALID_OPTION"));
 	});
 
 	it("checks enumerations", () => {

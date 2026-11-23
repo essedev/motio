@@ -1,11 +1,13 @@
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { MotioError } from "@motiojs/compat";
 import {
 	CODECS,
 	COLOR_SPACES,
 	type Codec,
+	type Concurrency,
+	type FrameRange,
 	PIXEL_FORMATS,
+	PRORES_PROFILES,
 	VIDEO_IMAGE_FORMATS,
 	X264_PRESETS,
 } from "@motiojs/compat/config";
@@ -46,11 +48,26 @@ export const RENDER_FLAGS = {
 	"pixel-format": { type: "string", description: `Pixel format: ${PIXEL_FORMATS.join(", ")}.` },
 	"color-space": { type: "string", description: `Colour space: ${COLOR_SPACES.join(", ")}.` },
 	"x264-preset": { type: "string", description: "x264 preset, from ultrafast to placebo." },
+	"prores-profile": {
+		type: "string",
+		description: `ProRes profile (codec prores): ${PRORES_PROFILES.join(", ")}.`,
+	},
+	"number-of-gif-loops": {
+		type: "string",
+		description: "GIF loops: 0 plays once, n repeats n times; unset loops forever.",
+	},
 	overwrite: {
 		type: "boolean",
 		description: "Overwrite the output (default true; --overwrite=false).",
 	},
-	sequence: { type: "boolean", description: "Output an image sequence (not supported yet)." },
+	sequence: {
+		type: "boolean",
+		description: "Output an image sequence (JPEG by default) into the output folder.",
+	},
+	"image-sequence-pattern": {
+		type: "string",
+		description: 'Image sequence file names: [frame] and [ext] (default "element-[frame].[ext]").',
+	},
 } as const;
 
 /** `motio render [entry|serve-url] <composition-id> [output]` */
@@ -64,13 +81,6 @@ export async function renderCommand(
 
 	const frameRangeFlag = flags.string("frames");
 	const frameRange = frameRangeFlag ? parseFrameRange(frameRangeFlag) : undefined;
-	if (flags.boolean("sequence")) {
-		throw new MotioError(
-			"E_UNSUPPORTED_OPTION",
-			"Image sequence output is not supported yet; use `motio frames` for a contact sheet or `motio still` for single frames.",
-			{ option: "sequence" },
-		);
-	}
 	const codecFlag = flags.oneOf("codec", CODECS);
 	const imageFormat = flags.oneOf("image-format", VIDEO_IMAGE_FORMATS);
 	const crf = flags.integer("crf", { min: 0 });
@@ -82,6 +92,9 @@ export async function renderCommand(
 	const pixelFormat = flags.oneOf("pixel-format", PIXEL_FORMATS);
 	const colorSpace = flags.oneOf("color-space", COLOR_SPACES);
 	const x264Preset = flags.oneOf("x264-preset", X264_PRESETS);
+	const proResProfile = flags.oneOf("prores-profile", PRORES_PROFILES);
+	const numberOfGifLoops = flags.integer("number-of-gif-loops", { min: 0 });
+	const imageSequencePattern = flags.string("image-sequence-pattern");
 	const sampleRate = flags.integer("sample-rate", { min: 1 });
 	const separateAudioTo = flags.string("separate-audio-to");
 	const outputFlag = flags.string("output");
@@ -94,6 +107,27 @@ export async function renderCommand(
 	const { config } = project;
 
 	const requestedOutput = outputFlag ?? positionalOutput ?? config.outputLocation;
+	// A list of single frames (`--frames=0,30,60`) renders an image sequence, as in Remotion.
+	const sequence =
+		flags.boolean("sequence") ??
+		(isListOfFrames(frameRange) ? true : undefined) ??
+		config.imageSequence ??
+		false;
+	if (sequence) {
+		return renderSequence(ctx, project, composition, {
+			output: resolvePath(
+				ctx.io.cwd,
+				requestedOutput ?? join("out", composition.defaultOutName ?? composition.id),
+			),
+			imageFormat: imageFormat ?? config.videoImageFormat,
+			jpegQuality: jpegQuality ?? config.jpegQuality,
+			frameRange: frameRange ?? config.frameRange ?? undefined,
+			everyNthFrame: everyNthFrame ?? config.everyNthFrame,
+			concurrency: concurrency ?? config.concurrency ?? undefined,
+			scale: scale ?? config.scale,
+			imageSequencePattern: imageSequencePattern ?? config.imageSequencePattern,
+		});
+	}
 	const codec: Codec =
 		codecFlag ??
 		config.codec ??
@@ -134,6 +168,12 @@ export async function renderCommand(
 				pixelFormat: pixelFormat ?? config.pixelFormat,
 				colorSpace: colorSpace ?? config.colorSpace,
 				x264Preset: x264Preset ?? config.x264Preset,
+				// The config's ProRes and GIF values apply only to their codec; flags pass through,
+				// so a mismatch reports the renderer's error.
+				proResProfile: proResProfile ?? (codec === "prores" ? config.proResProfile : undefined),
+				proResBitsPerMacroblock: codec === "prores" ? config.proResBitsPerMacroblock : undefined,
+				numberOfGifLoops:
+					numberOfGifLoops ?? (codec === "gif" ? config.numberOfGifLoops : undefined),
 				audioCodec: flags.string("audio-codec") ?? config.audioCodec,
 				audioBitrate: flags.string("audio-bitrate") ?? config.audioBitrate ?? undefined,
 				enforceAudioTrack: flags.boolean("enforce-audio-track") ?? config.enforceAudioTrack,
@@ -164,6 +204,82 @@ export async function renderCommand(
 			serveUrl: project.serveUrl,
 		},
 		human: [`Rendered ${composition.id} to ${output} in ${(durationMs / 1000).toFixed(1)}s`],
+	};
+}
+
+/** Whether `--frames` lists more than one single frame and no range. */
+function isListOfFrames(range: FrameRange | undefined): boolean {
+	return (
+		Array.isArray(range) &&
+		range.length > 1 &&
+		range.every((r) => Array.isArray(r) && r[0] === r[1])
+	);
+}
+
+/** `motio render --sequence`: every selected frame as an image in the output folder. */
+async function renderSequence(
+	ctx: CommandContext,
+	project: Awaited<ReturnType<typeof openProject>>,
+	composition: Awaited<ReturnType<typeof selectComposition>>,
+	options: {
+		output: string;
+		imageFormat: "jpeg" | "png" | "none" | undefined;
+		jpegQuality: number | undefined;
+		frameRange: FrameRange | undefined;
+		everyNthFrame: number | undefined;
+		concurrency: Concurrency | undefined;
+		scale: number | undefined;
+		imageSequencePattern: string | undefined;
+	},
+): Promise<CommandResult> {
+	if (options.imageFormat === "none") {
+		throw usageError('An image sequence needs --image-format jpeg or png, not "none".');
+	}
+	await mkdir(options.output, { recursive: true });
+	const renderer = await ctx.renderer();
+	const { cancelSignal, cancel } = renderer.makeCancelSignal();
+	const stopListening = ctx.onInterrupt(cancel);
+	const started = Date.now();
+	let renderedFrames = 0;
+	try {
+		const result = await renderer.renderFrames({
+			...project.session,
+			composition,
+			outputDir: options.output,
+			cancelSignal,
+			...pick({
+				imageFormat: options.imageFormat,
+				jpegQuality: options.jpegQuality,
+				frameRange: options.frameRange,
+				everyNthFrame: options.everyNthFrame,
+				concurrency: options.concurrency,
+				scale: options.scale,
+				imageSequencePattern: options.imageSequencePattern,
+			}),
+			onFrameUpdate: (count) => {
+				renderedFrames = count;
+				ctx.reporter.progress("Rendering", 0, `(${count} rendered)`);
+			},
+		});
+		renderedFrames = result.frameCount;
+	} finally {
+		stopListening();
+	}
+	const durationMs = Date.now() - started;
+	return {
+		json: {
+			composition: compositionJson(composition),
+			output: options.output,
+			codec: null,
+			sequence: true,
+			imageFormat: options.imageFormat ?? "jpeg",
+			renderedFrames,
+			durationMs,
+			serveUrl: project.serveUrl,
+		},
+		human: [
+			`Rendered ${renderedFrames} frames of ${composition.id} to ${options.output} in ${(durationMs / 1000).toFixed(1)}s`,
+		],
 	};
 }
 

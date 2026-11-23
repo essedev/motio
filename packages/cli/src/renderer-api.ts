@@ -85,6 +85,9 @@ export interface RenderMediaOptions extends SessionOptions {
 	pixelFormat?: PixelFormat;
 	colorSpace?: ColorSpace;
 	x264Preset?: string;
+	proResProfile?: string | null;
+	proResBitsPerMacroblock?: number | null;
+	numberOfGifLoops?: number | null;
 	audioCodec?: string;
 	audioBitrate?: string | null;
 	enforceAudioTrack?: boolean;
@@ -117,6 +120,9 @@ export interface RenderFramesOptions extends SessionOptions {
 	scale?: number;
 	concurrency?: Concurrency | null;
 	frames?: number[];
+	frameRange?: FrameRange | null;
+	everyNthFrame?: number;
+	imageSequencePattern?: string;
 	cancelSignal?: unknown;
 	/**
 	 * Motio extension requested from the renderer: the order frames are handed to pages,

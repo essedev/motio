@@ -12,6 +12,11 @@ const CODEC_ARGS: Record<AudioCodec, string[]> = {
 	"pcm-16": ["-c:a", "pcm_s16le"],
 };
 
+/** FFmpeg output arguments encoding `codec` at `bitrate` (ignored for PCM). */
+export function audioCodecArgs(codec: AudioCodec, bitrate?: string): string[] {
+	return [...CODEC_ARGS[codec], ...(bitrate && codec !== "pcm-16" ? ["-b:a", bitrate] : [])];
+}
+
 /**
  * Encodes mixed samples once to `output` (the container follows the file extension). With
  * `video`, that file's video stream is copied into `output` next to the audio: encoding and
@@ -27,9 +32,10 @@ export function encodeAudio(
 	args.push("-f", "f32le", "-ar", String(audio.sampleRate), "-ac", String(audio.channels));
 	args.push("-i", "-");
 	if (options.video) args.push("-map", "0:v", "-map", "1:a", "-c:v", "copy");
-	args.push(...CODEC_ARGS[options.codec]);
-	if (options.bitrate && options.codec !== "pcm-16") args.push("-b:a", options.bitrate);
-	if (options.video) args.push("-movflags", "+faststart");
+	args.push(...audioCodecArgs(options.codec, options.bitrate));
+	if (options.video && /\.(mp4|m4v|mov)$/i.test(options.output)) {
+		args.push("-movflags", "+faststart");
+	}
 	args.push(options.output);
 	return new Promise((resolve, reject) => {
 		const child = spawn(ffmpeg, args, { stdio: ["pipe", "ignore", "pipe"] });

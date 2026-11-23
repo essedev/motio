@@ -1,22 +1,34 @@
 import { readFile, rename, rm } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
+import type { AudioCodec } from "@motiojs/audio";
 import type { AudioIntent } from "@motiojs/core/protocol";
-import { buildAudioSegments, mixSegments, silence, writeAudioFile } from "./audio.js";
+import { silence, writeAudioFile } from "./audio.js";
 import {
 	AUDIO_EXTENSIONS,
+	assertSampleRateFits,
 	isAudioOnlyCodec,
 	resolveAudioBitrate,
 	resolveAudioCodec,
 	resolveSampleRate,
 } from "./audio-options.js";
 import { type CancelSignal, toAbortController } from "./cancel.js";
+import { captureVideo, mixTimelineAudio } from "./capture-video.js";
+import {
+	isVideoCodec,
+	type ProResProfile,
+	type ResolvedVideoEncoding,
+	resolveVideoEncoding,
+	VIDEO_CODEC_SPECS,
+} from "./codecs.js";
 import { MotioError } from "./errors.js";
 import {
 	assertFfmpegSupports,
-	Encoder,
-	h264Args,
+	gifEncodeArgs,
+	gifPaletteArgs,
 	probeFfmpeg,
 	resolveFfmpegPath,
+	runFfmpeg,
+	videoArgs,
 } from "./ffmpeg.js";
 import {
 	assertDimensionsFit,
@@ -29,7 +41,6 @@ import {
 	PIXEL_FORMATS,
 	type PixelFormat,
 	resolveConcurrency,
-	resolveCrf,
 	resolveFrames,
 	resolveJpegQuality,
 	resolveScale,
@@ -39,14 +50,8 @@ import {
 } from "./options.js";
 import { checkOverwrite, prepareOutput } from "./output.js";
 import { compositionPageFactory } from "./page-factory.js";
-import {
-	DEFAULT_CRASH_RETRIES,
-	DEFAULT_RECYCLE_EVERY_N_FRAMES,
-	runPool,
-	type SlowFrame,
-} from "./pool.js";
+import { DEFAULT_RECYCLE_EVERY_N_FRAMES, type SlowFrame } from "./pool.js";
 import type { OnStartData } from "./render-frames.js";
-import { ReorderBuffer } from "./reorder-buffer.js";
 import {
 	type BrowserSessionOptions,
 	openSession,
@@ -71,17 +76,21 @@ export interface RenderMediaProgress {
 export interface RenderMediaOptions extends BrowserSessionOptions {
 	composition: VideoConfig;
 	/**
-	 * `h264` (MP4), or `mp3`, `aac` and `wav` for audio only; other Remotion codecs fail with
-	 * `E_UNSUPPORTED_CODEC`.
+	 * `h264` (MP4), `h264-mkv`, `h264-ts`, `h265`, `vp8`, `vp9` (WebM), `prores` (MOV), `gif`, or
+	 * `mp3`, `aac` and `wav` for audio only; `av1` fails with `E_UNSUPPORTED_CODEC`.
 	 */
 	codec: Codec;
 	/** Output file; null or unset returns the video as a buffer. */
 	outputLocation?: string | null;
 	/** Default true. */
 	overwrite?: boolean;
-	/** Constant rate factor, 1 to 51 for H.264. Default 18. */
+	/**
+	 * Constant rate factor; range and default depend on the codec (h264 1 to 51, default 18;
+	 * h265 0 to 51, 23; vp8 4 to 63, 9; vp9 0 to 63, 28, where 0 is lossless). Not allowed with
+	 * `prores` and `gif`.
+	 */
 	crf?: number | null;
-	/** Default `jpeg`. */
+	/** Default `jpeg`. Transparent output needs `png`. */
 	imageFormat?: "jpeg" | "png" | "none";
 	/** Default 80. */
 	jpegQuality?: number;
@@ -92,16 +101,28 @@ export interface RenderMediaOptions extends BrowserSessionOptions {
 	concurrency?: number | string | null;
 	/** Device scale factor; output size is the composition size times `scale`. Default 1. */
 	scale?: number;
-	/** Default `yuv420p`. */
+	/**
+	 * Default `yuv420p`; for `prores` `yuv422p10le`, or `yuv444p10le` with the 4444 profiles.
+	 * `yuva420p` (vp8, vp9) and `yuva444p10le` (prores 4444) keep the alpha channel.
+	 */
 	pixelFormat?: PixelFormat;
 	/** Default `default`, which Motio encodes as BT.709 with explicit conversion and tags. */
 	colorSpace?: ColorSpace;
-	/** Default `medium`. */
+	/** Default `medium`. Applies to `h264`, `h264-mkv` and `h264-ts`. */
 	x264Preset?: X264Preset | null;
+	/** ProRes profile, only with `prores`. Default the composition's, else `hq`. */
+	proResProfile?: ProResProfile | null;
+	/** `prores_ks` bits per macroblock, 128 to 8192, only with `prores`. */
+	proResBitsPerMacroblock?: number | null;
+	/**
+	 * GIF loops: null (the default) loops forever, 0 plays once, n repeats n times. Ignored by
+	 * other codecs.
+	 */
+	numberOfGifLoops?: number | null;
 	/** Render no audio. Not allowed with an audio-only codec. Default false. */
 	muted?: boolean;
-	/** Audio codec; the default depends on `codec` (`aac` for h264, D-030). */
-	audioCodec?: "pcm-16" | "aac" | "mp3" | "opus" | null;
+	/** Audio codec; the default depends on `codec` (D-030, D-037). */
+	audioCodec?: AudioCodec | null;
 	/** Audio bitrate in FFmpeg `-b:a` syntax, such as `"128k"`. Default `"320k"`. */
 	audioBitrate?: string | null;
 	/** Use a lossless audio codec when `codec` supports one. `audioCodec` takes priority. */
@@ -136,7 +157,87 @@ export interface RenderMediaInternals {
 	frameOrder?: (frames: number[]) => number[];
 }
 
-/** Renders a composition to an H.264 MP4 file or buffer. */
+/** Options shared by every render that captures video. */
+export interface VideoPlanOptions {
+	composition: VideoConfig;
+	codec: Codec;
+	crf?: number | null | undefined;
+	imageFormat?: "jpeg" | "png" | "none" | undefined;
+	jpegQuality?: number | undefined;
+	scale?: number | undefined;
+	pixelFormat?: PixelFormat | undefined;
+	colorSpace?: ColorSpace | undefined;
+	x264Preset?: X264Preset | null | undefined;
+	proResProfile?: ProResProfile | null | undefined;
+	proResBitsPerMacroblock?: number | null | undefined;
+	numberOfGifLoops?: number | null | undefined;
+}
+
+/** The validated video settings of a render. */
+export interface VideoPlan {
+	encoding: ResolvedVideoEncoding;
+	captureFormat: "jpeg" | "png";
+	quality: number;
+	preset: X264Preset;
+	colorSpace: ColorSpace;
+	scale: number;
+	size: { width: number; height: number };
+}
+
+/** The FFmpeg encoders and decoders a video plan needs. */
+export function videoCodecNeeds(plan: VideoPlan): { encoders: string[]; decoders: string[] } {
+	return {
+		encoders: [plan.encoding.spec.encoder],
+		decoders: [plan.captureFormat === "png" ? "png" : "mjpeg"],
+	};
+}
+
+/** Validates the video options of a render (codec, image format, encoding, size). */
+export function planVideo(options: VideoPlanOptions): VideoPlan {
+	const { composition, codec } = options;
+	if (!isVideoCodec(codec)) {
+		throw new MotioError(
+			"E_UNSUPPORTED_CODEC",
+			`Codec "${codec}" is not supported yet; Motio renders h264, h264-mkv, h264-ts, h265, vp8, vp9, prores and gif video, and mp3, aac and wav audio.`,
+			{ composition: composition.id },
+		);
+	}
+	const imageFormat = oneOf(
+		"imageFormat",
+		options.imageFormat ?? composition.defaultVideoImageFormat ?? undefined,
+		["jpeg", "png", "none"] as const,
+		"jpeg",
+	);
+	if (imageFormat === "none") {
+		throw new MotioError(
+			"E_INVALID_OPTION",
+			'imageFormat "none" renders audio only: use the codec "mp3", "aac" or "wav".',
+		);
+	}
+	const quality = resolveJpegQuality(imageFormat, options.jpegQuality);
+	const pixelFormat = options.pixelFormat ?? composition.defaultPixelFormat ?? undefined;
+	const encoding = resolveVideoEncoding({
+		codec,
+		crf: options.crf,
+		pixelFormat:
+			pixelFormat === undefined
+				? undefined
+				: oneOf("pixelFormat", pixelFormat, PIXEL_FORMATS, "yuv420p"),
+		proResProfile: options.proResProfile,
+		defaultProResProfile: composition.defaultProResProfile,
+		proResBitsPerMacroblock: options.proResBitsPerMacroblock,
+		numberOfGifLoops: options.numberOfGifLoops,
+		imageFormat,
+	});
+	const preset = oneOf("x264Preset", options.x264Preset ?? undefined, X264_PRESETS, "medium");
+	const colorSpace = oneOf("colorSpace", options.colorSpace, COLOR_SPACES, "default");
+	const scale = resolveScale(options.scale);
+	const size = scaledSize(composition.width, composition.height, scale);
+	if (encoding.pixelFormat) assertDimensionsFit(size.width, size.height, encoding.pixelFormat);
+	return { encoding, captureFormat: imageFormat, quality, preset, colorSpace, scale, size };
+}
+
+/** Renders a composition to a video or audio file, or to a buffer. */
 export function renderMedia(options: RenderMediaOptions): Promise<RenderMediaResult> {
 	return renderMediaInternal(options, {});
 }
@@ -150,15 +251,9 @@ export async function renderMediaInternal(
 	validateComposition(composition);
 	const codec = oneOf("codec", options.codec, CODECS, "h264");
 	const audioOnly = isAudioOnlyCodec(codec);
-	if (codec !== "h264" && !audioOnly) {
-		throw new MotioError(
-			"E_UNSUPPORTED_CODEC",
-			`Codec "${codec}" is not supported yet; Motio renders "h264" video and "mp3", "aac" or "wav" audio.`,
-			{ composition: composition.id },
-		);
-	}
-	const muted = options.muted === true;
-	if (muted && audioOnly) {
+	const video = audioOnly ? null : planVideo({ ...options, codec });
+	const isGif = codec === "gif";
+	if (options.muted === true && audioOnly) {
 		throw new MotioError(
 			"E_INVALID_OPTION",
 			`muted cannot be used with the audio-only codec "${codec}".`,
@@ -171,70 +266,59 @@ export async function renderMediaInternal(
 			"forSeamlessAacConcatenation is not supported yet; distributed renders mux the audio rendered once.",
 		);
 	}
-	const audioCodec = resolveAudioCodec(codec, options.audioCodec, options.preferLossless === true);
+	const separateAudioTo = options.separateAudioTo ? resolvePath(options.separateAudioTo) : null;
+	if (separateAudioTo && (audioOnly || options.muted === true || isGif)) {
+		throw new MotioError(
+			"E_INVALID_OPTION",
+			"separateAudioTo cannot be used with an audio-only codec, with muted or with a codec without audio (gif).",
+		);
+	}
+	if (isGif && (options.audioCodec || options.enforceAudioTrack)) {
+		throw new MotioError(
+			"E_INVALID_OPTION",
+			"GIFs carry no audio: audioCodec and enforceAudioTrack cannot be used with the codec gif.",
+		);
+	}
+	// GIFs carry no audio, so they render none.
+	const muted = options.muted === true || isGif;
+	const audioCodec = muted
+		? null
+		: resolveAudioCodec(codec, options.audioCodec, options.preferLossless === true);
 	const audioBitrate = resolveAudioBitrate(options.audioBitrate);
 	const sampleRate = resolveSampleRate(options.sampleRate ?? composition.defaultSampleRate);
-	const separateAudioTo = options.separateAudioTo ? resolvePath(options.separateAudioTo) : null;
-	if (separateAudioTo && (audioOnly || muted)) {
-		throw new MotioError(
-			"E_INVALID_OPTION",
-			"separateAudioTo cannot be used with an audio-only codec or with muted.",
-		);
+	if (audioCodec) assertSampleRateFits(audioCodec, sampleRate);
+	if (audioOnly && options.imageFormat !== undefined && options.imageFormat !== "none") {
+		resolveJpegQuality(options.imageFormat, options.jpegQuality);
 	}
-	const imageFormat = oneOf(
-		"imageFormat",
-		options.imageFormat ?? composition.defaultVideoImageFormat ?? undefined,
-		["jpeg", "png", "none"] as const,
-		"jpeg",
-	);
-	if (imageFormat === "none" && !audioOnly) {
-		throw new MotioError(
-			"E_INVALID_OPTION",
-			'imageFormat "none" renders audio only: use the codec "mp3", "aac" or "wav".',
-		);
-	}
-	const captureFormat = imageFormat === "none" ? "jpeg" : imageFormat;
-	const quality = resolveJpegQuality(captureFormat, options.jpegQuality);
-	const crf = resolveCrf(options.crf);
-	const preset = oneOf("x264Preset", options.x264Preset ?? undefined, X264_PRESETS, "medium");
-	const pixelFormat = oneOf(
-		"pixelFormat",
-		options.pixelFormat ?? composition.defaultPixelFormat ?? undefined,
-		PIXEL_FORMATS,
-		"yuv420p",
-	);
-	if (pixelFormat.startsWith("yuva")) {
-		throw new MotioError(
-			"E_INVALID_OPTION",
-			`pixelFormat "${pixelFormat}" has an alpha channel, which H.264 cannot store. Use yuv420p.`,
-		);
-	}
-	const colorSpace = oneOf("colorSpace", options.colorSpace, COLOR_SPACES, "default");
-	const scale = resolveScale(options.scale);
 	const concurrency = resolveConcurrency(options.concurrency);
+	const everyNthFrame = options.everyNthFrame ?? 1;
 	const frames = audioOnly
 		? []
 		: resolveFrames(options.frameRange, options.everyNthFrame, composition.durationInFrames);
 	// The audio covers every frame of the range, also those `everyNthFrame` skips.
 	const audioFrames = resolveFrames(options.frameRange, 1, composition.durationInFrames);
-	const size = scaledSize(composition.width, composition.height, scale);
-	if (!audioOnly) assertDimensionsFit(size.width, size.height, pixelFormat);
 
 	const ffmpeg = resolveFfmpegPath(options.ffmpegExecutable);
-	const audioEncoder = { aac: "aac", mp3: "libmp3lame", "pcm-16": "pcm_s16le", opus: "libopus" }[
-		audioCodec
-	];
+	const audioEncoder = audioCodec
+		? { aac: "aac", mp3: "libmp3lame", "pcm-16": "pcm_s16le", opus: "libopus" }[audioCodec]
+		: null;
+	const needs = video ? videoCodecNeeds(video) : { encoders: [], decoders: [] };
 	assertFfmpegSupports(await probeFfmpeg(ffmpeg), {
-		encoders: [...(audioOnly ? [] : ["libx264"]), ...(muted ? [] : [audioEncoder])],
-		decoders: audioOnly ? [] : [captureFormat === "png" ? "png" : "mjpeg"],
+		encoders: [...needs.encoders, ...(audioEncoder ? [audioEncoder] : [])],
+		decoders: needs.decoders,
 	});
 	if (separateAudioTo) await checkOverwrite(separateAudioTo, options.overwrite ?? true);
 
 	const controller = toAbortController(options.cancelSignal, "renderMedia");
-	const extension = audioOnly ? AUDIO_EXTENSIONS[audioCodec] : ".mp4";
+	const extension = video
+		? video.encoding.spec.extension
+		: AUDIO_EXTENSIONS[audioCodec as AudioCodec];
 	const output = await prepareOutput(options.outputLocation, options.overwrite ?? true, extension);
-	const videoTemp = muted ? output.temp : `${output.temp}.video.mp4`;
-	let encoder: Encoder | undefined;
+	// Video first goes to its own file when audio is muxed afterwards, or when a GIF needs its
+	// palette passes.
+	const videoTemp =
+		muted && !isGif ? output.temp : `${output.temp}.video${isGif ? ".nut" : extension}`;
+	const paletteTemp = `${output.temp}.palette.png`;
 	let committed = false;
 	const session = await openSession(options).catch(async (err: unknown) => {
 		await output.discard();
@@ -260,9 +344,10 @@ export async function renderMediaInternal(
 		const openPage = compositionPageFactory(session, composition, {
 			width: composition.width,
 			height: composition.height,
-			scale,
-			transparent: captureFormat === "png",
+			scale: video?.scale ?? 1,
+			transparent: video?.captureFormat === "png",
 		});
+		const recycleEveryNFrames = options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES;
 		const intents = new Map<number, AudioIntent[]>();
 		options.onStart?.({
 			frameCount: audioOnly ? audioFrames.length : total,
@@ -271,109 +356,73 @@ export async function renderMediaInternal(
 		});
 
 		let slowestFrames: SlowFrame[] = [];
-		if (!audioOnly) {
-			const enc = Encoder.start(
+		if (video) {
+			const fps = composition.fps / everyNthFrame;
+			const captured = await captureVideo({
 				ffmpeg,
-				h264Args({
+				encoderArgs: videoArgs({
 					output: videoTemp,
-					fps: composition.fps / (options.everyNthFrame ?? 1),
-					imageFormat: captureFormat,
-					crf,
-					preset,
-					pixelFormat,
-					colorSpace,
+					fps,
+					imageFormat: video.captureFormat,
+					encoding: video.encoding,
+					preset: video.preset,
+					colorSpace: video.colorSpace,
 					frameCount: total,
 				}),
-				(n) => report(n),
-			);
-			encoder = enc;
-			const onAbort = () => {
-				void enc.kill();
-			};
-			controller.signal.addEventListener("abort", onAbort, { once: true });
-
-			const order = internals.frameOrder ? internals.frameOrder([...frames]) : frames;
-			const ascending = order.every((f, i) => i === 0 || f > (order[i - 1] as number));
-			const indexOf = new Map(frames.map((f, i) => [f, i]));
-			const buffer = new ReorderBuffer<Buffer>(
-				total,
-				(_, image) => enc.write(image),
-				ascending ? Math.max(8, concurrency * 4) : Number.POSITIVE_INFINITY,
-			);
-			controller.signal.addEventListener("abort", () => buffer.abort(controller.signal.reason), {
-				once: true,
+				frames,
+				...(internals.frameOrder ? { order: internals.frameOrder([...frames]) } : {}),
+				openPage,
+				format: video.captureFormat,
+				quality: video.quality,
+				concurrency,
+				recycleEveryNFrames,
+				signal: controller.signal,
+				onReport: (frame, frameReport) => {
+					if (!muted) intents.set(frame, frameReport.audio);
+				},
+				onProgress: (r, encoded) => {
+					rendered = r;
+					report(encoded);
+				},
 			});
-			try {
-				slowestFrames = await runPool({
-					frames: order,
-					concurrency,
-					openPage,
-					format: captureFormat,
-					quality,
-					recycleEveryNFrames: options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES,
-					crashRetries: DEFAULT_CRASH_RETRIES,
-					signal: controller.signal,
-					onFrame: async ({ frame, image, report: frameReport }) => {
-						if (!muted) intents.set(frame, frameReport.audio);
-						await buffer.push(indexOf.get(frame) as number, image);
-						rendered++;
-						if (rendered === total) renderedDoneIn = performance.now() - start;
-						report(enc.encodedFrames);
-					},
-				});
-				await buffer.done();
-				await enc.finish();
-			} catch (err) {
-				buffer.abort(err);
-				throw controller.signal.aborted ? controller.signal.reason : err;
-			} finally {
-				controller.signal.removeEventListener("abort", onAbort);
+			slowestFrames = captured.slowestFrames;
+			renderedDoneIn = captured.renderedDoneIn;
+			if (isGif) {
+				report(total, "muxing");
+				await runFfmpeg(ffmpeg, gifPaletteArgs(videoTemp, video.captureFormat, paletteTemp));
+				await runFfmpeg(
+					ffmpeg,
+					gifEncodeArgs({
+						intermediate: videoTemp,
+						palette: paletteTemp,
+						imageFormat: video.captureFormat,
+						fps,
+						loop: video.encoding.gifLoop ?? 0,
+						output: output.temp,
+					}),
+				);
+				if (controller.signal.aborted) throw controller.signal.reason;
 			}
-			if (controller.signal.aborted) throw controller.signal.reason;
 			encodedDoneIn = performance.now() - start;
 			report(total);
 		}
 
-		if (!muted) {
-			// The audio pass (D-030): frames the capture did not visit are seeked without capturing,
-			// so frameRange, everyNthFrame and audio-only codecs cannot drop audio.
-			const missing = audioFrames.filter((f) => !intents.has(f));
-			if (missing.length > 0) {
-				try {
-					await runPool({
-						frames: missing,
-						concurrency,
-						openPage,
-						format: "jpeg",
-						quality,
-						capture: false,
-						recycleEveryNFrames: options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES,
-						crashRetries: DEFAULT_CRASH_RETRIES,
-						signal: controller.signal,
-						onFrame: async ({ frame, report: frameReport }) => {
-							intents.set(frame, frameReport.audio);
-						},
-					});
-				} catch (err) {
-					throw controller.signal.aborted ? controller.signal.reason : err;
-				}
-				if (controller.signal.aborted) throw controller.signal.reason;
-			}
+		if (!muted && audioCodec) {
 			report(total, "muxing");
-			const segments = buildAudioSegments(audioFrames, intents);
-			let mixed = await mixSegments({
-				segments,
-				media: session.media,
-				fps: composition.fps,
-				durationInFrames: audioFrames.length,
+			let mixed = await mixTimelineAudio({
+				session,
+				composition,
+				audioFrames,
+				intents,
+				openPage,
+				concurrency,
+				recycleEveryNFrames,
 				sampleRate,
-				ffmpeg: session.ffmpeg,
-				ffprobe: session.ffprobe,
+				signal: controller.signal,
 			});
 			if (!mixed && (audioOnly || options.enforceAudioTrack || separateAudioTo)) {
 				mixed = silence(composition.fps, audioFrames.length, sampleRate);
 			}
-			if (controller.signal.aborted) throw controller.signal.reason;
 			const encode = { codec: audioCodec, bitrate: audioBitrate, ffmpeg: session.ffmpeg };
 			if (audioOnly) {
 				await writeAudioFile(mixed as NonNullable<typeof mixed>, {
@@ -404,17 +453,19 @@ export async function renderMediaInternal(
 		return {
 			buffer: result,
 			slowestFrames,
-			contentType: audioOnly ? (AUDIO_CONTENT_TYPES[audioCodec] ?? "audio/wav") : "video/mp4",
+			contentType: video
+				? VIDEO_CODEC_SPECS[video.encoding.codec].contentType
+				: (AUDIO_CONTENT_TYPES[audioCodec as AudioCodec] ?? "audio/wav"),
 		};
 	} finally {
-		await encoder?.kill();
 		if (videoTemp !== output.temp) await rm(videoTemp, { force: true });
+		await rm(paletteTemp, { force: true });
 		if (!committed || output.final === null) await output.discard();
 		await session.close();
 	}
 }
 
-const AUDIO_CONTENT_TYPES: Record<string, string> = {
+const AUDIO_CONTENT_TYPES: Record<AudioCodec, string> = {
 	aac: "audio/aac",
 	mp3: "audio/mpeg",
 	"pcm-16": "audio/wav",

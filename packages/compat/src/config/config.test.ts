@@ -38,7 +38,7 @@ describe("Config", () => {
 
 	it("records unsupported setters with a warning and never throws", () => {
 		expect(() => {
-			Config.setProResProfile("hq");
+			Config.setVideoBitrate("1M");
 			Config.setKeyboardShortcutsEnabled(false);
 			Config.setLambdaInsights(true);
 			Config.setRspack(true);
@@ -46,14 +46,34 @@ describe("Config", () => {
 			// biome-ignore lint/suspicious/noExplicitAny: deliberately wrong input
 			Config.setGopSize("not a number" as any);
 		}).not.toThrow();
-		expect(getConfigValues()).toEqual({ proResProfile: "hq" });
+		expect(getConfigValues()).toEqual({ videoBitrate: "1M" });
 		expect(getConfigWarnings().map((w) => [w.setter, w.reason])).toEqual([
-			["setProResProfile", "planned"],
+			["setVideoBitrate", "planned"],
 			["setKeyboardShortcutsEnabled", "studio"],
 			["setLambdaInsights", "cloud"],
 			["setRspack", "no-equivalent"],
 			["setGopSize", "planned"],
 		]);
+	});
+
+	it("applies the ProRes, GIF and image sequence setters without warnings", () => {
+		Config.setProResProfile("4444");
+		Config.setProResBitsPerMacroblock(2000);
+		Config.setNumberOfGifLoops(null);
+		Config.setNumberOfGifLoops(2);
+		Config.setImageSequence(true);
+		Config.setImageSequencePattern("frame_[frame].[ext]");
+		expect(getConfigValues()).toEqual({
+			proResProfile: "4444",
+			proResBitsPerMacroblock: 2000,
+			numberOfGifLoops: 2,
+			imageSequence: true,
+			imageSequencePattern: "frame_[frame].[ext]",
+		});
+		expect(getConfigWarnings()).toEqual([]);
+		// biome-ignore lint/suspicious/noExplicitAny: deliberately wrong input
+		expect(() => Config.setProResProfile("best" as any)).toThrow(/4444-xq, 4444, hq/);
+		expect(() => Config.setNumberOfGifLoops(-1)).toThrow();
 	});
 
 	it("warns that overrideWebpackConfig has no equivalent and points to Vite plugins", () => {

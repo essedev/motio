@@ -1,7 +1,12 @@
 import type { AudioIntent } from "@motiojs/core/protocol";
 import { describe, expect, it } from "vitest";
 import { buildAudioSegments } from "./audio.js";
-import { resolveAudioBitrate, resolveAudioCodec, resolveSampleRate } from "./audio-options.js";
+import {
+	assertSampleRateFits,
+	resolveAudioBitrate,
+	resolveAudioCodec,
+	resolveSampleRate,
+} from "./audio-options.js";
 import { isMotioError } from "./errors.js";
 import { resolveFfprobePath } from "./ffmpeg.js";
 
@@ -92,10 +97,17 @@ describe("audio options", () => {
 		expect(resolveAudioCodec("wav", undefined, false)).toBe("pcm-16");
 		expect(resolveAudioCodec("mp3", null, true)).toBe("mp3");
 		expect(resolveAudioCodec("wav", undefined, true)).toBe("pcm-16");
+		expect(resolveAudioCodec("vp9", undefined, false)).toBe("opus");
+		expect(resolveAudioCodec("prores", undefined, false)).toBe("pcm-16");
+		expect(resolveAudioCodec("h264-mkv", undefined, true)).toBe("pcm-16");
+		expect(resolveAudioCodec("h264-mkv", undefined, false)).toBe("aac");
 		for (const bad of [
 			() => resolveAudioCodec("h264", "pcm-16", false),
 			() => resolveAudioCodec("h264", "flac", false),
-			() => resolveAudioCodec("vp9", undefined, false),
+			() => resolveAudioCodec("vp9", "aac", false),
+			() => resolveAudioCodec("gif", undefined, false),
+			() => resolveAudioCodec("av1", undefined, false),
+			() => assertSampleRateFits("opus", 44100),
 		]) {
 			let error: unknown;
 			try {

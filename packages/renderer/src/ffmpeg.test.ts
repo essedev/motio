@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { resolveVideoEncoding, type VideoCodec } from "./codecs.js";
 import {
 	assertFfmpegSupports,
 	colorFilter,
 	colorTags,
 	type FfmpegInfo,
 	frameRateArg,
-	h264Args,
+	gifEncodeArgs,
+	gifPaletteArgs,
 	parseCodecList,
 	parseFfmpegVersion,
+	VP8_BITRATE_CAP,
+	videoArgs,
 } from "./ffmpeg.js";
 
 const info = (over: Partial<FfmpegInfo> = {}): FfmpegInfo => ({
@@ -87,13 +91,12 @@ describe("encoder arguments", () => {
 	});
 
 	it("builds an H.264 MP4 command with exact frame count, rate and tags", () => {
-		const args = h264Args({
+		const args = videoArgs({
 			output: "/tmp/out.mp4",
 			fps: 25,
 			imageFormat: "jpeg",
-			crf: 18,
+			encoding: resolveVideoEncoding({ codec: "h264", imageFormat: "jpeg" }),
 			preset: "medium",
-			pixelFormat: "yuv420p",
 			colorSpace: "default",
 			frameCount: 50,
 		});
@@ -104,6 +107,79 @@ describe("encoder arguments", () => {
 		expect(after("-crf")).toBe("18");
 		expect(after("-frames:v")).toBe("50");
 		expect(after("-color_range")).toBe("tv");
-		expect(args.at(-1)).toBe("/tmp/out.mp4");
+		expect(args.slice(-4)).toEqual(["-f", "mp4", "-y", "/tmp/out.mp4"]);
+	});
+
+	const encode = (
+		codec: VideoCodec,
+		extra: Parameters<typeof resolveVideoEncoding>[0] | object = {},
+	) =>
+		videoArgs({
+			output: "/tmp/out",
+			fps: 30,
+			imageFormat: "png",
+			encoding: resolveVideoEncoding({ codec, imageFormat: "png", ...extra }),
+			preset: "veryfast",
+			colorSpace: "default",
+			frameCount: 10,
+		}).join(" ");
+
+	it("picks the encoder, muxer and codec settings of each codec", () => {
+		expect(encode("h264-mkv")).toMatch(/-c:v libx264 -preset veryfast -crf 18 .* -f matroska/);
+		expect(encode("h264-ts")).toMatch(/-f mpegts -y/);
+		expect(encode("h265")).toMatch(
+			/-c:v libx265 -crf 23 .*-tag:v hvc1 -movflags \+faststart -f mp4/,
+		);
+		expect(encode("vp8")).toContain(`-c:v libvpx -crf 9 -b:v ${VP8_BITRATE_CAP} -pix_fmt yuv420p`);
+		expect(encode("vp8", { pixelFormat: "yuva420p" })).toContain(
+			"-auto-alt-ref 0 -pix_fmt yuva420p",
+		);
+		expect(encode("vp9")).toContain("-c:v libvpx-vp9 -crf 28 -b:v 0 -pix_fmt yuv420p");
+		expect(encode("vp9", { crf: 0, pixelFormat: "yuva420p" })).toContain(
+			"-lossless 1 -b:v 0 -auto-alt-ref 0 -pix_fmt yuva420p",
+		);
+		expect(encode("prores")).toContain(
+			"-c:v prores_ks -profile:v 3 -vendor apl0 -pix_fmt yuv422p10le",
+		);
+		expect(
+			encode("prores", {
+				proResProfile: "4444-xq",
+				pixelFormat: "yuva444p10le",
+				proResBitsPerMacroblock: 2000,
+			}),
+		).toContain("-profile:v 5 -vendor apl0 -bits_per_mb 2000 -pix_fmt yuva444p10le");
+		expect(encode("prores")).toMatch(/-f mov -y/);
+	});
+
+	it("writes chunks to the requested muxer", () => {
+		const args = videoArgs({
+			output: "/tmp/chunk.ts",
+			fps: 30,
+			imageFormat: "jpeg",
+			encoding: resolveVideoEncoding({ codec: "h264", imageFormat: "jpeg" }),
+			preset: "medium",
+			colorSpace: "default",
+			frameCount: 10,
+			muxer: "mpegts",
+		});
+		expect(args).not.toContain("-movflags");
+		expect(args.slice(-4)).toEqual(["-f", "mpegts", "-y", "/tmp/chunk.ts"]);
+	});
+
+	it("encodes GIFs in three passes with the D-020 palette recipe and loop values", () => {
+		expect(encode("gif")).toMatch(/-c:v png -i pipe:0 -c:v copy -frames:v 10 -an -f nut/);
+		expect(gifPaletteArgs("/tmp/f.nut", "jpeg", "/tmp/p.png").join(" ")).toContain(
+			"scale=in_color_matrix=bt601:in_range=pc:flags=accurate_rnd+full_chroma_int,format=rgb24,palettegen=max_colors=256:stats_mode=full",
+		);
+		const gif = gifEncodeArgs({
+			intermediate: "/tmp/f.nut",
+			palette: "/tmp/p.png",
+			imageFormat: "png",
+			fps: 10,
+			loop: -1,
+			output: "/tmp/o.gif",
+		}).join(" ");
+		expect(gif).toContain("[0:v]format=rgba[x];[x][1:v]paletteuse=dither=none");
+		expect(gif).toContain("-r 10 -loop -1 -f gif");
 	});
 });

@@ -1,4 +1,5 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
+import { proResProfileNumber, type ResolvedVideoEncoding } from "./codecs.js";
 import { MotioError } from "./errors.js";
 import type { ColorSpace, PixelFormat, X264Preset } from "./options.js";
 
@@ -182,28 +183,37 @@ export function frameRateArg(fps: number): string {
 	return `${Math.round(fps * 1000)}/1000`;
 }
 
-/** Settings of one H.264 encode. */
-export interface H264EncodeSettings {
+/** Settings of one video encode from an image pipe. */
+export interface VideoEncodeSettings {
 	output: string;
 	fps: number;
 	imageFormat: "jpeg" | "png";
-	crf: number;
+	encoding: ResolvedVideoEncoding;
 	preset: X264Preset;
-	pixelFormat: PixelFormat;
 	colorSpace: ColorSpace;
 	frameCount: number;
+	/** Muxer instead of the codec's own, for chunks (D-018). */
+	muxer?: string;
 }
 
 const SWS = "flags=accurate_rnd+full_chroma_int";
+
+/**
+ * VP8 runs in constrained quality: libvpx's VP8 encoder ignores the CRF without a target
+ * bitrate (D-037), so a cap far above any real frame lets the CRF decide.
+ */
+export const VP8_BITRATE_CAP = "1000M";
 
 /**
  * The video filter converting captured frames to YUV. PNG decodes to full-range RGB(A); JPEG
  * from Chrome decodes to full-range BT.601 YCbCr (JFIF), so it is first converted to RGB with
  * that matrix and range (16-bit intermediate, so no extra rounding), then to the output matrix. Never left to FFmpeg's defaults.
  */
-export function colorFilter(
-	settings: Pick<H264EncodeSettings, "imageFormat" | "pixelFormat" | "colorSpace">,
-): string {
+export function colorFilter(settings: {
+	imageFormat: "jpeg" | "png";
+	pixelFormat: PixelFormat;
+	colorSpace: ColorSpace;
+}): string {
 	const tags = colorTags(settings.colorSpace, settings.pixelFormat);
 	// setparams tags the frames themselves: FFmpeg 7 and later take the encoder's colour
 	// metadata from the frames and ignore -color_primaries and -color_trc otherwise.
@@ -212,10 +222,15 @@ export function colorFilter(
 	return `scale=in_color_matrix=bt601:in_range=pc:${SWS},format=gbrp16le,${toYuv}`;
 }
 
-/** FFmpeg arguments for an H.264 MP4 encode from an image pipe on stdin. */
-export function h264Args(s: H264EncodeSettings): string[] {
-	const rate = frameRateArg(s.fps);
-	const tags = colorTags(s.colorSpace, s.pixelFormat);
+/** The filter converting captured frames to the RGB(A) a GIF palette is built from. */
+export function gifRgbFilter(imageFormat: "jpeg" | "png"): string {
+	return imageFormat === "png"
+		? "format=rgba"
+		: `scale=in_color_matrix=bt601:in_range=pc:${SWS},format=rgb24`;
+}
+
+/** Arguments reading the image pipe on stdin. */
+function pipeInput(fps: number, imageFormat: "jpeg" | "png"): string[] {
 	return [
 		"-hide_banner",
 		"-loglevel",
@@ -226,21 +241,84 @@ export function h264Args(s: H264EncodeSettings): string[] {
 		"-f",
 		"image2pipe",
 		"-framerate",
-		rate,
+		frameRateArg(fps),
 		"-c:v",
-		s.imageFormat === "png" ? "png" : "mjpeg",
+		imageFormat === "png" ? "png" : "mjpeg",
 		"-i",
 		"pipe:0",
+	];
+}
+
+/** Encoder arguments of a YUV codec (everything but GIF). */
+export function codecArgs(encoding: ResolvedVideoEncoding, preset: X264Preset): string[] {
+	const crf = String(encoding.crf);
+	switch (encoding.codec) {
+		case "h264":
+		case "h264-mkv":
+		case "h264-ts":
+			return ["-c:v", "libx264", "-preset", preset, "-crf", crf];
+		case "h265":
+			return ["-c:v", "libx265", "-crf", crf, "-x265-params", "log-level=error"];
+		case "vp8":
+			return [
+				"-c:v",
+				"libvpx",
+				"-crf",
+				crf,
+				"-b:v",
+				VP8_BITRATE_CAP,
+				...(encoding.alpha ? ["-auto-alt-ref", "0"] : []),
+			];
+		case "vp9":
+			return [
+				"-c:v",
+				"libvpx-vp9",
+				// D-037: CRF 0, the best quality, encodes losslessly.
+				...(encoding.crf === 0 ? ["-lossless", "1"] : ["-crf", crf]),
+				"-b:v",
+				"0",
+				// Required for VP9 alpha (D-019).
+				...(encoding.alpha ? ["-auto-alt-ref", "0"] : []),
+			];
+		case "prores":
+			return [
+				"-c:v",
+				"prores_ks",
+				"-profile:v",
+				String(proResProfileNumber(encoding.proResProfile ?? "hq")),
+				"-vendor",
+				"apl0",
+				...(encoding.proResBitsPerMacroblock === null
+					? []
+					: ["-bits_per_mb", String(encoding.proResBitsPerMacroblock)]),
+			];
+		case "gif":
+			throw new Error("GIF is encoded by gifPaletteArgs");
+	}
+}
+
+/**
+ * FFmpeg arguments encoding the image pipe on stdin to a video file. For GIF this is the first
+ * of three passes: the captured images are copied to an intermediate file (`settings.output`),
+ * from which `gifPaletteArgs` and `gifEncodeArgs` build the palette and the GIF (D-020), so the
+ * palette sees every frame without holding them all in memory.
+ */
+export function videoArgs(s: VideoEncodeSettings): string[] {
+	const input = pipeInput(s.fps, s.imageFormat);
+	const frames = ["-frames:v", String(s.frameCount), "-an"];
+	if (s.encoding.codec === "gif") {
+		return [...input, "-c:v", "copy", ...frames, "-f", "nut", "-y", s.output];
+	}
+	const pixelFormat = s.encoding.pixelFormat as PixelFormat;
+	const tags = colorTags(s.colorSpace, pixelFormat);
+	const muxer = s.muxer ?? s.encoding.spec.muxer;
+	return [
+		...input,
 		"-vf",
-		colorFilter(s),
-		"-c:v",
-		"libx264",
-		"-preset",
-		s.preset,
-		"-crf",
-		String(s.crf),
+		colorFilter({ imageFormat: s.imageFormat, pixelFormat, colorSpace: s.colorSpace }),
+		...codecArgs(s.encoding, s.preset),
 		"-pix_fmt",
-		s.pixelFormat,
+		pixelFormat,
 		"-colorspace",
 		tags.colorspace,
 		"-color_primaries",
@@ -250,17 +328,95 @@ export function h264Args(s: H264EncodeSettings): string[] {
 		"-color_range",
 		"tv",
 		"-r",
-		rate,
-		"-frames:v",
-		String(s.frameCount),
-		"-an",
-		"-movflags",
-		"+faststart",
+		frameRateArg(s.fps),
+		...frames,
+		...(s.encoding.codec === "h265" && (muxer === "mp4" || muxer === "mov")
+			? ["-tag:v", "hvc1"]
+			: []),
+		...(muxer === "mp4" || muxer === "mov" ? ["-movflags", "+faststart"] : []),
 		"-f",
-		"mp4",
+		muxer,
 		"-y",
 		s.output,
 	];
+}
+
+/** Second GIF pass: the palette of the whole clip (D-020). */
+export function gifPaletteArgs(
+	intermediate: string,
+	imageFormat: "jpeg" | "png",
+	palette: string,
+): string[] {
+	return [
+		"-hide_banner",
+		"-loglevel",
+		"error",
+		"-i",
+		intermediate,
+		"-vf",
+		`${gifRgbFilter(imageFormat)},palettegen=max_colors=256:stats_mode=full`,
+		"-frames:v",
+		"1",
+		"-update",
+		"1",
+		"-y",
+		palette,
+	];
+}
+
+/** Third GIF pass: map every frame to the palette, without dithering (D-020). */
+export function gifEncodeArgs(options: {
+	intermediate: string;
+	palette: string;
+	imageFormat: "jpeg" | "png";
+	fps: number;
+	loop: number;
+	output: string;
+}): string[] {
+	return [
+		"-hide_banner",
+		"-loglevel",
+		"error",
+		"-i",
+		options.intermediate,
+		"-i",
+		options.palette,
+		"-lavfi",
+		`[0:v]${gifRgbFilter(options.imageFormat)}[x];[x][1:v]paletteuse=dither=none`,
+		"-r",
+		frameRateArg(options.fps),
+		"-loop",
+		String(options.loop),
+		"-f",
+		"gif",
+		"-y",
+		options.output,
+	];
+}
+
+/** Runs FFmpeg to completion; throws `E_FFMPEG_FAILED` with its stderr. */
+export function runFfmpeg(ffmpeg: string, args: string[]): Promise<void> {
+	return new Promise((resolve, reject) => {
+		const child = spawn(ffmpeg, args, { stdio: ["ignore", "ignore", "pipe"] });
+		let stderr = "";
+		child.stderr.on("data", (c: Buffer) => {
+			stderr = (stderr + c.toString()).slice(-8_000);
+		});
+		child.on("error", (err) =>
+			reject(new MotioError("E_FFMPEG_FAILED", `FFmpeg could not be started: ${err.message}`)),
+		);
+		child.on("close", (code) =>
+			code === 0
+				? resolve()
+				: reject(
+						new MotioError(
+							"E_FFMPEG_FAILED",
+							`FFmpeg exited with code ${code}${stderr.trim() ? `: ${stderr.trim()}` : "."}`,
+							{ details: { stderr, args: args.join(" ") } },
+						),
+					),
+		);
+	});
 }
 
 /** A running FFmpeg encode fed through stdin. */

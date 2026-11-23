@@ -248,18 +248,30 @@ const setters = {
 	),
 	setOutputLocation: supported("setOutputLocation", "outputLocation", isString, "a file path"),
 	setOverwriteOutput: supported("setOverwriteOutput", "overwriteOutput", isBoolean, "a boolean"),
-	setProResProfile: recorded("setProResProfile", "proResProfile", oneOf(PRORES_PROFILES)),
-	setProResBitsPerMacroblock: recorded(
+	setProResProfile: supported(
+		"setProResProfile",
+		"proResProfile",
+		oneOf(PRORES_PROFILES),
+		PRORES_PROFILES.join(", "),
+	),
+	setProResBitsPerMacroblock: supported(
 		"setProResBitsPerMacroblock",
 		"proResBitsPerMacroblock",
 		nullable(isPositiveInteger),
+		"an integer from 128 to 8192, or null",
 	),
-	setImageSequence: recorded("setImageSequence", "imageSequence", isBoolean),
-	setImageSequencePattern: recorded("setImageSequencePattern", "imageSequencePattern", isString),
-	setNumberOfGifLoops: recorded(
+	setImageSequence: supported("setImageSequence", "imageSequence", isBoolean, "a boolean"),
+	setImageSequencePattern: supported(
+		"setImageSequencePattern",
+		"imageSequencePattern",
+		isString,
+		'a file name pattern containing "[frame]"',
+	),
+	setNumberOfGifLoops: supported(
 		"setNumberOfGifLoops",
 		"numberOfGifLoops",
 		nullable(isNonNegativeInteger),
+		"null or a non-negative integer",
 	),
 	setVideoBitrate: recorded("setVideoBitrate", "videoBitrate", nullable(isString)),
 	setAudioBitrate: supported(

@@ -110,6 +110,55 @@ describe("render", () => {
 		});
 	});
 
+	it("passes the ProRes and GIF flags", async () => {
+		const prores = await run(["render", "Main", "out/a.mov", "--json", "--prores-profile=4444"]);
+		expect(prores.code).toBe(0);
+		expect(prores.calls.renderMedia?.[0]).toMatchObject({ codec: "prores", proResProfile: "4444" });
+		const gif = await run(["render", "Main", "out/a.gif", "--json", "--number-of-gif-loops=0"]);
+		expect(gif.code).toBe(0);
+		expect(gif.calls.renderMedia?.[0]).toMatchObject({ codec: "gif", numberOfGifLoops: 0 });
+		const bad = await run(["render", "Main", "--json", "--prores-profile=best"]);
+		expect(bad.code).toBe(2);
+	});
+
+	it("renders an image sequence into a folder with --sequence or a list of frames", async () => {
+		const { io, calls, code } = await run([
+			"render",
+			"Main",
+			"out/frames",
+			"--sequence",
+			"--image-format=png",
+			"--image-sequence-pattern=f-[frame].[ext]",
+			"--frames=0-4",
+			"--json",
+		]);
+		expect(code).toBe(0);
+		const result = parseJson(io);
+		expect(validate("render", result)).toBeNull();
+		expect(result).toMatchObject({
+			codec: null,
+			sequence: true,
+			imageFormat: "png",
+			output: join(cwd, "out", "frames"),
+		});
+		expect(calls.renderMedia).toBeUndefined();
+		expect(calls.renderFrames?.[0]).toMatchObject({
+			outputDir: join(cwd, "out", "frames"),
+			imageFormat: "png",
+			imageSequencePattern: "f-[frame].[ext]",
+			frameRange: [0, 4],
+		});
+		const list = await run(["render", "Main", "--frames=0,5,9", "--json"]);
+		expect(parseJson(list.io)).toMatchObject({ sequence: true, output: join(cwd, "out", "Main") });
+		expect(list.calls.renderFrames?.[0]).toMatchObject({
+			frameRange: [
+				[0, 0],
+				[5, 5],
+				[9, 9],
+			],
+		});
+	});
+
 	it("takes the output positional and infers the codec from its extension", async () => {
 		const { io, calls } = await run(["render", "src/index.ts", "Main", "out/video.webm", "--json"]);
 		expect(parseJson(io)).toMatchObject({ codec: "vp8", output: join(cwd, "out", "video.webm") });

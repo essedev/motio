@@ -1,4 +1,5 @@
 import type { AudioCodec } from "@motiojs/audio";
+import { isVideoCodec, VIDEO_CODEC_SPECS } from "./codecs.js";
 import { MotioError } from "./errors.js";
 import type { Codec } from "./options.js";
 
@@ -17,16 +18,25 @@ export const DEFAULT_AUDIO_BITRATE = "320k";
 /** Default output sample rate. */
 export const DEFAULT_SAMPLE_RATE = 48_000;
 
-/**
- * Audio codecs each output codec can carry, the default first (D-030). Only the codecs Motio
- * renders are listed.
- */
-const SUPPORTED: Partial<Record<Codec, readonly AudioCodec[]>> = {
-	h264: ["aac", "mp3"],
+/** Audio codecs of the audio-only outputs. */
+const AUDIO_ONLY: Record<AudioOnlyCodec, readonly AudioCodec[]> = {
 	aac: ["aac"],
 	mp3: ["mp3"],
 	wav: ["pcm-16"],
 };
+
+/**
+ * Audio codecs an output codec can carry, the default first (D-030, D-037); empty for GIF,
+ * undefined for codecs Motio does not render.
+ */
+export function supportedAudioCodecs(codec: Codec): readonly AudioCodec[] | undefined {
+	if (isAudioOnlyCodec(codec)) return AUDIO_ONLY[codec];
+	if (isVideoCodec(codec)) return VIDEO_CODEC_SPECS[codec].audioCodecs;
+	return undefined;
+}
+
+/** Sample rates libopus encodes. */
+export const OPUS_SAMPLE_RATES = [48_000, 24_000, 16_000, 12_000, 8_000] as const;
 
 /** File extension of an audio-only output, and of the audio written by `separateAudioTo`. */
 export const AUDIO_EXTENSIONS: Record<AudioCodec, string> = {
@@ -50,12 +60,12 @@ export function resolveAudioCodec(
 	audioCodec: string | null | undefined,
 	preferLossless: boolean,
 ): AudioCodec {
-	const supported = SUPPORTED[codec];
+	const supported = supportedAudioCodecs(codec);
 	if (!supported) {
-		throw new MotioError(
-			"E_UNSUPPORTED_CODEC",
-			`Codec "${codec}" is not supported yet; Motio renders h264, mp3, aac and wav.`,
-		);
+		throw new MotioError("E_UNSUPPORTED_CODEC", `Codec "${codec}" is not supported yet.`);
+	}
+	if (supported.length === 0) {
+		throw new MotioError("E_INVALID_OPTION", `The codec "${codec}" cannot carry audio.`);
 	}
 	if (audioCodec !== null && audioCodec !== undefined) {
 		if (!(AUDIO_CODECS as readonly string[]).includes(audioCodec)) {
@@ -86,6 +96,16 @@ export function resolveAudioBitrate(value: string | null | undefined): string {
 		);
 	}
 	return value;
+}
+
+/** Throws unless the audio codec can encode at `sampleRate` (Opus takes five rates). */
+export function assertSampleRateFits(audioCodec: AudioCodec, sampleRate: number): void {
+	if (audioCodec === "opus" && !(OPUS_SAMPLE_RATES as readonly number[]).includes(sampleRate)) {
+		throw new MotioError(
+			"E_INVALID_OPTION",
+			`The audio codec "opus" encodes at ${OPUS_SAMPLE_RATES.join(", ")} Hz, not at ${sampleRate} Hz. Change sampleRate.`,
+		);
+	}
 }
 
 /** Validates `sampleRate`. */

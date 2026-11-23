@@ -30,10 +30,11 @@
 				},
 				"output": {
 					"type": "string",
-					"description": "Absolute path."
+					"description": "Absolute path: the file, or the folder of an image sequence."
 				},
 				"codec": {
-					"type": "string"
+					"type": ["string", "null"],
+					"description": "The codec, or null for an image sequence."
 				},
 				"renderedFrames": {
 					"type": "integer",
@@ -48,6 +49,14 @@
 				},
 				"warnings": {
 					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				},
+				"sequence": {
+					"const": true,
+					"description": "Present when the output is an image sequence folder."
+				},
+				"imageFormat": {
+					"enum": ["jpeg", "png"],
+					"description": "Image format of an image sequence."
 				}
 			}
 		},
