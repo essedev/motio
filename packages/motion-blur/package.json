@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/motion-blur",
 	"version": "0.0.0",
-	"description": "Camera motion blur and trails for Motio, mirroring @remotion/motion-blur",
+	"description": "Motion blur (HTML-in-canvas, camera) and trails for Motio, mirroring @remotion/motion-blur",
 	"license": "Apache-2.0",
 	"type": "module",
 	"exports": {
