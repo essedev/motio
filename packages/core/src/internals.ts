@@ -26,6 +26,17 @@ export {
 	RemotionEnvironmentContext,
 	registerPlayerMount,
 } from "./environment.js";
+export {
+	type AudioIntentInput,
+	AudioIntentRegistry,
+	audioIntents,
+} from "./media/audio-intents.js";
+export {
+	type MediaPlayback,
+	MediaPlaybackContext,
+	type SharedAudioPool,
+	useMediaPlayback,
+} from "./media/playback-context.js";
 export { getPrefetchedUrl } from "./prefetch.js";
 export {
 	type ClosedHandle,

@@ -4,8 +4,11 @@
  * import it from `@motiojs/core/protocol`.
  */
 
-/** Bumped on any breaking change to the types below. The renderer refuses other versions. */
-export const PROTOCOL_VERSION = 1;
+/**
+ * Bumped on any breaking change to the types below. The renderer refuses other versions.
+ * 2: per-frame `AudioIntent` with the source position, and `RunContext.mediaBaseUrl`.
+ */
+export const PROTOCOL_VERSION = 2;
 
 /** Name of the global the page installs. */
 export const PAGE_API_GLOBAL = "__motio";
@@ -38,6 +41,47 @@ export interface RunContext {
 	 * model. Default 0.
 	 */
 	frameSeed?: number;
+	/**
+	 * Absolute URL, ending in `/`, of the renderer's media service (see `MEDIA_ROUTES`). Media
+	 * components read extracted video frames and media information from it during a render.
+	 */
+	mediaBaseUrl?: string;
+}
+
+/**
+ * Routes of the renderer's media service, relative to `RunContext.mediaBaseUrl`. Each takes the
+ * media URL as the `src` query parameter.
+ *
+ * - `info`: JSON `MediaInfo`.
+ * - `frame`: the source frame shown at `t` seconds (`mode` `floor` or `nearest`), as an image.
+ * - `locate`: JSON `FrameLocation` for `t` and `mode`.
+ */
+export const MEDIA_ROUTES = { info: "info", frame: "frame", locate: "locate" } as const;
+
+/** What the media service's `info` route returns. */
+export interface MediaInfo {
+	/** Duration of the longest stream, in seconds; null when the container does not say. */
+	durationInSeconds: number | null;
+	/** The first video stream, if any. */
+	video: { width: number; height: number; frameCount: number } | null;
+	/** Number of audio streams. */
+	audioStreams: number;
+}
+
+/** What the media service's `locate` route returns. */
+export interface FrameLocation {
+	/** Index of the selected source frame. */
+	index: number;
+	/** Presentation time of that frame, in seconds from the stream start. */
+	timestamp: number;
+	/** The middle of the frame's display interval: where a native element must seek to show it. */
+	seekTime: number;
+}
+
+/** Error body of the media service, with an HTTP error status. */
+export interface MediaServiceError {
+	code: string;
+	message: string;
 }
 
 /**
@@ -80,18 +124,34 @@ export interface FrameWarning {
 	message: string;
 }
 
-/** An audio source active on a frame, collected by the audio pass (M3). */
+/**
+ * An audio source playing on one frame, reported by a media component in `FrameReport.audio`.
+ * The renderer joins the intents of consecutive frames into continuous segments: a segment
+ * continues while `sourceFrame` advances by `playbackRate` per frame.
+ */
 export interface AudioIntent {
+	/**
+	 * Tells apart intents that are otherwise identical (the same source at the same position),
+	 * numbered from "0" in volume order.
+	 */
 	id: string;
+	/** Absolute URL of the media. */
 	src: string;
-	/** Absolute composition frame where the source starts playing. */
-	startFrame: number;
-	/** Source offset in frames at the start, after trim. */
-	trimBeforeFrames: number;
+	/**
+	 * Position in the source at the start of this frame, in composition frames (seconds times
+	 * fps), after trimming and looping.
+	 */
+	sourceFrame: number;
+	/** Source frames per composition frame: the media's `playbackRate` times enclosing rates. */
 	playbackRate: number;
+	/** Pitch factor (`toneFrequency`), 1 for none. */
 	toneFrequency: number;
+	/** False when the pitch follows `playbackRate` instead of being kept. */
+	preservePitch: boolean;
+	/** Linear volume on this frame, 0 when muted. */
 	volume: number;
-	muted: boolean;
+	/** Zero-based audio stream of the file; null picks the first one. */
+	audioStreamIndex: number | null;
 }
 
 export interface FrameReport {

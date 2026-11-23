@@ -15,6 +15,7 @@ import {
 	toCompositionInfo,
 } from "../composition/resolve.js";
 import { getRunContext } from "../environment.js";
+import { audioIntents } from "../media/audio-intents.js";
 import {
 	type CompositionInfo,
 	FRAME_ATTRIBUTE,
@@ -341,7 +342,7 @@ class PageRuntime {
 		return {
 			frame: readBack,
 			warnings,
-			audio: [],
+			audio: audioIntents.snapshot(),
 			timings: { renderMs, settleMs: settled.settleMs },
 		};
 	}

@@ -1,6 +1,7 @@
 import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { PROTOCOL_VERSION } from "@motiojs/core/protocol";
 import { afterAll, describe, expect, it } from "vitest";
 import {
 	type BrowserLog,
@@ -100,7 +101,7 @@ describe("errors", () => {
 		);
 		expect(err.code).toBe("E_PROTOCOL_MISMATCH");
 		expect(err.message).toContain("protocol 999");
-		expect(err.message).toContain("speaks protocol 1");
+		expect(err.message).toContain(`speaks protocol ${PROTOCOL_VERSION}`);
 	}, 60_000);
 
 	it("names the available compositions for an unknown id", async () => {

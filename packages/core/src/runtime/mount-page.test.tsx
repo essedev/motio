@@ -1,8 +1,9 @@
-import { lazy, useDeferredValue, useEffect, useState } from "react";
+import { lazy, useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Composition, Still } from "../composition/composition.js";
 import { Folder } from "../composition/folder.js";
 import { registerRoot, resetRoot } from "../composition/register-root.js";
+import { audioIntents } from "../media/audio-intents.js";
 import { RUN_CONTEXT_GLOBAL } from "../protocol.js";
 import { cancelRender, continueRender, delayRender } from "../readiness/delay-render.js";
 import { readiness } from "../readiness/registry.js";
@@ -289,6 +290,60 @@ describe("mountPage", () => {
 		expect(container.querySelector("[data-motio-from]")?.getAttribute("data-motio-from")).toBe(
 			"10",
 		);
+	});
+});
+
+describe("audio intents", () => {
+	const Sound = ({ from }: { from: number }) => {
+		const frame = useCurrentFrame();
+		const owner = useRef({});
+		useLayoutEffect(() => {
+			const token = owner.current;
+			audioIntents.set(token, {
+				src: "http://x/a.wav",
+				sourceFrame: frame - from,
+				playbackRate: 1,
+				toneFrequency: 1,
+				preservePitch: true,
+				volume: 1,
+				audioStreamIndex: null,
+			});
+			return () => audioIntents.delete(token);
+		}, [frame, from]);
+		return null;
+	};
+
+	it("returns the intents of the mounted components in the frame report", async () => {
+		registerRoot(() => (
+			<Composition
+				id="a"
+				component={() => (
+					<Sequence from={10}>
+						<Sound from={0} />
+					</Sequence>
+				)}
+				width={10}
+				height={10}
+				fps={30}
+				durationInFrames={30}
+			/>
+		));
+		const api = mountPage({ container, installGlobal: false });
+		await api.setComposition("a", {});
+		expect((await api.seek(5)).audio).toEqual([]);
+		expect((await api.seek(12)).audio).toEqual([
+			{
+				id: "0",
+				src: "http://x/a.wav",
+				sourceFrame: 2,
+				playbackRate: 1,
+				toneFrequency: 1,
+				preservePitch: true,
+				volume: 1,
+				audioStreamIndex: null,
+			},
+		]);
+		expect((await api.seek(3)).audio).toEqual([]);
 	});
 });
 
