@@ -104,7 +104,6 @@ export const CODEC_EXTENSIONS: Record<Codec, string> = {
 
 const EXTENSION_CODECS: Record<string, Codec> = {
 	mp4: "h264",
-	m4v: "h264",
 	webm: "vp8",
 	mov: "prores",
 	mkv: "h264-mkv",
