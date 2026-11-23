@@ -113,6 +113,7 @@ export class RenderPage {
 	private failure: MotioError | undefined;
 	private readonly waiters = new Set<(err: MotioError) => void>();
 	private closed = false;
+	private closing: Promise<void> | undefined;
 	private composition: string | undefined;
 	/** Frame of the page call in flight, stamped on errors that interrupt it. */
 	private inFlightFrame: number | undefined;
@@ -606,11 +607,17 @@ export class RenderPage {
 		);
 	}
 
-	/** Closes the page and kills its browser process. Safe to call more than once. */
-	async close(): Promise<void> {
-		if (this.closed) return;
-		this.closed = true;
-		await killBrowser(this.browser);
+	/**
+	 * Closes the page and kills its browser process. Safe to call more than once: every call
+	 * resolves when the process has exited, so a caller awaiting it never races a close another
+	 * caller started (a cancelled render used to return while its browsers were still exiting).
+	 */
+	close(): Promise<void> {
+		if (!this.closing) {
+			this.closed = true;
+			this.closing = killBrowser(this.browser);
+		}
+		return this.closing;
 	}
 }
 

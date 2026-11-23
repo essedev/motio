@@ -26,13 +26,17 @@ const dir = mkdtempSync(join(tmpdir(), "motio-api-"));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 describe("browser", () => {
-	it("finds the pinned chrome-headless-shell in the cache", async () => {
-		const b = await ensureBrowser();
-		expect(b.version).toBe(CHROME_VERSION);
-		expect(b.downloaded).toBe(false);
-		const r = spawnSync(b.executablePath, ["--version"], { encoding: "utf8" });
-		expect(r.stdout).toContain(CHROME_VERSION);
-	});
+	// The pinned image ships its browser outside the cache and points MOTIO_BROWSER_EXECUTABLE at it.
+	it.skipIf(process.env.MOTIO_BROWSER_EXECUTABLE)(
+		"finds the pinned chrome-headless-shell in the cache",
+		async () => {
+			const b = await ensureBrowser();
+			expect(b.version).toBe(CHROME_VERSION);
+			expect(b.downloaded).toBe(false);
+			const r = spawnSync(b.executablePath, ["--version"], { encoding: "utf8" });
+			expect(r.stdout).toContain(CHROME_VERSION);
+		},
+	);
 });
 
 describe("compositions", () => {
@@ -206,10 +210,11 @@ describe("renderMedia", () => {
 			outputLocation: out,
 			onProgress: (p) => {
 				for (const pid of childPids()) {
-					const comm = spawnSync("ps", ["-o", "comm=", "-p", String(pid)], {
+					// The command line, not `comm`: Linux truncates `comm` to 15 characters.
+					const args = spawnSync("ps", ["-o", "args=", "-p", String(pid)], {
 						encoding: "utf8",
 					}).stdout;
-					if (comm.includes("chrome-headless-shell")) {
+					if (args.includes("chrome-headless-shell")) {
 						seen.add(pid);
 						if (!killed && p.renderedFrames >= 60) {
 							killed = true;
