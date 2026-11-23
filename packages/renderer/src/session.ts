@@ -2,6 +2,11 @@ import type { CompositionInfo, ResolvedComposition } from "@motiojs/core/protoco
 import { ensureBrowser } from "./browser/ensure.js";
 import type { ChromiumOptions } from "./browser/flags.js";
 import type { BrowserLog } from "./browser-log.js";
+import {
+	type CaptureMethod,
+	type CaptureMethodOption,
+	resolveCaptureMethod,
+} from "./capture-method.js";
 import { MotioError } from "./errors.js";
 import { resolveFfmpegPath, resolveFfprobePath } from "./ffmpeg.js";
 import { type MediaServer, startMediaServer } from "./media-server.js";
@@ -34,6 +39,12 @@ export interface BrowserSessionOptions {
 	 * FFmpeg executable.
 	 */
 	ffprobeExecutable?: string | null;
+	/**
+	 * Motio extension: how frames are captured (D-013). `auto` (the default, or
+	 * `$MOTIO_CAPTURE_METHOD`) uses BeginFrame on Linux when a start-up probe succeeds and
+	 * `Page.captureScreenshot` otherwise; `begin-frame` and `screenshot` force a path.
+	 */
+	captureMethod?: CaptureMethodOption | null;
 }
 
 /** A Remotion-shaped composition description returned by `getCompositions` and `selectComposition`. */
@@ -57,6 +68,8 @@ export interface VideoConfig {
 /** Resolved common options plus the bundle server. */
 export interface BrowserSession {
 	executablePath: string;
+	/** The resolved capture path of the session's render pages. */
+	captureMethod: CaptureMethod;
 	server: StaticServer;
 	/** Media service for video frames and media information (D-015, D-016). */
 	media: MediaServer;
@@ -76,8 +89,14 @@ export interface BrowserSession {
 	close(): Promise<void>;
 }
 
-/** Validates the common options, finds the browser and starts the bundle server. */
-export async function openSession(options: BrowserSessionOptions): Promise<BrowserSession> {
+/**
+ * Validates the common options, finds the browser and starts the bundle server. With `capture`
+ * false (listing compositions) no capture path is probed and pages use the screenshot launch.
+ */
+export async function openSession(
+	options: BrowserSessionOptions,
+	capture = true,
+): Promise<BrowserSession> {
 	const inputProps = resolveInputProps(options.inputProps);
 	const envVariables = resolveEnvVariables(options.envVariables);
 	const timeoutInMilliseconds = resolveTimeout(options.timeoutInMilliseconds);
@@ -86,6 +105,9 @@ export async function openSession(options: BrowserSessionOptions): Promise<Brows
 		options.browserExecutable ??
 		process.env.MOTIO_BROWSER_EXECUTABLE ??
 		(await ensureBrowser()).executablePath;
+	const captureMethod: CaptureMethod = capture
+		? await resolveCaptureMethod(options.captureMethod, executablePath, chromiumOptions)
+		: "screenshot";
 	const server = await openServeUrl(options.serveUrl, options.port ?? undefined);
 	const ffmpeg = resolveFfmpegPath(options.ffmpegExecutable);
 	const ffprobe = resolveFfprobePath(options.ffprobeExecutable, ffmpeg);
@@ -104,6 +126,7 @@ export async function openSession(options: BrowserSessionOptions): Promise<Brows
 	const onBrowserLog = options.onBrowserLog;
 	return {
 		executablePath,
+		captureMethod,
 		server,
 		media,
 		ffmpeg,
@@ -122,6 +145,7 @@ export async function openSession(options: BrowserSessionOptions): Promise<Brows
 			timeoutInMilliseconds,
 			onBrowserLog,
 			mediaBaseUrl: media.url,
+			captureMethod,
 			...size,
 		}),
 		close: async () => {
@@ -177,9 +201,11 @@ export function toVideoConfig(
 
 /** Opens a page that only lists compositions (no viewport size known yet). */
 export function openListingPage(session: BrowserSession): Promise<RenderPage> {
-	return RenderPage.open(
-		session.pageConfig({ width: 1280, height: 720, scale: 1, transparent: false }),
-	);
+	// Listing captures nothing, so it never needs the BeginFrame launch.
+	return RenderPage.open({
+		...session.pageConfig({ width: 1280, height: 720, scale: 1, transparent: false }),
+		captureMethod: "screenshot",
+	});
 }
 
 /** Default props merged with input props, shallowly, as the props a composition receives. */

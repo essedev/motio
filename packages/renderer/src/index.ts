@@ -5,6 +5,7 @@ export {
 	ensureBrowser,
 } from "./browser/ensure.js";
 export {
+	BEGIN_FRAME_FLAGS,
 	type ChromiumOptions,
 	chromeArgs,
 	DETERMINISM_FLAGS,
@@ -13,6 +14,13 @@ export {
 export { CHROME_ARCHIVE_SHA256, CHROME_VERSION, type ChromePlatform } from "./browser/pinned.js";
 export type { BrowserLog, BrowserLogLocation, BrowserLogType } from "./browser-log.js";
 export { type CancelSignal, type CancelSignalHandle, makeCancelSignal } from "./cancel.js";
+export {
+	type BeginFrameProbe,
+	CAPTURE_METHODS,
+	type CaptureMethod,
+	type CaptureMethodOption,
+	probeBeginFrame,
+} from "./capture-method.js";
 export {
 	type GetCompositionsOptions,
 	getCompositions,

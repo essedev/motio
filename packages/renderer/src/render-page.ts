@@ -13,6 +13,7 @@ import type { Browser, CDPSession, Page } from "puppeteer-core";
 import type { ChromiumOptions } from "./browser/flags.js";
 import { launchBrowser } from "./browser/launch.js";
 import type { BrowserLog, BrowserLogType } from "./browser-log.js";
+import { BEGIN_FRAME_ATTEMPTS, type CaptureMethod } from "./capture-method.js";
 import { MotioError, type MotioErrorCode } from "./errors.js";
 
 /** Everything needed to open a page on a bundle. */
@@ -31,7 +32,19 @@ export interface PageConfig {
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
 	/** Base URL of the renderer's media service, passed to the page in the run context. */
 	mediaBaseUrl?: string;
+	/** Capture path (D-013). Default `screenshot`. */
+	captureMethod?: CaptureMethod;
 }
+
+/**
+ * While a page call is in flight on a BeginFrame page, frames without display updates are sent
+ * at this interval so `requestAnimationFrame` callbacks keep running: under BeginFrame control
+ * the compositor produces no frame on its own.
+ */
+export const BEGIN_FRAME_PUMP_MS = 16;
+
+/** Resource types a BeginFrame capture waits for: those style and layout request. */
+const TRACKED_RESOURCES = new Set(["Image", "Font", "Stylesheet"]);
 
 /** Extra time the Node watchdog gives a seek beyond the readiness timeout. */
 export const WATCHDOG_GRACE_MS = 5_000;
@@ -103,6 +116,13 @@ export class RenderPage {
 	private composition: string | undefined;
 	/** Frame of the page call in flight, stamped on errors that interrupt it. */
 	private inFlightFrame: number | undefined;
+	/** The last BeginFrame sent; BeginFrames are serialised. */
+	private frameChain: Promise<unknown> = Promise.resolve();
+	/** BeginFrame pages: images, fonts and style sheets being loaded, by request id. */
+	private readonly loading = new Set<string>();
+	/** BeginFrame pages: such requests started so far. */
+	private requestsStarted = 0;
+	private readonly loadingWaiters = new Set<() => void>();
 
 	private constructor(
 		private readonly browser: Browser,
@@ -118,6 +138,7 @@ export class RenderPage {
 			chromiumOptions: config.chromiumOptions,
 			width: Math.round(config.width * config.scale),
 			height: Math.round(config.height * config.scale),
+			...(config.captureMethod === "begin-frame" ? { beginFrame: { scale: config.scale } } : {}),
 		});
 		let rp: RenderPage | undefined;
 		try {
@@ -133,6 +154,11 @@ export class RenderPage {
 			else await killBrowser(browser);
 			throw err;
 		}
+	}
+
+	/** The capture path of this page. */
+	get captureMethod(): CaptureMethod {
+		return this.config.captureMethod ?? "screenshot";
 	}
 
 	/** Process id of the browser, for diagnostics. */
@@ -223,8 +249,14 @@ export class RenderPage {
 	 * Runs `work`, rejecting early if the page fails (crash, uncaught error) or the watchdog
 	 * fires after `timeoutMs`.
 	 */
-	private guard<T>(work: Promise<T>, timeoutMs: number, onTimeout: () => MotioError): Promise<T> {
+	private guard<T>(
+		work: Promise<T>,
+		timeoutMs: number,
+		onTimeout: () => MotioError,
+		pump = true,
+	): Promise<T> {
 		if (this.failure) return Promise.reject(this.failure);
+		if (pump && this.captureMethod === "begin-frame") work = this.pumpWhile(work);
 		return new Promise<T>((resolve, reject) => {
 			let settled = false;
 			const done = (fn: () => void) => {
@@ -257,8 +289,83 @@ export class RenderPage {
 		});
 	}
 
+	/**
+	 * Sends a BeginFrame after any BeginFrame still in flight: Chrome handles one at a time.
+	 * Rejections propagate to the caller only; the chain itself never rejects.
+	 */
+	private beginFrame(params: {
+		interval: number;
+		noDisplayUpdates?: boolean;
+		screenshot?: { format: "jpeg" | "png" | "webp"; quality?: number; optimizeForSpeed?: boolean };
+	}): Promise<{ hasDamage: boolean; screenshotData?: string }> {
+		const next = this.frameChain.then(() =>
+			this.cdp.send("HeadlessExperimental.beginFrame", params),
+		);
+		this.frameChain = next.catch(() => undefined);
+		return next;
+	}
+
+	/**
+	 * Keeps the compositor ticking until `work` settles, so `requestAnimationFrame` callbacks run
+	 * on a BeginFrame page; work that finishes within one interval sends no frame. Resolves after
+	 * the last frame sent, so a capture never overlaps it.
+	 */
+	private async pumpWhile<T>(work: Promise<T>): Promise<T> {
+		let settled = false;
+		let timer: NodeJS.Timeout | undefined;
+		const tick = () => {
+			timer = setTimeout(() => {
+				if (settled || this.closed) return;
+				void this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS, noDisplayUpdates: true })
+					.catch(() => undefined)
+					.then(() => {
+						if (!settled) tick();
+					});
+			}, BEGIN_FRAME_PUMP_MS);
+		};
+		tick();
+		try {
+			return await work;
+		} finally {
+			settled = true;
+			clearTimeout(timer);
+			await this.frameChain;
+		}
+	}
+
+	/**
+	 * Under BeginFrame control style and layout run only inside a frame, so a CSS background image
+	 * or a font is requested only when a frame is drawn. The page tracks those requests to wait
+	 * for them before the frame it captures.
+	 */
+	private async trackResources(): Promise<void> {
+		const done = (e: { requestId: string }) => {
+			if (!this.loading.delete(e.requestId)) return;
+			if (this.loading.size === 0) {
+				for (const w of this.loadingWaiters) w();
+				this.loadingWaiters.clear();
+			}
+		};
+		this.cdp.on("Network.requestWillBeSent", (e) => {
+			if (e.type !== undefined && !TRACKED_RESOURCES.has(e.type)) return;
+			if (e.request.url.startsWith("data:")) return;
+			if (!this.loading.has(e.requestId)) this.requestsStarted++;
+			this.loading.add(e.requestId);
+		});
+		this.cdp.on("Network.loadingFinished", done);
+		this.cdp.on("Network.loadingFailed", done);
+		await this.cdp.send("Network.enable");
+	}
+
+	/** Resolves when no tracked resource is loading. */
+	private resourcesLoaded(): Promise<void> {
+		if (this.loading.size === 0) return Promise.resolve();
+		return new Promise((resolve) => this.loadingWaiters.add(resolve));
+	}
+
 	private async prepare(): Promise<void> {
 		const c = this.config;
+		if (this.captureMethod === "begin-frame") await this.trackResources();
 		const context: RunContext = {
 			protocol: PROTOCOL_VERSION,
 			inputProps: c.inputProps,
@@ -425,6 +532,9 @@ export class RenderPage {
 	/** Captures the viewport as JPEG, PNG or WebP. */
 	async capture(format: "jpeg" | "png" | "webp", quality: number, frame: number): Promise<Buffer> {
 		const timeout = this.config.timeoutInMilliseconds + WATCHDOG_GRACE_MS;
+		if (this.captureMethod === "begin-frame") {
+			return this.guardCapture(this.captureBeginFrame(format, quality, frame), timeout, frame);
+		}
 		const res = await this.guard(
 			this.cdp.send("Page.captureScreenshot", {
 				format,
@@ -444,6 +554,56 @@ export class RenderPage {
 				),
 		);
 		return Buffer.from(res.data, "base64");
+	}
+
+	/** Like `guard`, without pumping frames: the capture sends its own. */
+	private guardCapture(work: Promise<Buffer>, timeout: number, frame: number): Promise<Buffer> {
+		return this.guard(
+			work,
+			timeout,
+			() =>
+				new MotioError(
+					"E_CAPTURE_FAILED",
+					`Capturing frame ${frame} took longer than ${timeout} ms.`,
+					{
+						frame,
+					},
+				),
+			false,
+		);
+	}
+
+	/**
+	 * Draws one frame with BeginFrame and returns its screenshot. The first frames after a
+	 * navigation can come without a screenshot while the compositor initialises, so a few
+	 * attempts are made before failing with `E_CAPTURE_FAILED`.
+	 */
+	private async captureBeginFrame(
+		format: "jpeg" | "png" | "webp",
+		quality: number,
+		frame: number,
+	): Promise<Buffer> {
+		// Frames without display updates run style and layout, which starts the requests for
+		// resources the frame needs (CSS images, fonts); wait for them until a frame starts none.
+		// The evaluation is a round trip through the page's main thread, which delivers the
+		// request events sent during the frame before its result.
+		for (let pass = 0; pass < BEGIN_FRAME_ATTEMPTS; pass++) {
+			const started = this.requestsStarted;
+			await this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS, noDisplayUpdates: true });
+			await this.cdp.send("Runtime.evaluate", { expression: "0" });
+			await this.resourcesLoaded();
+			if (this.requestsStarted === started) break;
+		}
+		const screenshot = { format, ...(format === "png" ? {} : { quality }), optimizeForSpeed: true };
+		for (let attempt = 0; attempt < BEGIN_FRAME_ATTEMPTS; attempt++) {
+			const res = await this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS, screenshot });
+			if (res.screenshotData) return Buffer.from(res.screenshotData, "base64");
+		}
+		throw new MotioError(
+			"E_CAPTURE_FAILED",
+			`No BeginFrame returned a screenshot of frame ${frame} in ${BEGIN_FRAME_ATTEMPTS} attempts. Retry with captureMethod "screenshot".`,
+			{ frame },
+		);
 	}
 
 	/** Closes the page and kills its browser process. Safe to call more than once. */

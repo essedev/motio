@@ -48,6 +48,20 @@ export const DETERMINISM_FLAGS: readonly string[] = [
 	"--disable-sync",
 ];
 
+/**
+ * Extra flags of the BeginFrame capture path (D-013): the compositor draws only when the renderer
+ * sends `HeadlessExperimental.beginFrame`, and every stage runs before the frame is drawn.
+ */
+export const BEGIN_FRAME_FLAGS: readonly string[] = [
+	"--enable-begin-frame-control",
+	"--deterministic-mode",
+	"--run-all-compositor-stages-before-draw",
+	"--disable-new-content-rendering-timeout",
+	"--disable-threaded-animation",
+	"--disable-threaded-scrolling",
+	"--disable-checker-imaging",
+];
+
 const GL_FLAGS: Record<OpenGlRenderer, readonly string[]> = {
 	swangle: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
 	// Modern Chrome only offers SwiftShader through ANGLE.

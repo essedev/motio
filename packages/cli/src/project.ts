@@ -101,6 +101,9 @@ export async function openProject(
 	return { config, serveUrl, session, bundle };
 }
 
+/** Values of `--capture-method` (D-013). */
+const CAPTURE_METHODS = ["auto", "begin-frame", "screenshot"] as const;
+
 /**
  * The renderer options every call shares (browser, timeout, logging, props), read from the
  * flags with the config as fallback. `rendererPort` is passed in because `motio dev` uses
@@ -127,6 +130,7 @@ export function buildSessionOptions(
 		flags.string("browser-executable") ?? config.browserExecutable ?? undefined;
 	const props = flags.string("props");
 	const logLevel = logLevelFrom(flags) ?? config.logLevel;
+	const captureMethod = flags.oneOf("capture-method", CAPTURE_METHODS);
 
 	return {
 		serveUrl,
@@ -136,6 +140,7 @@ export function buildSessionOptions(
 		...(port ? { port } : {}),
 		...(browserExecutable ? { browserExecutable: resolvePath(rootDir, browserExecutable) } : {}),
 		...(logLevel ? { logLevel } : {}),
+		...(captureMethod ? { captureMethod } : {}),
 		chromiumOptions: {
 			...(gl ? { gl } : {}),
 			...(userAgent ? { userAgent } : {}),

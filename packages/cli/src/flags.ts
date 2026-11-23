@@ -26,6 +26,11 @@ export const PROJECT_FLAGS = {
 	"disable-web-security": { type: "boolean", description: "Disable CORS and other web security." },
 	"user-agent": { type: "string", description: "User agent of the pages." },
 	"dark-mode": { type: "boolean", description: "Emulate prefers-color-scheme: dark." },
+	"capture-method": {
+		type: "string",
+		description:
+			"Motio: frame capture, auto (BeginFrame on Linux when available), begin-frame or screenshot.",
+	},
 	width: { type: "string", description: "Override the composition width." },
 	height: { type: "string", description: "Override the composition height." },
 	fps: { type: "string", description: "Override the composition frame rate." },

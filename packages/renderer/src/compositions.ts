@@ -39,7 +39,7 @@ export async function getCompositions(
 		typeof optionsOrServeUrl === "string"
 			? { ...legacy, serveUrl: optionsOrServeUrl }
 			: optionsOrServeUrl;
-	const session = await openSession(options);
+	const session = await openSession(options, false);
 	try {
 		const page = await openListingPage(session);
 		try {
@@ -64,7 +64,7 @@ export async function getCompositions(
 
 /** Returns one composition with its final metadata and props, after `calculateMetadata`. */
 export async function selectComposition(options: SelectCompositionOptions): Promise<VideoConfig> {
-	const session = await openSession(options);
+	const session = await openSession(options, false);
 	try {
 		const page = await openListingPage(session);
 		try {

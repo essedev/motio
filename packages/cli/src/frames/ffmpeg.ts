@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { open, readFile } from "node:fs/promises";
 import { MotioError } from "@motiojs/compat";
 import { pngSize } from "./compare.js";
 
@@ -107,6 +107,18 @@ export interface ContactSheetLayout {
 	padding: number;
 }
 
+/** Whether a file starts with the PNG signature. */
+async function isPng(file: string | undefined): Promise<boolean> {
+	if (!file) return false;
+	const handle = await open(file, "r");
+	try {
+		const { buffer, bytesRead } = await handle.read(Buffer.alloc(8), 0, 8, 0);
+		return bytesRead === 8 && buffer.equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+	} finally {
+		await handle.close();
+	}
+}
+
 /** Tiles images (in order, row by row) into one PNG with FFmpeg's `tile` filter. */
 export async function composeContactSheet(
 	ffmpegPath: string,
@@ -121,6 +133,10 @@ export async function composeContactSheet(
 		"-y",
 		"-f",
 		"image2pipe",
+		// Named explicitly from the first file's signature: probing a pipe of small JPEGs can fail
+		// to find a stream.
+		"-c:v",
+		(await isPng(files[0])) ? "png" : "mjpeg",
 		"-i",
 		"pipe:0",
 		"-vf",
