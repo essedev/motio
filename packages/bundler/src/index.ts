@@ -18,6 +18,19 @@ export {
 	loadRemotionConfig,
 } from "./config-file.js";
 export {
+	DEFAULT_DEV_PORT,
+	DEFAULT_PREVIEW_MODULE,
+	DEV_API_PREFIX,
+	type DevLogLevel,
+	type DevServer,
+	type DevServerOptions,
+	type DevStillHandler,
+	type DevStillRequest,
+	type DevStillResult,
+	parseStillRequest,
+	startDevServer,
+} from "./dev-server.js";
+export {
 	ENTRY_POINT_CANDIDATES,
 	type EntryPointReason,
 	type ResolvedEntryPoint,
@@ -26,3 +39,4 @@ export {
 } from "./entry-point.js";
 export { ENV_PREFIX, type LoadEnvOptions, type LoadedEnv, loadEnvVariables } from "./env.js";
 export { encodeStaticPath, STATIC_FILES_LIMIT, type StaticFile } from "./public-dir.js";
+export { listStaticFiles } from "./static-files.js";

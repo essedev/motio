@@ -305,6 +305,12 @@ importers:
       '@motiojs/core':
         specifier: workspace:*
         version: link:../core
+      '@motiojs/preview':
+        specifier: workspace:*
+        version: link:../preview
+      '@vitejs/plugin-react':
+        specifier: 6.3.0
+        version: 6.3.0(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0))
       vite:
         specifier: 8.3.8
         version: 8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)

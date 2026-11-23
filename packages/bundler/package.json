@@ -28,6 +28,8 @@
 	"dependencies": {
 		"@motiojs/compat": "workspace:*",
 		"@motiojs/core": "workspace:*",
+		"@motiojs/preview": "workspace:*",
+		"@vitejs/plugin-react": "6.3.0",
 		"vite": "8.3.8"
 	}
 }
