@@ -1,5 +1,5 @@
 {
-	"$comment": "Official Remotion starter templates, fetched at the pinned commit into .cache/<name> by fetch.ts (never vendored). stills: composition id to frames rendered at scale 1 by Remotion (tools/oracle-render/record-templates.ts) and by Motio (packages/cli/src/templates.integration.test.ts). network: the template loads fonts from the internet while rendering. blockedBy: Motio symbols the template needs that are not implemented yet; the Motio test expects the build to fail until they land. knownMismatch: \"<composition>/<frame>\" to the reason that still does not match yet; the Motio test expects it to miss the thresholds until the cause is fixed. unsupported: the template imports Remotion packages Motio does not provide; the Motio test expects the compat plugin's build error naming one of them.",
+	"$comment": "Official Remotion starter templates, fetched at the pinned commit into .cache/<name> by fetch.ts (never vendored). stills: composition id to frames rendered at scale 1 by Remotion (tools/oracle-render/record-templates.ts) and by Motio (packages/cli/src/templates.integration.test.ts). network: the template loads fonts from the internet while rendering. gl: chromiumOptions.gl Remotion records with (WebGL templates use swangle, the software renderer Motio uses by default). blockedBy: Motio symbols the template needs that are not implemented yet; the Motio test expects the build to fail until they land. knownMismatch: \"<composition>/<frame>\" to the reason that still does not match yet; the Motio test expects it to miss the thresholds until the cause is fixed. unsupported: the template imports Remotion packages Motio does not provide; the Motio test expects the compat plugin's build error naming one of them.",
 	"templates": {
 		"helloworld": {
 			"repository": "https://github.com/remotion-dev/template-helloworld",
@@ -49,7 +49,10 @@
 		"three": {
 			"repository": "https://github.com/remotion-dev/template-three",
 			"commit": "691540390727b7d07daf4099c592464659a1ca64",
-			"unsupported": ["@remotion/three", "@remotion/media"]
+			"stills": {
+				"Scene": [30, 150, 250]
+			},
+			"gl": "swangle"
 		}
 	}
 }

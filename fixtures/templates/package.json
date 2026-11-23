@@ -9,11 +9,16 @@
 		"@motiojs/captions": "workspace:*",
 		"@motiojs/google-fonts": "workspace:*",
 		"@motiojs/layout-utils": "workspace:*",
+		"@motiojs/media": "workspace:*",
 		"@motiojs/media-utils": "workspace:*",
+		"@motiojs/three": "workspace:*",
 		"@motiojs/zod-types": "workspace:*",
+		"@react-three/fiber": "9.2.0",
+		"mediabunny": "1.66.0",
 		"motio": "workspace:*",
 		"react": "19.3.1",
 		"react-dom": "19.3.1",
+		"three": "0.178.0",
 		"zod": "4.6.7"
 	}
 }

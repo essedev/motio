@@ -8,7 +8,12 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createBundle, loadRemotionConfig } from "@motiojs/bundler";
-import { getCompositions, renderStill, selectComposition } from "@motiojs/renderer";
+import {
+	getCompositions,
+	type OpenGlRenderer,
+	renderStill,
+	selectComposition,
+} from "@motiojs/renderer";
 import { decodeImage, psnr, ssim } from "@motiojs/testing";
 import type { Plugin } from "vite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -201,6 +206,7 @@ for (const [name, template] of rendered) {
 					frame,
 					scale: golden.scale,
 					imageFormat: "png",
+					...(template.gl ? { chromiumOptions: { gl: template.gl as OpenGlRenderer } } : {}),
 				});
 				if (!buffer) throw new Error("renderStill returned no buffer");
 				const ours = await decodeImage(buffer);

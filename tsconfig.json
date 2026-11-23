@@ -50,6 +50,9 @@
 			"path": "packages/distributed"
 		},
 		{
+			"path": "packages/three"
+		},
+		{
 			"path": "packages/transitions"
 		},
 		{

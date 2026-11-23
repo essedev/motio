@@ -1340,17 +1340,20 @@
 				"ThreeCanvas": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "supported",
+					"note": "Proven against Remotion stills of fixtures/three and the Three template, both with swangle (D-046)."
 				},
 				"useOffthreadVideoTexture": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "stubbed",
+					"note": "Deprecated, reference page gone (404): throws, pointing to the @remotion/media texture recipe (D-046)."
 				},
 				"useVideoTexture": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing"
+					"status": "stubbed",
+					"note": "Deprecated, reference page gone (404): throws, pointing to the @remotion/media texture recipe (D-046)."
 				}
 			}
 		},
