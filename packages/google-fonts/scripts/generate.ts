@@ -14,8 +14,10 @@ const target = JSON.parse(
 ) as {
 	fonts: { fontFamily: string; importName: string }[];
 };
+// This user agent makes Google serve the same woff2 files @remotion/google-fonts references (checked
+// against the recorded samples); other agents get differently subset files with different metrics.
 const UA =
-	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36";
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 interface Meta {
 	family: string;

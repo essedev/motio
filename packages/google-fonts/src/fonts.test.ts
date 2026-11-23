@@ -52,5 +52,18 @@ describe("@motiojs/google-fonts against @remotion/google-fonts 4.0.545", () => {
 			expect(Object.keys(mod).sort()).toEqual(sample.exports);
 			expect(shape(mod.getInfo())).toEqual(shape(sample.info));
 		});
+
+		it(`${name}: the same font files as the published package`, async () => {
+			const font = getAvailableFonts().find((f) => f.importName === name);
+			expect(font).toBeDefined();
+			const mod = (await font?.load()) as { getInfo(): FontInfo } | undefined;
+			const info = mod?.getInfo();
+			if (!info) throw new Error(`${name} has no getInfo()`);
+			expect(info.fonts).toEqual(sample.info.fonts);
+			expect(info.unicodeRanges).toEqual(sample.info.unicodeRanges);
+			expect(info.variable?.fontFaces.map((f) => f.src).sort()).toEqual(
+				sample.info.variable?.fontFaces.map((f) => f.src).sort(),
+			);
+		});
 	}
 });
