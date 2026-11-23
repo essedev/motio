@@ -32,6 +32,9 @@ importers:
       '@remotion/layout-utils':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/light-leaks':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/lottie':
         specifier: 4.0.545
         version: 4.0.545(lottie-web@5.13.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -57,6 +60,9 @@ importers:
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/shapes':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/starburst':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/three':
@@ -440,6 +446,12 @@ packages:
   '@remotion/licensing@4.0.545':
     resolution: {integrity: sha512-3xXYhNShkGezJUMCJMCpm7tR7OIqGL6hTWn9EXNi0Vde92hGZmLOsNIjkjA7NYHo5lzlTmvyvklIUUgINVZ1lQ==}
 
+  '@remotion/light-leaks@4.0.545':
+    resolution: {integrity: sha512-UQTMnatq7vU9uUx7udU4Z3elkl8JnB7BqivwvFxOFJ+X6qDvwEUMPm9ao2KLMUdp2W0qf+w2myNsKnjSKlV0rA==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
   '@remotion/lottie@4.0.545':
     resolution: {integrity: sha512-q4F1ZhXdbvJPlcMfhKeY5Iwj5weMPztwOQwHokpjdGqWARGFqMNFM4X0jp7AhqLuG2VfN5cVps4E2BniTZfcBg==}
     peerDependencies:
@@ -494,6 +506,12 @@ packages:
 
   '@remotion/shapes@4.0.545':
     resolution: {integrity: sha512-Dwp1r/wUDyW+QAfwFROBKmKAH0xbwV9TjK6FjUxcyQXqZINOUHaSpLqlwT7WPj2uK00GeFB0aw2A2B0v+S72sA==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
+  '@remotion/starburst@4.0.545':
+    resolution: {integrity: sha512-pt43yzlNDfHi0gGQTBZnbf69B71hs/vi9EqcKElwJ3wZFMF5ifE41Gh2F4VgsZIX56vQrX/h3hmxe0Sskad2Ug==}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -1688,6 +1706,14 @@ snapshots:
 
   '@remotion/licensing@4.0.545': {}
 
+  '@remotion/light-leaks@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@remotion/effects': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      zod: 4.6.7
+
   '@remotion/lottie@4.0.545(lottie-web@5.13.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       lottie-web: 5.13.0
@@ -1778,6 +1804,14 @@ snapshots:
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
+  '@remotion/starburst@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@remotion/effects': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      zod: 4.6.7
 
   '@remotion/streaming@4.0.545': {}
 

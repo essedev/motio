@@ -252,6 +252,8 @@ importers:
 
   fixtures/gif: {}
 
+  fixtures/light-leaks: {}
+
   fixtures/lottie: {}
 
   fixtures/media:
@@ -301,6 +303,8 @@ importers:
       vite:
         specifier: ^8.3.8
         version: 8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)
+
+  fixtures/starburst: {}
 
   fixtures/templates:
     dependencies:

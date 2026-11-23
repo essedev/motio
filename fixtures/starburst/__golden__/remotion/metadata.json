@@ -1,0 +1,38 @@
+{
+	"remotion": "4.0.545",
+	"gl": "swangle",
+	"compositions": {
+		"starburst-rotating": {
+			"width": 480,
+			"height": 270,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"starburst-options": {
+			"width": 480,
+			"height": 270,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"starburst-timing": {
+			"width": 480,
+			"height": 270,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"starburst-wide": {
+			"width": 960,
+			"height": 200,
+			"fps": 30,
+			"durationInFrames": 10,
+			"defaultProps": {},
+			"props": {}
+		}
+	}
+}

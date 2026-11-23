@@ -15,7 +15,8 @@
 		"record:templates": "node record-templates.ts",
 		"record:exports": "node record-exports.ts",
 		"record:lottie": "node record-lottie.ts",
-		"record:gif": "node record-gif.ts"
+		"record:gif": "node record-gif.ts",
+		"record:light-leaks-starburst": "node record-light-leaks-starburst.ts"
 	},
 	"dependencies": {
 		"@react-three/fiber": "9.2.0",
@@ -26,6 +27,7 @@
 		"@remotion/gif": "4.0.545",
 		"@remotion/google-fonts": "4.0.545",
 		"@remotion/layout-utils": "4.0.545",
+		"@remotion/light-leaks": "4.0.545",
 		"@remotion/lottie": "4.0.545",
 		"@remotion/media": "4.0.545",
 		"@remotion/media-utils": "4.0.545",
@@ -35,6 +37,7 @@
 		"@remotion/player": "4.0.545",
 		"@remotion/renderer": "4.0.545",
 		"@remotion/shapes": "4.0.545",
+		"@remotion/starburst": "4.0.545",
 		"@remotion/three": "4.0.545",
 		"@remotion/transitions": "4.0.545",
 		"@remotion/zod-types": "4.0.545",

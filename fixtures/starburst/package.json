@@ -1,0 +1,8 @@
+{
+	"name": "@motiojs/fixture-starburst",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"license": "Apache-2.0",
+	"description": "@remotion/starburst fixture written against the Remotion API, for golden comparison of @motiojs/starburst"
+}

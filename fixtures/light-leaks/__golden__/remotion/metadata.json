@@ -1,0 +1,22 @@
+{
+	"remotion": "4.0.545",
+	"gl": "swangle",
+	"compositions": {
+		"light-leak-basic": {
+			"width": 480,
+			"height": 270,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		},
+		"light-leak-cut": {
+			"width": 480,
+			"height": 270,
+			"fps": 30,
+			"durationInFrames": 60,
+			"defaultProps": {},
+			"props": {}
+		}
+	}
+}
