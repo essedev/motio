@@ -32,12 +32,23 @@ export const encodeDeep = (value) => {
 	return encodeNumber(value);
 };
 
-/** Runs fn and returns either { out } or { error } with the thrown message. */
+/**
+ * The built-in class an error derives from ("TypeError", "RangeError", ..., "Error"). The tests
+ * compare failures on this class and on the options the message names, never on its wording.
+ */
+export const errorTypeOf = (e) => {
+	for (const C of [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError]) {
+		if (e instanceof C) return C.name;
+	}
+	return e instanceof Error ? "Error" : "unknown";
+};
+
+/** Runs fn and returns either { out } or { error, errorType }: the thrown message and its class. */
 export const capture = (fn) => {
 	try {
 		return { out: fn() };
 	} catch (e) {
-		return { error: e instanceof Error ? e.message : String(e) };
+		return { error: e instanceof Error ? e.message : String(e), errorType: errorTypeOf(e) };
 	}
 };
 
