@@ -24,8 +24,8 @@
 				"AnimatedImage": {
 					"kind": "value",
 					"tier": 2,
-					"status": "missing",
-					"note": "Being reimplemented from the docs and the recorded oracle only (D-067)."
+					"status": "supported",
+					"note": "Rewritten from the docs and the recorded oracle only (D-067). Deliberate differences (D-066): the frame shown is the one whose display interval contains the current time (Remotion: the nearest start, up to half a frame earlier), a frame of duration 0 lasts 100 ms, and a failed load without onError fails the render. effects is not supported. Measured in packages/core/COMPAT.md."
 				},
 				"Artifact": {
 					"kind": "value",

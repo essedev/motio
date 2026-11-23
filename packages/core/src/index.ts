@@ -45,6 +45,12 @@ export {
 	interpolate,
 } from "./interpolate.js";
 export { type InterpolateColorsOptions, interpolateColors } from "./interpolate-colors.js";
+export {
+	AnimatedImage,
+	type AnimatedImageFillMode,
+	type AnimatedImageLoopBehavior,
+	type AnimatedImageProps,
+} from "./media/animated-image.js";
 export { IFrame, type IFrameProps } from "./media/iframe.js";
 export { Img, type ImgProps } from "./media/img.js";
 export {

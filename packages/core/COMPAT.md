@@ -1,6 +1,6 @@
 # Compatibility with Remotion
 
-How the pure functions of `@motiojs/core`, and what `Interactive` renders, compare with the published `remotion` package. Every row is checked by the co-located tests against fixtures recorded from Remotion's public API by `tools/oracle` (`pnpm install && pnpm record` there), never from its source code.
+How the pure functions of `@motiojs/core`, what `Interactive` renders and what `AnimatedImage` shows compare with the published `remotion` package. Every row is checked by the co-located tests against fixtures recorded from Remotion's public API by `tools/oracle` (`pnpm install && pnpm record` there) and `tools/oracle-render` (`pnpm record:animated-image`), never from its source code.
 
 Recorded version: **remotion 4.0.545** (stamped in every fixture under `src/__oracle__/`).
 
@@ -17,6 +17,7 @@ Error is relative for values with magnitude at least 1 and absolute below.
 | `spring`            | within tolerance | 1e-12            | 5.9e-15                     | 51060 frames: 240 physical configs (under and overdamped, `overshootClamping`), `from`/`to`, fps 24/25/29.97/30/60, `durationInFrames`, `durationRestThreshold`, `delay`, `reverse`, negative and fractional frames, 16 validation and degenerate cases |
 | `measureSpring`     | exact            | identical number | 0                           | 2898 cases: config grid x fps x threshold, deprecated `from`/`to`, validation failures                                                                                                                                                                  |
 | `Interactive`       | exact            | identical markup | 0                           | 65 scenes rendered at chosen frames inside `@remotion/player`'s `Thumbnail`: all 35 elements, timing props, premount and postmount, crop (with radius, overlapping), loop, freeze, nesting, `withSchema()` with and without `wrapInSequence`, `create()` with both layouts; element names and display names; the 13 schema helpers deep-equal |
+| `AnimatedImage`     | exact except the deliberate timing differences below | every recorded frame identical or explained by them; identical canvas attributes and sizes | 283 of 705 frames differ: 274 by one image frame (Motio up to 100 ms later), 9 on frames with a duration of 0 | 15 timing cases (705 frames) in `@remotion/player`'s `Thumbnail`: GIF, APNG, WebP and AVIF; 24, 30 and 60 fps; `playbackRate` 0.5, 1, 1.7 and 2; the three loop behaviours; `from` with `trimBefore`; delays of 0, 1, 2 and 10 hundredths. 8 markup cases (size, `fit`, `style`, `className`, `id`), 8 failure cases |
 
 No function is approximated.
 
@@ -42,15 +43,22 @@ These are the places where the docs alone did not determine the numbers; each wa
 
 - `Interactive`: an element renders itself, with every prop except the timing ones, like a `<Sequence layout="none">` around it; its children see the shifted timeline. Crops become `clip-path: inset(...)` with unrounded percentages, overlapping opposite crops both 50%, rounded with the border radius. Premounted and postmounted elements get `opacity: 0; pointer-events: none`, then `styleWhilePremounted`/`styleWhilePostmounted`. `withSchema()` without `wrapInSequence` passes every prop through plus `controls: null`; with it, and with `create()`, the component receives its own props, `style` (with the crop) and `ref`. `create({ layout: "absolute-fill" })` renders a full-size container with `overflow: hidden` that takes `style` and the crop.
 
+- `AnimatedImage`: the canvas bitmap is `width` by `height`, each falling back on its own to the image's intrinsic size (`width={120}` on a 64x64 image gives 120x64), and the canvas gets no CSS size; `style` is passed through as is, `width` and `height` in it included, and so are other attributes (`className`, `id`). Unknown `loopBehavior` and `fit` values do not throw. An invalid `playbackRate` throws a `TypeError` naming the prop, as `<Sequence>` does. Remotion shows the frame whose start is nearest to the current time (a tie going to the later frame), and a play that stops is over only after its end; Motio's rule is below.
+
 ## Deliberate differences
 
 - `Easing.spring` with `stiffness: 0` or `durationRestThreshold: 0` throws on first use. Remotion never returns (and later `Easing.spring` calls in the same page fail with `RangeError: Too many properties to enumerate`).
 - `measureSpring` (and `spring` with `durationInFrames` or `reverse`) with `stiffness: 0` and a threshold below 1 throws `Spring stiffness must be greater than 0, ...`. Remotion never returns in that case.
+- `AnimatedImage` timing (D-066): Motio shows the frame whose display interval contains the current time, from the sum of the previous durations (inclusive) to the next start (exclusive). Remotion's nearest-start rule shows each frame up to half of the previous frame's duration early: over the 684 recorded frames of the 14 cases with regular delays, 410 are identical and 274 are one image frame apart: in 271 Motio still shows the previous frame, up to 100 ms after Remotion moved on (the fixture's 200 ms frame followed by an 80 ms one); in 1 Motio clears a `clear-after-finish` play at its exact end (frame 24 at 30 fps, 800 ms) where Remotion still shows the last frame; in 2 (`playbackRate` 2 at 2.4 s and 4 s, exact ends of a loop) Remotion shows the last frame and Motio the first.
+- `AnimatedImage` frames with a duration of 0 last 100 ms, as browsers show them. On `short-delays.gif` (delays of 0, 10, 20 and 100 ms) Remotion stays on the first frame for all 21 recorded frames at 60 fps (333 ms); Motio shows the frames for 100, 10, 20 and 100 ms, so 9 of the 21 differ.
+- `AnimatedImage` without `onError`: a file that cannot be loaded or decoded fails the render with an error naming the file, as `<Gif>` does; Remotion leaves an empty canvas and reports nothing. With `onError`, Motio passes an `Error` naming the file, with the browser's error as its `cause`; Remotion passes the browser's `DOMException` itself. An HTTP error is reported as such (`HTTP 404 Not Found`), where Remotion reports that the decoder does not support `text/plain`.
+- `AnimatedImage` finds the format from the file's first bytes (GIF, PNG, WebP, AVIF, JPEG), and uses the response's content type only for other files, so an image served as `application/octet-stream` still plays. Not recorded for Remotion.
 
 ## Not implemented yet
 
 Parts of the 4.0.545 API outside the current scope:
 
 - `Interactive`: the Studio's editing (selection, dragging, controls). Schemas are exported as data and ignored.
+- `AnimatedImage`: `effects` (a non-empty list throws) and `effectsOutputSize` (ignored), which need `@remotion/effects` (D-066 dropped it).
 
 - `interpolateColors`: none of the documented formats is missing; `color()` and space-separated `rgb()`/`hsl()` are rejected, as in Remotion.
