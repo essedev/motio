@@ -11,6 +11,7 @@ Project-specific rules. Prose in English everywhere (public repository).
 - Browser packages (`core`, `media`, `player`, feature packages) never import Node built-ins.
 - Errors that reach users are `MotioError` instances with a stable `code` (`E_READINESS_TIMEOUT`, `E_PROTOCOL_MISMATCH`, ...), a message that says what to do, and structured context (frame, label, composition). No silent catches.
 - Compatibility behaviour comes from Remotion's public docs and from oracle recordings, never from Remotion's source, type declarations or source maps.
+- Only someone entitled to run Remotion records the oracle: an individual or an organization of up to 3 people under Remotion's free licence, otherwise a company licence holder (D-066). Documentation and examples are written from Motio's code, never copied or closely paraphrased from remotion.dev.
 - Ported code keeps its original copyright header and licence and gets a `NOTICE` entry.
 
 ## Tests
