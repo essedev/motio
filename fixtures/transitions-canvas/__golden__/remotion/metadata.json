@@ -1,0 +1,246 @@
+{
+	"remotion": "4.0.545",
+	"gl": "swangle",
+	"compositions": {
+		"custom": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"zoom-in-out": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"dissolve": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"dissolve-options": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"swap": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"swap-options": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"blur-slide": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"blur-slide-right": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"blur-slide-top": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"blur-slide-bottom": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"book-flip": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"book-flip-left": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"book-flip-top": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"book-flip-bottom": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"crosswarp": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"cross-zoom": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"cross-zoom-options": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"dreamy-zoom": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"dreamy-zoom-options": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"film-burn": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"film-burn-options": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"linear-blur": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"linear-blur-options": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"ripple": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"ripple-options": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"zoom-blur": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"zoom-blur-options": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		},
+		"ends": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 40,
+			"defaultProps": {},
+			"props": {}
+		},
+		"mixed": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 90,
+			"defaultProps": {},
+			"props": {}
+		},
+		"chain": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 50,
+			"defaultProps": {},
+			"props": {}
+		}
+	}
+}

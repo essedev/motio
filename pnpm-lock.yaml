@@ -356,6 +356,8 @@ importers:
 
   fixtures/three: {}
 
+  fixtures/transitions-canvas: {}
+
   packages/animation-utils:
     dependencies:
       '@motiojs/core':
