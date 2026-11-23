@@ -6,6 +6,7 @@
 	"license": "Apache-2.0",
 	"description": "Official Remotion templates fetched at pinned commits into .cache/ (never vendored). This package's node_modules is the parent the unmodified templates resolve their imports from: Motio's packages and the third-party versions the templates pin.",
 	"dependencies": {
+		"@motiojs/animation-utils": "workspace:*",
 		"@motiojs/captions": "workspace:*",
 		"@motiojs/google-fonts": "workspace:*",
 		"@motiojs/layout-utils": "workspace:*",

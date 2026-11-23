@@ -25,12 +25,12 @@ Reference stills come from `tools/oracle-render/record-templates.ts`: it copies 
 | [Still](https://github.com/remotion-dev/template-still) | `5487596` | Metadata (with Zod schema props) and still match (SSIM 0.9997, PSNR 49.8 dB). Loads Inter from Google Fonts while rendering. |
 | [Overlay](https://github.com/remotion-dev/template-overlay) | `5f61771` | Metadata matches; both stills are identical (frame 30 since D-041). Loads Roboto from Google Fonts while rendering. |
 | [Hello World](https://github.com/remotion-dev/template-helloworld) | `01cb8eb` | Metadata matches; every still is identical, `Logo` (transparent) included since D-041 (it was the D-031 mismatch). Uses `Interactive`, `Easing.spring` and string `interpolate()` with `output: "perceptual-scale"`. |
-| [TikTok](https://github.com/remotion-dev/template-tiktok) | `1d2bffa` | Does not build: `@remotion/animation-utils` (M5) and `@remotion/media` (M3); the compat plugin names the package and its milestone. |
+| [TikTok](https://github.com/remotion-dev/template-tiktok) | `1d2bffa` | Metadata matches; every still is identical since extracted video frames lose their colour tags (D-047). Without a caption file it shows its "No caption file" notice over the `OffthreadVideo`; `watchStaticFile` warns, as in Remotion outside the Studio. |
 | [Three](https://github.com/remotion-dev/template-three) | `6915403` | Metadata matches; every still is identical. Recorded on both sides with `gl: "swangle"` (software WebGL, Motio's default), since GPU WebGL differs per machine (D-046). The phone screen is black in both: the template updates its texture with `invalidate()`, which draws nothing while rendering. |
 
 Not used: templates built on packages outside Motio's scope or needing services (Skia, Code Hike with `@remotion/studio`, Audiogram and Music Visualization on `@remotion/media`, the Next.js, React Router, Electron, Vercel and render-server apps, prompt-to-video), and the obsolete Tailwind template.
 
-`templates.json` sets `gl` for WebGL templates (the renderer both sides use) and marks the exceptions the test expects: `blockedBy` (build fails on a missing symbol; none at the moment), `unsupported` (build fails with the compat message) and `knownMismatch` (a still misses the thresholds, with the reason; none at the moment, the D-031 ones were fixed by D-041). Each such test is written to fail once the cause is fixed, so the marker has to be removed then.
+`templates.json` sets `gl` for WebGL templates (the renderer both sides use) and marks the exceptions the test expects: `blockedBy` (build fails on a missing symbol; none at the moment), `unsupported` (build fails with the compat message; none since D-047) and `knownMismatch` (a still misses the thresholds, with the reason; none at the moment, the D-031 ones were fixed by D-041). Each such test is written to fail once the cause is fixed, so the marker has to be removed then.
 
 ## Licences
 

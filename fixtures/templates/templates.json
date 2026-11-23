@@ -44,7 +44,9 @@
 		"tiktok": {
 			"repository": "https://github.com/remotion-dev/template-tiktok",
 			"commit": "1d2bffac65db4938d2ac24884c0013624e6146e8",
-			"unsupported": ["@remotion/animation-utils", "@remotion/media"]
+			"stills": {
+				"CaptionedVideo": [0, 45, 120]
+			}
 		},
 		"three": {
 			"repository": "https://github.com/remotion-dev/template-three",

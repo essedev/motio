@@ -231,8 +231,14 @@ for (const [name, template] of rendered) {
 	});
 }
 
-describe("templates Motio cannot build yet", () => {
-	for (const [name, template] of Object.entries(templates)) {
+const blocked = Object.entries(templates).filter(
+	([, template]) => template.blockedBy !== undefined || template.unsupported !== undefined,
+);
+
+// Every template builds since @motiojs/three and @motiojs/animation-utils; the suite stays for
+// the next template that cannot.
+describe.skipIf(blocked.length === 0)("templates Motio cannot build yet", () => {
+	for (const [name, template] of blocked) {
 		const blockers = template.blockedBy;
 		if (blockers) {
 			// Flips when the symbols land: then drop blockedBy and the stills are compared above.

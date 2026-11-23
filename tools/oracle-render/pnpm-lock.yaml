@@ -11,9 +11,15 @@ importers:
       '@react-three/fiber':
         specifier: 9.2.0
         version: 9.2.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.178.0)
+      '@remotion/animation-utils':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/bundler':
         specifier: 4.0.545
         version: 4.0.545(postcss@8.5.33)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/captions':
+        specifier: 4.0.545
+        version: 4.0.545
       '@remotion/fonts':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -27,6 +33,9 @@ importers:
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/media-utils':
+        specifier: 4.0.545
+        version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/motion-blur':
         specifier: 4.0.545
         version: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/noise':
@@ -337,6 +346,12 @@ packages:
         optional: true
       react-native:
         optional: true
+
+  '@remotion/animation-utils@4.0.545':
+    resolution: {integrity: sha512-+B+np6/zW/JbyDhViO0AqzO6E5NwDUdY4daMjqeri/5Ug/876i7rIQd/2c9X1NrmXUHEiZYnnkP7igzaFDVrbQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   '@remotion/bundler@4.0.545':
     resolution: {integrity: sha512-HbUp5EDrjJIq++o2TE7Ux4C20q4cuTFK3OAezQWEZC1jc0xdrnp5/IFdmGpp+Kf3l63BPVaMr96nT842EY7M9Q==}
@@ -1526,6 +1541,12 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
       - immer
+
+  '@remotion/animation-utils@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
 
   '@remotion/bundler@4.0.545(postcss@8.5.33)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
