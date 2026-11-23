@@ -155,3 +155,7 @@ The preview page is its own browser package, `@motiojs/preview`, served by `star
 
 Google's CSS2 API serves differently subset woff2 files per user agent, with different glyph metrics: the official Overlay template rendered a text box 2 px narrower than Remotion's because the generator used a recent macOS Chrome user agent. With a Windows Chrome 120 user agent Google returns exactly the files `@remotion/google-fonts` 4.0.545 references. The generator now uses it, all 1,848 modules are regenerated, and the tests require identical file URLs, unicode ranges and variable faces for every recorded sample.
 
+
+## D-028 Mono sources upmix at -3 dB, as Remotion's output measures (2026-11-23, supersedes the mono part of D-014)
+
+D-014 duplicated a mono source into both stereo channels at full level, from a comparison of the mixer's first channel with the oracle's clicks. But the media recorder decodes Remotion's output with `-ac 1`, FFmpeg's stereo downmix `(L + R) / sqrt(2)`, so the oracle peak (0.9155, the click's own amplitude in `clicks.wav`) is what a stereo output with each channel at -3 dB measures, the result of FFmpeg's default mono-to-stereo matrix (or of a mono output). Full-level duplication measured 1.2947 through the recorder's method, 41% louder than Remotion. The mixer now lets FFmpeg convert channel layouts with its default matrix, and the mixer test measures through the same downmix as the recorder; every click time and constant-volume peak still matches (D-014's tolerances). Stereo sources are unaffected.

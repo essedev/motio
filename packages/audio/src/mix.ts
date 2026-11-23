@@ -84,10 +84,10 @@ export async function mixAudio(options: MixOptions): Promise<MixedAudio> {
 				toneFrequency: source.toneFrequency ?? 1,
 				sampleRate,
 			});
-			const sourceChannels = await probeChannels(ffprobe, source.src);
+			// Fails with a clear error when the file has no audio stream.
+			await probeChannels(ffprobe, source.src);
 			const decoded = await decodeToFloat({
 				ffmpeg,
-				sourceChannels,
 				src: source.src,
 				filter,
 				sampleRate,

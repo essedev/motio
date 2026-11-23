@@ -13,17 +13,23 @@ const golden = JSON.parse(
 };
 const clicks = resolve(media, "public/clicks.wav");
 
-/** Same detector as tools/oracle-render/record-media.ts, on the first channel. */
+/**
+ * Same detector as tools/oracle-render/record-media.ts, on the same mono signal: the recorder
+ * decodes with `-ac 1`, FFmpeg's stereo downmix `(L + R) / sqrt(2)`.
+ */
 function detect(samples: Float32Array, channels: number, rate: number) {
 	const out: { t: number; peak: number }[] = [];
 	let quiet = 1000;
 	const n = samples.length / channels;
+	const mono = (i: number) =>
+		channels === 2
+			? ((samples[i * 2] ?? 0) + (samples[i * 2 + 1] ?? 0)) * Math.SQRT1_2
+			: (samples[i * channels] ?? 0);
 	for (let i = 0; i < n; i++) {
-		const a = Math.abs(samples[i * channels] ?? 0);
+		const a = Math.abs(mono(i));
 		if (a > 0.02 && quiet >= 96) {
 			let peak = 0;
-			for (let j = i; j < Math.min(n, i + 48); j++)
-				peak = Math.max(peak, Math.abs(samples[j * channels] ?? 0));
+			for (let j = i; j < Math.min(n, i + 48); j++) peak = Math.max(peak, Math.abs(mono(j)));
 			out.push({ t: i / rate, peak });
 		}
 		quiet = a > 0.02 ? 0 : quiet + 1;

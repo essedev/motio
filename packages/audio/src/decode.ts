@@ -45,9 +45,9 @@ export function probeChannels(ffprobe: string, src: string): Promise<number> {
 
 /**
  * Decodes `src` (a file path or URL FFmpeg can read) through `filter` to interleaved float
- * samples at `sampleRate` with `channels` channels. A mono source is duplicated into every
- * channel at full level: FFmpeg's default upmix treats mono as a centre channel and lowers it
- * by 3 dB, which Remotion does not do.
+ * samples at `sampleRate` with `channels` channels. Channel layouts are converted by FFmpeg's
+ * default matrix, so a mono source plays at -3 dB in each stereo channel, which is what
+ * Remotion's output measures (D-028).
  */
 export function decodeToFloat(options: {
 	ffmpeg: string;
@@ -55,14 +55,8 @@ export function decodeToFloat(options: {
 	filter: string;
 	sampleRate: number;
 	channels: number;
-	sourceChannels: number;
 }): Promise<Float32Array> {
-	const { ffmpeg, src, sampleRate, channels, sourceChannels } = options;
-	const upmix =
-		sourceChannels === 1 && channels > 1
-			? `,pan=${channels === 2 ? "stereo" : `${channels}c`}|${Array.from({ length: channels }, (_, c) => `c${c}=c0`).join("|")}`
-			: "";
-	const filter = options.filter + upmix;
+	const { ffmpeg, src, sampleRate, channels, filter } = options;
 	const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-i", src, "-vn", "-af", filter];
 	args.push("-ac", String(channels), "-ar", String(sampleRate), "-f", "f32le", "-");
 	return new Promise((resolve, reject) => {
