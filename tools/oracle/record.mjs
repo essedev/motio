@@ -12,7 +12,7 @@ import { CSS_NAMED_COLORS } from "./named-colors.mjs";
 import { recordEasingSpring } from "./record-easing-spring.mjs";
 import { recordExports } from "./record-exports.mjs";
 import { recordInteractive } from "./record-interactive.mjs";
-import { recordInterpolateOutputs } from "./record-interpolate-outputs.mjs";
+import { captureTyped, recordInterpolateOutputs } from "./record-interpolate-outputs.mjs";
 import { recordMotionBlur } from "./record-motion-blur.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -39,14 +39,8 @@ const encodeDeep = (value) => {
 	return encodeNumber(value);
 };
 
-// Runs fn and returns either { out } or { error } with the thrown message.
-const capture = (fn) => {
-	try {
-		return { out: fn() };
-	} catch (e) {
-		return { error: e instanceof Error ? e.message : String(e) };
-	}
-};
+// Runs fn and returns either { out } or { error, errorType }.
+const capture = captureTyped;
 
 const write = (name, description, cases) => {
 	mkdirSync(outDir, { recursive: true });
@@ -405,7 +399,9 @@ const recordColors = () => {
 			outputRange,
 			options: options ?? {},
 			inputs,
-			...(firstError ? { error: firstError.error } : { out: results.map((r) => r.out) }),
+			...(firstError
+				? { error: firstError.error, errorType: firstError.errorType }
+				: { out: results.map((r) => r.out) }),
 		});
 	};
 	const formats = [

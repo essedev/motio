@@ -25,14 +25,22 @@ export const tag = (value) => {
 	return value;
 };
 
-// Like capture() in record.mjs, but keeps the kind of error: the tests check
-// that Motio throws a TypeError where Remotion does.
+// The built-in class an error derives from ("TypeError", "RangeError", ..., "Error"). The tests
+// compare failures on this class and on the options the message names, never on its wording.
+export const errorTypeOf = (e) => {
+	for (const C of [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError]) {
+		if (e instanceof C) return C.name;
+	}
+	return e instanceof Error ? "Error" : "unknown";
+};
+
+// Runs fn and returns either { out } or { error, errorType }: the thrown message and the
+// built-in class of the error.
 export const captureTyped = (fn) => {
 	try {
 		return { out: fn() };
 	} catch (e) {
-		if (!(e instanceof Error)) return { error: String(e), errorType: "unknown" };
-		return { error: e.message, errorType: e instanceof TypeError ? "TypeError" : "Error" };
+		return { error: e instanceof Error ? e.message : String(e), errorType: errorTypeOf(e) };
 	}
 };
 

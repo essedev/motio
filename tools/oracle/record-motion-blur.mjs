@@ -10,6 +10,7 @@ import { Thumbnail } from "@remotion/player";
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Sequence, useCurrentFrame } from "remotion";
+import { errorTypeOf } from "./record-interpolate-outputs.mjs";
 
 const here = import.meta.dirname;
 const outDir = join(here, "../../packages/motion-blur/src/__oracle__");
@@ -120,22 +121,21 @@ const recordErrors = async () => {
 	console.error = () => {};
 	const errors = new Map();
 	for (const [component, props] of INVALID) {
-		let message = null;
+		let failure = null;
+		const record = (e) => {
+			failure = { error: e.message, errorType: errorTypeOf(e) };
+		};
 		const node = dom.window.document.createElement("div");
 		const root = createRoot(node, {
-			onCaughtError: (e) => {
-				message = e.message;
-			},
-			onUncaughtError: (e) => {
-				message = e.message;
-			},
+			onCaughtError: record,
+			onUncaughtError: record,
 		});
 		await act(async () => {
 			root.render(
 				h(Thumbnail, {
 					component: () => h(COMPONENTS[component], props, h(Probe)),
 					errorFallback: ({ error }) => {
-						message = error.message;
+						record(error);
 						return null;
 					},
 					durationInFrames: 30,
@@ -147,7 +147,7 @@ const recordErrors = async () => {
 			);
 		});
 		root.unmount();
-		errors.set(`${component} ${JSON.stringify(tagged(props))}`, message);
+		errors.set(`${component} ${JSON.stringify(tagged(props))}`, failure);
 	}
 	console.error = quiet;
 	return errors;
@@ -194,7 +194,7 @@ export const recordMotionBlur = async () => {
 		cases.push({
 			component,
 			props: tagged(props),
-			error: errors.get(`${component} ${JSON.stringify(tagged(props))}`) ?? null,
+			...(errors.get(`${component} ${JSON.stringify(tagged(props))}`) ?? { error: null }),
 		});
 	}
 	mkdirSync(outDir, { recursive: true });
