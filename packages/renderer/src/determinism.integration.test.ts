@@ -11,40 +11,62 @@ const serveUrl = fixturePageDir();
 const dir = mkdtempSync(join(tmpdir(), "motio-determinism-"));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
-// M1 done criterion: identical decoded frame hashes across 2 runs, 2 orders and 3 concurrencies.
-const VARIANTS = [
-	{ name: "run 1, ascending, concurrency 1", concurrency: 1, shuffled: false },
-	{ name: "run 2, ascending, concurrency 1", concurrency: 1, shuffled: false },
-	{ name: "shuffled, concurrency 4", concurrency: 4, shuffled: true },
-	{ name: "ascending, concurrency 8", concurrency: 8, shuffled: false },
-	{ name: "shuffled, concurrency 8", concurrency: 8, shuffled: true },
+// M1 done criterion: every run gives the decoded frames of a render with a new page per frame,
+// whatever the order and the concurrency. The reference has no history, so runs that are wrong in
+// the same way (D-072) cannot agree with it by accident.
+const REFERENCE = { name: "a new page per frame", concurrency: 1, recycleEveryNFrames: 1 };
+const VARIANTS: Array<{
+	name: string;
+	concurrency: number;
+	order?: (frames: number[]) => number[];
+}> = [
+	{ name: "run 1, ascending, concurrency 1", concurrency: 1 },
+	{ name: "run 2, ascending, concurrency 1", concurrency: 1 },
+	{ name: "descending, concurrency 1", concurrency: 1, order: (f) => [...f].reverse() },
+	{ name: "shuffled, concurrency 4", concurrency: 4, order: (f) => shuffle(f, 31) },
+	{ name: "ascending, concurrency 8", concurrency: 8 },
+	{ name: "shuffled, concurrency 8", concurrency: 8, order: (f) => shuffle(f, 37) },
 ];
 
 describe("determinism", () => {
-	it("gives identical decoded frames across runs, orders and concurrencies", async () => {
+	it("gives the decoded frames of a new page per frame in every run, order and concurrency", async () => {
 		const composition = await selectComposition({
 			serveUrl,
 			id: "stamp",
 			inputProps: { durationInFrames: 120 },
 		});
-		const hashes: string[][] = [];
-		for (const [i, v] of VARIANTS.entries()) {
-			const out = join(dir, `v${i}.mp4`);
+		const render = async (
+			name: string,
+			concurrency: number,
+			internals: { frameOrder?: (frames: number[]) => number[] },
+			recycleEveryNFrames?: number,
+		) => {
+			const out = join(dir, `${name.replace(/\W+/g, "-")}.mp4`);
 			await renderMediaInternal(
-				{ serveUrl, composition, codec: "h264", concurrency: v.concurrency, outputLocation: out },
-				v.shuffled ? { frameOrder: (frames) => shuffle(frames, 31 + i) } : {},
+				{
+					serveUrl,
+					composition,
+					codec: "h264",
+					concurrency,
+					outputLocation: out,
+					...(recycleEveryNFrames ? { recycleEveryNFrames } : {}),
+				},
+				internals,
 			);
-			hashes.push(await hashVideoFrames(out));
-		}
-		const reference = hashes[0] as string[];
+			return hashVideoFrames(out);
+		};
+		const reference = await render(
+			REFERENCE.name,
+			REFERENCE.concurrency,
+			{},
+			REFERENCE.recycleEveryNFrames,
+		);
 		expect(reference).toHaveLength(120);
 		expect(new Set(reference).size).toBeGreaterThan(100);
-		for (const [i, h] of hashes.entries()) {
+		for (const v of VARIANTS) {
+			const h = await render(v.name, v.concurrency, v.order ? { frameOrder: v.order } : {});
 			const differing = h.flatMap((x, f) => (x === reference[f] ? [] : [f]));
-			expect({ variant: VARIANTS[i]?.name, differing }).toEqual({
-				variant: VARIANTS[i]?.name,
-				differing: [],
-			});
+			expect({ variant: v.name, differing }).toEqual({ variant: v.name, differing: [] });
 		}
 	}, 300_000);
 });

@@ -125,6 +125,30 @@ const TinySteps: React.FC = () => {
 	);
 };
 
+/** Translation only, in steps of 0.004 px (below Blink's 0.01 px tolerance) from a subpixel offset. */
+const SubpixelTranslate: React.FC = () => {
+	const frame = useCurrentFrame();
+	const x = 0.37 + frame * 0.004;
+	const y = 0.21 + frame * 0.0031;
+	return (
+		<AbsoluteFill style={centred}>
+			<div
+				style={{
+					display: "flex",
+					alignItems: "center",
+					gap: 24,
+					transform: `translate(${x}px, ${y}px)`,
+				}}
+			>
+				<div style={{ width: 93, height: 61, background: "#3ec9f0", borderRadius: 9 }} />
+				<div style={{ color: "white", fontSize: 44, fontFamily: "sans-serif" }}>
+					Drifting slowly
+				</div>
+			</div>
+		</AbsoluteFill>
+	);
+};
+
 /** Text scaled from 0 on its own layer: Chrome keeps the raster scale of the first frame drawn. */
 const WillChange: React.FC = () => {
 	const frame = useCurrentFrame();
@@ -155,6 +179,7 @@ export const Root: React.FC = () => (
 		<Composition id="scale-near-one" component={ScaleNearOne} {...size} />
 		<Composition id="rotate-translate" component={RotateTranslate} {...size} />
 		<Composition id="tiny-steps" component={TinySteps} {...size} />
+		<Composition id="subpixel-translate" component={SubpixelTranslate} {...size} />
 		<Composition id="will-change" component={WillChange} {...size} />
 	</>
 );
