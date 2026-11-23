@@ -1,0 +1,24 @@
+{
+	"name": "@motiojs/elevenlabs",
+	"version": "0.0.0",
+	"description": "ElevenLabs Speech to Text transcripts to captions, mirroring @remotion/elevenlabs",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/captions": "workspace:*"
+	},
+	"devDependencies": {
+		"@motiojs/testing": "workspace:*"
+	}
+}

@@ -511,6 +511,16 @@ importers:
         specifier: ^26.6.6
         version: 26.6.6
 
+  packages/elevenlabs:
+    dependencies:
+      '@motiojs/captions':
+        specifier: workspace:*
+        version: link:../captions
+    devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
+
   packages/fonts:
     dependencies:
       '@motiojs/core':
@@ -575,6 +585,19 @@ importers:
       '@motiojs/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/install-whisper-cpp:
+    dependencies:
+      '@motiojs/captions':
+        specifier: workspace:*
+        version: link:../captions
+    devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
 
   packages/layout-utils:
     devDependencies:
@@ -797,6 +820,16 @@ importers:
       simplex-noise:
         specifier: 4.0.1
         version: 4.0.1
+
+  packages/openai-whisper:
+    dependencies:
+      '@motiojs/captions':
+        specifier: workspace:*
+        version: link:../captions
+    devDependencies:
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   packages/paths:
     dependencies:

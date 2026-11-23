@@ -1,0 +1,28 @@
+{
+	"name": "@motiojs/install-whisper-cpp",
+	"version": "0.0.0",
+	"description": "Installs whisper.cpp and its models, transcribes and converts to captions, mirroring @remotion/install-whisper-cpp",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/captions": "workspace:*"
+	},
+	"devDependencies": {
+		"@motiojs/testing": "workspace:*",
+		"@types/node": "^26.6.6"
+	},
+	"engines": {
+		"node": ">=22"
+	}
+}

@@ -1,0 +1,24 @@
+{
+	"name": "@motiojs/openai-whisper",
+	"version": "0.0.0",
+	"description": "OpenAI Whisper API transcriptions to captions, mirroring @remotion/openai-whisper",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/captions": "workspace:*"
+	},
+	"devDependencies": {
+		"@motiojs/testing": "workspace:*"
+	}
+}
