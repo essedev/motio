@@ -1,5 +1,8 @@
-// Prop checks of <Lottie>, with the published package's messages and order (recorded in
-// __oracle__/lottie.json). `direction` is not checked: anything but "backward" plays forward.
+// Prop checks of <Lottie>, in the published package's order (recorded in __oracle__/lottie.json);
+// the messages are Motio's own. `direction` is not checked: anything but "backward" plays forward.
+
+const show = (value: unknown) =>
+	typeof value === "string" ? JSON.stringify(value) : String(value);
 
 /** Throws when `animationData`, `playbackRate` or `loop` is invalid. */
 export function validateLottieProps(props: {
@@ -10,25 +13,23 @@ export function validateLottieProps(props: {
 	const { animationData, playbackRate, loop } = props;
 	if (typeof animationData !== "object" || animationData === null) {
 		throw new Error(
-			"animationData should be provided as an object. If you only have the path to the JSON file, load it and pass it as animationData. See https://remotion.dev/docs/lottie/lottie#example for more information.",
+			`<Lottie>: animationData is ${show(animationData)}, not an object. Pass the animation's parsed JSON; with a path or URL, fetch and parse the file first.`,
 		);
 	}
 	if (playbackRate !== undefined) {
 		if (typeof playbackRate !== "number") {
 			throw new TypeError(
-				`The "playbackRate" prop must be a number or undefined, but is ${JSON.stringify(playbackRate)}`,
+				`<Lottie>: playbackRate is ${show(playbackRate)}: pass a number, or leave it out.`,
 			);
 		}
 		if (!Number.isFinite(playbackRate)) {
-			throw new TypeError(`The "playbackRate" props must be a real number, but is ${playbackRate}`);
+			throw new TypeError(`<Lottie>: playbackRate is ${playbackRate}: pass a finite number.`);
 		}
 		if (playbackRate <= 0) {
-			throw new TypeError(`The "playbackRate" props must be positive, but is ${playbackRate}`);
+			throw new TypeError(`<Lottie>: playbackRate is ${playbackRate}: it must be greater than 0.`);
 		}
 	}
 	if (loop !== undefined && typeof loop !== "boolean") {
-		throw new TypeError(
-			`The "loop" prop must be a boolean or undefined, but is "${JSON.stringify(loop)}"`,
-		);
+		throw new TypeError(`<Lottie>: loop is ${show(loop)}: pass true or false, or leave it out.`);
 	}
 }

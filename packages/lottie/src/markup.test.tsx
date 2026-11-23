@@ -1,7 +1,8 @@
-// <Lottie> renders the same container markup as the published @remotion/lottie, rejects invalid
-// props with the same messages, and getLottieMetadata() returns the same values
-// (tools/oracle/record-lottie.mjs).
+// <Lottie> renders the same container markup as the published @remotion/lottie, rejects the same
+// invalid props with the same error class (the messages are Motio's own), and getLottieMetadata()
+// returns the same values (tools/oracle/record-lottie.mjs).
 import { CompositionFrame } from "@motiojs/core/internals";
+import { compareFailure, failureOf, type RecordedFailure } from "@motiojs/testing/oracle-errors";
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -43,6 +44,15 @@ const tag = (value: unknown): unknown => {
 	return value;
 };
 
+/** Props that a failure message should name when the recorded one does. */
+const PROPS = ["animationData", "playbackRate", "loop"];
+
+/** The recorder writes failures as "Name: message". */
+const recordedFailure = (recorded: string): RecordedFailure => {
+	const [, errorType, error = recorded] = /^(\w+): ([\s\S]*)$/.exec(recorded) ?? [];
+	return { error, errorType };
+};
+
 const props = (extra: unknown) =>
 	({ animationData: oracle.data, ...(untag(extra) as object) }) as unknown as LottieProps;
 
@@ -58,22 +68,19 @@ describe("Lottie markup equals @remotion/lottie", () => {
 		}
 	});
 
-	it("rejects invalid props with Remotion's messages", () => {
+	it("rejects the same invalid props, in the same order, with the same error class", () => {
 		for (const c of oracle.errors) {
 			// lottie-web itself rejects an array as animation data, while loading.
 			if (c.error?.includes("reading 'length'")) continue;
-			let message: string | null = null;
-			try {
-				renderToStaticMarkup(h(Lottie, props(c.props)));
-			} catch (error) {
-				message = `${(error as Error).name}: ${(error as Error).message}`;
-			}
+			const label = JSON.stringify(c.props);
+			const { threw, error } = failureOf(() => renderToStaticMarkup(h(Lottie, props(c.props))));
+			expect(threw, label).toBe(true);
 			if (c.error === null) {
 				// Valid props: the component goes on to read the timeline, absent here.
-				expect(message, JSON.stringify(c.props)).toMatch(/outside|composition/i);
+				expect((error as Error).message, label).toMatch(/outside|composition/i);
 				expect(markupAt(c.props, 3)).toBe("<div></div>");
 			} else {
-				expect(message, JSON.stringify(c.props)).toBe(c.error);
+				expect(compareFailure(error, recordedFailure(c.error), PROPS), label).toBeUndefined();
 			}
 		}
 	});
@@ -83,15 +90,14 @@ describe("getLottieMetadata equals @remotion/lottie", () => {
 	it(`over ${oracle.metadata.length} inputs`, () => {
 		for (const c of oracle.metadata) {
 			const input = untag(c.input) as LottieAnimationData;
-			let got: unknown;
-			try {
-				got = { out: tag(getLottieMetadata(input)) };
-			} catch (error) {
-				got = { error: `${(error as Error).name}: ${(error as Error).message}` };
+			const label = JSON.stringify(c.input);
+			if ("error" in c && typeof c.error === "string") {
+				const { threw, error } = failureOf(() => getLottieMetadata(input));
+				expect(threw, label).toBe(true);
+				expect(compareFailure(error, recordedFailure(c.error)), label).toBeUndefined();
+			} else {
+				expect({ out: tag(getLottieMetadata(input)) }, label).toEqual({ out: c.out });
 			}
-			expect(got, JSON.stringify(c.input)).toEqual(
-				"error" in c ? { error: c.error } : { out: c.out },
-			);
 		}
 	});
 });
