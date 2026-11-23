@@ -1,4 +1,5 @@
 import type { CompositionInfo, ResolvedComposition } from "@motiojs/core/protocol";
+import { BrowserPool, defaultPagesPerBrowser } from "./browser/browser-pool.js";
 import { ensureBrowser } from "./browser/ensure.js";
 import type { ChromiumOptions } from "./browser/flags.js";
 import type { BrowserLog } from "./browser-log.js";
@@ -10,7 +11,12 @@ import {
 import { MotioError } from "./errors.js";
 import { resolveFfmpegPath, resolveFfprobePath } from "./ffmpeg.js";
 import { type MediaServer, startMediaServer } from "./media-server.js";
-import { resolveEnvVariables, resolveInputProps, resolveTimeout } from "./options.js";
+import {
+	resolveEnvVariables,
+	resolveInputProps,
+	resolvePagesPerBrowser,
+	resolveTimeout,
+} from "./options.js";
 import { type PageConfig, RenderPage } from "./render-page.js";
 import { openServeUrl, type StaticServer } from "./server.js";
 
@@ -45,6 +51,12 @@ export interface BrowserSessionOptions {
 	 * `Page.captureScreenshot` otherwise; `begin-frame` and `screenshot` force a path.
 	 */
 	captureMethod?: CaptureMethodOption | null;
+	/**
+	 * Motio extension: pages sharing one browser process (D-042). Default one up to concurrency 4
+	 * and two above, which measures fastest; 1 gives every page its own process, which confines a
+	 * browser crash to one page.
+	 */
+	pagesPerBrowser?: number | null;
 }
 
 /** A Remotion-shaped composition description returned by `getCompositions` and `selectComposition`. */
@@ -80,11 +92,18 @@ export interface BrowserSession {
 	timeoutInMilliseconds: number;
 	chromiumOptions: ChromiumOptions;
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
+	/** Browsers shared by the session's pages (D-042), killed by `close()`. */
+	browsers: BrowserPool;
+	/**
+	 * The configuration of a page; `concurrency` (default 1) is the number of pages the render
+	 * opens at once, which sets how many share a browser unless `pagesPerBrowser` was given.
+	 */
 	pageConfig(size: {
 		width: number;
 		height: number;
 		scale: number;
 		transparent: boolean;
+		concurrency?: number;
 	}): PageConfig;
 	close(): Promise<void>;
 }
@@ -100,6 +119,7 @@ export async function openSession(
 	const inputProps = resolveInputProps(options.inputProps);
 	const envVariables = resolveEnvVariables(options.envVariables);
 	const timeoutInMilliseconds = resolveTimeout(options.timeoutInMilliseconds);
+	const pagesPerBrowser = resolvePagesPerBrowser(options.pagesPerBrowser);
 	const chromiumOptions = options.chromiumOptions ?? {};
 	const executablePath =
 		options.browserExecutable ??
@@ -124,6 +144,7 @@ export async function openSession(
 		throw err;
 	}
 	const onBrowserLog = options.onBrowserLog;
+	const browsers = new BrowserPool();
 	return {
 		executablePath,
 		captureMethod,
@@ -136,7 +157,8 @@ export async function openSession(
 		timeoutInMilliseconds,
 		chromiumOptions,
 		onBrowserLog,
-		pageConfig: (size) => ({
+		browsers,
+		pageConfig: ({ concurrency = 1, ...size }) => ({
 			executablePath,
 			serveUrl: server.url,
 			chromiumOptions,
@@ -146,10 +168,14 @@ export async function openSession(
 			onBrowserLog,
 			mediaBaseUrl: media.url,
 			captureMethod,
+			browsers: {
+				pool: browsers,
+				pagesPerBrowser: pagesPerBrowser ?? defaultPagesPerBrowser(concurrency),
+			},
 			...size,
 		}),
 		close: async () => {
-			await Promise.all([server.close(), media.close()]);
+			await Promise.all([browsers.close(), server.close(), media.close()]);
 		},
 	};
 }

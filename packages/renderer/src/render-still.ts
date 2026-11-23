@@ -87,6 +87,7 @@ export async function renderStill(options: RenderStillOptions): Promise<RenderSt
 			height: composition.height,
 			scale,
 			transparent: imageFormat !== "jpeg",
+			concurrency: 1,
 		});
 		await runPool({
 			frames: [frame],

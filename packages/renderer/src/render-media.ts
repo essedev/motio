@@ -346,6 +346,7 @@ export async function renderMediaInternal(
 			height: composition.height,
 			scale: video?.scale ?? 1,
 			transparent: video?.captureFormat === "png",
+			concurrency,
 		});
 		const recycleEveryNFrames = options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES;
 		const intents = new Map<number, AudioIntent[]>();

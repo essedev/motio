@@ -58,3 +58,25 @@ export function childPids(): number[] {
 		.map((l) => Number(l.trim()))
 		.filter((n) => n > 0);
 }
+
+/** Process ids of every descendant of `pid`, children first. */
+export function descendantPids(pid: number): number[] {
+	const out: number[] = [];
+	const queue = [pid];
+	for (let p = queue.shift(); p !== undefined; p = queue.shift()) {
+		const r = spawnSync("pgrep", ["-P", String(p)], { encoding: "utf8" });
+		for (const child of r.stdout.split("\n").map((l) => Number(l.trim()))) {
+			if (child > 0) {
+				out.push(child);
+				queue.push(child);
+			}
+		}
+	}
+	return out;
+}
+
+/** The command line of a process, or an empty string once it exited. */
+export function commandLine(pid: number): string {
+	// The command line, not `comm`: Linux truncates `comm` to 15 characters.
+	return spawnSync("ps", ["-o", "args=", "-p", String(pid)], { encoding: "utf8" }).stdout;
+}

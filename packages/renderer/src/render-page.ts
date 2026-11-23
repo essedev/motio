@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
 	type CompositionInfo,
 	type FrameReport,
@@ -10,8 +11,9 @@ import {
 	type SetCompositionOptions,
 } from "@motiojs/core/protocol";
 import type { Browser, CDPSession, Page } from "puppeteer-core";
+import { type BrowserLease, type BrowserPool, killBrowser } from "./browser/browser-pool.js";
 import type { ChromiumOptions } from "./browser/flags.js";
-import { launchBrowser } from "./browser/launch.js";
+import { type LaunchOptions, launchArgs, launchBrowser } from "./browser/launch.js";
 import type { BrowserLog, BrowserLogType } from "./browser-log.js";
 import { BEGIN_FRAME_ATTEMPTS, type CaptureMethod } from "./capture-method.js";
 import { MotioError, type MotioErrorCode } from "./errors.js";
@@ -34,6 +36,11 @@ export interface PageConfig {
 	mediaBaseUrl?: string;
 	/** Capture path (D-013). Default `screenshot`. */
 	captureMethod?: CaptureMethod;
+	/**
+	 * Browsers shared with other pages of the session (D-042). Without it the page launches its own
+	 * browser and kills it on close.
+	 */
+	browsers?: { pool: BrowserPool; pagesPerBrowser: number };
 }
 
 /**
@@ -105,9 +112,13 @@ export function fromPageError(
 	return err;
 }
 
+/** How long closing a page on a shared browser may take before the browser is killed. */
+const PAGE_CLOSE_TIMEOUT_MS = 3_000;
+
 /**
- * One browser process with one page on the bundle (D-007). Injects the run context, checks the
- * protocol version and wraps the page API with a Node-side watchdog and crash detection.
+ * One page on the bundle, on its own browser process or on one shared with other pages of the
+ * session (D-042). Injects the run context, checks the protocol version and wraps the page API
+ * with a Node-side watchdog and crash detection.
  */
 export class RenderPage {
 	private failure: MotioError | undefined;
@@ -125,35 +136,62 @@ export class RenderPage {
 	private requestsStarted = 0;
 	private readonly loadingWaiters = new Set<() => void>();
 
+	private readonly onDisconnected = () => {
+		if (!this.closed) {
+			this.fail(
+				new MotioError(
+					"E_BROWSER_CRASHED",
+					"The browser process exited unexpectedly",
+					this.failureContext(),
+				),
+			);
+		}
+	};
+
 	private constructor(
 		private readonly browser: Browser,
 		private readonly page: Page,
 		private readonly cdp: CDPSession,
 		private readonly config: PageConfig,
+		private readonly lease: BrowserLease | undefined,
 	) {}
 
-	/** Launches a browser, opens the bundle and completes the protocol handshake. */
+	/**
+	 * Opens a page on a pooled browser (or launches its own), loads the bundle and completes the
+	 * protocol handshake.
+	 */
 	static async open(config: PageConfig): Promise<RenderPage> {
-		const browser = await launchBrowser({
+		const launch: LaunchOptions = {
 			executablePath: config.executablePath,
 			chromiumOptions: config.chromiumOptions,
 			width: Math.round(config.width * config.scale),
 			height: Math.round(config.height * config.scale),
 			transparent: config.transparent,
 			...(config.captureMethod === "begin-frame" ? { beginFrame: { scale: config.scale } } : {}),
-		});
+		};
+		const shared = config.browsers;
+		const lease = shared
+			? await shared.pool.lease(
+					JSON.stringify([launch.executablePath, launchArgs(launch)]),
+					shared.pagesPerBrowser,
+					() => launchBrowser(launch),
+				)
+			: undefined;
+		const browser = lease ? lease.browser : await launchBrowser(launch);
 		let rp: RenderPage | undefined;
+		let page: Page | undefined;
 		try {
-			const pages = await browser.pages();
-			const page = pages[0] ?? (await browser.newPage());
+			page = await openTab(browser, lease, config.captureMethod === "begin-frame");
 			const cdp = await page.createCDPSession();
-			rp = new RenderPage(browser, page, cdp, config);
+			rp = new RenderPage(browser, page, cdp, config, lease);
 			rp.attachListeners();
 			await rp.prepare();
 			return rp;
 		} catch (err) {
 			if (rp) await rp.close();
-			else await killBrowser(browser);
+			else if (lease) {
+				await closeTab(page, lease);
+			} else await killBrowser(browser);
 			throw err;
 		}
 	}
@@ -213,17 +251,7 @@ export class RenderPage {
 				),
 			);
 		});
-		this.browser.on("disconnected", () => {
-			if (!this.closed) {
-				this.fail(
-					new MotioError(
-						"E_BROWSER_CRASHED",
-						"The browser process exited unexpectedly",
-						this.failureContext(),
-					),
-				);
-			}
-		});
+		this.browser.on("disconnected", this.onDisconnected);
 	}
 
 	/** Composition and the frame being sought, for errors raised outside a page call. */
@@ -634,35 +662,67 @@ export class RenderPage {
 	}
 
 	/**
-	 * Closes the page and kills its browser process. Safe to call more than once: every call
-	 * resolves when the process has exited, so a caller awaiting it never races a close another
-	 * caller started (a cancelled render used to return while its browsers were still exiting).
+	 * Closes the page: on a shared browser the tab is closed (the browser is killed if that takes
+	 * longer than 3 s) and the slot given back; on its own browser the process is killed. Safe to
+	 * call more than once: every call resolves when the close is complete, so a caller awaiting it
+	 * never races a close another caller started (a cancelled render used to return while its
+	 * browsers were still exiting). Pooled browsers exit when the session closes its pool.
 	 */
 	close(): Promise<void> {
 		if (!this.closing) {
 			this.closed = true;
-			this.closing = killBrowser(this.browser);
+			this.browser.off("disconnected", this.onDisconnected);
+			this.closing = this.lease ? closeTab(this.page, this.lease) : killBrowser(this.browser);
 		}
 		return this.closing;
 	}
 }
 
 /**
- * Closes a browser gracefully for up to 3 s, then kills its process. A browser that already
- * crashed rejects `close()`; the kill below is what guarantees the process is gone, so that
- * rejection carries no information and is not rethrown.
+ * A tab for a new page: the tab a fresh browser opened at launch, else a new one. Under BeginFrame
+ * control a new tab must be created with BeginFrame control itself (D-013), which only
+ * `Target.createTarget` offers; it is found again by a unique URL.
  */
-async function killBrowser(browser: Browser): Promise<void> {
-	const proc = browser.process();
-	await Promise.race([
-		browser.close().catch(() => undefined),
-		new Promise((ok) => setTimeout(ok, 3_000)),
-	]);
-	if (proc && proc.exitCode === null && proc.signalCode === null) {
-		proc.kill("SIGKILL");
-		await new Promise<void>((ok) => {
-			if (proc.exitCode !== null || proc.signalCode !== null) ok();
-			else proc.once("exit", () => ok());
-		});
+async function openTab(
+	browser: Browser,
+	lease: BrowserLease | undefined,
+	beginFrame: boolean,
+): Promise<Page> {
+	if (!lease || lease.takeInitialTab()) {
+		const [first] = await browser.pages();
+		if (first) return first;
+	}
+	if (!beginFrame) return browser.newPage();
+	const url = `about:blank#motio-${randomUUID()}`;
+	const session = await browser.target().createCDPSession();
+	try {
+		await session.send("Target.createTarget", { url, enableBeginFrameControl: true });
+	} finally {
+		await session.detach().catch(() => undefined);
+	}
+	const target = await browser.waitForTarget((t) => t.url() === url, { timeout: 30_000 });
+	const page = await target.page();
+	if (!page) throw new MotioError("E_BROWSER_CRASHED", "The browser did not open a new tab");
+	return page;
+}
+
+/** Closes a tab on a shared browser and gives its slot back; kills the browser if the tab hangs. */
+async function closeTab(page: Page | undefined, lease: BrowserLease): Promise<void> {
+	try {
+		if (!page || !lease.browser.connected) return;
+		// A tab that is already gone rejects, which needs nothing more; a tab whose renderer does
+		// not respond would hold the slot, so its browser is killed.
+		const outcome = await Promise.race([
+			page.close().then(
+				() => "closed" as const,
+				() => "gone" as const,
+			),
+			new Promise<"timeout">((ok) =>
+				setTimeout(() => ok("timeout"), PAGE_CLOSE_TIMEOUT_MS).unref(),
+			),
+		]);
+		if (outcome === "timeout" && lease.browser.connected) await lease.kill();
+	} finally {
+		lease.release();
 	}
 }

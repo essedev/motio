@@ -131,6 +131,7 @@ export function buildSessionOptions(
 	const props = flags.string("props");
 	const logLevel = logLevelFrom(flags) ?? config.logLevel;
 	const captureMethod = flags.oneOf("capture-method", CAPTURE_METHODS);
+	const pagesPerBrowser = flags.integer("pages-per-browser", { min: 1 });
 
 	return {
 		serveUrl,
@@ -141,6 +142,7 @@ export function buildSessionOptions(
 		...(browserExecutable ? { browserExecutable: resolvePath(rootDir, browserExecutable) } : {}),
 		...(logLevel ? { logLevel } : {}),
 		...(captureMethod ? { captureMethod } : {}),
+		...(pagesPerBrowser ? { pagesPerBrowser } : {}),
 		chromiumOptions: {
 			...(gl ? { gl } : {}),
 			...(userAgent ? { userAgent } : {}),

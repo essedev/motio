@@ -177,6 +177,7 @@ export async function renderChunk(options: RenderChunkOptions): Promise<RenderCh
 				height: composition.height,
 				scale: video.scale,
 				transparent: video.captureFormat === "png",
+				concurrency,
 			}),
 			format: video.captureFormat,
 			quality: video.quality,
@@ -243,6 +244,7 @@ export async function renderAudio(options: RenderAudioOptions): Promise<RenderAu
 			height: composition.height,
 			scale: 1,
 			transparent: false,
+			concurrency,
 		});
 		let mixed = await mixTimelineAudio({
 			session,

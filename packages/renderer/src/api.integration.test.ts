@@ -18,7 +18,12 @@ import {
 	renderStill,
 	selectComposition,
 } from "./index.js";
-import { childPids, fixturePageDir } from "./test-support/fixture-page.js";
+import {
+	childPids,
+	commandLine,
+	descendantPids,
+	fixturePageDir,
+} from "./test-support/fixture-page.js";
 import { stampMismatches } from "./test-support/video-checks.js";
 
 const serveUrl = fixturePageDir();
@@ -199,7 +204,8 @@ describe("renderMedia", () => {
 			inputProps: { durationInFrames: 240 },
 		});
 		const out = join(dir, "crash.mp4");
-		const seen = new Set<number>();
+		const browsers = new Set<number>();
+		const renderers = new Set<number>();
 		let killed = false;
 		await renderMedia({
 			serveUrl,
@@ -210,23 +216,24 @@ describe("renderMedia", () => {
 			outputLocation: out,
 			onProgress: (p) => {
 				for (const pid of childPids()) {
-					// The command line, not `comm`: Linux truncates `comm` to 15 characters.
-					const args = spawnSync("ps", ["-o", "args=", "-p", String(pid)], {
-						encoding: "utf8",
-					}).stdout;
-					if (args.includes("chrome-headless-shell")) {
-						seen.add(pid);
-						if (!killed && p.renderedFrames >= 60) {
-							killed = true;
-							process.kill(pid, "SIGKILL");
-						}
+					if (!commandLine(pid).includes("chrome-headless-shell")) continue;
+					browsers.add(pid);
+					for (const child of descendantPids(pid)) {
+						if (commandLine(child).includes("--type=renderer")) renderers.add(child);
+					}
+					if (!killed && p.renderedFrames >= 60) {
+						killed = true;
+						process.kill(pid, "SIGKILL");
 					}
 				}
 			},
 		});
 		expect(killed).toBe(true);
-		// 240 frames on 3 pages recycled every 25 frames need at least 9 browser processes.
-		expect(seen.size).toBeGreaterThanOrEqual(9);
+		// A recycled page is a new tab, with its own renderer process, on the same browser (D-042):
+		// 240 frames on 3 pages recycled every 25 frames open at least 9 pages, and the crash
+		// replaced one of the 3 browsers.
+		expect(renderers.size).toBeGreaterThanOrEqual(9);
+		expect(browsers.size).toBe(4);
 		const { frames, mismatches } = await stampMismatches(
 			out,
 			(i) => i,
@@ -235,4 +242,42 @@ describe("renderMedia", () => {
 		expect(mismatches).toEqual([]);
 		expect(frames).toBe(240);
 	}, 120_000);
+});
+
+describe("browser pool layout (D-042)", () => {
+	/** The most browser processes running at once during a render. */
+	async function peakBrowsers(options: { concurrency: number; pagesPerBrowser?: number }) {
+		const composition = await selectComposition({
+			serveUrl,
+			id: "stamp",
+			inputProps: { durationInFrames: 48 },
+		});
+		let peak = 0;
+		await renderMedia({
+			serveUrl,
+			composition,
+			codec: "h264",
+			outputLocation: join(dir, "layout.mp4"),
+			...options,
+			onProgress: () => {
+				const running = childPids().filter((pid) =>
+					commandLine(pid).includes("chrome-headless-shell"),
+				);
+				peak = Math.max(peak, running.length);
+			},
+		});
+		expect(childPids().filter((pid) => commandLine(pid).includes("chrome-headless-shell"))).toEqual(
+			[],
+		);
+		return peak;
+	}
+
+	it("gives each page its own browser up to concurrency 4", async () => {
+		expect(await peakBrowsers({ concurrency: 4 })).toBe(4);
+	});
+
+	it("shares browsers between pages as pagesPerBrowser asks", async () => {
+		expect(await peakBrowsers({ concurrency: 4, pagesPerBrowser: 2 })).toBe(2);
+		expect(await peakBrowsers({ concurrency: 3, pagesPerBrowser: 4 })).toBe(1);
+	});
 });

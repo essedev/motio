@@ -31,6 +31,11 @@ export const PROJECT_FLAGS = {
 		description:
 			"Motio: frame capture, auto (BeginFrame on Linux when available), begin-frame or screenshot.",
 	},
+	"pages-per-browser": {
+		type: "string",
+		description:
+			"Motio: pages sharing one browser process (default 1 up to concurrency 4, else 2).",
+	},
 	width: { type: "string", description: "Override the composition width." },
 	height: { type: "string", description: "Override the composition height." },
 	fps: { type: "string", description: "Override the composition frame rate." },

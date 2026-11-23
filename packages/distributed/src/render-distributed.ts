@@ -197,6 +197,7 @@ export async function renderDistributed(
 			"ffmpegExecutable",
 			"ffprobeExecutable",
 			"captureMethod",
+			"pagesPerBrowser",
 			"crf",
 			"imageFormat",
 			"jpegQuality",

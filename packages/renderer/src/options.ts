@@ -272,3 +272,15 @@ export function resolveTimeout(ms: number | undefined): number {
 	}
 	return ms;
 }
+
+/**
+ * Resolves `pagesPerBrowser` (D-042): an integer of at least 1, or null for the default that
+ * depends on the concurrency.
+ */
+export function resolvePagesPerBrowser(value: number | null | undefined): number | null {
+	if (value === null || value === undefined) return null;
+	if (!Number.isInteger(value) || value < 1) {
+		throw invalid(`pagesPerBrowser must be an integer of at least 1, got ${value}`);
+	}
+	return value;
+}

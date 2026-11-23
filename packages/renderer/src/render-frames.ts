@@ -160,6 +160,7 @@ export async function renderFrames(options: RenderFramesOptions): Promise<Render
 				height: composition.height,
 				scale,
 				transparent: imageFormat === "png",
+				concurrency,
 			}),
 			format: imageFormat,
 			quality,

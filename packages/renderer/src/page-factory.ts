@@ -5,7 +5,7 @@ import type { BrowserSession, VideoConfig } from "./session.js";
 export function compositionPageFactory(
 	session: BrowserSession,
 	composition: VideoConfig,
-	size: { width: number; height: number; scale: number; transparent: boolean },
+	size: { width: number; height: number; scale: number; transparent: boolean; concurrency: number },
 ): () => Promise<RenderPage> {
 	return async () => {
 		const page = await RenderPage.open(session.pageConfig(size));

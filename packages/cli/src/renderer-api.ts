@@ -57,6 +57,7 @@ export interface SessionOptions {
 	onBrowserLog?: (log: BrowserLog) => void;
 	logLevel?: LogLevel;
 	captureMethod?: "auto" | "begin-frame" | "screenshot";
+	pagesPerBrowser?: number | null;
 }
 
 export interface CancelSignalHandle {
