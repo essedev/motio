@@ -1,0 +1,54 @@
+{
+	"remotion": "4.0.545",
+	"gl": "swangle",
+	"compositions": {
+		"documented": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 30,
+			"defaultProps": {},
+			"props": {}
+		},
+		"options": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 30,
+			"defaultProps": {},
+			"props": {}
+		},
+		"timing": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 30,
+			"defaultProps": {},
+			"props": {}
+		},
+		"small": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 30,
+			"defaultProps": {
+				"disabled": false
+			},
+			"props": {
+				"disabled": false
+			}
+		},
+		"small-disabled": {
+			"width": 320,
+			"height": 180,
+			"fps": 30,
+			"durationInFrames": 30,
+			"defaultProps": {
+				"disabled": true
+			},
+			"props": {
+				"disabled": true
+			}
+		}
+	}
+}

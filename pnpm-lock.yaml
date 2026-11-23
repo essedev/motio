@@ -273,6 +273,8 @@ importers:
 
   fixtures/motion-blur: {}
 
+  fixtures/motion-blur-canvas: {}
+
   fixtures/protocol-page:
     dependencies:
       react:
