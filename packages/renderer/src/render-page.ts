@@ -53,6 +53,45 @@ export const BEGIN_FRAME_PUMP_MS = 16;
 /** Resource types a BeginFrame capture waits for: those style and layout request. */
 const TRACKED_RESOURCES = new Set(["Image", "Font", "Stylesheet"]);
 
+/**
+ * Installed in an isolated world of every page (ARCHITECTURE, "Raster reset"): `hide()` makes the
+ * document invisible, `show()` restores its own opacity, and `hideForOneFrame()` hides it until a
+ * frame was painted hidden.
+ *
+ * Blink skips the raster invalidation of a transform change below 0.01 px of translation or 1e-4
+ * in the other matrix components and keeps the transform it last rasterised with as the
+ * reference, and Chrome keeps the raster scale of a layer with `will-change: transform`: without
+ * a reset, the pixels of a frame depend on the frames the page rendered before it. Content that
+ * was invisible on the previous paint is invalidated in full when it shows again, so the next
+ * frame is rasterised as on a fresh page. A task queued from an animation frame callback runs
+ * once that frame was painted. In the isolated world `requestAnimationFrame` and `setTimeout` are
+ * the browser's own even when page code replaced them, and nothing is left on the page's globals.
+ */
+const RASTER_RESET_WORLD = `(() => {
+	let saved = null;
+	globalThis.hide = () => {
+		const style = document.documentElement.style;
+		if (!saved) saved = [style.getPropertyValue("opacity"), style.getPropertyPriority("opacity")];
+		style.setProperty("opacity", "0", "important");
+	};
+	globalThis.show = () => {
+		if (!saved) return;
+		const style = document.documentElement.style;
+		const [value, priority] = saved;
+		saved = null;
+		if (value) style.setProperty("opacity", value, priority);
+		else style.removeProperty("opacity");
+	};
+	globalThis.hideForOneFrame = async () => {
+		hide();
+		try {
+			await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+		} finally {
+			show();
+		}
+	};
+})()`;
+
 /** Extra time the Node watchdog gives a seek beyond the readiness timeout. */
 export const WATCHDOG_GRACE_MS = 5_000;
 
@@ -148,6 +187,8 @@ export class RenderPage {
 	/** Such requests started so far. */
 	private requestsStarted = 0;
 	private readonly loadingWaiters = new Set<() => void>();
+	/** Execution context of the isolated world that resets the raster state before each capture. */
+	private isolatedWorld: number | undefined;
 
 	private readonly onDisconnected = () => {
 		if (!this.closed) {
@@ -497,6 +538,41 @@ export class RenderPage {
 				{ details: { bundleProtocol: protocol, rendererProtocol: PROTOCOL_VERSION } },
 			);
 		}
+		const { frameTree } = await this.cdp.send("Page.getFrameTree");
+		const world = await this.cdp.send("Page.createIsolatedWorld", {
+			frameId: frameTree.frame.id,
+			worldName: "motio-raster-reset",
+		});
+		this.isolatedWorld = world.executionContextId;
+		await this.evaluateIsolated(RASTER_RESET_WORLD);
+	}
+
+	/** Evaluates `expression` in the isolated world and awaits its promise. */
+	private async evaluateIsolated(expression: string): Promise<void> {
+		const contextId = this.isolatedWorld;
+		if (contextId === undefined) {
+			throw new MotioError("E_RENDER_ERROR", "The page was used before it finished loading.");
+		}
+		const res = await this.cdp.send("Runtime.evaluate", {
+			expression,
+			awaitPromise: true,
+			contextId,
+		});
+		if (res.exceptionDetails) {
+			throw new MotioError(
+				"E_RENDER_ERROR",
+				`Resetting the page before a frame failed: ${res.exceptionDetails.exception?.description ?? res.exceptionDetails.text}`,
+			);
+		}
+	}
+
+	/**
+	 * Makes the frame about to be captured rasterise as on a fresh page, whatever the page rendered
+	 * before (ARCHITECTURE, "Raster reset"): the document, already showing the frame, is hidden
+	 * for one painted frame. BeginFrame pages draw that frame in `captureBeginFrame`.
+	 */
+	private resetRaster(): Promise<void> {
+		return this.evaluateIsolated("hideForOneFrame()");
 	}
 
 	private async call<T>(
@@ -599,21 +675,25 @@ export class RenderPage {
 		// A resource the frame's style requests (a CSS background image, a font) can still be
 		// loading when the page reports the frame ready, and a fast capture would miss it: reading
 		// the layout runs style and layout, which starts those requests, and they are awaited.
-		const capture = this.awaitResources(
-			() =>
-				this.cdp.send("Runtime.evaluate", {
-					expression: "void document.documentElement.getBoundingClientRect()",
+		const capture = this.resetRaster()
+			.then(() =>
+				this.awaitResources(
+					() =>
+						this.cdp.send("Runtime.evaluate", {
+							expression: "void document.documentElement.getBoundingClientRect()",
+						}),
+					true,
+				),
+			)
+			.then(() =>
+				this.cdp.send("Page.captureScreenshot", {
+					format,
+					...(format === "png" ? {} : { quality }),
+					optimizeForSpeed: true,
+					fromSurface: true,
+					captureBeyondViewport: false,
 				}),
-			true,
-		).then(() =>
-			this.cdp.send("Page.captureScreenshot", {
-				format,
-				...(format === "png" ? {} : { quality }),
-				optimizeForSpeed: true,
-				fromSurface: true,
-				captureBeyondViewport: false,
-			}),
-		);
+			);
 		const res = await this.guard(
 			capture,
 			timeout,
@@ -656,6 +736,15 @@ export class RenderPage {
 		quality: number,
 		frame: number,
 	): Promise<Buffer> {
+		// One frame is drawn with the document hidden, so the captured frame is rasterised as on a
+		// fresh page (ARCHITECTURE, "Raster reset"); a frame without display updates does not
+		// paint, and Blink compares the captured frame with the last paint.
+		await this.evaluateIsolated("hide()");
+		try {
+			await this.beginFrame({ interval: BEGIN_FRAME_PUMP_MS });
+		} finally {
+			await this.evaluateIsolated("show()");
+		}
 		// Frames without display updates run style and layout, which starts the requests for
 		// resources the frame needs (CSS images, fonts).
 		await this.awaitResources(() =>
