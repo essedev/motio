@@ -2,6 +2,13 @@
 
 Progress log, newest first. One entry per unit of work: what changed, what was measured, what is next.
 
+## 2026-11-23: second review, legal hygiene, Tier 2 and Tier 3 packages
+
+- Second adversarial review (M2, M3, performance): ten defects confirmed and fixed with tests, among them overlapping copies of one audio source split into one-frame segments, unbounded audio decoding, an uncaught EPIPE, and opaque captures that were white where Remotion's are black (D-050); FFmpeg minimum raised to 5.1 (D-051).
+- Legal hygiene: Remotion's renders of its own templates are no longer committed (recorded locally into the ignored cache); `motio` reports its own `VERSION`, with Remotion's API version only through the `remotion` alias; every error message reworded in Motio's own terms, oracle tests compare behaviour instead of text (D-054).
+- New packages: lottie, gif (D-052, D-053), starburst (D-055), light-leaks (approximated, D-056), the twelve HTML-in-canvas transitions and `HtmlInCanvasMotionBlur` (D-058 to D-060). `@remotion/effects` needs an effect pipeline in core (D-057).
+- `make check` green with 1406 tests. Next: Rive, Skia and transcription adapters; then what needs the author (M4 project, cloud spending, D-009 confirmation, history rewrite before publishing).
+
 ## 2026-11-23: performance criterion met
 
 - Committed benchmark against the pinned Remotion (`make bench`, D-044). Profiled the full pipeline: FFmpeg probed the image pipe until stdin closed, Chrome throttled captures to its frame rate, SwiftShader composited every frame on the CPU, the exact JPEG colour path halved x264's speed.
