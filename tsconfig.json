@@ -83,6 +83,9 @@
 			"path": "packages/lottie"
 		},
 		{
+			"path": "packages/rive"
+		},
+		{
 			"path": "packages/gif"
 		},
 		{

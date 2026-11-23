@@ -306,6 +306,8 @@ importers:
         specifier: ^8.3.8
         version: 8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)
 
+  fixtures/rive: {}
+
   fixtures/starburst: {}
 
   fixtures/templates:
@@ -886,6 +888,52 @@ importers:
       '@motiojs/testing':
         specifier: workspace:*
         version: link:../testing
+
+  packages/rive:
+    dependencies:
+      '@motiojs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@rive-app/canvas-advanced':
+        specifier: 2.31.5
+        version: 2.31.5
+    devDependencies:
+      '@motiojs/bundler':
+        specifier: workspace:*
+        version: link:../bundler
+      '@motiojs/player':
+        specifier: workspace:*
+        version: link:../player
+      '@motiojs/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@motiojs/testing':
+        specifier: workspace:*
+        version: link:../testing
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      esbuild:
+        specifier: 0.28.1
+        version: 0.28.1
+      jsdom:
+        specifier: ^31.0.1
+        version: 31.0.1
+      motio:
+        specifier: workspace:*
+        version: link:../motio
+      puppeteer-core:
+        specifier: 25.18.1
+        version: 25.18.1
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
 
   packages/shapes:
     dependencies:
@@ -1518,6 +1566,9 @@ packages:
         optional: true
       react-native:
         optional: true
+
+  '@rive-app/canvas-advanced@2.31.5':
+    resolution: {integrity: sha512-zwqLIc5wRF+zFKgDSTJn21+r4N4KWqAe6iVrjDGFzfxxeKDoESrwK7GQ9qVyS6UH2W4SsDRzO6q6jrlw33+yIg==}
 
   '@rolldown/binding-android-arm-eabi@1.2.19':
     resolution: {integrity: sha512-e+Ebe0WT+9tbXmNKPIiC8YrWAHYwug3m6i4p3rZGGulfZri1jtI4HslT+OZnFf/OIHowWF71DTlHwXBP2SiA7A==}
@@ -2771,6 +2822,8 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
       - immer
+
+  '@rive-app/canvas-advanced@2.31.5': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.19':
     optional: true

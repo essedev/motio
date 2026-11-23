@@ -1,0 +1,40 @@
+{
+	"name": "@motiojs/rive",
+	"version": "0.0.0",
+	"description": "Rive animations driven by Motio's timeline, mirroring @remotion/rive",
+	"license": "Apache-2.0",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {},
+	"dependencies": {
+		"@motiojs/core": "workspace:*",
+		"@rive-app/canvas-advanced": "2.31.5"
+	},
+	"devDependencies": {
+		"@motiojs/bundler": "workspace:*",
+		"@motiojs/player": "workspace:*",
+		"@motiojs/renderer": "workspace:*",
+		"@motiojs/testing": "workspace:*",
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"esbuild": "0.28.1",
+		"jsdom": "^31.0.1",
+		"motio": "workspace:*",
+		"puppeteer-core": "25.18.1",
+		"react": "19.3.1",
+		"react-dom": "19.3.1"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0"
+	}
+}
