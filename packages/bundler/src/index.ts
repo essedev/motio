@@ -1,3 +1,8 @@
+/**
+ * A Webpack override as written in `remotion.config.ts` (`Config.overrideWebpackConfig()`):
+ * Motio reads it to detect Tailwind; `bundle()` rejects a `webpackOverride` (use `viteOverride`).
+ */
+export type { WebpackOverrideFn } from "@motiojs/compat/config";
 export {
 	BUNDLE_GLOBAL,
 	type BundleOptions,

@@ -27,4 +27,5 @@ export {
 export { OffthreadVideo, type OffthreadVideoProps } from "./offthread-video.js";
 export type { ObjectFit } from "./render-frame.js";
 export type { MediaTrimProps } from "./timing.js";
+export { AudioForPreview, getTargetSampleRate } from "./undocumented.js";
 export type { LoopVolumeCurveBehavior, VolumeProp } from "./volume.js";
