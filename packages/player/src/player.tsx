@@ -1,3 +1,4 @@
+import type { MediaPlayback } from "@motiojs/core/internals";
 import {
 	type ForwardedRef,
 	forwardRef,
@@ -41,6 +42,7 @@ import {
 } from "./fullscreen.js";
 import { useMediaSession } from "./media-session.js";
 import { type PlaybackOptions, PlaybackStore } from "./playback-store.js";
+import { SharedAudioTags } from "./shared-audio.js";
 import type { PlayerEventTypes, PlayerProps, PlayerRef } from "./types.js";
 import { assertUnchanged, validateCanvasProps, validatePlayerProps } from "./validate.js";
 import { DEFAULT_VOLUME_KEY, persistVolume, readPersistedVolume } from "./volume-persistence.js";
@@ -230,6 +232,24 @@ function PlayerInner<Props extends Record<string, unknown>>(
 	});
 
 	const snap = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+	const [sharedAudio] = useState(() =>
+		numberOfSharedAudioTags > 0 && typeof document !== "undefined"
+			? new SharedAudioTags(numberOfSharedAudioTags)
+			: null,
+	);
+	const playing = snap.playing && !snap.buffering;
+	const playback = useMemo<MediaPlayback>(
+		() => ({
+			playing,
+			playbackRate: effectiveRate,
+			volume: snap.volume,
+			muted: snap.muted,
+			sharedAudio,
+		}),
+		[playing, effectiveRate, snap.volume, snap.muted, sharedAudio],
+	);
+	// Called on every play request: within a user gesture it unlocks the shared audio tags.
+	const unlockAudio = useCallback(() => sharedAudio?.unlock(), [sharedAudio]);
 	const mounted = usePlayerMount();
 	const container = useRef<HTMLDivElement | null>(null);
 	const size = useElementSize(container, impliedSize(style, compositionWidth, compositionHeight));
@@ -298,9 +318,15 @@ function PlayerInner<Props extends Record<string, unknown>>(
 	useImperativeHandle(
 		ref,
 		(): PlayerRef => ({
-			play: () => store.play(),
+			play: () => {
+				unlockAudio();
+				store.play();
+			},
 			pause: () => store.pause(),
-			toggle: () => store.toggle(),
+			toggle: () => {
+				unlockAudio();
+				store.toggle();
+			},
 			pauseAndReturnToPlayStart: () => store.pauseAndReturnToPlayStart(),
 			seekTo: (frame) => store.seekTo(frame),
 			getCurrentFrame: () => store.getSnapshot().frame,
@@ -319,7 +345,7 @@ function PlayerInner<Props extends Record<string, unknown>>(
 			addEventListener: (name, cb) => emitter.addEventListener(name, cb),
 			removeEventListener: (name, cb) => emitter.removeEventListener(name, cb),
 		}),
-		[store, emitter, requestFullscreen, exitFullscreen],
+		[store, emitter, requestFullscreen, exitFullscreen, unlockAudio],
 	);
 
 	// Clicks: play/pause on click, fullscreen on double click.
@@ -342,12 +368,14 @@ function PlayerInner<Props extends Record<string, unknown>>(
 		if (!clickToPlay || fromControls(e.target)) return;
 		if (doubleClickToFullscreen) {
 			if (clickTimer.current !== null) clearTimeout(clickTimer.current);
+			unlockAudio();
 			clickTimer.current = setTimeout(() => {
 				clickTimer.current = null;
 				store.toggle();
 			}, DOUBLE_CLICK_MS);
 			return;
 		}
+		unlockAudio();
 		store.toggle();
 	};
 	const onDoubleClick = (e: ReactMouseEvent<HTMLDivElement>) => {
@@ -362,6 +390,7 @@ function PlayerInner<Props extends Record<string, unknown>>(
 		if (!controls || !spaceKeyToPlayOrPause) return;
 		if (e.key !== " " || isTypingTarget(e.target)) return;
 		e.preventDefault();
+		unlockAudio();
 		store.toggle();
 	};
 
@@ -438,6 +467,7 @@ function PlayerInner<Props extends Record<string, unknown>>(
 								frame={snap.frame}
 								scale={placement.scale}
 								buffer={store.bufferState}
+								playback={playback}
 							/>
 						) : null}
 						{poster && posterFillMode === "composition-size" ? (
@@ -463,7 +493,10 @@ function PlayerInner<Props extends Record<string, unknown>>(
 						showVolumeControls={showVolumeControls}
 						fullscreenAvailable={allowFullscreen && fullscreenSupported}
 						isFullscreen={isFullscreen}
-						onToggle={() => store.toggle()}
+						onToggle={() => {
+							unlockAudio();
+							store.toggle();
+						}}
 						onToggleFullscreen={toggleFullscreen}
 						playbackRates={playbackRates}
 						onPlaybackRateChange={(rate) => setRateOverride({ prop: playbackRate, rate })}

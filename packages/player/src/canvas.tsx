@@ -2,6 +2,8 @@ import type { BufferState, RemotionEnvironment, VideoConfig } from "@motiojs/cor
 import {
 	BufferStateContext,
 	CurrentScaleContext,
+	type MediaPlayback,
+	MediaPlaybackContext,
 	RemotionEnvironmentContext,
 	registerPlayerMount,
 	rootTimelineState,
@@ -201,6 +203,8 @@ interface CompositionTreeProps {
 	frame: number;
 	scale: number;
 	buffer: BufferState;
+	/** How native media plays: provided by the Player, null in a Thumbnail. */
+	playback?: MediaPlayback | null;
 }
 
 /** The composition at one frame, with every context the core hooks read. */
@@ -210,6 +214,7 @@ export const CompositionTree = memo(function CompositionTree({
 	frame,
 	scale,
 	buffer,
+	playback = null,
 }: CompositionTreeProps): ReactNode {
 	const timeline = useMemo(
 		() => rootTimelineState(frame, config.durationInFrames),
@@ -221,7 +226,9 @@ export const CompositionTree = memo(function CompositionTree({
 				<VideoConfigContext.Provider value={config}>
 					<CurrentScaleContext.Provider value={scale}>
 						<TimelineContext.Provider value={timeline}>
-							<Comp {...config.props} />
+							<MediaPlaybackContext.Provider value={playback}>
+								<Comp {...config.props} />
+							</MediaPlaybackContext.Provider>
 						</TimelineContext.Provider>
 					</CurrentScaleContext.Provider>
 				</VideoConfigContext.Provider>
