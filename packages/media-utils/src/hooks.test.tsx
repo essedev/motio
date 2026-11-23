@@ -202,14 +202,16 @@ describe("useWindowedAudioData", () => {
 	it("refuses a changing windowInSeconds", async () => {
 		await render({ frame: 0 });
 		await render({ frame: 0, windowInSeconds: 2 });
-		expect((thrown as Error).message).toBe("windowInSeconds cannot be changed dynamically");
+		expect((thrown as Error).message).toMatch(
+			/^windowInSeconds changed from 1 to 2: keep it the same/,
+		);
 	});
 
 	it("fails the render for a channel the audio lacks", async () => {
 		windowed.channels = 1;
 		await render({ frame: 0, channelIndex: 1 });
 		expect((core.cancelled[0] as Error).message).toBe(
-			"Invalid channel index 1 for audio with 1 channels",
+			"channelIndex is 1, but /long.wav has 1 channel: use 0.",
 		);
 		expect(core.open.size).toBe(0);
 	});

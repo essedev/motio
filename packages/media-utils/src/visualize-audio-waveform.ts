@@ -35,7 +35,7 @@ export function visualizeAudioWaveform(options: VisualizeAudioWaveformOptions): 
 	} = options;
 	if (windowInSeconds * audioData.sampleRate < numberOfSamples) {
 		throw new TypeError(
-			`${windowInSeconds}s audiodata does not have ${numberOfSamples} bars. Increase windowInSeconds or decrease numberOfSamples`,
+			`A window of ${windowInSeconds} s holds fewer than ${numberOfSamples} samples: increase windowInSeconds or decrease numberOfSamples.`,
 		);
 	}
 	return waveformAmplitudes({

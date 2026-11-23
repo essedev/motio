@@ -101,12 +101,14 @@ export function visualizeAudio(options: VisualizeAudioOptions): number[] {
 	const size = numberOfSamples * 2;
 	if (!(Number.isInteger(size) && size > 0 && (size & (size - 1)) === 0)) {
 		throw new TypeError(
-			`The argument "bars" must be a power of two. For example: 64, 128. Got instead: ${size}`,
+			`numberOfSamples is ${numberOfSamples}: use a power of two, such as 32, 64 or 128.`,
 		);
 	}
 	const waveform = audioData.channelWaveforms[0];
 	if (waveform === undefined || waveform.length < size) {
-		throw new TypeError(`Audio data is not big enough to provide ${size} bars.`);
+		throw new TypeError(
+			`The audio has ${waveform?.length ?? 0} samples, too few for numberOfSamples ${numberOfSamples} (it needs ${size}): pass fewer samples or longer audio.`,
+		);
 	}
 	const peak = peakOf(audioData, waveform);
 	const at = (f: number) =>

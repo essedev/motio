@@ -7,7 +7,9 @@ const load = memoizeBySrc(async (src): Promise<VideoMetadata> => {
 	const width = element.videoWidth;
 	const height = element.videoHeight;
 	if (width === 0 || height === 0) {
-		throw new Error(`Unable to determine video metadata for ${src}`);
+		throw new Error(
+			`getVideoMetadata() found no video picture in ${src}: it may be an audio file. Use getAudioDurationInSeconds() for audio.`,
+		);
 	}
 	return {
 		durationInSeconds: element.duration,

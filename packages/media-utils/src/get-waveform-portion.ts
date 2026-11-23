@@ -28,13 +28,13 @@ export interface GetWaveformPortionOptions {
 	normalize?: boolean;
 }
 
-/** Throws the compatible error for a channel index outside the audio. */
+/** Throws a `TypeError`, as Remotion does, for a channel index outside the audio. */
 export function validateChannel(audioData: MediaUtilsAudioData, channel: number): Float32Array {
-	if (channel < 0) throw new TypeError('"channel" cannot be negative');
+	if (channel < 0) throw new TypeError(`channel is ${channel}: use 0 or more.`);
 	const waveform = audioData.channelWaveforms[channel];
 	if (channel >= audioData.numberOfChannels || waveform === undefined) {
 		throw new TypeError(
-			`"channel" must be ${audioData.numberOfChannels - 1} or lower. The audio has ${audioData.numberOfChannels} channels`,
+			`channel is ${channel}, but the audio has ${audioData.numberOfChannels} channels: use 0 to ${audioData.numberOfChannels - 1}.`,
 		);
 	}
 	return waveform;

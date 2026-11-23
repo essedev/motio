@@ -5,8 +5,8 @@ Target: `@remotion/media-utils@4.0.545`. Proof: `fixtures/media-utils/__golden__
 | Export | Status | Tolerance |
 |---|---|---|
 | `getAudioData` | exact | channel data bit-identical (SHA-256), metadata, caching, `isRemote`, errors |
-| `getAudioDurationInSeconds`, `getAudioDuration` | exact | values; error messages identical except the Mediabunny link |
-| `getVideoMetadata` | exact | values; error messages identical except the Mediabunny link |
+| `getAudioDurationInSeconds`, `getAudioDuration` | exact | values; fails on the same files with the same error class |
+| `getVideoMetadata` | exact | values; fails on the same files with the same error class |
 | `getImageDimensions` | exact values | rejects with an `Error` (the `Event` as `cause`) instead of the bare `Event` |
 | `getWaveformPortion` | exact | bit-identical on the grid (9,664 values) |
 | `visualizeAudioWaveform` | exact | bit-identical on the grid (2,720 values) |
@@ -15,6 +15,8 @@ Target: `@remotion/media-utils@4.0.545`. Proof: `fixtures/media-utils/__golden__
 | `audioBufferToDataUrl` | exact | identical data URLs |
 | `useAudioData` | exact | same states (null, loaded, previous data kept while a new `src` or `sampleRate` loads) |
 | `useWindowedAudioData` | approximated | see below |
+
+Failures are compared on behaviour, not wording: the same calls fail, with the same error name (`Error`, `TypeError`, the browser's `EncodingError`), and Motio's message names the same option. The messages are Motio's own (D-054).
 
 ## Measured behaviour
 

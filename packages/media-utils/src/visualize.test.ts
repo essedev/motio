@@ -81,7 +81,7 @@ describe("getWaveformPortion", () => {
 		).toEqual([]);
 	});
 
-	it("rejects channels outside the audio with Remotion's messages", () => {
+	it("rejects channels outside the audio with a TypeError, as Remotion does", () => {
 		const base = {
 			audioData: data,
 			startTimeInSeconds: 0,
@@ -89,10 +89,10 @@ describe("getWaveformPortion", () => {
 			numberOfSamples: 2,
 		};
 		expect(() => getWaveformPortion({ ...base, channel: -1 })).toThrow(
-			'"channel" cannot be negative',
+			new TypeError("channel is -1: use 0 or more."),
 		);
 		expect(() => getWaveformPortion({ ...base, channel: 2 })).toThrow(
-			'"channel" must be 1 or lower. The audio has 2 channels',
+			new TypeError("channel is 2, but the audio has 2 channels: use 0 to 1."),
 		);
 	});
 });
@@ -123,7 +123,7 @@ describe("visualizeAudioWaveform", () => {
 				windowInSeconds: 0.1,
 			}),
 		).toThrow(
-			"0.1s audiodata does not have 11 bars. Increase windowInSeconds or decrease numberOfSamples",
+			"A window of 0.1 s holds fewer than 11 samples: increase windowInSeconds or decrease numberOfSamples.",
 		);
 	});
 });
@@ -206,15 +206,15 @@ describe("visualizeAudio", () => {
 		});
 	});
 
-	it("validates numberOfSamples like Remotion", () => {
+	it("rejects the numberOfSamples Remotion rejects", () => {
 		const data = signal(() => 0.1);
 		const call = (numberOfSamples: number) => () =>
 			visualizeAudio({ audioData: data, frame: 1, fps: 1, numberOfSamples });
 		expect(call(3)).toThrow(
-			'The argument "bars" must be a power of two. For example: 64, 128. Got instead: 6',
+			new TypeError("numberOfSamples is 3: use a power of two, such as 32, 64 or 128."),
 		);
-		expect(call(0)).toThrow("Got instead: 0");
-		expect(call(4096)).toThrow("Audio data is not big enough to provide 8192 bars.");
+		expect(call(0)).toThrow("numberOfSamples is 0");
+		expect(call(4096)).toThrow(/too few for numberOfSamples 4096 \(it needs 8192\)/);
 		expect(call(1)()).toHaveLength(1);
 	});
 });

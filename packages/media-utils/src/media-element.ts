@@ -12,11 +12,12 @@ async function describeError(fn: string, src: string, element: HTMLMediaElement)
 	const status = await httpStatus(src);
 	if (status !== null && status >= 400) {
 		return new Error(
-			`Failed to execute ${fn}(): Received a ${status} error loading "${src}". Correct the URL of the file.`,
+			`${fn}() could not load "${src}": the server answered HTTP ${status}. Check the URL of the file.`,
 		);
 	}
+	const browserMessage = element.error?.message ? `, "${element.error.message}"` : "";
 	return new Error(
-		`Failed to execute ${fn}(), Received a MediaError loading "${src}". Consider using Mediabunny instead, which supports more codecs: https://mediabunny.dev/guide/reading-media-files HTTP Status code of the file: ${status ?? "unknown"}. Browser error message: ${element.error?.message ?? ""} Check the path of the file and if it is a valid video.`,
+		`${fn}() could not read "${src}" as media (HTTP status ${status ?? "unknown"}; browser error ${element.error?.code ?? "unknown"}${browserMessage}). Check that the file exists and is in a format this browser plays; Mediabunny (https://mediabunny.dev) reads more formats.`,
 	);
 }
 

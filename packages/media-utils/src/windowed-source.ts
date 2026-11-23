@@ -15,7 +15,9 @@ export interface WindowedSource {
 const HEADER_BYTES = 64 * 1024;
 
 function fetchError(src: string, response: Response): Error {
-	return new Error(`Error fetching ${src}: ${response.status} ${response.statusText}`);
+	return new Error(
+		`Could not fetch ${src}: the server answered HTTP ${response.status} ${response.statusText}.`,
+	);
 }
 
 function totalSize(response: Response, received: number): number {

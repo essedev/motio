@@ -4,6 +4,7 @@
 import { readFileSync } from "node:fs";
 import type { Server } from "node:http";
 import { join, resolve } from "node:path";
+import { compareFailure } from "@motiojs/testing/oracle-errors";
 import { build } from "esbuild";
 import puppeteer, { type Browser } from "puppeteer-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -124,7 +125,42 @@ function diff(a: number[], b: number[]): { abs: number; rel: number } {
 	return { abs, rel };
 }
 
-/** Compares numeric outcomes within `abs` or `rel`; errors must match exactly. */
+/** Options that a failure message should name when the recorded one does. */
+const NAMES = ["channel", "numberOfSamples", "windowInSeconds"];
+
+/**
+ * Checks every failure recorded in `expected` against the one at the same place in `actual`, on
+ * behaviour (same error name, Motio's own message naming the same options), and returns `actual`
+ * with those failures replaced by the recorded ones, so that the rest compares with toEqual().
+ */
+function withFailuresChecked(actual: unknown, expected: unknown, path = ""): unknown {
+	if (Array.isArray(expected)) {
+		return expected.map((e, i) =>
+			withFailuresChecked((actual as unknown[] | undefined)?.[i], e, `${path}[${i}]`),
+		);
+	}
+	if (expected === null || typeof expected !== "object") return actual;
+	const recorded = expected as Outcome;
+	if (typeof recorded.error === "string") {
+		const failure = actual as Outcome | undefined;
+		expect(failure?.error, `${path} should fail`).toBeTypeOf("string");
+		const problem = compareFailure(
+			{ name: failure?.name, message: failure?.error },
+			{ error: recorded.error, errorType: recorded.name },
+			NAMES,
+		);
+		expect(problem, path).toBeUndefined();
+		return { ...(actual as object), error: recorded.error };
+	}
+	return Object.fromEntries(
+		Object.entries(expected).map(([k, e]) => [
+			k,
+			withFailuresChecked((actual as Record<string, unknown> | undefined)?.[k], e, `${path}.${k}`),
+		]),
+	);
+}
+
+/** Compares numeric outcomes within `abs` or `rel`; failures on behaviour. */
 function expectClose(
 	expected: Outcome<number[]>,
 	actual: Outcome<number[]>,
@@ -132,10 +168,7 @@ function expectClose(
 	rel: number,
 ) {
 	if (expected.ok === undefined) {
-		expect({ error: actual.error, name: actual.name }).toEqual({
-			error: expected.error,
-			name: expected.name,
-		});
+		withFailuresChecked(actual, expected);
 		return;
 	}
 	expect(actual.error).toBeUndefined();
@@ -151,13 +184,6 @@ function expectClose(
 	});
 }
 
-const REMOTION_MEDIABUNNY = "https://www.remotion.dev/docs/mediabunny/metadata";
-const MOTIO_MEDIABUNNY = "https://mediabunny.dev/guide/reading-media-files";
-const withMotioLink = (o: Outcome) =>
-	o.error === undefined
-		? o
-		: { ...o, error: o.error.replace(REMOTION_MEDIABUNNY, MOTIO_MEDIABUNNY) };
-
 describe("media-utils against @remotion/media-utils 4.0.545 in the same browser", () => {
 	it("records a meaningful grid", () => {
 		expect(golden.visualizeAudio.length).toBeGreaterThan(400);
@@ -166,7 +192,7 @@ describe("media-utils against @remotion/media-utils 4.0.545 in the same browser"
 	});
 
 	it("getAudioData decodes bit-identically (SHA-256 of every channel) with the same metadata", () => {
-		expect(got.getAudioData).toEqual(golden.getAudioData);
+		expect(withFailuresChecked(got.getAudioData, golden.getAudioData)).toEqual(golden.getAudioData);
 	});
 
 	it("getAudioData caches by src and sample rate, reports isRemote and forwards requestInit", () => {
@@ -235,10 +261,10 @@ describe("media-utils against @remotion/media-utils 4.0.545 in the same browser"
 	});
 
 	it("getAudioDurationInSeconds and getVideoMetadata match, errors included", () => {
-		const norm = (r: Record<string, Outcome>) =>
-			Object.fromEntries(Object.entries(r).map(([k, v]) => [k, withMotioLink(v)]));
-		expect(got.durations).toEqual(norm(golden.durations));
-		expect(got.videoMetadata).toEqual(norm(golden.videoMetadata));
+		expect(withFailuresChecked(got.durations, golden.durations)).toEqual(golden.durations);
+		expect(withFailuresChecked(got.videoMetadata, golden.videoMetadata)).toEqual(
+			golden.videoMetadata,
+		);
 	});
 
 	it("getImageDimensions matches", () => {

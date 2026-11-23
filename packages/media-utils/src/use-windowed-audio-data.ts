@@ -81,7 +81,9 @@ export function useWindowedAudioData(
 	const { src, frame, fps, windowInSeconds, channelIndex = 0 } = options;
 	const initialWindow = useRef(windowInSeconds).current;
 	if (windowInSeconds !== initialWindow) {
-		throw new Error("windowInSeconds cannot be changed dynamically");
+		throw new Error(
+			`windowInSeconds changed from ${initialWindow} to ${windowInSeconds}: keep it the same for the life of the component, or remount it with a new key.`,
+		);
 	}
 	const requestInit = useRef(options.requestInit).current;
 	const [source, setSource] = useState<{ src: string; source: WindowedSource } | null>(null);
@@ -97,7 +99,7 @@ export function useWindowedAudioData(
 				if (!current) return;
 				if (channelIndex >= opened.numberOfChannels || channelIndex < 0) {
 					throw new Error(
-						`Invalid channel index ${channelIndex} for audio with ${opened.numberOfChannels} channels`,
+						`channelIndex is ${channelIndex}, but ${src} has ${opened.numberOfChannels === 1 ? "1 channel: use 0" : `${opened.numberOfChannels} channels: use 0 to ${opened.numberOfChannels - 1}`}.`,
 					);
 				}
 				setSource({ src, source: opened });

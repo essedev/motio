@@ -22,7 +22,7 @@ async function load(
 	const response = await fetch(src, requestInit);
 	if (!response.ok) {
 		throw new Error(
-			`Failed to fetch audio data from ${src}: ${response.status} ${response.statusText}`,
+			`getAudioData() could not fetch ${src}: the server answered HTTP ${response.status} ${response.statusText}.`,
 		);
 	}
 	const encoded = await response.arrayBuffer();
