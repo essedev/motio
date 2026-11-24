@@ -3,6 +3,8 @@
 // `paint` when their rendering changes or `requestPaint()` asks for it, and its 2D context draws
 // a child with `drawElementImage()`. chrome-headless-shell 158 offers it with default flags (D-057).
 
+import { isHtmlInCanvasSupported } from "@motiojs/core";
+
 /** A canvas element with the HTML-in-canvas additions. */
 export interface DrawableCanvas extends HTMLCanvasElement {
 	requestPaint(): void;
@@ -16,12 +18,5 @@ export interface DrawableContext2D extends CanvasRenderingContext2D {
 
 /** Whether this browser offers the HTML-in-canvas API. */
 export function isHtmlInCanvasAvailable(): boolean {
-	return (
-		typeof HTMLCanvasElement !== "undefined" &&
-		typeof (HTMLCanvasElement.prototype as Partial<DrawableCanvas>).requestPaint === "function" &&
-		typeof CanvasRenderingContext2D !== "undefined" &&
-		typeof (CanvasRenderingContext2D.prototype as Partial<DrawableContext2D>).drawElementImage ===
-			"function" &&
-		typeof OffscreenCanvas !== "undefined"
-	);
+	return isHtmlInCanvasSupported();
 }

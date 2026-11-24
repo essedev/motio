@@ -196,7 +196,7 @@
 				"isHtmlInCanvasSupported": {
 					"kind": "value",
 					"tier": 3,
-					"status": "missing"
+					"status": "supported"
 				},
 				"Loop": {
 					"kind": "value",

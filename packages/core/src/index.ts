@@ -19,6 +19,7 @@ export {
 	type RemotionEnvironment,
 	useRemotionEnvironment,
 } from "./environment.js";
+export { isHtmlInCanvasSupported } from "./html-in-canvas.js";
 export {
 	Interactive,
 	type InteractiveBaseProps,

@@ -47,6 +47,7 @@ export {
 	type InterpolateOutputType,
 	interpolate,
 	interpolateColors,
+	isHtmlInCanvasSupported,
 	Loop,
 	type LoopInfo,
 	type LoopProps,
