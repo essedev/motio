@@ -5,6 +5,12 @@ import type { BundleResult } from "@motiojs/bundler";
 import { MotioError } from "@motiojs/compat";
 import { type ConfigValues, GL_RENDERERS, LOG_LEVELS, type LogLevel } from "@motiojs/compat/config";
 import type { Flags } from "./args.js";
+import {
+	type ConfigPurpose,
+	loadProjectConfig,
+	type ProjectConfig,
+	viteOverrideOf,
+} from "./config.js";
 import type { CommandContext } from "./context.js";
 import { usageError } from "./errors.js";
 import { parseProps, resolvePath } from "./options.js";
@@ -12,7 +18,12 @@ import type { DelayRenderPending, SessionOptions, VideoConfig } from "./renderer
 
 /** A project opened for rendering: config loaded, bundle built (or a serve URL given). */
 export interface Project {
+	/** The settings every command reads: config file and `MOTIO_*` variables (flags win). */
 	config: Readonly<Partial<ConfigValues>>;
+	/** The config as loaded: its file and the Motio-only settings (`outDir`, `vite`, `ffmpeg`). */
+	settings: ProjectConfig;
+	/** The project root: config paths are relative to it. */
+	rootDir: string;
 	serveUrl: string;
 	/** Session options shared by every renderer call. */
 	session: SessionOptions;
@@ -75,24 +86,26 @@ export function logLevelFrom(flags: Flags): LogLevel | undefined {
 }
 
 /**
- * Loads `remotion.config.ts`, resolves the serve URL (an http(s) URL, a directory holding a
- * built bundle, or an entry file bundled with Vite) and builds the session options.
+ * Loads the config (`motio.config.ts`, else `remotion.config.ts`), resolves the serve URL (an
+ * http(s) URL, a directory holding a built bundle, or an entry file bundled with Vite) and builds
+ * the session options. `purpose` picks the config group of `scale`, `jpegQuality` and `overwrite`.
  */
 export async function openProject(
 	ctx: CommandContext,
 	flags: Flags,
 	entryArgument: string | undefined,
+	purpose: ConfigPurpose = "render",
 ): Promise<Project> {
 	const rootDir = findProjectRoot(ctx.io.cwd, entryArgument);
 	if (rootDir !== ctx.io.cwd) ctx.reporter.verbose(`Project root ${rootDir}`);
-	const configFlag = flags.string("config");
-	const loaded = await ctx.bundler.loadRemotionConfig({
+	const settings = await loadProjectConfig(ctx, {
 		rootDir,
-		configFile: configFlag ? resolvePath(ctx.io.cwd, configFlag) : undefined,
+		configFlag: flags.string("config"),
+		purpose,
 	});
-	if (loaded.file) ctx.reporter.verbose(`Loaded config from ${loaded.file}`);
-	for (const warning of loaded.warnings) ctx.reporter.warn(warning.message);
-	const config = loaded.values;
+	for (const warning of settings.warnings) ctx.reporter.warn(warning.message);
+	const config = settings.values;
+	const viteOverride = viteOverrideOf(settings);
 
 	const envFlag = flags.string("env-file");
 	const env = ctx.bundler.loadEnvVariables({
@@ -131,6 +144,7 @@ export async function openProject(
 			config,
 			envVariables: env.variables,
 			...(publicDirFlag ? { publicDir: publicDir.path } : {}),
+			...(viteOverride ? { viteOverride } : {}),
 			onProgress: (progress) => ctx.reporter.progress("Bundling", progress / 100),
 			onWarning: (message) => ctx.reporter.warn(message),
 		});
@@ -149,7 +163,19 @@ export async function openProject(
 		rendererPort: flags.integer("port", { min: 1, max: 65535 }) ?? config.rendererPort ?? undefined,
 	});
 	await ensureBrowserWithProgress(ctx, session);
-	return { config, serveUrl, session, bundle };
+	return { config, settings, rootDir, serveUrl, session, bundle };
+}
+
+/**
+ * The folder of outputs without a path: the config's `outDir` (relative to the project root),
+ * else `out` in the working directory.
+ */
+export function outDirOf(
+	ctx: CommandContext,
+	project: Pick<Project, "settings" | "rootDir">,
+): string {
+	const outDir = project.settings.motio.outDir;
+	return outDir ? resolvePath(project.rootDir, outDir) : resolvePath(ctx.io.cwd, "out");
 }
 
 /**

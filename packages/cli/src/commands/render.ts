@@ -25,7 +25,13 @@ import {
 	parseFrameRange,
 	resolvePath,
 } from "../options.js";
-import { compositionJson, openProject, selectComposition, splitPositionals } from "../project.js";
+import {
+	compositionJson,
+	openProject,
+	outDirOf,
+	selectComposition,
+	splitPositionals,
+} from "../project.js";
 import { loadDistributed } from "../renderer-api.js";
 
 export const RENDER_FLAGS = {
@@ -151,7 +157,8 @@ export async function renderCommand(
 		return renderSequence(ctx, project, composition, commandStarted, {
 			output: resolvePath(
 				ctx.io.cwd,
-				requestedOutput ?? join("out", composition.defaultOutName ?? composition.id),
+				requestedOutput ??
+					join(outDirOf(ctx, project), composition.defaultOutName ?? composition.id),
 			),
 			// PNG: a sequence is usually an intermediate for another tool, where JPEG would lose
 			// quality at every step. Remotion's CLI writes element-[frame].jpeg; the config keeps both.
@@ -177,13 +184,16 @@ export async function renderCommand(
 	const output = resolvePath(
 		ctx.io.cwd,
 		requestedOutput ??
-			join("out", `${composition.defaultOutName ?? composition.id}.${CODEC_EXTENSIONS[codec]}`),
+			join(
+				outDirOf(ctx, project),
+				`${composition.defaultOutName ?? composition.id}.${CODEC_EXTENSIONS[codec]}`,
+			),
 	);
 	await mkdir(dirname(output), { recursive: true });
 
 	const renderer = await ctx.renderer();
 	// Resolved once here, so the render, its chunks and the JSON result name the same FFmpeg.
-	const ffmpeg = await commandFfmpeg(ctx);
+	const ffmpeg = await commandFfmpeg(ctx, project.settings);
 	const ffmpegVersion = renderer.probeFfmpeg
 		? await renderer.probeFfmpeg(ffmpeg.ffmpeg).then(
 				(info) => info.version,

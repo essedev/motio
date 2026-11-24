@@ -168,7 +168,7 @@ export async function checkDeterminismCommand(
 		});
 		const runHashes = new Map<number, string>();
 		await decodePngs(
-			(await commandFfmpeg(ctx)).ffmpeg,
+			(await commandFfmpeg(ctx, project.settings)).ffmpeg,
 			frames.map((frame) => files.get(frame) as string),
 			(i, rgba) => void runHashes.set(frames[i] as number, hashPixels(rgba)),
 		);
@@ -236,7 +236,7 @@ export async function checkFlickerCommand(
 	// Sliding window of the last three decoded frames; only consecutive frames are compared.
 	const window: Array<{ frame: number; rgba: Buffer }> = [];
 	await decodePngs(
-		(await commandFfmpeg(ctx)).ffmpeg,
+		(await commandFfmpeg(ctx, project.settings)).ffmpeg,
 		frames.map((frame) => files.get(frame) as string),
 		(index, rgba) => {
 			window.push({ frame: frames[index] as number, rgba: Buffer.from(rgba) });

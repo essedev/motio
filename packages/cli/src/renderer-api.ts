@@ -95,6 +95,10 @@ export interface ResolvedFfmpeg {
 
 /** Options of the FFmpeg resolution. */
 export interface ResolveFfmpegOptions {
+	/** An FFmpeg executable to use as is (the config's `ffmpeg.executable`). */
+	ffmpegExecutable?: string;
+	/** An ffprobe executable (the config's `ffmpeg.ffprobeExecutable`). */
+	ffprobeExecutable?: string;
 	/** False never downloads: an installed package without its build resolves to null. */
 	download?: boolean;
 	onDownloadProgress?: (progress: { downloadedBytes: number; totalBytes: number }) => void;

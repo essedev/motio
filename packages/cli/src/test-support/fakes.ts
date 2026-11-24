@@ -2,7 +2,12 @@ import { mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { crc32, deflateSync } from "node:zlib";
-import type { BundleResult, DevServer, DevServerOptions } from "@motiojs/bundler";
+import {
+	type BundleResult,
+	type DevServer,
+	type DevServerOptions,
+	loadConfig,
+} from "@motiojs/bundler";
 import type { CompatibilityReport } from "@motiojs/compat";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import type { BundlerApi, CliDeps } from "../context.js";
@@ -170,6 +175,8 @@ export function fakeBundler(overrides: Partial<BundlerApi> = {}): {
 				},
 			],
 		}),
+		// The real loader: tests write motio.config files into temporary folders.
+		loadConfig,
 		loadEnvVariables: () => ({ variables: { REMOTION_X: "1" }, file: null }),
 		resolveEntryPoint: () => ({ path: "/project/src/index.ts", reason: "common paths" }),
 		startDevServer: async (options) => fakeDevServer(options),

@@ -1,5 +1,6 @@
 import type {
 	createBundle,
+	loadConfig,
 	loadEnvVariables,
 	loadRemotionConfig,
 	resolveEntryPoint,
@@ -18,6 +19,7 @@ import type {
 export interface BundlerApi {
 	createBundle: typeof createBundle;
 	loadRemotionConfig: typeof loadRemotionConfig;
+	loadConfig: typeof loadConfig;
 	loadEnvVariables: typeof loadEnvVariables;
 	resolveEntryPoint: typeof resolveEntryPoint;
 	startDevServer: typeof startDevServer;

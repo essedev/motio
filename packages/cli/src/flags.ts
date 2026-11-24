@@ -13,7 +13,8 @@ export const PROJECT_FLAGS = {
 	props: { type: "string", description: "Input props: a JSON object or the path to a JSON file." },
 	config: {
 		type: "string",
-		description: "Path to the config file (default: the one in the project root, if any).",
+		description:
+			"Config file (default: motio.config.ts, else remotion.config.ts, in the project root).",
 	},
 	"env-file": { type: "string", description: "Dotenv file to read instead of .env." },
 	"public-dir": { type: "string", description: "Public directory (default public/)." },

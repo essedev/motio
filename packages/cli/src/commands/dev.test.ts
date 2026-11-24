@@ -109,6 +109,33 @@ describe("motio dev", () => {
 		expect(started.io.err).toEqual([]);
 	});
 
+	it("takes host, open, keyboard shortcuts, port and the Vite function from motio.config", async () => {
+		await writeFile(
+			join(cwd, "motio.config.mjs"),
+			"export default { dev: { port: 4100, host: '0.0.0.0', open: true, keyboardShortcuts: false }, vite: (c) => c };\n",
+		);
+		const started = await start(["--json"]);
+		expect(JSON.parse(started.io.out[0] as string).warnings).toEqual([]);
+		const options = lastServer();
+		expect(options).toMatchObject({ host: "0.0.0.0", open: true, keyboardShortcuts: false });
+		// The config's port reaches the server as its default, which moves on when taken.
+		expect(options.config?.studioPort).toBe(4100);
+		expect(options.strictPort).toBeUndefined();
+		expect(typeof options.viteOverride).toBe("function");
+		started.interrupt();
+		await started.done;
+		// Flags win over the config.
+		const flagged = await start(["--host=127.0.0.1", "--open=false", "--port=4200"]);
+		expect(lastServer()).toMatchObject({
+			host: "127.0.0.1",
+			open: false,
+			port: 4200,
+			strictPort: true,
+		});
+		flagged.interrupt();
+		await flagged.done;
+	});
+
 	it("also stops on a termination signal", async () => {
 		const started = await start([]);
 		started.terminate();

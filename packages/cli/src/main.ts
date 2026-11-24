@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import {
 	createBundle,
+	loadConfig,
 	loadEnvVariables,
 	loadRemotionConfig,
 	resolveEntryPoint,
@@ -223,6 +224,7 @@ export function defaultDeps(env: Record<string, string | undefined>): CliDeps {
 		bundler: {
 			createBundle,
 			loadRemotionConfig,
+			loadConfig,
 			loadEnvVariables,
 			resolveEntryPoint,
 			startDevServer,
@@ -231,12 +233,15 @@ export function defaultDeps(env: Record<string, string | undefined>): CliDeps {
 		resolveFfmpeg: async (options) => {
 			const loaded = await getRenderer().catch(() => undefined);
 			if (loaded?.resolveFfmpeg) return loaded.resolveFfmpeg(options);
-			// Without the renderer: the environment, else PATH.
-			const ffmpeg = env.MOTIO_FFMPEG ?? "ffmpeg";
+			// Without the renderer: the option, the environment, else PATH.
+			const ffmpeg = options?.ffmpegExecutable ?? env.MOTIO_FFMPEG ?? "ffmpeg";
 			return {
 				ffmpeg,
-				ffprobe: env.MOTIO_FFPROBE ?? ffmpeg.replace(/ffmpeg(\.exe)?$/i, "ffprobe$1"),
-				source: env.MOTIO_FFMPEG ? "env" : "path",
+				ffprobe:
+					options?.ffprobeExecutable ??
+					env.MOTIO_FFPROBE ??
+					ffmpeg.replace(/ffmpeg(\.exe)?$/i, "ffprobe$1"),
+				source: options?.ffmpegExecutable ? "option" : env.MOTIO_FFMPEG ? "env" : "path",
 			};
 		},
 		onInterrupt: (handler) => {

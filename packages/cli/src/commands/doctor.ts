@@ -1,12 +1,13 @@
 import { spawn } from "node:child_process";
 import { constants, existsSync, readdirSync } from "node:fs";
 import { access } from "node:fs/promises";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import type { CompatibilityReport } from "@motiojs/compat";
 import { Flags, parseCommandArgs } from "../args.js";
+import { loadProjectConfig, type ProjectConfig } from "../config.js";
 import type { CommandContext, CommandResult } from "../context.js";
 import { EXIT, toErrorJson, usageError } from "../errors.js";
-import { FFMPEG_SOURCE_LABELS } from "../ffmpeg.js";
+import { configFfmpegOptions, FFMPEG_SOURCE_LABELS } from "../ffmpeg.js";
 import { BASE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import { resolvePath } from "../options.js";
 import type { ResolvedFfmpeg } from "../renderer-api.js";
@@ -134,12 +135,15 @@ async function unpublishedPinnedBuild(
 	];
 }
 
-async function checkFfmpeg(ctx: CommandContext): Promise<DoctorCheck[]> {
+async function checkFfmpeg(
+	ctx: CommandContext,
+	settings: ProjectConfig | undefined,
+): Promise<DoctorCheck[]> {
 	const checks: DoctorCheck[] = [];
 	// Never downloads: doctor reports a pinned build that is not downloaded yet instead.
 	let resolved: Awaited<ReturnType<CommandContext["resolveFfmpeg"]>>;
 	try {
-		resolved = await ctx.resolveFfmpeg({ download: false });
+		resolved = await ctx.resolveFfmpeg({ download: false, ...configFfmpegOptions(ctx, settings) });
 	} catch (error) {
 		// For example @motiojs/ffmpeg installed on a platform it has no build for.
 		const { code, message } = toErrorJson(error);
@@ -323,6 +327,38 @@ function compatibilityCheck(report: CompatibilityReport): DoctorCheck {
 	};
 }
 
+/**
+ * Which config file is in use: a Motio config, a Remotion config (with its settings that have no
+ * full effect), or none.
+ */
+function configCheck(ctx: CommandContext, settings: ProjectConfig): DoctorCheck {
+	const details = { file: settings.file, kind: settings.kind, warnings: settings.warnings };
+	if (!settings.file) {
+		return {
+			name: "config",
+			status: "pass",
+			message: "No config file; defaults apply.",
+			details,
+		};
+	}
+	const shown = relative(ctx.io.cwd, settings.file) || settings.file;
+	if (settings.kind === "motio") {
+		return { name: "config", status: "pass", message: `Using ${shown}.`, details };
+	}
+	const webpack = settings.warnings.filter(
+		(w) => w.setter === "overrideWebpackConfig" || w.setter === "overrideBundlerConfig",
+	);
+	return {
+		name: "config",
+		status: settings.warnings.length > 0 ? "warn" : "pass",
+		message:
+			settings.warnings.length > 0
+				? `Using ${shown} (a Remotion config): ${settings.warnings.length} setting(s) without full effect in Motio${webpack.length > 0 ? ", including a webpack override (D-003)" : ""}.`
+				: `Using ${shown} (a Remotion config).`,
+		details,
+	};
+}
+
 /** `motio doctor [project-dir]`: environment checks and the compatibility report. */
 export async function doctorCommand(
 	ctx: CommandContext,
@@ -333,40 +369,25 @@ export async function doctorCommand(
 	if (positionals.length > 1) throw usageError(`Too many arguments: ${positionals.join(" ")}.`);
 	const rootDir = resolvePath(ctx.io.cwd, positionals[0] ?? ".");
 
-	const checks: DoctorCheck[] = [nodeCheck(), ...(await checkFfmpeg(ctx))];
-	checks.push(await checkBrowser(ctx, flags.string("browser-executable")));
-
+	// The config comes first: its ffmpeg.executable decides which FFmpeg is checked.
+	const projectChecks: DoctorCheck[] = [];
+	let settings: ProjectConfig | undefined;
 	try {
-		const loaded = await ctx.bundler.loadRemotionConfig({
-			rootDir,
-			configFile: flags.string("config"),
-		});
-		const webpack = loaded.warnings.filter(
-			(w) => w.setter === "overrideWebpackConfig" || w.setter === "overrideBundlerConfig",
-		);
-		checks.push({
-			name: "config",
-			status: loaded.warnings.length > 0 ? "warn" : "pass",
-			message: !loaded.file
-				? "No config file; defaults apply."
-				: loaded.warnings.length > 0
-					? `${loaded.file}: ${loaded.warnings.length} setting(s) without full effect in Motio${webpack.length > 0 ? ", including a webpack override (D-003)" : ""}.`
-					: `${loaded.file} loaded.`,
-			details: { file: loaded.file, warnings: loaded.warnings },
-		});
+		settings = await loadProjectConfig(ctx, { rootDir, configFlag: flags.string("config") });
+		projectChecks.push(configCheck(ctx, settings));
 		try {
 			const entry = ctx.bundler.resolveEntryPoint({
 				rootDir,
-				configEntryPoint: loaded.values.entryPoint,
+				configEntryPoint: settings.values.entryPoint,
 			});
-			checks.push({
+			projectChecks.push({
 				name: "entry-point",
 				status: "pass",
 				message: `Entry point ${entry.path}.`,
 				details: { path: entry.path, reason: entry.reason },
 			});
 		} catch (error) {
-			checks.push({
+			projectChecks.push({
 				name: "entry-point",
 				status: "warn",
 				message: toErrorJson(error).message,
@@ -374,13 +395,22 @@ export async function doctorCommand(
 			});
 		}
 	} catch (error) {
-		checks.push({
+		projectChecks.push({
 			name: "config",
 			status: "fail",
 			message: toErrorJson(error).message,
 			details: toErrorJson(error).context,
 		});
 	}
+
+	const checks: DoctorCheck[] = [nodeCheck(), ...(await checkFfmpeg(ctx, settings))];
+	checks.push(
+		await checkBrowser(
+			ctx,
+			flags.string("browser-executable") ?? settings?.values.browserExecutable ?? undefined,
+		),
+	);
+	checks.push(...projectChecks);
 
 	const report = await ctx.compatibilityReport(rootDir);
 	checks.push(compatibilityCheck(report));

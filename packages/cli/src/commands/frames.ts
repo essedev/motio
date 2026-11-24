@@ -11,7 +11,13 @@ import { drawLabels } from "../frames/labels.js";
 import { encodeRgbaPng } from "../frames/png.js";
 import { framesInRange, renderToFiles } from "../frames/render-to-files.js";
 import { parseConcurrency, parseFrameRange, resolvePath } from "../options.js";
-import { compositionJson, openProject, selectComposition, splitPositionals } from "../project.js";
+import {
+	compositionJson,
+	openProject,
+	outDirOf,
+	selectComposition,
+	splitPositionals,
+} from "../project.js";
 
 export const FRAMES_FLAGS = {
 	...PROJECT_FLAGS,
@@ -96,7 +102,7 @@ export async function framesCommand(
 	const rows = Math.ceil(frames.length / columns);
 	const output = resolvePath(
 		ctx.io.cwd,
-		outputFlag ?? positionalOutput ?? join("out", `${composition.id}-frames.png`),
+		outputFlag ?? positionalOutput ?? join(outDirOf(ctx, project), `${composition.id}-frames.png`),
 	);
 	await mkdir(dirname(output), { recursive: true });
 
@@ -110,7 +116,7 @@ export async function framesCommand(
 		label: "Rendering frames",
 	});
 	const padding = 4;
-	const ffmpeg = (await commandFfmpeg(ctx)).ffmpeg;
+	const ffmpeg = (await commandFfmpeg(ctx, project.settings)).ffmpeg;
 	await composeContactSheet(
 		ffmpeg,
 		frames.map((frame) => files.get(frame) as string),

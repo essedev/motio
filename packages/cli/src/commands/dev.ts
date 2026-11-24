@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DEFAULT_DEV_PORT, type DevLogLevel } from "@motiojs/bundler";
 import { Flags, parseCommandArgs } from "../args.js";
+import { loadProjectConfig, viteOverrideOf } from "../config.js";
 import type { CommandContext, CommandResult } from "../context.js";
 import { usageError } from "../errors.js";
 import { BASE_FLAGS, PROJECT_FLAGS } from "../flags.js";
@@ -22,7 +23,7 @@ export const DEV_FLAGS = {
 	port: {
 		type: "string",
 		description:
-			"Port of the preview page; fails if taken. Default Config.setStudioPort(), else 3000, then the next free port.",
+			"Port of the preview page; fails if taken. Default dev.port of the config, else 3000, then the next free port.",
 	},
 	host: { type: "string", description: "Host to bind (default localhost)." },
 	open: { type: "boolean", description: "Open the page in the default browser." },
@@ -84,15 +85,13 @@ export async function devCommand(
 	const entryPoint = entryArgument ? resolvePath(ctx.io.cwd, entryArgument) : "";
 	const configFlag = flags.string("config");
 
-	const loaded = await ctx.bundler.loadRemotionConfig({
-		rootDir,
-		configFile: configFlag ? resolvePath(ctx.io.cwd, configFlag) : undefined,
-	});
-	if (loaded.file) ctx.reporter.verbose(`Loaded config from ${loaded.file}`);
-	for (const warning of loaded.warnings) {
+	const settings = await loadProjectConfig(ctx, { rootDir, configFlag, purpose: "still" });
+	for (const warning of settings.warnings) {
 		if (!DEV_HONOURED_SETTERS.has(warning.setter)) ctx.reporter.warn(warning.message);
 	}
-	const config = loaded.values;
+	const config = settings.values;
+	const devSettings = settings.motio.dev ?? {};
+	const viteOverride = viteOverrideOf(settings);
 	const envFlag = flags.string("env-file");
 	const env = ctx.bundler.loadEnvVariables({
 		rootDir,
@@ -126,6 +125,7 @@ export async function devCommand(
 			config,
 			envVariables: env.variables,
 			...(publicDir ? { publicDir } : {}),
+			...(viteOverride ? { viteOverride } : {}),
 			onWarning: (message) => ctx.reporter.verbose(`Render check: ${message}`),
 		},
 	});
@@ -142,11 +142,16 @@ export async function devCommand(
 		config,
 		envVariables: env.variables,
 		...(publicDir ? { publicDir } : {}),
+		...(viteOverride ? { viteOverride } : {}),
+		// The config's port (`dev.port`, read by the server as studioPort) moves on when taken,
+		// like the default; only --port fails.
 		...(port !== undefined ? { port, strictPort: true } : {}),
-		...(host ? { host } : {}),
-		open: flags.boolean("open") ?? false,
+		...((host ?? devSettings.host) ? { host: host ?? devSettings.host } : {}),
+		open: flags.boolean("open") ?? devSettings.open ?? false,
 		initialProps,
-		keyboardShortcuts: !(flags.boolean("disable-keyboard-shortcuts") ?? false),
+		keyboardShortcuts: flags.boolean("disable-keyboard-shortcuts")
+			? false
+			: (devSettings.keyboardShortcuts ?? true),
 		onRenderStill: (request, signal) => stills.render(request, signal),
 		onFileChange: () => stills.invalidate(),
 		onLog: log,

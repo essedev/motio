@@ -51,12 +51,13 @@ export function toErrorJson(error: unknown): ErrorJson {
 }
 
 /**
- * Codes that mean the input was wrong (a flag, a value, a composition id) rather than the
+ * Codes that mean the input was wrong (a flag, a value, a config key, a composition id) rather than the
  * render failing: they exit with 2, whether the CLI or the renderer raised them.
  */
 const USAGE_CODES = new Set([
 	"E_INVALID_ARGUMENT",
 	"E_INVALID_OPTION",
+	"E_INVALID_CONFIG",
 	"E_UNSUPPORTED_OPTION",
 	"E_UNSUPPORTED_CODEC",
 	"E_COMPOSITION_REQUIRED",

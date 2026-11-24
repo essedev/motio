@@ -6,7 +6,13 @@ import type { CommandContext, CommandResult } from "../context.js";
 import { usageError } from "../errors.js";
 import { CAPTURE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import { resolvePath } from "../options.js";
-import { compositionJson, openProject, selectComposition, splitPositionals } from "../project.js";
+import {
+	compositionJson,
+	openProject,
+	outDirOf,
+	selectComposition,
+	splitPositionals,
+} from "../project.js";
 import { pick, timing } from "./render.js";
 
 export const STILL_FLAGS = {
@@ -43,7 +49,7 @@ export async function stillCommand(
 		throw usageError("Pass the output either as an argument or with --output, not both.");
 	}
 
-	const project = await openProject(ctx, flags, entry);
+	const project = await openProject(ctx, flags, entry, "still");
 	const composition = await selectComposition(ctx, project, flags, id);
 	const requested = frameFlag ?? 0;
 	const frame = requested < 0 ? composition.durationInFrames + requested : requested;
@@ -67,7 +73,10 @@ export async function stillCommand(
 	const output = resolvePath(
 		ctx.io.cwd,
 		requestedOutput ??
-			join("out", `${composition.id}.${imageFormat === "jpeg" ? "jpeg" : imageFormat}`),
+			join(
+				outDirOf(ctx, project),
+				`${composition.id}.${imageFormat === "jpeg" ? "jpeg" : imageFormat}`,
+			),
 	);
 	await mkdir(dirname(output), { recursive: true });
 
