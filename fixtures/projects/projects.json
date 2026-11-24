@@ -67,10 +67,6 @@
 						"OrderFlow": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
 					}
 				},
-				"jitter-audit": {
-					"file": "src/remotion/jitter-audit-root.tsx",
-					"script": "scripts/audit-jitter.mts"
-				},
 				"jitter-lab-angle": {
 					"file": "src/remotion/jitter-lab/angle.tsx",
 					"script": "scripts/jitter-lab.mts"
@@ -138,7 +134,8 @@
 			},
 			"excluded": {
 				"src/remotion/playback-audit-entry.tsx": "a page that mounts the Player to measure playback in Chrome, not a bundle of compositions",
-				"scripts/21st/generate.mts": "a code generator that writes registerRoot into generated files, not a bundle entry"
+				"scripts/21st/generate.mts": "a code generator that writes registerRoot into generated files, not a bundle entry",
+				"src/remotion/jitter-audit-root.tsx": "an audit tool that imports Remotion's private Internals (which Motio does not provide by design, doctor warns about it) and registers no composition in Remotion either: there is no video to compare"
 			}
 		},
 		"snapcn": {
