@@ -3,6 +3,9 @@
  * browser session per output, every composition of src/Root.tsx. Then copies the stills the
  * repository uses to their places: the Open Graph card of the website and the README banner.
  *
+ * The teaser's soundtrack, promo/music/teaser.wav, is not in git: it is generated first when it
+ * is missing or older than its generator (music/ensure.ts).
+ *
  * Run with `make promo` from the repository root (it builds the packages first), or
  * `pnpm --dir promo render`.
  */
@@ -11,6 +14,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundle } from "@motiojs/bundler";
 import { renderMedia, renderStill, selectComposition } from "@motiojs/renderer";
+import { ensureTeaserMusic } from "./music/ensure.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "..");
@@ -40,6 +44,7 @@ const PUBLISH: [from: string, to: string][] = [
 
 const only = process.argv.slice(2);
 const started = performance.now();
+if (ensureTeaserMusic()) console.log("generated music/teaser.wav");
 const serveUrl = await bundle({ entryPoint: "src/index.ts", rootDir: here });
 
 for (const job of JOBS) {

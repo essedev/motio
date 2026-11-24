@@ -6,9 +6,9 @@
 	"license": "Apache-2.0",
 	"description": "Motio's promotional material (cards, banner, teasers), made with Motio",
 	"scripts": {
-		"dev": "motio dev src/index.ts",
+		"dev": "node music/ensure.ts && motio dev src/index.ts",
 		"render": "node render.ts",
-		"still": "motio still src/index.ts og-card out/og-card.png",
+		"still": "node music/ensure.ts && motio still src/index.ts og-card out/og-card.png",
 		"typecheck": "tsc"
 	},
 	"dependencies": {

@@ -1,5 +1,5 @@
 // The teaser arrangement as note sequences, one per piezo instrument: promo/music/piezo/score.json.
-// The timeline, tempo fit and arrangement are the same as generate.ts (the code-synth version);
+// The timeline, tempo fit and arrangement are the same as sketches/sketch-keys.ts (the code-synth version);
 // here they become {time_s, note, velocity, duration_s} lists, the format of a piezo moment.
 // Run: node promo/music/piezo/score.ts (Node 24+).
 
@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const FPS = 30;
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "score.json");
 
-// Timeline, mirrored from generate.ts (which mirrors promo/src/teaser/Teaser.tsx).
+// Timeline, mirrored from sketches/sketch-keys.ts (which mirrors promo/src/teaser/Teaser.tsx).
 const SCENES = [
 	{ id: "intro", frames: 60 },
 	{ id: "pitch", frames: 75 },

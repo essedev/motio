@@ -1,77 +1,25 @@
-// Objective listening check of promo/music/teaser.wav: loudness and peak (FFmpeg ebur128), per
-// section loudness and spectrum balance, DC offset, clipping, clicks at section boundaries, the
-// scene accents against their frames, and a waveform and a spectrogram PNG next to the file.
-// Run: node promo/music/analyze.ts (after generate.ts).
+// Objective listening check of the teaser music and the sketches: loudness and true peak (FFmpeg ebur128), DC, clipping, per
+// section loudness and spectrum balance, how strongly each cut is accented, the onset timing of the
+// accented moments, where the ending falls silent, and a spectrogram PNG next to each WAV.
+// Run: node promo/music/analyze.ts [teaser] [b] [c] [keys] (default: teaser)
 
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { CUT_FRAMES, FPS } from "./dsp.ts";
 
 const DIR = dirname(fileURLToPath(import.meta.url));
-const WAV = join(DIR, "teaser.wav");
-const FPS = 30;
+const which = process.argv.slice(2).length > 0 ? process.argv.slice(2) : ["teaser"];
+/** WAV of a name: the teaser itself, or a sketch (b, c, keys). */
+const wavOf = (id: string) =>
+	id === "teaser" ? join(DIR, "teaser.wav") : join(DIR, "sketches", `sketch-${id}.wav`);
 
-// Section boundaries (seconds) and cut accents (frames), as generate.ts prints them.
-const CUTS = [
-	{ id: "pitch", frame: 46.09 },
-	{ id: "code", frame: 105.09 },
-	{ id: "reasons", frame: 239.09 },
-	{ id: "speed", frame: 358.09 },
-	{ id: "install", frame: 447.09 },
-	{ id: "end", frame: 506.09 },
-];
-
-const buf = readFileSync(WAV);
-const sr = buf.readUInt32LE(24);
-const channels = buf.readUInt16LE(22);
-const bits = buf.readUInt16LE(34);
-let off = 12;
-while (buf.toString("ascii", off, off + 4) !== "data") off += 8 + buf.readUInt32LE(off + 4);
-const n = buf.readUInt32LE(off + 4) / 4;
-const L = new Float64Array(n);
-const R = new Float64Array(n);
-let clipped = 0;
-for (let i = 0; i < n; i++) {
-	const l = buf.readInt16LE(off + 8 + i * 4);
-	const r = buf.readInt16LE(off + 10 + i * 4);
-	if (Math.abs(l) >= 32767 || Math.abs(r) >= 32767) clipped++;
-	L[i] = l / 32768;
-	R[i] = r / 32768;
-}
-const db = (x: number) => (x > 0 ? 20 * Math.log10(x) : -Infinity);
-console.log(
-	`format ${sr} Hz, ${channels} ch, ${bits}-bit, ${n} samples = ${(n / sr).toFixed(3)} s = ${((n / sr) * FPS).toFixed(2)} frames`,
-);
-
-// FFmpeg prints its reports on stderr; return both streams.
 const ffmpeg = (args: string[]): string => {
 	const r = spawnSync("ffmpeg", ["-hide_banner", "-nostats", ...args], { encoding: "utf8" });
 	if (r.status !== 0) throw new Error(`ffmpeg failed: ${r.stderr}`);
 	return `${r.stdout}${r.stderr}`;
 };
-// Runs an audio filter over the file, or over [from, to] seconds of it, and returns the report.
-const runCapture = (filter: string, from?: number, to?: number): string => {
-	const trim = from === undefined ? "" : `atrim=${from}:${to},asetpts=N/SR/TB,`;
-	return ffmpeg(["-i", WAV, "-af", `${trim}${filter}`, "-f", "null", "-"]);
-};
-
-// Whole file.
-const whole = runCapture("ebur128=peak=true:framelog=quiet");
-const I = /I:\s+(-?[\d.]+) LUFS/.exec(whole)?.[1];
-const LRA = /LRA:\s+(-?[\d.]+) LU/.exec(whole)?.[1];
-const TP = /Peak:\s+(-?[\d.]+) dBFS/.exec(whole)?.[1];
-console.log(`ebur128: integrated ${I} LUFS, LRA ${LRA} LU, true peak ${TP} dBTP`);
-const stats = runCapture(
-	"astats=measure_overall=DC_offset+Peak_level+Flat_factor:measure_perchannel=none",
-);
-console.log(
-	`astats: DC offset ${/DC offset: (\S+)/.exec(stats)?.[1]}, peak ${/Peak level dB: (\S+)/.exec(stats)?.[1]} dBFS, full-scale samples ${clipped}`,
-);
-
-// Sections: loudness (momentary max, via ebur128 on the trimmed range) and spectrum balance.
-const bounds = [0, ...CUTS.map((c) => c.frame / FPS), n / sr];
-const names = ["intro", ...CUTS.map((c) => c.id)];
 
 const fft = (re: Float64Array, im: Float64Array) => {
 	const m = re.length;
@@ -111,137 +59,122 @@ const BANDS: Array<[string, number, number]> = [
 	["6-12k", 6000, 12000],
 	[">12k", 12000, 24000],
 ];
-const bandEnergy = (from: number, to: number) => {
-	const size = 4096;
-	const acc = new Float64Array(BANDS.length);
-	const s0 = Math.round(from * sr);
-	const s1 = Math.round(to * sr);
-	for (let s = s0; s + size <= s1; s += size / 2) {
-		const re = new Float64Array(size);
-		const im = new Float64Array(size);
-		for (let i = 0; i < size; i++) {
-			const w = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / size);
-			re[i] = (((L[s + i] as number) + (R[s + i] as number)) / 2) * w;
-		}
-		fft(re, im);
-		for (let k = 1; k < size / 2; k++) {
-			const f = (k * sr) / size;
-			const p = (re[k] as number) ** 2 + (im[k] as number) ** 2;
-			const bi = BANDS.findIndex(([, lo, hi]) => f >= lo && f < hi);
-			if (bi >= 0) acc[bi] = (acc[bi] as number) + p;
-		}
-	}
-	const total = acc.reduce((a, b) => a + b, 0);
-	return [...acc].map((e) => (10 * Math.log10(e / total)).toFixed(1));
-};
 
-console.log(
-	`\nsection    from-to (s)      LUFS(I)  peak dBFS  band share dB [${BANDS.map((b) => b[0]).join(" | ")}]`,
-);
-for (let k = 0; k < names.length; k++) {
-	const a = bounds[k] as number;
-	const b = bounds[k + 1] as number;
-	const out = runCapture("ebur128=peak=sample:framelog=quiet", a, b);
-	const li = /I:\s+(-?[\d.]+) LUFS/.exec(out)?.[1] ?? "n/a";
+for (const id of which) {
+	const wav = wavOf(id);
+	const buf = readFileSync(wav);
+	const sr = buf.readUInt32LE(24);
+	const n = buf.readUInt32LE(40) / 4;
+	const M = new Float64Array(n);
+	let clipped = 0;
 	let pk = 0;
-	for (let i = Math.round(a * sr); i < Math.round(b * sr); i++)
-		pk = Math.max(pk, Math.abs(L[i] as number), Math.abs(R[i] as number));
-	console.log(
-		`${(names[k] as string).padEnd(10)} ${a.toFixed(2).padStart(5)}-${b.toFixed(2).padEnd(6)}  ${li.padStart(7)}  ${db(pk).toFixed(1).padStart(9)}  ${bandEnergy(a, b).join(" | ")}`,
-	);
-}
-
-// Clicks: the largest sample-to-sample jump in a 40 ms window around each boundary, against the
-// largest jump of the whole file. A click would stand out as a jump far above the local signal.
-const jump = (i: number) =>
-	Math.max(
-		Math.abs((L[i] as number) - (L[i - 1] as number)),
-		Math.abs((R[i] as number) - (R[i - 1] as number)),
-	);
-let maxJump = 0;
-for (let i = 1; i < n; i++) maxJump = Math.max(maxJump, jump(i));
-// Second difference (curvature) catches steps that the first difference hides in loud passages.
-const curv = (i: number) =>
-	Math.max(
-		Math.abs((L[i + 1] as number) - 2 * (L[i] as number) + (L[i - 1] as number)),
-		Math.abs((R[i + 1] as number) - 2 * (R[i] as number) + (R[i - 1] as number)),
-	);
-const win = Math.round(0.02 * sr);
-console.log(`\nclicks: max sample jump in the file ${maxJump.toFixed(4)}`);
-for (let k = 1; k < bounds.length; k++) {
-	const c = Math.round((bounds[k] as number) * sr);
-	let jMax = 0;
-	let cMax = 0;
-	let rms = 0;
-	for (let i = Math.max(1, c - win); i < Math.min(n - 1, c + win); i++) {
-		jMax = Math.max(jMax, jump(i));
-		cMax = Math.max(cMax, curv(i));
-		rms += (L[i] as number) ** 2;
-	}
-	rms = Math.sqrt(rms / (2 * win));
-	console.log(
-		`  ${(names[k] ?? "file end").padEnd(8)} ${(bounds[k] as number).toFixed(3)} s: max jump ${jMax.toFixed(4)}, max curvature ${cMax.toFixed(4)}, local rms ${rms.toFixed(4)}`,
-	);
-}
-console.log(
-	`  first sample ${(L[0] as number).toFixed(5)}, last sample ${(L[n - 1] as number).toFixed(5)}; last 100 ms peak ${db(Math.max(...Array.from(L.subarray(n - sr / 10)).map(Math.abs))).toFixed(1)} dBFS`,
-);
-
-// Accents: onset strength from the rise of a 5 ms energy envelope (low band, where the boom and
-// kick live), the strongest onset within 100 ms of each cut, reported in ms and frames.
-const hop = Math.round(0.002 * sr);
-const frameLen = Math.round(0.005 * sr);
-// Two one-pole low-passes at 150 Hz keep only the kick and the boom.
-const low = new Float64Array(n);
-{
-	const a = Math.exp((-2 * Math.PI * 150) / sr);
-	let y1 = 0;
-	let y2 = 0;
 	for (let i = 0; i < n; i++) {
-		y1 = (1 - a) * (((L[i] as number) + (R[i] as number)) / 2) + a * y1;
-		y2 = (1 - a) * y1 + a * y2;
-		low[i] = y2;
+		const l = buf.readInt16LE(44 + i * 4);
+		const r = buf.readInt16LE(46 + i * 4);
+		if (Math.abs(l) >= 32767 || Math.abs(r) >= 32767) clipped++;
+		pk = Math.max(pk, Math.abs(l), Math.abs(r));
+		M[i] = (l + r) / 65536;
 	}
-}
-const env: number[] = [];
-for (let s = 0; s + frameLen < n; s += hop) {
-	let e = 0;
-	for (let i = s; i < s + frameLen; i++) e += (low[i] as number) ** 2;
-	env.push(Math.log10(e + 1e-9));
-}
-const flux = env.map((v, i) => (i === 0 ? 0 : Math.max(0, v - (env[i - 4] ?? v))));
-console.log("\naccents (strongest onset within 100 ms of each cut):");
-for (const c of CUTS) {
-	const t = c.frame / FPS;
-	const i0 = Math.round(((t - 0.1) * sr) / hop);
-	const i1 = Math.round(((t + 0.1) * sr) / hop);
-	let best = i0;
-	for (let i = i0; i <= i1; i++) if ((flux[i] ?? 0) > (flux[best] ?? 0)) best = i;
-	const tOn = (best * hop + frameLen / 2) / sr;
+	const whole = ffmpeg(["-i", wav, "-af", "ebur128=peak=true:framelog=quiet", "-f", "null", "-"]);
+	const stats = ffmpeg([
+		"-i",
+		wav,
+		"-af",
+		"astats=measure_overall=DC_offset:measure_perchannel=none",
+		"-f",
+		"null",
+		"-",
+	]);
+	console.log(`\n${id}: ${(n / sr).toFixed(3)} s = ${((n / sr) * FPS).toFixed(2)} frames`);
 	console.log(
-		`  ${c.id.padEnd(8)} cut frame ${c.frame.toFixed(2)} -> onset at ${tOn.toFixed(3)} s = frame ${(tOn * FPS).toFixed(2)} (${((tOn - t) * 1000).toFixed(0)} ms)`,
+		`  integrated ${/I:\s+(-?[\d.]+) LUFS/.exec(whole)?.[1]} LUFS, LRA ${/LRA:\s+(-?[\d.]+) LU/.exec(whole)?.[1]} LU, true peak ${/Peak:\s+(-?[\d.]+) dBFS/.exec(whole)?.[1]} dBTP, sample peak ${(20 * Math.log10(pk / 32768)).toFixed(2)} dBFS, full-scale samples ${clipped}, DC ${/DC offset: (\S+)/.exec(stats)?.[1]}`,
 	);
-}
 
-// Pictures.
-ffmpeg([
-	"-y",
-	"-i",
-	WAV,
-	"-filter_complex",
-	"showwavespic=s=1600x300:split_channels=1:colors=#FF3D8B|#12B5A5",
-	"-frames:v",
-	"1",
-	join(DIR, "teaser-waveform.png"),
-]);
-ffmpeg([
-	"-y",
-	"-i",
-	WAV,
-	"-lavfi",
-	"showspectrumpic=s=1600x600:legend=1:scale=log:fscale=log:stop=16000",
-	join(DIR, "teaser-spectrogram.png"),
-]);
-console.log(
-	`\nwrote ${join(DIR, "teaser-waveform.png")} and ${join(DIR, "teaser-spectrogram.png")}`,
-);
+	// Sections between the cuts.
+	const bounds = [0, ...CUT_FRAMES.map((f) => f / FPS), n / sr];
+	const names = ["intro", "pitch", "code", "reasons", "speed", "install", "end"];
+	console.log(`  section   LUFS(I)  band share dB [${BANDS.map((b) => b[0]).join(" | ")}]`);
+	for (let k = 0; k < names.length; k++) {
+		const a = bounds[k] as number;
+		const b = bounds[k + 1] as number;
+		const out = ffmpeg([
+			"-i",
+			wav,
+			"-af",
+			`atrim=${a}:${b},asetpts=N/SR/TB,ebur128=framelog=quiet`,
+			"-f",
+			"null",
+			"-",
+		]);
+		const size = 4096;
+		const acc = new Float64Array(BANDS.length);
+		for (let s = Math.round(a * sr); s + size <= Math.round(b * sr); s += size / 2) {
+			const re = new Float64Array(size);
+			const im = new Float64Array(size);
+			for (let i = 0; i < size; i++)
+				re[i] = (M[s + i] as number) * (0.5 - 0.5 * Math.cos((2 * Math.PI * i) / size));
+			fft(re, im);
+			for (let q = 1; q < size / 2; q++) {
+				const f = (q * sr) / size;
+				const bi = BANDS.findIndex(([, lo, hi]) => f >= lo && f < hi);
+				if (bi >= 0)
+					acc[bi] = (acc[bi] as number) + (re[q] as number) ** 2 + (im[q] as number) ** 2;
+			}
+		}
+		const total = acc.reduce((x, y) => x + y, 0);
+		console.log(
+			`  ${(names[k] as string).padEnd(8)} ${(/I:\s+(-?[\d.]+) LUFS/.exec(out)?.[1] ?? "n/a").padStart(7)}  ${[...acc].map((e) => (10 * Math.log10(e / total)).toFixed(1)).join(" | ")}`,
+		);
+	}
+
+	// Accent strength: energy in the 80 ms after a moment against the 220 ms before it (dB), and
+	// the strongest onset (5 ms energy rise) within 60 ms of it.
+	const energy = (from: number, to: number) => {
+		let e = 1e-12;
+		for (let i = Math.max(0, Math.round(from * sr)); i < Math.min(n, Math.round(to * sr)); i++)
+			e += (M[i] as number) ** 2;
+		return e / Math.max(1, (to - from) * sr);
+	};
+	const moments = [
+		{ id: "mark", frame: 7 },
+		...["pitch", "code", "reasons", "speed", "install", "end"].map((c, k) => ({
+			id: c,
+			frame: CUT_FRAMES[k] as number,
+		})),
+	];
+	console.log("  accents: rise in dB (80 ms after vs 220 ms before) and onset offset");
+	for (const mo of moments) {
+		const t = mo.frame / FPS;
+		const rise = 10 * Math.log10(energy(t - 0.005, t + 0.08) / energy(t - 0.25, t - 0.03));
+		let best = t - 0.06;
+		let bestRise = -Infinity;
+		for (let x = t - 0.06; x <= t + 0.06; x += 0.001) {
+			const r = energy(x, x + 0.005) / energy(x - 0.02, x - 0.005);
+			if (r > bestRise) {
+				bestRise = r;
+				best = x;
+			}
+		}
+		console.log(
+			`    ${mo.id.padEnd(8)} frame ${mo.frame.toFixed(2).padStart(6)}: rise ${rise.toFixed(1).padStart(5)} dB, onset ${((best - t) * 1000).toFixed(0).padStart(4)} ms (${(best * FPS).toFixed(2)} frames)`,
+		);
+	}
+	// The ending: the last frame where the mix still reaches -60 dBFS, and the edge samples.
+	let lastLoud = 0;
+	for (let i = 0; i < n; i++) if (Math.abs(M[i] as number) > 0.001) lastLoud = i;
+	console.log(
+		`  ending: below -60 dBFS from ${(lastLoud / sr).toFixed(3)} s (frame ${((lastLoud / sr) * FPS).toFixed(1)}), first and last samples ${M[0]} and ${M[n - 1]}`,
+	);
+	const png = wav.replace(/\.wav$/, "-spectrogram.png");
+	ffmpeg([
+		"-y",
+		"-loglevel",
+		"error",
+		"-i",
+		wav,
+		"-lavfi",
+		"showspectrumpic=s=1200x400:legend=1:scale=log:fscale=log:stop=16000",
+		png,
+	]);
+	console.log(`  wrote ${png}`);
+}

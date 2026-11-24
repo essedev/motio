@@ -1,4 +1,4 @@
-// Objective listening check of promo/music/teaser-piezo.wav (copy of analyze.ts, any WAV as argument): loudness and peak (FFmpeg ebur128), per
+// Objective listening check of promo/music/teaser-piezo.wav (copy of sketches/analyze-keys.ts, any WAV as argument): loudness and peak (FFmpeg ebur128), per
 // section loudness and spectrum balance, DC offset, clipping, clicks at section boundaries, the
 // scene accents against their frames, and a waveform and a spectrogram PNG next to the file.
 // Run: node promo/music/piezo/analyze-piezo.ts [file.wav] (after mix.py).
@@ -9,12 +9,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
-// The piezo version by default; pass another WAV to compare (e.g. teaser.wav).
+// The piezo version by default; pass another WAV to compare (e.g. sketches/sketch-keys.wav).
 const WAV = join(DIR, process.argv[2] ?? "teaser-piezo.wav");
 const STEM = WAV.replace(/\.wav$/, "");
 const FPS = 30;
 
-// Section boundaries (seconds) and cut accents (frames), as generate.ts prints them.
+// Section boundaries (seconds) and cut accents (frames), as sketches/sketch-keys.ts prints them.
 const CUTS = [
 	{ id: "pitch", frame: 46.09 },
 	{ id: "code", frame: 105.09 },

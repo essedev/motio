@@ -25,7 +25,7 @@ import {
 	SR,
 	sample,
 	writeWav,
-} from "./dsp.ts";
+} from "../dsp.ts";
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "sketch-c.wav");
 const rng = makeRng(0xc0ffee);

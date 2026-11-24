@@ -8,12 +8,15 @@ export const FPS = 30;
 
 // The timeline, mirrored from promo/src/teaser/Teaser.tsx: keep the two in sync.
 const SCENES = [60, 75, 150, 135, 105, 75, 90];
-const TRANSITION_FRAMES = 16;
+export const TRANSITION_FRAMES = 16;
 export const TOTAL_FRAMES =
 	SCENES.reduce((a, b) => a + b, 0) - (SCENES.length - 1) * TRANSITION_FRAMES;
 export const N = Math.round((TOTAL_FRAMES / FPS) * SR);
 
-// Spring maths as Motio computes it (damped oscillator, settled within 0.005).
+// Spring maths exactly as Motio computes it (packages/core/src/spring.ts): the closed-form damped
+// spring, with the critically damped response for every damping ratio of 1 or more (as Remotion
+// does), and "settled" meaning within 0.005 of the end and staying there for 18 frames.
+// promo.integration.test.ts checks HALF against Motio's own spring().
 const springAt = (t: number, stiffness: number, damping: number): number => {
 	const zeta = damping / (2 * Math.sqrt(stiffness));
 	const w0 = Math.sqrt(stiffness);
@@ -23,20 +26,26 @@ const springAt = (t: number, stiffness: number, damping: number): number => {
 			1 - Math.exp(-zeta * w0 * t) * (Math.cos(wd * t) + ((zeta * w0) / wd) * Math.sin(wd * t))
 		);
 	}
-	const s = w0 * Math.sqrt(zeta * zeta - 1);
-	const r1 = -zeta * w0 + s;
-	const r2 = -zeta * w0 - s;
-	const a = r2 / (r1 - r2);
-	return 1 + a * Math.exp(r1 * t) + (-1 - a) * Math.exp(r2 * t);
+	return 1 - Math.exp(-w0 * t) * (1 + w0 * t);
 };
 const natural = (() => {
-	let last = 0;
-	for (let f = 0; f < 5000; f++)
-		if (Math.abs(1 - springAt(f / FPS, 100, 200)) > 0.005) last = f + 1;
-	return last;
+	const inside = (f: number) => Math.abs(springAt(f / FPS, 100, 200) - 1) <= 0.005;
+	let frame = 0;
+	for (;;) {
+		while (!inside(frame)) frame++;
+		let left = -1;
+		for (let i = 1; i <= 18; i++) {
+			if (!inside(frame + i)) {
+				left = frame + i;
+				break;
+			}
+		}
+		if (left === -1) return frame;
+		frame = left;
+	}
 })();
-// A cut's accent: the moment the incoming field covers half the frame (calm spring, 16 frames).
-const HALF = (() => {
+/** Frames from a transition's start to the moment the incoming field covers half the frame. */
+export const HALF = (() => {
 	let lo = 0;
 	let hi = TRANSITION_FRAMES;
 	for (let i = 0; i < 40; i++) {

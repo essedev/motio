@@ -86,7 +86,7 @@ def graph(gains: dict[str, float], master_db: float) -> str:
     parts.append(f"{sources}amix=inputs={2 + len(rest)}:normalize=0[sum]")
     master = ",".join(
         [
-            # Master EQ, as in generate.ts: no sub rumble, less mud, a touch of presence, no harshness.
+            # Master EQ, as in sketches/sketch-keys.ts: no sub rumble, less mud, a touch of presence, no harshness.
             "highpass=f=38:poles=2",
             "highpass=f=38:poles=2",
             "lowshelf=f=90:g=-3:t=q:w=0.7",

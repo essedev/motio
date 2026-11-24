@@ -1,5 +1,7 @@
+import { Audio } from "@motiojs/motio";
 import { springTiming, TransitionSeries } from "@motiojs/transitions";
 import { slide } from "@motiojs/transitions/slide";
+import teaserMusic from "../../music/teaser.wav";
 import { useLayout } from "../brand/layout";
 import { CALM_SPRING } from "../brand/tokens";
 import { CodeScene } from "./CodeScene";
@@ -28,26 +30,32 @@ const timing = springTiming({ config: CALM_SPRING, durationInFrames: TRANSITION_
 export const TEASER_FRAMES =
 	SCENES.reduce((sum, s) => sum + s.frames, 0) - (SCENES.length - 1) * TRANSITION_FRAMES;
 
-/** The teaser, wide or tall: the same scenes, each recomposed for the frame's shape. */
+/**
+ * The teaser, wide or tall: the same scenes, each recomposed for the frame's shape, over the
+ * synthesised soundtrack (promo/music, generated before bundling: see music/ensure.ts).
+ */
 export const Teaser = () => {
 	const { tall } = useLayout();
 	const presentation = slide({ direction: tall ? "from-bottom" : "from-right" });
 	return (
-		<TransitionSeries>
-			{SCENES.flatMap(({ id, Scene, frames }, i) => [
-				...(i > 0
-					? [
-							<TransitionSeries.Transition
-								key={`${id}-in`}
-								presentation={presentation}
-								timing={timing}
-							/>,
-						]
-					: []),
-				<TransitionSeries.Sequence key={id} durationInFrames={frames} name={id}>
-					<Scene />
-				</TransitionSeries.Sequence>,
-			])}
-		</TransitionSeries>
+		<>
+			<Audio src={teaserMusic} />
+			<TransitionSeries>
+				{SCENES.flatMap(({ id, Scene, frames }, i) => [
+					...(i > 0
+						? [
+								<TransitionSeries.Transition
+									key={`${id}-in`}
+									presentation={presentation}
+									timing={timing}
+								/>,
+							]
+						: []),
+					<TransitionSeries.Sequence key={id} durationInFrames={frames} name={id}>
+						<Scene />
+					</TransitionSeries.Sequence>,
+				])}
+			</TransitionSeries>
+		</>
 	);
 };
