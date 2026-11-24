@@ -184,6 +184,10 @@ export interface BlockFlicker {
  * both neighbours by more than `threshold` while the neighbours' block stays alike (the same
  * rule as `isFlicker`): content seen for exactly one frame, never steady motion such as a pan,
  * where the previous and next block differ more than either does from the current one.
+ * An element smaller than a block that moves more than a block per frame (a cursor, the edge of
+ * a sliding panel) passes through each block in one frame, so a block is also left alone when
+ * its content is found in both neighbours, displaced in opposite directions: it came from one
+ * side and went on to the other (see `movesThrough`).
  * Returns null when no block jumped.
  */
 export function blockFlicker(
@@ -224,6 +228,8 @@ export function blockFlicker(
 			const diffPrevious = toPrevious / scale;
 			const diffNext = toNext / scale;
 			if (!isFlicker(diffPrevious, diffNext, neighbours / scale, options)) continue;
+			const block = { x: bx, y: by, width: right - bx, height: bottom - by };
+			if (movesThrough(previous, current, next, width, height, block, options.threshold)) continue;
 			blocks++;
 			maxDiff = Math.max(maxDiff, Math.min(diffPrevious, diffNext));
 			x0 = Math.min(x0, bx);
@@ -234,6 +240,129 @@ export function blockFlicker(
 	}
 	if (blocks === 0) return null;
 	return { blocks, region: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 }, maxDiff };
+}
+
+/** How far a block's content is looked for in the neighbouring frames, in captured pixels. */
+export const FLICKER_MOTION_RADIUS = 4 * FLICKER_BLOCK_SIZE;
+/** Least luma range (0 to 255) a block needs to be located: a flat block matches anywhere. */
+const MIN_STRUCTURE = 32;
+
+interface Rect {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
+const luma = (frame: Uint8Array, i: number) =>
+	((frame[i] as number) * 299 + (frame[i + 1] as number) * 587 + (frame[i + 2] as number) * 114) /
+	1000;
+
+/**
+ * Sum of RGB differences between `block` in `current` and the same block moved by dx, dy in
+ * `other`; stops once past `ceiling`.
+ */
+function blockCost(
+	current: Uint8Array,
+	other: Uint8Array,
+	width: number,
+	block: Rect,
+	dx: number,
+	dy: number,
+	ceiling: number,
+): number {
+	let cost = 0;
+	for (let y = 0; y < block.height && cost <= ceiling; y++) {
+		let i = ((block.y + y) * width + block.x) * 4;
+		let j = ((block.y + dy + y) * width + block.x + dx) * 4;
+		for (let x = 0; x < block.width; x++, i += 4, j += 4) {
+			cost +=
+				Math.abs((current[i] as number) - (other[j] as number)) +
+				Math.abs((current[i + 1] as number) - (other[j + 1] as number)) +
+				Math.abs((current[i + 2] as number) - (other[j + 2] as number));
+		}
+	}
+	return cost;
+}
+
+/**
+ * Where the content of `block` in `current` sits in `other`, within `FLICKER_MOTION_RADIUS`: the
+ * displacement with the smallest mean RGB difference, if that difference is at most `limit`.
+ * Searched every 2 px, then refined around the best candidates.
+ */
+function locate(
+	current: Uint8Array,
+	other: Uint8Array,
+	width: number,
+	height: number,
+	block: Rect,
+	limit: number,
+): { dx: number; dy: number } | null {
+	const budget = limit * block.width * block.height * 3 * 255;
+	const r = FLICKER_MOTION_RADIUS;
+	const inside = (dx: number, dy: number) =>
+		block.x + dx >= 0 &&
+		block.x + dx + block.width <= width &&
+		block.y + dy >= 0 &&
+		block.y + dy + block.height <= height;
+	// The coarse pass keeps candidates up to twice the budget: half a pixel off can cost that much.
+	const coarse: Array<{ dx: number; dy: number; cost: number }> = [];
+	for (let dy = -r; dy <= r; dy += 2) {
+		for (let dx = -r; dx <= r; dx += 2) {
+			if ((dx === 0 && dy === 0) || !inside(dx, dy)) continue;
+			const cost = blockCost(current, other, width, block, dx, dy, 2 * budget);
+			if (cost <= 2 * budget) coarse.push({ dx, dy, cost });
+		}
+	}
+	coarse.sort((a, b) => a.cost - b.cost);
+	let best: { dx: number; dy: number } | null = null;
+	let bestCost = budget;
+	for (const candidate of coarse.slice(0, 8)) {
+		for (let dy = candidate.dy - 1; dy <= candidate.dy + 1; dy++) {
+			for (let dx = candidate.dx - 1; dx <= candidate.dx + 1; dx++) {
+				if ((dx === 0 && dy === 0) || !inside(dx, dy)) continue;
+				const cost = blockCost(current, other, width, block, dx, dy, bestCost);
+				if (cost <= bestCost) {
+					bestCost = cost;
+					best = { dx, dy };
+				}
+			}
+		}
+	}
+	return best;
+}
+
+/**
+ * Whether the content of `block` in `current` is an element passing through: it has enough
+ * structure to be located, and it is found in both neighbours (within half the block
+ * threshold), behind it in the previous frame and ahead in the next (displacements in opposite
+ * directions). A one-frame jump, where the element leaves its place and comes back, is found on
+ * the same side in both and is not exempted.
+ */
+export function movesThrough(
+	previous: Uint8Array,
+	current: Uint8Array,
+	next: Uint8Array,
+	width: number,
+	height: number,
+	block: Rect,
+	threshold: number,
+): boolean {
+	let low = 255;
+	let high = 0;
+	for (let y = block.y; y < block.y + block.height; y++) {
+		for (let i = (y * width + block.x) * 4, end = i + block.width * 4; i < end; i += 4) {
+			const value = luma(current, i);
+			if (value < low) low = value;
+			if (value > high) high = value;
+		}
+	}
+	if (high - low < MIN_STRUCTURE) return false;
+	const from = locate(current, previous, width, height, block, threshold / 2);
+	if (!from) return false;
+	const to = locate(current, next, width, height, block, threshold / 2);
+	if (!to) return false;
+	return from.dx * to.dx + from.dy * to.dy < 0;
 }
 
 /** Block threshold for a `--threshold` meant for the whole frame: five times it, at most 0.9. */

@@ -147,6 +147,31 @@ describe("block flicker", () => {
 		expect(blockFlicker(still, still, still, width, height, options)).toBeNull();
 	});
 
+	/** A dark 256x128 frame with a white 10x14 arrow-like mark (a cursor) at `x`, `y`. */
+	function cursorAt(x: number, y: number): Uint8Array {
+		const frame = new Uint8Array(256 * 128 * 4).fill(30);
+		for (let row = 0; row < 14; row++) {
+			const span = Math.max(1, Math.round((row * 10) / 14));
+			frame.fill(240, ((y + row) * 256 + x) * 4, ((y + row) * 256 + x + span) * 4);
+		}
+		return frame;
+	}
+
+	it("leaves a small element alone that moves more than a block per frame", () => {
+		const path = [20, 44, 68, 92, 116, 140];
+		for (let i = 1; i < path.length - 1; i++) {
+			const at = (k: number) =>
+				cursorAt(path[k] as number, 40 + Math.round((path[k] as number) / 4));
+			expect(blockFlicker(at(i - 1), at(i), at(i + 1), 256, 128, options), `step ${i}`).toBeNull();
+		}
+	});
+
+	it("still flags a small element that jumps away for one frame and comes back", () => {
+		const home = cursorAt(100, 50);
+		const away = cursorAt(130, 50);
+		expect(blockFlicker(home, away, home, 256, 128, options)?.blocks).toBeGreaterThan(0);
+	});
+
 	it("locates a single element shown for one frame", () => {
 		const blank = new Uint8Array(64 * 64 * 4).fill(0);
 		const flash = Uint8Array.from(blank);
