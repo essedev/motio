@@ -54,7 +54,7 @@ The latest published version when work started. Every compatibility claim and or
 
 ## D-009 Oracle recordings are made by the author as an individual (2026-11-22)
 
-Recording reference values and frames means running Remotion. Remotion's licence is free for individuals; recordings made for a company would need a company licence. The recordings are produced by the project author as an individual for this personal open-source project, at the pinned version, with the oracle installed outside the workspace. To be confirmed explicitly by the author.
+Recording reference values and frames means running Remotion. Remotion's licence is free for individuals; recordings made for a company would need a company licence. The recordings are produced by the project author as an individual for this personal open-source project, at the pinned version, with the oracle installed outside the workspace. Confirmed by the author on 2026-11-24: the recordings were made by the author as a private individual, for tests of this personal project.
 
 ## D-010 Kinetograph: ideas only (2026-11-22)
 
@@ -555,7 +555,7 @@ Until now work was chosen by the gap with Remotion: which symbols, packages and 
 - **Where Motio can do better, it designs its own API** and, when useful, maps Remotion's on top through the alias. First case: `@motiojs/text` with a configurable `<TextBackground>`, of which `@remotion/rounded-text-box` is one preset. Candidates to design with the author one at a time: visual regression tests for videos, incremental re-rendering, an effect system of Motio's own instead of `@remotion/effects`.
 - **Dropped from the plan**: `@remotion/effects` (D-057, D-060 stay as the record), Skia (D-063), web-renderer, media-parser, webcodecs, whisper-web, `<ThreeWebGPUCanvas>`, `HtmlInCanvas` and the minor core symbols. The Lambda and Cloud Run adapters wait for a use case and approved spending.
 
-Revisit if users arrive mainly as Remotion migrants blocked by missing symbols: then parity work returns, driven by their reports; or if Remotion's terms forbid using it to build an alternative, which would end the scheduled updates (the recorded fixtures stay).
+Revisit if users arrive mainly as Remotion migrants blocked by missing symbols: then parity work returns, driven by their reports; or if Remotion's terms forbid using it to build an alternative, which would end the scheduled updates (the recorded fixtures stay). Compatibility is a means, not a constraint: if keeping it stops paying off (a Remotion release that diverges, terms that forbid the oracle, a design Motio needs that the alias would block), it can be frozen or dropped, and Motio must stand and evolve on its own regardless (author, 2026-11-24).
 
 ## D-067 `<AnimatedImage>` removed after a clean-room breach, to be rewritten clean (2026-11-23)
 
