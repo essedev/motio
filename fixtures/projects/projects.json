@@ -1,0 +1,145 @@
+{
+	"$comment": "Third-party MIT projects built on Remotion, the M4 proof. Each is fetched at the pinned commit into .cache/<name> by projects.ts (never vendored). entries: id to the bundle entry (a file that calls registerRoot) and the project script that bundles it, which the oracle mirrors: tailwind is set when that script wraps its webpack config in enableTailwind(). Every composition of every entry is compared on the frames sampleFrames() picks. excluded: registerRoot files that are not measured, with the reason. Both renderers use gl swangle (software WebGL, Motio's default): GPU WebGL differs per machine (D-046).",
+	"projects": {
+		"remocn": {
+			"repository": "https://github.com/Remocn/remocn",
+			"commit": "7ddf6a8c2b0a551de7f88b637737a7caca7ac39c",
+			"entries": {
+				"github-stars": { "file": "src/remotion/index.ts", "script": "remotion.config.ts" },
+				"demos": { "file": "src/remotion/demos-entry.ts", "script": "scripts/render-demos.mts" },
+				"brand-guidelines": {
+					"file": "src/remotion/brand-guidelines-root.tsx",
+					"script": "scripts/review-brand-guidelines.mts"
+				},
+				"canvas-spike": {
+					"file": "src/remotion/canvas-spike-root.tsx",
+					"script": "scripts/canvas-determinism.mts"
+				},
+				"center-stage-demo": {
+					"file": "src/remotion/center-stage-demo-root.tsx",
+					"script": "remotion.config.ts"
+				},
+				"design-audit": {
+					"file": "src/remotion/design-audit-root.tsx",
+					"script": "remotion.config.ts"
+				},
+				"fomo": { "file": "src/remotion/fomo-root.tsx", "script": "scripts/review-fomo.mts" },
+				"hero-bg": {
+					"file": "src/remotion/hero-bg-root.tsx",
+					"script": "scripts/render-hero-bg.mts"
+				},
+				"independent-templates": {
+					"file": "src/remotion/independent-templates-root.tsx",
+					"script": "scripts/review-independent-templates.mts"
+				},
+				"jitter-audit": {
+					"file": "src/remotion/jitter-audit-root.tsx",
+					"script": "scripts/audit-jitter.mts"
+				},
+				"jitter-lab-angle": {
+					"file": "src/remotion/jitter-lab/angle.tsx",
+					"script": "scripts/jitter-lab.mts"
+				},
+				"jitter-lab-cures": {
+					"file": "src/remotion/jitter-lab/cures.tsx",
+					"script": "scripts/jitter-lab.mts"
+				},
+				"jitter-lab-layers": {
+					"file": "src/remotion/jitter-lab/layers.tsx",
+					"script": "scripts/jitter-lab.mts"
+				},
+				"jitter-lab-subtle": {
+					"file": "src/remotion/jitter-lab/subtle.tsx",
+					"script": "scripts/jitter-lab.mts"
+				},
+				"launch-anything": {
+					"file": "src/remotion/launch-anything-root.tsx",
+					"script": "scripts/review-launch-anything.mts"
+				},
+				"motion-pack": {
+					"file": "src/remotion/motion-pack-root.tsx",
+					"script": "remotion.config.ts"
+				},
+				"not-found": {
+					"file": "src/remotion/not-found-root.tsx",
+					"script": "scripts/render-not-found.mts"
+				},
+				"props-review": {
+					"file": "src/remotion/props-review-root.tsx",
+					"script": "scripts/review-props.mts"
+				},
+				"release-demo": {
+					"file": "src/remotion/release-demo/release-demo-entry.ts",
+					"script": "remotion.config.ts"
+				},
+				"release-teaser": {
+					"file": "src/remotion/release-teaser-root.tsx",
+					"script": "scripts/review-release-teaser.mts"
+				},
+				"shader-presets": {
+					"file": "src/remotion/shader-presets-root.tsx",
+					"script": "scripts/review-shader-presets.mts"
+				},
+				"workflow-console": {
+					"file": "src/remotion/workflow-console-root.tsx",
+					"script": "scripts/review-workflow-console.mts"
+				}
+			},
+			"excluded": {
+				"src/remotion/playback-audit-entry.tsx": "a page that mounts the Player to measure playback in Chrome, not a bundle of compositions",
+				"scripts/21st/generate.mts": "a code generator that writes registerRoot into generated files, not a bundle entry"
+			}
+		},
+		"snapcn": {
+			"repository": "https://github.com/shadcn-labs/snapcn",
+			"commit": "3f09f3a5fa0ee8ef7aea5e0680578471f9fdd339",
+			"entries": {
+				"video-timeline": {
+					"file": "src/remotion/index.ts",
+					"script": "scripts/bundle-remotion.mts",
+					"tailwind": true
+				},
+				"demos": {
+					"file": "src/remotion/demos-entry.ts",
+					"script": "scripts/render-demos.mts",
+					"tailwind": true
+				},
+				"previews": {
+					"file": "src/remotion/previews-entry.ts",
+					"script": "scripts/render-previews.mts",
+					"tailwind": true
+				},
+				"split": {
+					"file": "src/remotion/split-entry.ts",
+					"script": "none (imports app/globals.css like the entries the scripts bundle with Tailwind)",
+					"tailwind": true
+				},
+				"x-brandwheel": {
+					"file": "src/remotion/x-brandwheel-entry.ts",
+					"script": "scripts/render-x-brandwheel.mts",
+					"tailwind": true
+				},
+				"x-btngroup": {
+					"file": "src/remotion/x-btngroup-entry.ts",
+					"script": "none (imports app/globals.css like the entries the scripts bundle with Tailwind)",
+					"tailwind": true
+				}
+			},
+			"excluded": {
+				"src/remotion/cuts-entry.ts": "imports registry/snap-cn-pro, the paid tier, which the public repository does not contain",
+				"src/remotion/dev-entry.ts": "imports registry/snap-cn-pro (the project's dev script aliases it to a stand-in when missing)",
+				"src/remotion/labs-launch-entry.ts": "imports registry/snap-cn-pro",
+				"src/remotion/launch-entry.ts": "imports registry/snap-cn-pro",
+				"src/remotion/ph-launch-entry.ts": "imports registry/snap-cn-pro",
+				"src/remotion/ph-launch-v2-entry.ts": "imports registry/snap-cn-pro",
+				"src/remotion/pro-new-entry.ts": "imports registry/snap-cn-pro",
+				"src/remotion/pro-wed-entry.ts": "imports registry/snap-cn-pro",
+				"src/remotion/x-function-entry.ts": "imports registry/snap-cn-pro",
+				"src/remotion/x-grid-oct29-entry.ts": "imports registry/snap-cn-pro",
+				"src/remotion/x-oct25-entry.ts": "imports registry/snap-cn-pro",
+				"scripts/cuts.mts": "a render script, not a bundle entry",
+				"scripts/dev/render-one.mts": "a render script, not a bundle entry"
+			}
+		}
+	}
+}
