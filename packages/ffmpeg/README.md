@@ -1,6 +1,6 @@
 # @motiojs/ffmpeg
 
-> **Coming soon: do not install this package yet.** The FFmpeg archives of this version are not published, so it cannot download them; use the FFmpeg on your `PATH`, or `MOTIO_FFMPEG`, until a release of the archives exists. The rest of this page describes how it will work.
+> **Coming soon: do not install this package yet.** The FFmpeg archives of this version are not published, so it cannot download them; use the FFmpeg on your `PATH`, or `MOTIO_FFMPEG`, until a release of the archives exists. Installed anyway, it does not break renders: they use the FFmpeg on `PATH` with a `W_FFMPEG_FALLBACK` warning, while `motio doctor` reports the unpublished archives as a failure and `motio ffmpeg ensure` fails. The rest of this page describes how it will work.
 
 An optional, pinned FFmpeg and ffprobe for [Motio](../../README.md). Install it and every render uses the same FFmpeg build, with every encoder Motio needs, on every machine of the same platform:
 
@@ -48,6 +48,8 @@ The renderer and the CLI pick FFmpeg in this order:
 2. `MOTIO_FFMPEG` and `MOTIO_FFPROBE`;
 3. this package, when it is installed in the project;
 4. `ffmpeg` and `ffprobe` on `PATH`.
+
+If this package is installed but its build cannot be downloaded (`E_FFMPEG_DOWNLOAD`, including archives that are not published, or `E_FFMPEG_UNSUPPORTED_PLATFORM`) and an `ffmpeg` on `PATH` runs, the renderer uses that one and adds `W_FFMPEG_FALLBACK` to the render's warnings. `E_FFMPEG_DIGEST` and `E_FFMPEG_VERIFY` are never papered over: the render fails.
 
 `motio doctor` says which one it found and lists its encoders; the JSON result of `motio render` records the path, version and source of the FFmpeg that encoded the video. The package is looked up in the `node_modules` folders above the renderer and above the working directory; Yarn Plug'n'Play is not supported, use `MOTIO_FFMPEG` there.
 
