@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
-import { Composition, Folder, Still, useCurrentFrame } from "@motiojs/core";
-import { act, type ComponentType } from "react";
+import {
+	Composition,
+	delayRender,
+	Folder,
+	Sequence,
+	Series,
+	Still,
+	useCurrentFrame,
+} from "@motiojs/core";
+import { act, type ComponentType, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PreviewApp, type PreviewOptions } from "./app.js";
@@ -68,6 +76,61 @@ function StillAndBlink() {
 				height={180}
 				fps={30}
 				durationInFrames={1}
+			/>
+		</>
+	);
+}
+
+function Edit() {
+	return (
+		<>
+			<Sequence name="Title" from={10} durationInFrames={20}>
+				<Sequence name="Shine" from={5} durationInFrames={5} />
+			</Sequence>
+			<Series>
+				<Series.Sequence name="One" durationInFrames={30} />
+				<Series.Sequence durationInFrames={30} />
+			</Series>
+		</>
+	);
+}
+
+function Waiting() {
+	useState(() => delayRender("Waiting for the API"));
+	return null;
+}
+
+function Throws() {
+	if (useCurrentFrame() === 3) throw new Error("Boom at frame three");
+	return null;
+}
+
+function Lab() {
+	return (
+		<>
+			<Composition
+				id="Edit"
+				component={Edit}
+				width={320}
+				height={180}
+				fps={30}
+				durationInFrames={60}
+			/>
+			<Composition
+				id="Waiting"
+				component={Waiting}
+				width={320}
+				height={180}
+				fps={30}
+				durationInFrames={30}
+			/>
+			<Composition
+				id="Throws"
+				component={Throws}
+				width={320}
+				height={180}
+				fps={30}
+				durationInFrames={30}
 			/>
 		</>
 	);
@@ -239,6 +302,73 @@ describe("PreviewApp", () => {
 		await mount(BrokenRoot);
 		expect(host.textContent).toContain("The root component threw");
 		expect(host.textContent).toContain("root exploded");
+		spy.mockRestore();
+	});
+
+	it("warns about props keys that are not in defaultProps", async () => {
+		await mount();
+		await typeProps('{"titel": "Typo"}');
+		// The test schema has no readable shape: only defaultProps are compared.
+		expect(text("props-issues")).toContain(
+			'titel: Unknown prop: not in defaultProps. Did you mean "title"?',
+		);
+	});
+
+	it("shows the sequences in the timeline by name, nested, and seeks from it", async () => {
+		await mount(Lab);
+		const labels = () => [...host.querySelectorAll(".mp-tl-label")].map((el) => el.textContent);
+		// "Shine" is inside "Title" (frames 10 to 29): it registers once Title renders.
+		expect(labels()).toEqual(["Series", "One", "Series.Sequence", "Title"]);
+		const title = host.querySelector('.mp-tl-bar[aria-label^="Title,"]') as HTMLButtonElement;
+		expect(title.getAttribute("aria-label")).toBe("Title, frames 10 to 29. Go to its first frame.");
+		expect(Number.parseFloat(title.style.left)).toBeCloseTo((10 / 60) * 100, 3);
+		await act(async () => title.click());
+		expect((q("frame-input") as HTMLInputElement).value).toBe("10");
+		expect(labels()).toEqual(["Series", "One", "Series.Sequence", "Title", "Shine"]);
+		const ruler = q("timeline-ruler") as HTMLElement;
+		expect(ruler.getAttribute("aria-valuetext")).toBe("Frame 10, 00:00:00:10");
+		await act(async () => {
+			ruler.dispatchEvent(
+				new KeyboardEvent("keydown", {
+					key: "ArrowRight",
+					shiftKey: true,
+					bubbles: true,
+					cancelable: true,
+				}),
+			);
+		});
+		// One handler only: the page's global shortcut does not step a second time.
+		expect((q("frame-input") as HTMLInputElement).value).toBe("40");
+		await act(async () => {
+			ruler.dispatchEvent(
+				new KeyboardEvent("keydown", { key: "End", bubbles: true, cancelable: true }),
+			);
+		});
+		expect(ruler.getAttribute("aria-valuenow")).toBe("59");
+		// Out of Title's range, Shine is unmounted but keeps its row.
+		expect(labels()).toEqual(["Series", "One", "Series.Sequence", "Title", "Shine"]);
+	});
+
+	it("lists an open delayRender() in the Problems panel", async () => {
+		window.history.replaceState(null, "", "#/Waiting");
+		await mount(Lab);
+		await wait(600);
+		expect(text("problems")).toContain('delayRender("Waiting for the API") open for');
+		expect(text("problems-button")).toBe("1 problem");
+	});
+
+	it("shows where a composition threw, with the frame", async () => {
+		const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+		window.history.replaceState(null, "", "#/Throws");
+		await mount(Lab);
+		await act(async () => {
+			window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+			window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+			window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight" }));
+		});
+		await wait(50);
+		expect(text("player-error")).toContain("Boom at frame three");
+		expect(text("player-error")).toContain("Thrown while rendering frame 3 of Throws.");
 		spy.mockRestore();
 	});
 

@@ -1,6 +1,8 @@
 import { getRoot, waitForRoot } from "@motiojs/core/internals";
+import type { ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { PreviewApp, type PreviewOptions } from "./app.js";
+import { BuildErrorOverlay, BuildErrorStore } from "./build-error.js";
 import { PREVIEW_CSS } from "./styles.js";
 
 /** Options of {@link mountPreview}; every field has a default. */
@@ -17,6 +19,10 @@ const ROOT_WAIT_NOTICE_MS = 3000;
  * module the dev server generates, after it imported the user's entry file.
  */
 export async function mountPreview(options: MountPreviewOptions = {}): Promise<Root> {
+	// First, before any await: the page module loads the user's entry right after this call,
+	// and a build error in it is reported as an event this store must already hear.
+	const buildErrors = new BuildErrorStore();
+	buildErrors.listen();
 	if (!document.getElementById(STYLE_ID)) {
 		const style = document.createElement("style");
 		style.id = STYLE_ID;
@@ -25,11 +31,19 @@ export async function mountPreview(options: MountPreviewOptions = {}): Promise<R
 	}
 	const container = options.container ?? document.getElementById("motio-preview") ?? document.body;
 	const reactRoot = createRoot(container);
+	const show = (content: ReactNode) =>
+		reactRoot.render(
+			<>
+				{content}
+				<BuildErrorOverlay store={buildErrors} />
+			</>,
+		);
+	show(null);
 	let root = getRoot();
 	if (!root) {
 		// The entry may register the root after asynchronous work; say so if it takes long.
 		const timer = setTimeout(() => {
-			reactRoot.render(
+			show(
 				<div className="mp-app" style={{ display: "flex" }}>
 					<div className="mp-message">
 						<h2>Waiting for registerRoot()</h2>
@@ -44,7 +58,7 @@ export async function mountPreview(options: MountPreviewOptions = {}): Promise<R
 		root = await waitForRoot();
 		clearTimeout(timer);
 	}
-	reactRoot.render(
+	show(
 		<PreviewApp
 			root={root}
 			options={{

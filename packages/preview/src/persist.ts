@@ -13,6 +13,8 @@ export interface PreviewPreferences {
 	zoom: Zoom;
 	playbackRate: number;
 	loop: boolean;
+	/** The timeline lists the sequences (true) or shows only its ruler. */
+	timeline: boolean;
 }
 
 /** `fit` scales the composition to the stage; a number is a fixed scale. */
@@ -26,7 +28,12 @@ export const PLAYBACK_RATES: readonly number[] = [0.25, 0.5, 1, 1.5, 2, 4];
 
 const PREFIX = "motio.preview.";
 
-export const DEFAULT_PREFERENCES: PreviewPreferences = { zoom: "fit", playbackRate: 1, loop: true };
+export const DEFAULT_PREFERENCES: PreviewPreferences = {
+	zoom: "fit",
+	playbackRate: 1,
+	loop: true,
+	timeline: true,
+};
 
 // sessionStorage can be missing or throw (privacy modes, sandboxed frames): the page then works
 // without persistence, which only costs the restored frame after a reload.
@@ -88,6 +95,7 @@ export function readPreferences(): PreviewPreferences {
 			? (rate as number)
 			: DEFAULT_PREFERENCES.playbackRate,
 		loop: typeof value?.loop === "boolean" ? value.loop : DEFAULT_PREFERENCES.loop,
+		timeline: typeof value?.timeline === "boolean" ? value.timeline : DEFAULT_PREFERENCES.timeline,
 	};
 }
 

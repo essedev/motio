@@ -140,7 +140,11 @@ export function Toolbar(props: ToolbarProps) {
 				<span className="mp-label" data-testid="frame-total">
 					/ {last}
 				</span>
-				<span className="mp-timecode" data-testid="timecode" title="Timecode (HH:MM:SS.frames)">
+				<span
+					className="mp-timecode"
+					data-testid="timecode"
+					title="Timecode: hours, minutes, seconds and frames (HH:MM:SS:FF)"
+				>
 					{formatTimecode(Math.min(frame, last), fps)}
 				</span>
 			</div>

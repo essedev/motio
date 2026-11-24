@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatProps, parseProps } from "./props.js";
+import { closest, formatProps, parseProps, schemaKeys, unknownKeyIssues } from "./props.js";
 
 const schema = {
 	safeParse(value: unknown) {
@@ -62,5 +62,61 @@ describe("parseProps", () => {
 
 	it("formats props with two-space indentation", () => {
 		expect(formatProps({ a: 1 })).toBe('{\n  "a": 1\n}');
+	});
+});
+
+describe("unknown keys", () => {
+	it("warns on keys not in defaultProps, with the likely intended key", () => {
+		const result = parseProps('{"titel":"Typo","color":"red"}', null, {
+			title: "Hi",
+			color: "blue",
+		});
+		expect(result).toEqual({
+			ok: true,
+			props: { titel: "Typo", color: "red" },
+			issues: [
+				{ path: "titel", message: 'Unknown prop: not in defaultProps. Did you mean "title"?' },
+			],
+		});
+	});
+
+	it("knows the keys of a Zod-like object schema, also behind refinements and defaults", () => {
+		const object = {
+			shape: { title: {}, count: {} },
+			_def: { unknownKeys: "strip" },
+			safeParse: () => ({ success: true }),
+		};
+		expect(schemaKeys(object)).toEqual(["title", "count"]);
+		expect(schemaKeys({ _def: { schema: object } })).toEqual(["title", "count"]);
+		expect(schemaKeys({ _def: { innerType: { _def: { shape: () => ({ a: {} }) } } } })).toEqual([
+			"a",
+		]);
+		expect(schemaKeys({ _zod: { def: { shape: { b: {} } } } })).toEqual(["b"]);
+		expect(unknownKeyIssues({ count: 1, extra: 2 }, {}, object)).toEqual([
+			{ path: "extra", message: "Unknown prop: not in defaultProps or the schema." },
+		]);
+	});
+
+	it("says nothing when the schema accepts any key or there is nothing to compare with", () => {
+		const passthrough = {
+			shape: { a: {} },
+			_def: { unknownKeys: "passthrough" },
+			safeParse: () => ({ success: true }),
+		};
+		const catchall = {
+			shape: { a: {} },
+			_def: { catchall: { _def: { typeName: "ZodString" } } },
+			safeParse: () => ({ success: true }),
+		};
+		expect(unknownKeyIssues({ b: 1 }, {}, passthrough)).toEqual([]);
+		expect(unknownKeyIssues({ b: 1 }, {}, catchall)).toEqual([]);
+		expect(unknownKeyIssues({ b: 1 }, {}, null)).toEqual([]);
+		expect(unknownKeyIssues({ b: 1 }, {}, schema)).toEqual([]);
+	});
+
+	it("suggests only close names", () => {
+		expect(closest("titel", ["title", "subtitle"])).toBe("title");
+		expect(closest("bg", ["background"])).toBeNull();
+		expect(closest("Colour", ["color"])).toBe("color");
 	});
 });

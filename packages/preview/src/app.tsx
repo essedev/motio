@@ -1,4 +1,8 @@
-import type { RegisteredComposition } from "@motiojs/core/internals";
+import {
+	type RegisteredComposition,
+	SequenceRegistry,
+	SequenceRegistryContext,
+} from "@motiojs/core/internals";
 import { Player } from "@motiojs/player";
 import {
 	type ComponentType,
@@ -17,7 +21,9 @@ import {
 	useCompositionRegistry,
 	useCompositions,
 } from "./compositions.js";
+import { ErrorView } from "./error-view.js";
 import { FrameStore } from "./frame-store.js";
+import { useElementSize, useMediaQuery } from "./hooks.js";
 import {
 	type CompositionSession,
 	compositionFromHash,
@@ -29,11 +35,14 @@ import {
 	writeSession,
 	type Zoom,
 } from "./persist.js";
+import { ProblemCollector } from "./problems.js";
+import { ProblemsPanel } from "./problems-panel.js";
 import { formatProps, parseProps } from "./props.js";
 import { FULL_RANGE, fitRange, type LoopRange, setInPoint, setOutPoint } from "./range.js";
 import { isEditableTarget, SHORTCUTS, type ShortcutAction, shortcutFor } from "./shortcuts.js";
-import { type RenderedStill, requestStill } from "./still.js";
+import { type RenderedStill, requestStill, type SavedStill, saveStill } from "./still.js";
 import { clampFrame, formatDuration, formatFps, formatFrameCount } from "./time.js";
+import { Timeline } from "./timeline.js";
 import { Toolbar, type ToolbarActions } from "./toolbar.js";
 import { type ResolvedConfig, useResolvedComposition } from "./use-resolved.js";
 
@@ -50,6 +59,9 @@ export interface PreviewOptions {
 /** Debounce for props edits before `calculateMetadata()` and the Player see them. */
 const PROPS_DEBOUNCE_MS = 250;
 const STAGE_PADDING = 48;
+/** Below this width the right panel becomes a drawer; below the second, the list too. */
+const INSPECTOR_DRAWER_QUERY = "(max-width: 1099px)";
+const LIST_DRAWER_QUERY = "(max-width: 719px)";
 
 function useHashSelection(): [string | null, (id: string) => void] {
 	const [id, setId] = useState(() => compositionFromHash(window.location.hash));
@@ -79,23 +91,6 @@ function useDebounced<T>(value: T, ms: number, key: unknown): T {
 		return () => clearTimeout(timer);
 	}, [value, current.value, key, ms]);
 	return current.value;
-}
-
-function useElementSize(): [(element: HTMLElement | null) => void, { w: number; h: number }] {
-	const [size, setSize] = useState({ w: 0, h: 0 });
-	const observer = useRef<ResizeObserver | null>(null);
-	const ref = useCallback((element: HTMLElement | null) => {
-		observer.current?.disconnect();
-		observer.current = null;
-		if (!element) return;
-		const measure = () => setSize({ w: element.clientWidth, h: element.clientHeight });
-		measure();
-		if (typeof ResizeObserver !== "undefined") {
-			observer.current = new ResizeObserver(measure);
-			observer.current.observe(element);
-		}
-	}, []);
-	return [ref, size];
 }
 
 function initialPropsText(entry: RegisteredComposition, initial: Record<string, unknown>): string {
@@ -203,10 +198,17 @@ type StillState =
 	| { status: "done"; still: RenderedStill }
 	| { status: "error"; message: string };
 
+type SaveState =
+	| { status: "idle" }
+	| { status: "saving" }
+	| { status: "saved"; saved: SavedStill }
+	| { status: "error"; message: string };
+
 function StillPanel({
 	state,
 	enabled,
 	store,
+	compositionId,
 	onGoTo,
 	difference,
 	onDifferenceChange,
@@ -214,23 +216,43 @@ function StillPanel({
 	state: StillState;
 	enabled: boolean;
 	store: FrameStore;
+	compositionId: string | null;
 	onGoTo(frame: number): void;
 	difference: boolean;
 	onDifferenceChange(value: boolean): void;
 }) {
 	const { frame } = useSyncExternalStore(store.subscribe, store.get, store.get);
+	const [save, setSave] = useState<SaveState>({ status: "idle" });
+	const still = state.status === "done" ? state.still : null;
+	// biome-ignore lint/correctness/useExhaustiveDependencies: a new still starts unsaved
+	useEffect(() => setSave({ status: "idle" }), [still]);
+	const onSave = async () => {
+		if (!still?.saveUrl) return;
+		setSave({ status: "saving" });
+		try {
+			setSave({ status: "saved", saved: await saveStill(still.saveUrl) });
+		} catch (error) {
+			setSave({ status: "error", message: error instanceof Error ? error.message : String(error) });
+		}
+	};
 	return (
-		<section className="mp-section mp-still" data-testid="still-panel">
-			<h2 className="mp-section-title">Render check</h2>
+		<section
+			className="mp-section mp-still"
+			data-testid="still-panel"
+			aria-labelledby="mp-still-title"
+		>
+			<h2 className="mp-section-title" id="mp-still-title">
+				Render check
+			</h2>
 			{!enabled ? (
 				<p className="mp-note">The renderer is not available in this session.</p>
 			) : state.status === "idle" ? (
 				<p className="mp-note">
-					"Render still" renders the current frame through the real pipeline (as{" "}
-					<code>motio still</code> does) so you can compare it with the preview.
+					Render still renders the current frame with the real renderer, as <code>motio still</code>{" "}
+					does, so you can check that the video will look like the preview.
 				</p>
 			) : state.status === "rendering" ? (
-				<p className="mp-spinner" data-testid="still-status">
+				<p className="mp-spinner" data-testid="still-status" role="status">
 					Rendering frame {state.frame}…
 				</p>
 			) : state.status === "error" ? (
@@ -241,26 +263,34 @@ function StillPanel({
 				<>
 					<img
 						src={state.still.url}
-						alt={`Rendered frame ${state.still.frame}`}
+						alt={`Frame ${state.still.frame} as rendered`}
 						data-testid="still-image"
 						data-frame={state.still.frame}
+						data-file={state.still.file}
 					/>
-					<div className="mp-still-meta">
-						Frame {state.still.frame} · {state.still.width}×{state.still.height} · rendered in{" "}
+					<p className="mp-still-meta">
+						Frame {state.still.frame}, {state.still.width}×{state.still.height}, rendered in{" "}
 						{state.still.durationMs} ms
-						<br />
-						{state.still.file}
-					</div>
+					</p>
 					<div className="mp-row">
-						<button
-							type="button"
+						{state.still.saveUrl ? (
+							<button
+								type="button"
+								className="mp-btn mp-btn-small"
+								data-testid="still-save"
+								disabled={save.status === "saving"}
+								onClick={onSave}
+							>
+								{save.status === "saving" ? "Saving…" : "Save to out/"}
+							</button>
+						) : null}
+						<a
 							className="mp-btn mp-btn-small"
-							aria-pressed={difference}
-							title="Overlay the render on the preview with a difference blend: identical pixels turn black"
-							onClick={() => onDifferenceChange(!difference)}
+							href={state.still.url}
+							download={`${compositionId ?? "still"}-${state.still.frame}.png`}
 						>
-							Difference
-						</button>
+							Download
+						</a>
 						{frame !== state.still.frame ? (
 							<button
 								type="button"
@@ -271,6 +301,30 @@ function StillPanel({
 							</button>
 						) : null}
 					</div>
+					{save.status === "saved" ? (
+						<p className="mp-note" role="status" data-testid="still-saved">
+							Saved to <code title={save.saved.file}>{save.saved.relativePath}</code>
+						</p>
+					) : save.status === "error" ? (
+						<p className="mp-issues mp-issues-error" role="alert">
+							{save.message}
+						</p>
+					) : null}
+					<label className="mp-check">
+						<input
+							type="checkbox"
+							checked={difference}
+							data-testid="still-difference"
+							onChange={(e) => onDifferenceChange(e.target.checked)}
+						/>
+						<span>
+							Show differences on the stage
+							<span className="mp-check-hint">
+								The render is blended over the preview: matching pixels turn black, anything that
+								differs stays visible.
+							</span>
+						</span>
+					</label>
 				</>
 			)}
 		</section>
@@ -306,6 +360,24 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 	// A new store per composition; the initial frame is read once.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: keyed by the composition only
 	const store = useMemo(() => new FrameStore(current?.frame ?? 0), [selectedId]);
+	// The sequences of the selected composition, for the timeline; fresh per composition.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: keyed by the composition only
+	const sequences = useMemo(() => new SequenceRegistry(), [selectedId]);
+	const [problemCollector] = useState(() => new ProblemCollector());
+	useEffect(() => problemCollector.start(), [problemCollector]);
+	// Scoped before the composition renders: its delayRender() calls run during that render.
+	const scopedTo = useRef<string | null | undefined>(undefined);
+	if (scopedTo.current !== selectedId) {
+		scopedTo.current = selectedId;
+		problemCollector.scope();
+	}
+	// biome-ignore lint/correctness/useExhaustiveDependencies: refreshed when the composition changes
+	useEffect(() => problemCollector.refresh(), [problemCollector, selectedId]);
+	const problems = useSyncExternalStore(
+		problemCollector.subscribe,
+		problemCollector.get,
+		problemCollector.get,
+	);
 
 	const [preferences, setPreferences] = useState<PreviewPreferences>(readPreferences);
 	const [direction, setDirection] = useState<1 | -1>(1);
@@ -316,7 +388,11 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 	const propsText = current?.propsText ?? "{}";
 	const debouncedText = useDebounced(propsText, PROPS_DEBOUNCE_MS, selectedId);
 	const schema = selected?.schema ?? null;
-	const liveProps = useMemo(() => parseProps(propsText, schema), [propsText, schema]);
+	const defaultProps = selected?.defaultProps ?? null;
+	const liveProps = useMemo(
+		() => parseProps(propsText, schema, defaultProps ?? {}),
+		[propsText, schema, defaultProps],
+	);
 	// The props the Player and the renderer get: the last valid editor content. Invalid JSON
 	// keeps the previous props on screen instead of blanking the preview.
 	const applied = useRef<{ id: string | null; props: Record<string, unknown> }>({
@@ -462,6 +538,37 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 		};
 	}, [actions, options.keyboardShortcuts]);
 
+	// Narrow windows: the side panels become drawers opened from the header.
+	const inspectorDrawer = useMediaQuery(INSPECTOR_DRAWER_QUERY);
+	const listDrawer = useMediaQuery(LIST_DRAWER_QUERY);
+	const [drawer, setDrawer] = useState<"list" | "inspector" | null>(null);
+	const openDrawer =
+		drawer === "list"
+			? listDrawer
+				? "list"
+				: null
+			: drawer === "inspector"
+				? inspectorDrawer
+					? "inspector"
+					: null
+				: null;
+	useEffect(() => {
+		if (!openDrawer) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setDrawer(null);
+		};
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, [openDrawer]);
+	const showProblems = () => {
+		if (inspectorDrawer) setDrawer("inspector");
+		requestAnimationFrame(() => {
+			const section = document.getElementById("mp-problems");
+			section?.scrollIntoView({ block: "nearest" });
+			section?.querySelector("h2")?.focus();
+		});
+	};
+
 	const [still, setStill] = useState<StillState>({ status: "idle" });
 	const [difference, setDifference] = useState(false);
 	const stillController = useRef<AbortController | null>(null);
@@ -539,7 +646,7 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 				</header>
 				<main className="mp-main" style={{ gridColumn: "1 / -1" }}>
 					<Message title="The root component threw">
-						<pre className="mp-error">{rootError.stack ?? rootError.message}</pre>
+						<ErrorView error={rootError} />
 						<p className="mp-note">Fix the error and save: the page reloads.</p>
 					</Message>
 				</main>
@@ -548,11 +655,30 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 	}
 
 	const shownMeta = config ?? selected;
+	const playerFrame = () => store.get().frame;
 	return (
-		<div className="mp-app" data-testid="preview">
+		<div
+			className="mp-app"
+			data-testid="preview"
+			data-drawer={openDrawer ?? undefined}
+			data-list-drawer={listDrawer || undefined}
+			data-inspector-drawer={inspectorDrawer || undefined}
+		>
 			{collector}
 			<header className="mp-header">
-				<span className="mp-brand">Motio</span>
+				{listDrawer ? (
+					<button
+						type="button"
+						className="mp-btn mp-btn-quiet"
+						aria-expanded={openDrawer === "list"}
+						aria-controls="mp-sidebar"
+						onClick={() => setDrawer(openDrawer === "list" ? null : "list")}
+					>
+						Compositions
+					</button>
+				) : (
+					<span className="mp-brand">Motio</span>
+				)}
 				<div className="mp-title">
 					{selected ? (
 						<>
@@ -571,23 +697,47 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 						</>
 					) : null}
 				</div>
+				{problems.length > 0 ? (
+					<button
+						type="button"
+						className="mp-btn mp-btn-warn"
+						data-testid="problems-button"
+						onClick={showProblems}
+					>
+						{problems.length} {problems.length === 1 ? "problem" : "problems"}
+					</button>
+				) : null}
+				{inspectorDrawer ? (
+					<button
+						type="button"
+						className="mp-btn"
+						aria-expanded={openDrawer === "inspector"}
+						aria-controls="mp-inspector"
+						onClick={() => setDrawer(openDrawer === "inspector" ? null : "inspector")}
+					>
+						Props
+					</button>
+				) : null}
 				{options.stillEndpoint ? (
 					<button
 						type="button"
 						className="mp-btn mp-btn-primary"
 						data-testid="render-still"
 						disabled={!config || !inputProps || still.status === "rendering"}
-						title="Render the current frame through the real pipeline"
-						onClick={renderStill}
+						title="Render the current frame with the real renderer"
+						onClick={() => {
+							if (inspectorDrawer) setDrawer("inspector");
+							void renderStill();
+						}}
 					>
 						{still.status === "rendering" ? "Rendering…" : "Render still"}
 					</button>
 				) : null}
 			</header>
-			<aside className="mp-sidebar">
+			<aside className="mp-sidebar" id="mp-sidebar" aria-label="Compositions">
 				<section className="mp-section mp-section-grow">
 					<h2 className="mp-section-title">
-						Compositions <span>{compositions.length}</span>
+						Compositions <span className="mp-count">{compositions.length}</span>
 					</h2>
 					{compositions.length === 0 ? (
 						<p className="mp-note">None registered yet.</p>
@@ -595,7 +745,10 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 						<CompositionList
 							compositions={compositions}
 							selectedId={selectedId}
-							onSelect={select}
+							onSelect={(id) => {
+								select(id);
+								setDrawer(null);
+							}}
 						/>
 					)}
 				</section>
@@ -612,38 +765,43 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 						</Message>
 					) : resolved.error && !config ? (
 						<Message title="Could not resolve the composition">
-							<pre className="mp-error" data-testid="resolve-error">
-								{resolved.error.message}
-							</pre>
+							<div data-testid="resolve-error">
+								<ErrorView error={resolved.error} />
+							</div>
 						</Message>
 					) : !config ? (
 						<p className="mp-spinner">Resolving metadata…</p>
 					) : (
 						<div className="mp-stage-inner" style={playerStyle} data-testid="stage">
-							<Player
-								key={selected.id}
-								ref={store.attach}
-								component={selected.component}
-								inputProps={config.props}
-								durationInFrames={config.durationInFrames}
-								fps={config.fps}
-								compositionWidth={config.width}
-								compositionHeight={config.height}
-								style={playerStyle}
-								controls
-								loop={preferences.loop}
-								playbackRate={preferences.playbackRate * direction}
-								inFrame={range.inFrame}
-								outFrame={range.outFrame}
-								initialFrame={clampFrame(current?.frame ?? 0, config.durationInFrames)}
-								spaceKeyToPlayOrPause={false}
-								doubleClickToFullscreen
-								errorFallback={({ error }) => (
-									<pre className="mp-error" style={{ margin: 0, height: "100%" }}>
-										{error.stack ?? error.message}
-									</pre>
-								)}
-							/>
+							<SequenceRegistryContext.Provider value={sequences}>
+								<Player
+									key={selected.id}
+									ref={store.attach}
+									component={selected.component}
+									inputProps={config.props}
+									durationInFrames={config.durationInFrames}
+									fps={config.fps}
+									compositionWidth={config.width}
+									compositionHeight={config.height}
+									style={playerStyle}
+									controls
+									loop={preferences.loop}
+									playbackRate={preferences.playbackRate * direction}
+									inFrame={range.inFrame}
+									outFrame={range.outFrame}
+									initialFrame={clampFrame(current?.frame ?? 0, config.durationInFrames)}
+									spaceKeyToPlayOrPause={false}
+									doubleClickToFullscreen
+									errorFallback={({ error }) => (
+										<div className="mp-player-error" data-testid="player-error">
+											<ErrorView
+												error={error}
+												where={`Thrown while rendering frame ${playerFrame()} of ${selected.id}.`}
+											/>
+										</div>
+									)}
+								/>
+							</SequenceRegistryContext.Provider>
 							{difference && still.status === "done" ? (
 								<img className="mp-diff" src={still.still.url} alt="" />
 							) : null}
@@ -665,10 +823,23 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 						onZoomChange={(next) => updatePreferences({ zoom: next })}
 					/>
 				) : null}
+				{config && !selected?.isStill ? (
+					<Timeline
+						registry={sequences}
+						store={store}
+						fps={config.fps}
+						durationInFrames={config.durationInFrames}
+						range={range}
+						expanded={preferences.timeline}
+						onExpandedChange={(timeline) => updatePreferences({ timeline })}
+						onSeek={actions.seek}
+						onScrubStart={actions.pause}
+					/>
+				) : null}
 			</main>
-			<aside className="mp-aside">
-				<section className="mp-section">
-					<h2 className="mp-section-title">
+			<aside className="mp-aside" id="mp-inspector" aria-label="Props and checks">
+				<section className="mp-section" aria-labelledby="mp-props-title">
+					<h2 className="mp-section-title" id="mp-props-title">
 						Props
 						<button
 							type="button"
@@ -683,46 +854,61 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 						className="mp-textarea"
 						aria-label="Input props (JSON)"
 						aria-invalid={!liveProps.ok}
+						aria-describedby="mp-props-status"
 						data-testid="props-editor"
 						spellCheck={false}
 						disabled={!selected}
 						value={propsText}
 						onChange={(e) => onPropsChange(e.target.value)}
 					/>
-					{!liveProps.ok ? (
-						<ul className="mp-issues mp-issues-error" data-testid="props-error">
-							{liveProps.issues.map((issue) => (
-								<li key={issue.message}>Invalid JSON: {issue.message}</li>
-							))}
-						</ul>
-					) : liveProps.issues.length > 0 ? (
-						<ul className="mp-issues mp-issues-warn" data-testid="props-issues">
-							{liveProps.issues.map((issue) => (
-								<li key={`${issue.path}:${issue.message}`}>
-									{issue.path ? <code>{issue.path}</code> : "Props"}: {issue.message}
-								</li>
-							))}
-						</ul>
-					) : (
-						<p className="mp-note">
-							{schema ? "Matches the schema." : "No schema: props are not validated."}
-						</p>
-					)}
+					<div id="mp-props-status">
+						{!liveProps.ok ? (
+							<ul className="mp-issues mp-issues-error" data-testid="props-error">
+								{liveProps.issues.map((issue) => (
+									<li key={issue.message}>Invalid JSON: {issue.message}</li>
+								))}
+							</ul>
+						) : liveProps.issues.length > 0 ? (
+							<ul className="mp-issues mp-issues-warn" data-testid="props-issues">
+								{liveProps.issues.map((issue) => (
+									<li key={`${issue.path}:${issue.message}`}>
+										{issue.path ? <code>{issue.path}</code> : "Props"}: {issue.message}
+									</li>
+								))}
+							</ul>
+						) : (
+							<p className="mp-note">
+								{schema
+									? "Matches the schema."
+									: "No schema: unknown keys are flagged, types are not checked. Pass a Zod schema as the schema prop of <Composition> to check them."}
+							</p>
+						)}
+					</div>
 					{resolved.error && config ? (
-						<pre className="mp-error" style={{ marginTop: 8 }}>
-							{resolved.error.message}
-						</pre>
+						<div className="mp-inline-error">
+							<ErrorView error={resolved.error} />
+						</div>
 					) : null}
 				</section>
+				<ProblemsPanel problems={problems} />
 				<StillPanel
 					state={still}
 					enabled={options.stillEndpoint !== null}
 					store={store}
+					compositionId={selectedId}
 					onGoTo={actions.seek}
 					difference={difference}
 					onDifferenceChange={setDifference}
 				/>
 			</aside>
+			{openDrawer ? (
+				<button
+					type="button"
+					className="mp-scrim"
+					aria-label="Close the panel"
+					onClick={() => setDrawer(null)}
+				/>
+			) : null}
 		</div>
 	);
 }

@@ -7,7 +7,8 @@ export function clampFrame(frame: number, durationInFrames: number): number {
 const pad = (value: number, length: number) => String(value).padStart(length, "0");
 
 /**
- * Formats a frame as `HH:MM:SS.FF`, where `FF` counts frames inside the second. With a
+ * Formats a frame as `HH:MM:SS:FF`, where `FF` counts frames inside the second (the separator
+ * of a non-drop-frame timecode: `00:00:01:10` is frame 10 of second 1, not 1.10 s). With a
  * fractional frame rate (29.97) a second starts at the first frame whose time reaches it, so
  * `FF` never exceeds the frames that second holds.
  */
@@ -19,7 +20,7 @@ export function formatTimecode(frame: number, fps: number): string {
 	const h = Math.floor(seconds / 3600);
 	const m = Math.floor((seconds % 3600) / 60);
 	const s = seconds % 60;
-	return `${pad(h, 2)}:${pad(m, 2)}:${pad(s, 2)}.${pad(frames, Math.max(2, digits))}`;
+	return `${pad(h, 2)}:${pad(m, 2)}:${pad(s, 2)}:${pad(frames, Math.max(2, digits))}`;
 }
 
 /** Formats a duration in frames as seconds with two decimals, e.g. `10.00 s`. */

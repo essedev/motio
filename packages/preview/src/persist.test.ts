@@ -40,11 +40,11 @@ describe("session persistence", () => {
 
 	it("keeps only known preference values", () => {
 		expect(readPreferences()).toEqual(DEFAULT_PREFERENCES);
-		writePreferences({ zoom: 0.5, playbackRate: 2, loop: false });
-		expect(readPreferences()).toEqual({ zoom: 0.5, playbackRate: 2, loop: false });
+		writePreferences({ zoom: 0.5, playbackRate: 2, loop: false, timeline: false });
+		expect(readPreferences()).toEqual({ zoom: 0.5, playbackRate: 2, loop: false, timeline: false });
 		sessionStorage.setItem(
 			"motio.preview.preferences",
-			JSON.stringify({ zoom: 3, playbackRate: 7, loop: "yes" }),
+			JSON.stringify({ zoom: 3, playbackRate: 7, loop: "yes", timeline: 1 }),
 		);
 		expect(readPreferences()).toEqual(DEFAULT_PREFERENCES);
 	});
