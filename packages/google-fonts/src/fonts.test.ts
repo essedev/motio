@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { FontInfo } from "./create-font-module.js";
+import { cssFamilyName } from "./css-family-name.js";
 import { getAvailableFonts } from "./index.js";
 
 const dir = resolve(import.meta.dirname, "../../../fixtures/google-fonts/__golden__/remotion");
@@ -32,7 +33,25 @@ const shape = (info: FontInfo) => ({
 		: null,
 });
 
+const cssNames = JSON.parse(readFileSync(resolve(dir, "css-family-names.json"), "utf8")) as {
+	families: { fontFamily: string; module: string; info: string }[];
+};
+
 describe("@motiojs/google-fonts against @remotion/google-fonts 4.0.545", () => {
+	it(`uses the published CSS family name for the ${cssNames.families.length} families with a digit`, async () => {
+		const fonts = new Map(getAvailableFonts().map((f) => [f.fontFamily, f]));
+		const ours = await Promise.all(
+			cssNames.families.map(async ({ fontFamily }) => {
+				const font = fonts.get(fontFamily);
+				if (!font) return { fontFamily, module: "(missing)", info: "(missing)" };
+				const mod = (await font.load()) as { fontFamily: string; getInfo(): FontInfo };
+				return { fontFamily, module: mod.fontFamily, info: mod.getInfo().fontFamily };
+			}),
+		);
+		expect(ours).toEqual(cssNames.families);
+		expect(cssFamilyName("Source Serif 4")).toBe("Source Serif Four");
+	});
+
 	it("lists the same fonts with the same import names", () => {
 		const ours = getAvailableFonts().map((f) => ({
 			fontFamily: f.fontFamily,

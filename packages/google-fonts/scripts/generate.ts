@@ -3,6 +3,7 @@
 // fixtures/google-fonts), intersected with what Google Fonts serves today. Run: pnpm generate
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { cssFamilyName } from "../src/css-family-name.ts";
 
 const here = import.meta.dirname;
 const out = resolve(here, "../src/fonts");
@@ -127,7 +128,8 @@ async function work() {
 			}
 			const version = /\/(v\d+)\//.exec(faces[0]?.src ?? "")?.[1] ?? "";
 			const info: Record<string, unknown> = {
-				fontFamily: meta.family,
+				// The CSS-safe name the module registers and returns; the font list keeps the real one.
+				fontFamily: cssFamilyName(meta.family),
 				importName: item.importName,
 				version,
 				url,
