@@ -3,6 +3,18 @@
 	"version": "0.0.0",
 	"description": "Make videos with React. Remotion-compatible API, Apache-2.0",
 	"license": "Apache-2.0",
+	"keywords": [
+		"video",
+		"react",
+		"remotion-compatible",
+		"remotion-alternative",
+		"motion-graphics",
+		"animation",
+		"video-rendering",
+		"headless-chrome",
+		"ffmpeg",
+		"mp4"
+	],
 	"type": "module",
 	"exports": {
 		".": {
