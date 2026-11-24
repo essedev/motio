@@ -1,4 +1,11 @@
-import { AbsoluteFill, random, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
+import {
+	AbsoluteFill,
+	interpolate,
+	random,
+	spring,
+	useCurrentFrame,
+	useVideoConfig,
+} from "@motiojs/motio";
 
 // region: clock
 export const Clock = () => {
@@ -39,6 +46,54 @@ export const Stars = () => {
 					}}
 				/>
 			))}
+		</AbsoluteFill>
+	);
+};
+// endregion
+
+// region: product-ui
+// Shared with the product as plain data, for example from a module both import: no components.
+const tokens = { surface: "#16181d", text: "#f4f4f5", accent: "#7c5cff", radius: 12 };
+const tasks = [
+	{ id: 1, title: "Import the footage" },
+	{ id: 2, title: "Cut the intro" },
+	{ id: 3, title: "Export in 4K" },
+];
+
+// The product's task panel, rebuilt for the video. In the product it slides in with a CSS
+// transition and fills its list when a query resolves; here both follow the frame.
+export const TaskPanel = () => {
+	const frame = useCurrentFrame();
+	const { fps } = useVideoConfig();
+	const enter = spring({ frame, fps, config: { damping: 200 } });
+	const shown = Math.floor(
+		interpolate(frame, [15, 45], [0, tasks.length], {
+			extrapolateLeft: "clamp",
+			extrapolateRight: "clamp",
+		}),
+	);
+	return (
+		<AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+			<div
+				style={{
+					width: 420,
+					padding: 24,
+					borderRadius: tokens.radius,
+					backgroundColor: tokens.surface,
+					color: tokens.text,
+					opacity: enter,
+					transform: `translateY(${(1 - enter) * 40}px)`,
+				}}
+			>
+				{tasks.slice(0, shown).map((task) => (
+					<div
+						key={task.id}
+						style={{ padding: "8px 0", borderBottom: `1px solid ${tokens.accent}` }}
+					>
+						{task.title}
+					</div>
+				))}
+			</div>
 		</AbsoluteFill>
 	);
 };

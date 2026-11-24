@@ -72,6 +72,65 @@ CSS transforms, filters and other styles can change freely from frame to frame: 
 
 Some libraries animate on their own clock: GSAP, canvas loops driven by `requestAnimationFrame`, anything reading `Date.now()`. Motio does not change the page's clock, so left alone they run on real time and give different pixels on every render. Drive them from the frame instead: pause the library's timeline and seek it to `frame / fps` on every render. A mode that makes the clock follow the frame time is designed but not available in this release.
 
+## Your product's UI in a video
+
+A video of your own app is the common case, and the first idea is to import the app's components into a composition. They render, but not the same way twice: product components animate with CSS transitions, run timers, and load data asynchronously (a query hook, a fetch in an effect), all on real time. With `motio check determinism` on this release, a CSS transition (one that follows a style set from the frame, or one a component plays when it mounts), state updated by `setInterval`, and data loaded in an effect without `delayRender()` each give frames that differ between runs. CSS `@keyframes` animations and data held with `delayRender()` give identical frames.
+
+Rebuild the screens in the video project instead, and share with the product only what has no behaviour: design tokens (colours, spacing, radii, fonts), copy, icons, and the sample records the screens show. Each rebuilt screen takes its data as plain values and gets its motion from the frame: the panel that slides in with a transition in the product slides in with `spring()` here, and the list that fills in when a query resolves shows as many rows as the frame says.
+
+<!-- example: examples/src/frames.tsx#product-ui -->
+```tsx
+import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
+
+// Shared with the product as plain data, for example from a module both import: no components.
+const tokens = { surface: "#16181d", text: "#f4f4f5", accent: "#7c5cff", radius: 12 };
+const tasks = [
+	{ id: 1, title: "Import the footage" },
+	{ id: 2, title: "Cut the intro" },
+	{ id: 3, title: "Export in 4K" },
+];
+
+// The product's task panel, rebuilt for the video. In the product it slides in with a CSS
+// transition and fills its list when a query resolves; here both follow the frame.
+export const TaskPanel = () => {
+	const frame = useCurrentFrame();
+	const { fps } = useVideoConfig();
+	const enter = spring({ frame, fps, config: { damping: 200 } });
+	const shown = Math.floor(
+		interpolate(frame, [15, 45], [0, tasks.length], {
+			extrapolateLeft: "clamp",
+			extrapolateRight: "clamp",
+		}),
+	);
+	return (
+		<AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+			<div
+				style={{
+					width: 420,
+					padding: 24,
+					borderRadius: tokens.radius,
+					backgroundColor: tokens.surface,
+					color: tokens.text,
+					opacity: enter,
+					transform: `translateY(${(1 - enter) * 40}px)`,
+				}}
+			>
+				{tasks.slice(0, shown).map((task) => (
+					<div
+						key={task.id}
+						style={{ padding: "8px 0", borderBottom: `1px solid ${tokens.accent}` }}
+					>
+						{task.title}
+					</div>
+				))}
+			</div>
+		</AbsoluteFill>
+	);
+};
+```
+
+The video then depends on the frame alone, and the product does not grow render flags or test hooks to fit the video.
+
 ## Frame rate and length
 
 The frame rate and the length are set per composition (next page). `--fps` and `--duration` on the CLI override them for one render; inside a component always read them from `useVideoConfig()` instead of hard-coding 30.
