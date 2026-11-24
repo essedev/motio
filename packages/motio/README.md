@@ -42,6 +42,7 @@ Frames are rendered in any order, in several browser tabs at once, and a failed 
 - Derive every moving value from `useCurrentFrame()`, with `interpolate()` and `spring()`.
 - CSS transitions, `setTimeout`, `setInterval`, `requestAnimationFrame` loops and `Date.now()` run on real time and give different pixels on every render. CSS `@keyframes` animations are seeked to the frame's time and are fine.
 - Keep no state between frames; use `random(seed)` instead of `Math.random()`.
+- These rules are for the default frame time model. For a library that runs on its own clock (GSAP, a canvas loop on `requestAnimationFrame`, `setInterval`, `Date`), `<Composition timeModel="virtual">` or `--time-model=virtual` makes `Date`, `performance.now()`, timers, `requestAnimationFrame` and `Math.random()` follow the frame: every tab steps through each frame from frame 0, so renders cost more the later a tab starts, and `motio dev` keeps the real clock (see [Code that reads the clock](../../docs/guide/frames-and-time.md#code-that-reads-the-clock)).
 - Hold anything asynchronous with `delayRender()` and release it with `continueRender(handle)`.
 - To show your product's UI, rebuild its screens and share pure data with the product (tokens, copy, icons, sample records) instead of importing its components.
 

@@ -1,11 +1,13 @@
 import {
 	AbsoluteFill,
+	Composition,
 	interpolate,
 	random,
 	spring,
 	useCurrentFrame,
 	useVideoConfig,
 } from "@motiojs/motio";
+import { useEffect, useRef } from "react";
 
 // region: clock
 export const Clock = () => {
@@ -97,4 +99,43 @@ export const TaskPanel = () => {
 		</AbsoluteFill>
 	);
 };
+// endregion
+
+// region: virtual-clock
+// A canvas loop on requestAnimationFrame that sums the time between animation frames, as a
+// third-party library would run it: it never reads the frame.
+const Comet = () => {
+	const canvas = useRef<HTMLCanvasElement>(null);
+	useEffect(() => {
+		const ctx = canvas.current?.getContext("2d");
+		if (!ctx) return;
+		let x = 0;
+		let last = performance.now();
+		let id = 0;
+		const loop = (now: number) => {
+			x = (x + (now - last) * 0.4) % 1280;
+			last = now;
+			ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+			ctx.fillRect(0, 0, 1280, 720);
+			ctx.fillStyle = "white";
+			ctx.fillRect(x, 340, 40, 40);
+			id = requestAnimationFrame(loop);
+		};
+		id = requestAnimationFrame(loop);
+		return () => cancelAnimationFrame(id);
+	}, []);
+	return <canvas ref={canvas} width={1280} height={720} />;
+};
+
+export const CometRoot = () => (
+	<Composition
+		id="Comet"
+		component={Comet}
+		width={1280}
+		height={720}
+		fps={30}
+		durationInFrames={150}
+		timeModel="virtual"
+	/>
+);
 // endregion

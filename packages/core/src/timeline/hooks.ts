@@ -26,7 +26,9 @@ export function useTimeline(hook: string): TimelineState {
  * `spring()`. Frames render in any order and in several tabs at once, so CSS transitions,
  * `setTimeout`, `setInterval`, `requestAnimationFrame` loops, `Date.now()` and state kept between
  * frames give different pixels on every render (`motio check determinism` reports them). CSS
- * `@keyframes` animations are seeked to the frame's time and are fine.
+ * `@keyframes` animations are seeked to the frame's time and are fine. For a library that runs on
+ * its own clock, the virtual time model (`<Composition timeModel="virtual">`) makes `Date`,
+ * `performance.now()`, timers, `requestAnimationFrame` and `Math.random()` follow the frame.
  */
 export function useCurrentFrame(): number {
 	return useTimeline("useCurrentFrame()").frame;
