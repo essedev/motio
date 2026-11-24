@@ -18,5 +18,6 @@ Rendering needs FFmpeg 5.1 or later with libx264 on `PATH` (`brew install ffmpeg
 - `src/index.ts`: the entry point; registers the root.
 - `src/Root.tsx`: the compositions: id, size, frame rate, length and default props.
 - `src/Main.tsx`: the component of the `Main` composition. It reads the current frame with `useCurrentFrame()` and derives everything it draws from it.
+- `motio.config.ts`: settings of the `motio` commands (entry point, codec, quality, preview port); flags win over it.
 
 `{{exec}} motio compositions src/index.ts` lists the compositions. Every command takes `--json` for scripts and agents.

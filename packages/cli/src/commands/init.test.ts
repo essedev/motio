@@ -128,7 +128,12 @@ describe("motio init", () => {
 				]),
 			);
 			expect(files).toEqual(
-				expect.arrayContaining(["src/index.ts", "src/Root.tsx", "tsconfig.json"]),
+				expect.arrayContaining([
+					"src/index.ts",
+					"src/Root.tsx",
+					"tsconfig.json",
+					"motio.config.ts",
+				]),
 			);
 			for (const file of files) expect(existsSync(join(dir, file)), file).toBe(true);
 

@@ -193,6 +193,23 @@ describe.each(STARTERS.map((starter) => [starter.name, starter] as const))(
 			expect(code, `${stdout}\n${stderr}`).toBe(0);
 		});
 
+		it("loads its motio.config.ts through @motiojs/motio/config, as doctor reports", async () => {
+			const { stdout, stderr } = await run(
+				join(dir, "node_modules/.bin/motio"),
+				["doctor", "--json"],
+				dir,
+			);
+			const result = JSON.parse(stdout) as { checks: Array<Record<string, unknown>> };
+			expect(
+				result.checks.find((check) => check.name === "config"),
+				stderr,
+			).toMatchObject({
+				status: "pass",
+				message: "Using motio.config.ts.",
+				details: { kind: "motio", file: join(dir, "motio.config.ts") },
+			});
+		});
+
 		it("type-checks imports of assets through @motiojs/motio/client", async () => {
 			// What the bundle accepts, typed by the published `@motiojs/motio/client` the starter references.
 			const file = join(dir, "src/assets-check.ts");

@@ -23,5 +23,6 @@ Rendering needs FFmpeg 5.1 or later with libx264 on `PATH` (`brew install ffmpeg
 - `src/Thumbnail.tsx`: a single frame, rendered with `motio still`.
 - `src/fonts.ts`: loads Inter from `public/fonts/`; the render waits for it before capturing a frame.
 - `public/`: static files served next to the bundle. Inter is licensed under the SIL Open Font License (`public/fonts/inter-LICENSE.txt`).
+- `motio.config.ts`: settings of the `motio` commands (entry point, codec, quality, preview port); flags win over it.
 
 `{{exec}} motio compositions src/index.ts` lists the compositions. Every command takes `--json` for scripts and agents.

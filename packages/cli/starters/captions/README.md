@@ -20,5 +20,6 @@ Rendering needs FFmpeg 5.1 or later with libx264 on `PATH` (`brew install ffmpeg
 - `src/Captions.tsx`: groups the words into pages with `createTikTokStyleCaptions()` and shows each page in its own `<Sequence>`, highlighting the word being spoken, over the sound file of the `audio` prop.
 - `public/word-tones.mp3`: a stand-in for a narration, one synthesised note as each word starts, so the starter ships no voice recording. Replace it with your recording (and `audio` in `src/Root.tsx` with its name).
 - `public/captions.json`: one entry per word, with start and end times in milliseconds. Replace it with the transcript of your recording; `parseSrt()` from `@motiojs/captions` reads SRT files.
+- `motio.config.ts`: settings of the `motio` commands (entry point, codec, quality, preview port); flags win over it.
 
 `{{exec}} motio compositions src/index.ts` lists the compositions. Every command takes `--json` for scripts and agents.
