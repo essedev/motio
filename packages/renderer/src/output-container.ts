@@ -49,6 +49,17 @@ export function outputExtensions(codec: Codec, audioCodec: AudioCodec | null): r
 	}
 }
 
+/** Every extension some codec writes, in the order of the codec list. */
+export function knownExtensions(): string[] {
+	const out: string[] = [];
+	for (const codec of CODECS) {
+		for (const audio of [null, "aac", "mp3", "pcm-16", "opus"] as const) {
+			for (const e of outputExtensions(codec, audio)) if (!out.includes(e)) out.push(e);
+		}
+	}
+	return out;
+}
+
 const MUXERS: Record<string, string> = {
 	mp4: "mp4",
 	mov: "mov",
@@ -77,25 +88,45 @@ export function resolveOutputContainer(
 	const allowed = outputExtensions(codec, audioCodec);
 	const extension = extname(outputLocation).slice(1).toLowerCase();
 	if (!allowed.includes(extension)) {
+		const name = basename(outputLocation);
+		const details = {
+			option: "outputLocation",
+			codec,
+			audioCodec,
+			outputLocation,
+			extensions: allowed,
+		};
+		const known = knownExtensions();
+		if (!extension || !known.includes(extension)) {
+			// Nothing writes this extension: the codec is beside the point, whichever was chosen.
+			const what = extension
+				? `has an extension no codec writes (.${extension})`
+				: "has no extension";
+			throw new MotioError(
+				"E_INVALID_OPTION",
+				`The output "${name}" ${what}. The extension chooses the container: use one of ${known.map((e) => `.${e}`).join(" ")} (${codec} writes ${allowed.map((e) => `.${e}`).join(", ")}).`,
+				{ details: { ...details, supported: known } },
+			);
+		}
 		const withAudio = audioCodec ? ` with ${audioCodec} audio` : "";
 		const list = allowed.map((e) => `.${e}`).join(", ");
-		const others = extension
-			? CODECS.filter((c) => c !== codec && outputExtensions(c, null).includes(extension))
-			: [];
+		const others = CODECS.filter(
+			(c) => c !== codec && outputExtensions(c, null).includes(extension),
+		);
 		const hint = others.length
 			? ` Rename the output, or choose a codec that writes .${extension} (${others.join(", ")}).`
 			: " Rename the output.";
 		throw new MotioError(
 			"E_INVALID_OPTION",
-			`The output "${basename(outputLocation)}" does not fit the codec ${codec}${withAudio}, which is written to ${list}.${hint}`,
-			{ details: { codec, audioCodec, outputLocation, extensions: allowed } },
+			`The output "${name}" does not fit the codec ${codec}${withAudio}, which is written to ${list}.${hint}`,
+			{ details },
 		);
 	}
 	if (extension === "hevc" && audioCodec) {
 		throw new MotioError(
 			"E_INVALID_OPTION",
 			`An .hevc file holds the video stream alone, so "${basename(outputLocation)}" cannot carry ${audioCodec} audio. Render it muted, or write .mp4 or .mkv.`,
-			{ details: { codec, audioCodec, outputLocation } },
+			{ details: { option: "outputLocation", codec, audioCodec, outputLocation } },
 		);
 	}
 	return {

@@ -20,6 +20,7 @@ import {
 	type VideoConfig,
 	validateComposition,
 } from "./session.js";
+import type { RenderWarning } from "./warnings.js";
 
 /** Data passed to `onStart`. */
 export interface OnStartData {
@@ -103,6 +104,8 @@ export interface RenderFramesOptions extends BrowserSessionOptions {
 export interface RenderFramesResult {
 	frameCount: number;
 	assetsInfo: RenderAssetInfo;
+	/** Motio extension: warnings the page reported, each once (see `RenderWarning`). */
+	warnings: RenderWarning[];
 }
 
 function framesToRender(options: RenderFramesOptions): number[] {
@@ -230,6 +233,7 @@ export async function renderFrames(options: RenderFramesOptions): Promise<Render
 		});
 		return {
 			frameCount: frames.length,
+			warnings: session.warnings.list(),
 			assetsInfo: {
 				frames,
 				imageSequence: outputDir ? { directory: outputDir, pattern, imageFormat, padding } : null,

@@ -35,7 +35,13 @@ export {
 	type SelectCompositionOptions,
 	selectComposition,
 } from "./compositions.js";
-export { isMotioError, MotioError, type MotioErrorCode, type MotioErrorContext } from "./errors.js";
+export {
+	isMotioError,
+	MotioError,
+	type MotioErrorCode,
+	type MotioErrorContext,
+	type SourceLocation,
+} from "./errors.js";
 export { type ExtractAudioOptions, extractAudio } from "./extract-audio.js";
 export { type FfmpegInfo, MIN_FFMPEG_VERSION, probeFfmpeg } from "./ffmpeg.js";
 export {
@@ -110,3 +116,4 @@ export {
 export { type RenderStillOptions, type RenderStillResult, renderStill } from "./render-still.js";
 export type { BrowserSessionOptions, VideoConfig } from "./session.js";
 export { type StitchFramesToVideoOptions, stitchFramesToVideo } from "./stitch-frames-to-video.js";
+export type { PendingDelayRender, RenderWarning } from "./warnings.js";

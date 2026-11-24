@@ -11,6 +11,7 @@ import {
 	type VideoConfig,
 	validateComposition,
 } from "./session.js";
+import type { RenderWarning } from "./warnings.js";
 
 /** Options of `renderStill()`. */
 export interface RenderStillOptions extends BrowserSessionOptions {
@@ -33,6 +34,8 @@ export interface RenderStillResult {
 	/** The image, or null when it was written to `output`. */
 	buffer: Buffer | null;
 	contentType: string;
+	/** Motio extension: warnings the page reported, each once (see `RenderWarning`). */
+	warnings: RenderWarning[];
 }
 
 const CONTENT_TYPES = { png: "image/png", jpeg: "image/jpeg", webp: "image/webp" } as const;
@@ -73,7 +76,15 @@ export async function renderStill(options: RenderStillOptions): Promise<RenderSt
 		throw new MotioError(
 			"E_INVALID_OPTION",
 			`frame ${requested} is outside the composition (0 to ${composition.durationInFrames - 1}, or negative from the end)`,
-			{ composition: composition.id },
+			{
+				composition: composition.id,
+				details: {
+					option: "frame",
+					value: requested,
+					min: -composition.durationInFrames,
+					max: composition.durationInFrames - 1,
+				},
+			},
 		);
 	}
 	if (options.output) await checkOverwrite(options.output, options.overwrite ?? true);
@@ -115,9 +126,17 @@ export async function renderStill(options: RenderStillOptions): Promise<RenderSt
 				await out.discard();
 				throw err;
 			}
-			return { buffer: null, contentType: CONTENT_TYPES[imageFormat] };
+			return {
+				buffer: null,
+				contentType: CONTENT_TYPES[imageFormat],
+				warnings: session.warnings.list(),
+			};
 		}
-		return { buffer: image, contentType: CONTENT_TYPES[imageFormat] };
+		return {
+			buffer: image,
+			contentType: CONTENT_TYPES[imageFormat],
+			warnings: session.warnings.list(),
+		};
 	} finally {
 		await session.close();
 	}

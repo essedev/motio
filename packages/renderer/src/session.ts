@@ -21,6 +21,8 @@ import {
 } from "./options.js";
 import { type PageConfig, RenderPage } from "./render-page.js";
 import { openServeUrl, type StaticServer } from "./server.js";
+import { StackMapper } from "./stack-map.js";
+import { type PendingDelayRender, WarningCollector } from "./warnings.js";
 
 /** Options shared by every function that opens the bundle in a browser. */
 export interface BrowserSessionOptions {
@@ -69,6 +71,11 @@ export interface BrowserSessionOptions {
 	 * capture always uses one page per browser (Chrome drives BeginFrame for one tab per browser).
 	 */
 	pagesPerBrowser?: number | null;
+	/**
+	 * Motio extension: called every 5 seconds for each `delayRender()` handle the render is
+	 * waiting on, until it is released or times out, so a long wait is not silent.
+	 */
+	onDelayRenderPending?: (pending: PendingDelayRender) => void;
 }
 
 /** A Remotion-shaped composition description returned by `getCompositions` and `selectComposition`. */
@@ -109,6 +116,8 @@ export interface BrowserSession {
 	 * `puppeteerInstance`.
 	 */
 	browsers: BrowserPool;
+	/** Warnings the session's pages reported, for the render result. */
+	warnings: WarningCollector;
 	/**
 	 * The configuration of a page; `concurrency` (default 1) is the number of pages the render
 	 * opens at once, which sets how many share a browser unless `pagesPerBrowser` was given.
@@ -146,7 +155,8 @@ export async function openSession(
 		? await resolveCaptureMethod(options.captureMethod, executablePath, chromiumOptions)
 		: "screenshot";
 	// Before the bundle server opens, so a failed FFmpeg download leaves nothing running.
-	const { ffmpeg, ffprobe } = await resolveRenderFfmpeg(options);
+	const resolvedFfmpeg = await resolveRenderFfmpeg(options);
+	const { ffmpeg, ffprobe } = resolvedFfmpeg;
 	const server = await openServeUrl(options.serveUrl, options.port ?? undefined);
 	let media: MediaServer;
 	try {
@@ -161,6 +171,16 @@ export async function openSession(
 		throw err;
 	}
 	const onBrowserLog = options.onBrowserLog;
+	const warnings = new WarningCollector();
+	if (resolvedFfmpeg.fallback) {
+		warnings.add([{ code: "W_FFMPEG_FALLBACK", message: resolvedFfmpeg.fallback.message }]);
+	}
+	const stackMapper = new StackMapper(
+		server.url,
+		/^https?:\/\//i.test(options.serveUrl) ? null : options.serveUrl,
+	);
+	const onWarnings = (list: readonly { code: string; message: string }[], frame: number) =>
+		warnings.add(list, frame);
 	// A shared browser outlives the session: its pages close with the render, its processes stay.
 	const browsers = shared ? shared.pool : new BrowserPool();
 	return {
@@ -176,6 +196,7 @@ export async function openSession(
 		chromiumOptions,
 		onBrowserLog,
 		browsers,
+		warnings,
 		pageConfig: ({ concurrency = 1, ...size }) => ({
 			executablePath,
 			serveUrl: server.url,
@@ -186,6 +207,9 @@ export async function openSession(
 			onBrowserLog,
 			mediaBaseUrl: media.url,
 			captureMethod,
+			stackMapper,
+			onWarnings,
+			onDelayRenderPending: options.onDelayRenderPending,
 			browsers: {
 				pool: browsers,
 				// Headless Chrome drives BeginFrame for one tab per browser: with a second tab under

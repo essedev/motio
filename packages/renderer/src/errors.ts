@@ -18,6 +18,8 @@ export type MotioErrorCode =
 	| "E_READINESS_TIMEOUT"
 	| "E_SEEK_TIMEOUT"
 	| "E_RENDER_ERROR"
+	| "E_ASSET_NOT_FOUND"
+	| "E_FONT_LOAD"
 	| "E_PAGE_ERROR"
 	| "E_FRAME_MISMATCH"
 	| "E_CAPTURE_FAILED"
@@ -43,8 +45,18 @@ export interface MotioErrorContext {
 	composition?: string;
 	/** Stack trace from the page, when the error came from user code. */
 	pageStack?: string;
-	/** Free-form details (FFmpeg stderr, versions, paths). */
+	/** Free-form details (FFmpeg stderr, versions, paths); see `MotioError.details`. */
 	details?: Record<string, unknown>;
+}
+
+/** Where in the project's source an error from the page happened, mapped through source maps. */
+export interface SourceLocation {
+	/** Absolute path of the source file when the bundle was built locally, else its URL. */
+	file: string;
+	/** 1-based line. */
+	line: number;
+	/** 1-based column. */
+	column: number;
 }
 
 /**
@@ -57,6 +69,13 @@ export class MotioError extends Error {
 	readonly label: string | undefined;
 	readonly composition: string | undefined;
 	readonly pageStack: string | undefined;
+	/**
+	 * Structured details. Besides the code's own fields (FFmpeg stderr, versions, paths), it
+	 * repeats `frame` and `compositionId` when they are known, and may carry `source` (a
+	 * `SourceLocation` in the project's code), `hint` (what to do, in a sentence), `option` (the
+	 * Node API option an invalid value was given to) and, for page errors, `rawStack` (the stack
+	 * before source mapping).
+	 */
 	readonly details: Record<string, unknown> | undefined;
 
 	constructor(
@@ -72,7 +91,7 @@ export class MotioError extends Error {
 		this.label = context.label;
 		this.composition = context.composition;
 		this.pageStack = context.pageStack;
-		this.details = context.details;
+		this.details = withLocation(context);
 	}
 
 	/** A copy with more context, keeping code, message and cause. */
@@ -99,6 +118,15 @@ export class MotioError extends Error {
 		if (this.details !== undefined) c.details = this.details;
 		return c;
 	}
+}
+
+/** The details of a context, with `frame` and `compositionId` added when known. */
+function withLocation(context: MotioErrorContext): Record<string, unknown> | undefined {
+	const extra: Record<string, unknown> = {};
+	if (context.frame !== undefined) extra.frame = context.frame;
+	if (context.composition !== undefined) extra.compositionId = context.composition;
+	if (Object.keys(extra).length === 0) return context.details;
+	return { ...extra, ...context.details };
 }
 
 /** True if `err` is a `MotioError`, optionally with the given code. */

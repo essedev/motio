@@ -4,6 +4,7 @@ import {
 	type FrameReport,
 	PAGE_API_GLOBAL,
 	type PageError,
+	type PendingHandle,
 	PROTOCOL_VERSION,
 	type ResolvedComposition,
 	RUN_CONTEXT_GLOBAL,
@@ -17,6 +18,8 @@ import { type LaunchOptions, launchArgs, launchBrowser } from "./browser/launch.
 import type { BrowserLog, BrowserLogType } from "./browser-log.js";
 import { BEGIN_FRAME_ATTEMPTS, type CaptureMethod } from "./capture-method.js";
 import { MotioError, type MotioErrorCode } from "./errors.js";
+import type { StackMapper } from "./stack-map.js";
+import type { PendingDelayRender, RenderWarning } from "./warnings.js";
 
 /** Everything needed to open a page on a bundle. */
 export interface PageConfig {
@@ -41,7 +44,18 @@ export interface PageConfig {
 	 * browser and kills it on close.
 	 */
 	browsers?: { pool: BrowserPool; pagesPerBrowser: number };
+	/** Maps page stack traces to the project's sources; errors keep the raw stack without it. */
+	stackMapper?: StackMapper;
+	/** Receives the warnings of every frame the page renders. */
+	onWarnings?: (warnings: readonly RenderWarning[], frame: number) => void;
+	/** Called every `pendingReportMs` for each `delayRender()` handle a page call waits on. */
+	onDelayRenderPending?: ((pending: PendingDelayRender) => void) | undefined;
+	/** Interval of `onDelayRenderPending`. Default `PENDING_REPORT_MS`. */
+	pendingReportMs?: number;
 }
+
+/** How often the open `delayRender()` handles of a slow page call are reported. */
+export const PENDING_REPORT_MS = 5_000;
 
 /**
  * While a page call is in flight on a BeginFrame page, frames without display updates are sent
@@ -113,6 +127,8 @@ const PAGE_CODES = new Set<MotioErrorCode>([
 	"E_CALCULATE_METADATA",
 	"E_INVALID_COMPOSITION",
 	"E_RENDER_ERROR",
+	"E_ASSET_NOT_FOUND",
+	"E_FONT_LOAD",
 ]);
 
 /** A page error that crossed the boundary, with the optional retry budget of the handle. */
@@ -129,7 +145,7 @@ const CALL = `(async (global, method, args) => {
 		return { ok: true, value: await api[method](...args) };
 	} catch (e) {
 		if (e && typeof e === "object") {
-			return { ok: false, error: { code: e.code, message: String(e.message ?? e), label: e.label, frame: e.frame, stack: e.stack, retries: e.retries } };
+			return { ok: false, error: { code: e.code, message: String(e.message ?? e), label: e.label, frame: e.frame, stack: e.stack, retries: e.retries, timeoutMs: e.timeoutMs, details: e.details } };
 		}
 		return { ok: false, error: { message: String(e) } };
 	}
@@ -149,17 +165,70 @@ export function fromPageError(
 			: "E_RENDER_ERROR";
 	const frame = e.frame ?? fallbackFrame;
 	let message = e.message ?? "Unknown error in the page";
-	if (code === "E_READINESS_TIMEOUT") {
-		message = `${message}${frame === undefined ? "" : ` (frame ${frame})`}`;
+	// The page runtime names the frame in its timeout messages; a page that does not (an older
+	// bundle, a hand-written page) gets it appended once.
+	if (
+		code === "E_READINESS_TIMEOUT" &&
+		frame !== undefined &&
+		!message.includes(`frame ${frame}`)
+	) {
+		message = `${message} (frame ${frame})`;
 	}
 	const ctx: Record<string, unknown> = {};
 	if (frame !== undefined) ctx.frame = frame;
 	if (e.label !== undefined) ctx.label = e.label;
 	if (composition !== undefined) ctx.composition = composition;
 	if (e.stack !== undefined) ctx.pageStack = e.stack;
+	const details: Record<string, unknown> = { ...e.details };
+	if (code === "E_READINESS_TIMEOUT") {
+		if (e.label !== undefined) details.label = e.label;
+		if (e.timeoutMs !== undefined) details.timeoutMs = e.timeoutMs;
+		details.option = "timeoutInMilliseconds";
+	}
+	if (Object.keys(details).length > 0) ctx.details = details;
 	const err = new MotioError(code, message, ctx) as MotioError & { retries?: number };
 	if (typeof e.retries === "number") err.retries = e.retries;
 	return err;
+}
+
+/**
+ * The error with its page stack mapped to the project's sources: `pageStack` becomes the mapped
+ * stack, `details.source` the first frame in the project's code and `details.rawStack` the stack
+ * as the page reported it. Errors without a stack, or whose stack maps to nothing, are returned
+ * as they are.
+ */
+export async function mapErrorStack<E extends MotioError>(
+	err: E,
+	mapper: StackMapper | undefined,
+): Promise<E> {
+	if (!mapper || err.pageStack === undefined) return err;
+	let mapped: Awaited<ReturnType<StackMapper["map"]>>;
+	try {
+		mapped = await mapper.map(err.pageStack);
+	} catch (mapError) {
+		// A broken or unreadable source map must not hide the error itself: it is reported with
+		// the raw stack and the reason the mapping failed.
+		return withRetries(
+			err.withContext({
+				details: {
+					...err.details,
+					sourceMapError: mapError instanceof Error ? mapError.message : String(mapError),
+				},
+			}) as E,
+			err,
+		);
+	}
+	if (mapped.stack === err.pageStack && !mapped.source) return err;
+	const details: Record<string, unknown> = { ...err.details, rawStack: err.pageStack };
+	if (mapped.source) details.source = mapped.source;
+	return withRetries(err.withContext({ pageStack: mapped.stack, details }) as E, err);
+}
+
+/** Copies the pool's retry budget, which `withContext` does not know about. */
+function withRetries<E extends MotioError>(out: E, from: MotioError): E {
+	const retries = (from as { retries?: number }).retries;
+	if (retries !== undefined) (out as { retries?: number }).retries = retries;
+	return out;
 }
 
 /**
@@ -326,14 +395,20 @@ export class RenderPage {
 			if (stack !== undefined) ctx.pageStack = stack;
 			const uncaught = new MotioError(
 				"E_PAGE_ERROR",
-				`Uncaught error in the page${frame === undefined ? "" : ` at frame ${frame}`}: ${message}. Fix the error in the composition code; see onBrowserLog for the stack.`,
+				`Uncaught error in the page${frame === undefined ? "" : ` at frame ${frame}`}: ${message}. Fix the error in the composition code.`,
 				ctx,
 			);
 			// cancelRender() throws; called from a timer or a promise callback, its error arrives
-			// here before the settle loop reports the cancellation. Ask the page which it was.
+			// here too. That error is the cancellation itself, which the page reports with its own
+			// code on the call in flight or the next one (a font that failed at module level must
+			// not fail the listing of compositions). Any other uncaught error fails the page.
 			void this.cancellation().then(
-				(cancelled) =>
-					this.fail(cancelled ? fromPageError(cancelled, frame, this.composition) : uncaught),
+				async (cancelled) => {
+					// Chrome may prefix the message (the error's name, "Uncaught (in promise)").
+					if (cancelled?.message && message.includes(cancelled.message)) return;
+					const error = cancelled ? fromPageError(cancelled, frame, this.composition) : uncaught;
+					this.fail(await mapErrorStack(error, this.config.stackMapper));
+				},
 				() => this.fail(uncaught),
 			);
 		});
@@ -630,6 +705,7 @@ export class RenderPage {
 	): Promise<T> {
 		const expr = `${CALL}(${JSON.stringify(PAGE_API_GLOBAL)}, ${JSON.stringify(method)}, ${JSON.stringify(args)})`;
 		this.inFlightFrame = frame;
+		const stopReporting = this.reportPending(frame);
 		let result: CallResult<T>;
 		try {
 			result = await this.guard(
@@ -638,10 +714,64 @@ export class RenderPage {
 				onTimeout,
 			);
 		} finally {
+			stopReporting();
 			this.inFlightFrame = undefined;
 		}
-		if (!result.ok) throw fromPageError(result.error, frame, this.composition);
+		if (!result.ok) {
+			throw await mapErrorStack(
+				fromPageError(result.error, frame, this.composition),
+				this.config.stackMapper,
+			);
+		}
 		return result.value;
+	}
+
+	/**
+	 * While a page call runs, asks the page every `pendingReportMs` which `delayRender()` handles
+	 * are open and passes each to `onDelayRenderPending`. Returns the function that stops it.
+	 * Bundles without `PageApi.pending()` report nothing.
+	 */
+	private reportPending(frame: number | undefined): () => void {
+		const report = this.config.onDelayRenderPending;
+		if (!report) return () => {};
+		const expr = `(() => { const api = window[${JSON.stringify(PAGE_API_GLOBAL)}]; return api && typeof api.pending === "function" ? api.pending() : []; })()`;
+		let stopped = false;
+		let busy = false;
+		const tick = async () => {
+			if (stopped || busy || this.closed) return;
+			busy = true;
+			try {
+				const handles = (await this.page.evaluate(expr)) as PendingHandle[];
+				if (stopped) return;
+				for (const h of handles) {
+					report({
+						label: h.label,
+						frame: frame ?? null,
+						compositionId: this.composition ?? null,
+						elapsedMs: h.elapsedMs,
+						timeoutMs: h.timeoutMs,
+					});
+				}
+			} catch (err) {
+				// The page closed or crashed while it was asked: the call in flight reports that
+				// failure; the progress report just stops.
+				if (!this.closed && !this.failure)
+					this.config.onBrowserLog?.({
+						text: `Could not read the pending delayRender() handles: ${err instanceof Error ? err.message : String(err)}`,
+						type: "warning",
+						stackTrace: [],
+					});
+				stopped = true;
+			} finally {
+				busy = false;
+			}
+		};
+		const timer = setInterval(() => void tick(), this.config.pendingReportMs ?? PENDING_REPORT_MS);
+		timer.unref();
+		return () => {
+			stopped = true;
+			clearInterval(timer);
+		};
 	}
 
 	/** The compositions the bundle registers, before `calculateMetadata`. */
@@ -697,11 +827,12 @@ export class RenderPage {
 			() =>
 				new MotioError(
 					"E_SEEK_TIMEOUT",
-					`Frame ${frame} did not become ready within ${timeout} ms and the page stopped responding. Look for a long-running loop in the composition, or raise timeoutInMilliseconds.`,
-					ctx,
+					`Frame ${frame} did not become ready within ${timeout} ms and the page stopped responding. Look for a long-running loop in the composition, or raise the timeout (timeoutInMilliseconds in the Node API, --timeout on the command line).`,
+					{ ...ctx, details: { option: "timeoutInMilliseconds", timeoutMs: timeout } },
 				),
 			frame,
 		);
+		if (report.warnings.length > 0) this.config.onWarnings?.(report.warnings, frame);
 		if (report.frame !== frame) {
 			throw new MotioError(
 				"E_FRAME_MISMATCH",

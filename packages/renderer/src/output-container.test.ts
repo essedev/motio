@@ -33,12 +33,27 @@ describe("output container", () => {
 		);
 		expect(() => resolveOutputContainer("gif", null, "a.mp4")).toThrow(code("E_INVALID_OPTION"));
 		expect(() => resolveOutputContainer("h264", "aac", "video")).toThrow(
-			"which is written to .mp4, .mkv, .mov. Rename the output.",
+			'The output "video" has no extension. The extension chooses the container: use one of .mp4 .mkv .mov',
 		);
 		expect(() => resolveOutputContainer("mp3", "mp3", "a.wav")).toThrow(code("E_INVALID_OPTION"));
 		expect(() => resolveOutputContainer("prores", "pcm-16", "a.mxf")).toThrow(
 			code("E_INVALID_OPTION"),
 		);
+	});
+
+	it("says when no codec writes the extension, whatever the codec, with the option in details", () => {
+		let error: unknown;
+		try {
+			resolveOutputContainer("h264", "aac", "out/x.avi");
+		} catch (err) {
+			error = err;
+		}
+		expect(error).toMatchObject({
+			code: "E_INVALID_OPTION",
+			message:
+				'The output "x.avi" has an extension no codec writes (.avi). The extension chooses the container: use one of .mp4 .mkv .mov .hevc .webm .ts .gif .mp3 .wav .aac .m4a .m4b .3gp (h264 writes .mp4, .mkv, .mov).',
+			details: { option: "outputLocation", outputLocation: "out/x.avi" },
+		});
 	});
 
 	it("writes the container the extension names, case-insensitively", () => {

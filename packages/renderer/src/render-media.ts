@@ -60,6 +60,7 @@ import {
 	type VideoConfig,
 	validateComposition,
 } from "./session.js";
+import type { RenderWarning } from "./warnings.js";
 
 /** Progress reported by `renderMedia()`. */
 export interface RenderMediaProgress {
@@ -155,6 +156,12 @@ export interface RenderMediaResult {
 	/** The ten slowest frames with their seek plus capture time in milliseconds. */
 	slowestFrames: SlowFrame[];
 	contentType: string;
+	/**
+	 * Motio extension: warnings about the render, each once with the first frame it was seen on
+	 * (see `RenderWarning`): a font that fell back, `Math.random()` in a frame, a timeline shorter
+	 * than the composition, the FFmpeg on PATH used instead of the pinned one.
+	 */
+	warnings: RenderWarning[];
 }
 
 /** Test hooks; not part of the public API. */
@@ -346,6 +353,9 @@ export async function renderMediaInternal(
 		await output.discard();
 		throw err;
 	});
+	if (resolved.fallback) {
+		session.warnings.add([{ code: "W_FFMPEG_FALLBACK", message: resolved.fallback.message }]);
+	}
 	try {
 		const start = performance.now();
 		let rendered = 0;
@@ -518,6 +528,7 @@ export async function renderMediaInternal(
 		return {
 			buffer: result,
 			slowestFrames,
+			warnings: session.warnings.list(),
 			contentType: video
 				? VIDEO_CODEC_SPECS[video.encoding.codec].contentType
 				: (AUDIO_CONTENT_TYPES[audioCodec as AudioCodec] ?? "audio/wav"),

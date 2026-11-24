@@ -65,8 +65,16 @@ export const CODECS = [
 /** Codec names accepted by Remotion's `renderMedia`; Motio encodes all of them (D-037, D-064). */
 export type Codec = (typeof CODECS)[number];
 
-function invalid(message: string): MotioError {
-	return new MotioError("E_INVALID_OPTION", message);
+/**
+ * An invalid option value. `details.option` names the Node API option (so a CLI can name its own
+ * flag), with the value and the valid values or range where they apply.
+ */
+function invalid(
+	message: string,
+	option: string,
+	details: Record<string, unknown> = {},
+): MotioError {
+	return new MotioError("E_INVALID_OPTION", message, { details: { option, ...details } });
 }
 
 /** Default concurrency: half of the CPU threads, at least 1, at most 8. */
@@ -89,23 +97,37 @@ export function resolveConcurrency(
 		if (m) {
 			const pct = Number(m[1]);
 			if (pct <= 0 || pct > 100) {
-				throw invalid(`concurrency "${value}" must be a percentage between 0% and 100%`);
+				throw invalid(
+					`concurrency "${value}" must be a percentage between 0% and 100%`,
+					"concurrency",
+					{ value },
+				);
 			}
 			return Math.max(1, Math.floor((cpus * pct) / 100));
 		}
 		if (!/^\s*\d+\s*$/.test(value)) {
-			throw invalid(`concurrency "${value}" must be a number or a percentage such as "50%"`);
+			throw invalid(
+				`concurrency "${value}" must be a number or a percentage such as "50%"`,
+				"concurrency",
+				{ value },
+			);
 		}
 		n = Number(value);
 	} else {
 		n = value;
 	}
 	if (!Number.isInteger(n) || n < 1) {
-		throw invalid(`concurrency must be an integer of at least 1, got ${value}`);
+		throw invalid(`concurrency must be an integer of at least 1, got ${value}`, "concurrency", {
+			value,
+			min: 1,
+			max: cpus,
+		});
 	}
 	if (n > cpus) {
 		throw invalid(
 			`concurrency ${n} exceeds the ${cpus} CPU threads of this machine; use at most ${cpus}`,
+			"concurrency",
+			{ value, min: 1, max: cpus },
 		);
 	}
 	return n;
@@ -123,12 +145,20 @@ export function resolveFrames(
 ): number[] {
 	const nth = everyNthFrame ?? 1;
 	if (!Number.isInteger(nth) || nth < 1) {
-		throw invalid(`everyNthFrame must be an integer of at least 1, got ${everyNthFrame}`);
+		throw invalid(
+			`everyNthFrame must be an integer of at least 1, got ${everyNthFrame}`,
+			"everyNthFrame",
+			{ value: everyNthFrame, min: 1 },
+		);
 	}
 	const last = durationInFrames - 1;
 	const check = (f: number, what: string) => {
 		if (!Number.isInteger(f) || f < 0 || f > last) {
-			throw invalid(`${what} ${f} is outside the composition (frames 0 to ${last})`);
+			throw invalid(`${what} ${f} is outside the composition (frames 0 to ${last})`, "frameRange", {
+				value: frameRange ?? null,
+				min: 0,
+				max: last,
+			});
 		}
 	};
 	let ranges: [number, number][];
@@ -141,10 +171,15 @@ export function resolveFrames(
 		ranges = [closeRange(frameRange, last, check)];
 	} else {
 		const list = frameRange as readonly (readonly [number, number | null])[];
-		if (list.length === 0) throw invalid("frameRange must not be an empty array");
+		if (list.length === 0)
+			throw invalid("frameRange must not be an empty array", "frameRange", { value: [] });
 		ranges = list.map((r, i) => {
 			if (r[1] === null && i !== list.length - 1) {
-				throw invalid("frameRange: an open range ([start, null]) may only be the last range");
+				throw invalid(
+					"frameRange: an open range ([start, null]) may only be the last range",
+					"frameRange",
+					{ value: frameRange },
+				);
 			}
 			return closeRange(r, last, check);
 		});
@@ -154,6 +189,8 @@ export function resolveFrames(
 			if (cur[0] <= prev[1]) {
 				throw invalid(
 					`frameRange: ranges must be ordered and not overlap, got [${prev}] then [${cur}]`,
+					"frameRange",
+					{ value: frameRange },
 				);
 			}
 		}
@@ -176,7 +213,10 @@ function closeRange(
 	check(start, "frameRange start");
 	const e = end === null ? last : end;
 	check(e, "frameRange end");
-	if (e < start) throw invalid(`frameRange [${start}, ${e}] ends before it starts`);
+	if (e < start)
+		throw invalid(`frameRange [${start}, ${e}] ends before it starts`, "frameRange", {
+			value: [start, e],
+		});
 	return [start, e];
 }
 
@@ -184,10 +224,18 @@ function closeRange(
 export function resolveJpegQuality(imageFormat: string, jpegQuality: number | undefined): number {
 	if (jpegQuality === undefined) return 80;
 	if (imageFormat !== "jpeg") {
-		throw invalid(`jpegQuality is only valid with imageFormat "jpeg", not "${imageFormat}"`);
+		throw invalid(
+			`jpegQuality is only valid with imageFormat "jpeg", not "${imageFormat}"`,
+			"jpegQuality",
+			{ value: jpegQuality, imageFormat },
+		);
 	}
 	if (!Number.isInteger(jpegQuality) || jpegQuality < 0 || jpegQuality > 100) {
-		throw invalid(`jpegQuality must be an integer between 0 and 100, got ${jpegQuality}`);
+		throw invalid(
+			`jpegQuality must be an integer between 0 and 100, got ${jpegQuality}`,
+			"jpegQuality",
+			{ value: jpegQuality, min: 0, max: 100 },
+		);
 	}
 	return jpegQuality;
 }
@@ -196,7 +244,10 @@ export function resolveJpegQuality(imageFormat: string, jpegQuality: number | un
 export function resolveScale(scale: number | undefined): number {
 	if (scale === undefined) return 1;
 	if (!Number.isFinite(scale) || scale <= 0 || scale > 16) {
-		throw invalid(`scale must be a number greater than 0 and at most 16, got ${scale}`);
+		throw invalid(`scale must be a number greater than 0 and at most 16, got ${scale}`, "scale", {
+			value: scale,
+			max: 16,
+		});
 	}
 	return scale;
 }
@@ -212,6 +263,8 @@ export function oneOf<T extends string>(
 	if (!(allowed as readonly string[]).includes(value)) {
 		throw invalid(
 			`${name} must be one of ${allowed.map((v) => `"${v}"`).join(", ")}, got "${value}"`,
+			name,
+			{ value, allowed: [...allowed] },
 		);
 	}
 	return value as T;
@@ -235,8 +288,15 @@ export function assertDimensionsFit(width: number, height: number, pixelFormat: 
 			"E_ODD_DIMENSIONS",
 			`The output is ${width}x${height}, but pixel format ${pixelFormat} needs an even ${
 				vertical ? "width and height" : "width"
-			}. Change the composition size or scale, or use yuv444p.`,
-			{ details: { width, height, pixelFormat } },
+			}. Make the size even: change the composition's width and height, or pass a scale that gives even numbers (2 always does). The yuv444p pixel format accepts odd sizes too, but QuickTime, Safari and most phones cannot play it.`,
+			{
+				details: {
+					width,
+					height,
+					pixelFormat,
+					hint: "Use an even width and height, or a scale such as 2.",
+				},
+			},
 		);
 	}
 }
@@ -245,13 +305,18 @@ export function assertDimensionsFit(width: number, height: number, pixelFormat: 
 export function resolveInputProps(inputProps: unknown): Record<string, unknown> {
 	if (inputProps === undefined || inputProps === null) return {};
 	if (typeof inputProps !== "object" || Array.isArray(inputProps)) {
-		throw invalid("inputProps must be a JSON object");
+		throw invalid("inputProps must be a JSON object", "inputProps");
 	}
 	let json: string;
 	try {
 		json = JSON.stringify(inputProps);
 	} catch (err) {
-		throw new MotioError("E_INVALID_OPTION", "inputProps must be serialisable to JSON", {}, err);
+		throw new MotioError(
+			"E_INVALID_OPTION",
+			"inputProps must be serialisable to JSON",
+			{ details: { option: "inputProps" } },
+			err,
+		);
 	}
 	return JSON.parse(json) as Record<string, unknown>;
 }
@@ -262,7 +327,8 @@ export function resolveEnvVariables(
 ): Record<string, string> {
 	if (env === undefined) return {};
 	for (const [k, v] of Object.entries(env)) {
-		if (typeof v !== "string") throw invalid(`envVariables.${k} must be a string`);
+		if (typeof v !== "string")
+			throw invalid(`envVariables.${k} must be a string`, "envVariables", { key: k });
 	}
 	return { ...env };
 }
@@ -271,7 +337,11 @@ export function resolveEnvVariables(
 export function resolveTimeout(ms: number | undefined): number {
 	if (ms === undefined) return 30_000;
 	if (!Number.isFinite(ms) || ms <= 0) {
-		throw invalid(`timeoutInMilliseconds must be a positive number, got ${ms}`);
+		throw invalid(
+			`timeoutInMilliseconds must be a positive number, got ${ms}`,
+			"timeoutInMilliseconds",
+			{ value: ms },
+		);
 	}
 	return ms;
 }
@@ -283,7 +353,11 @@ export function resolveTimeout(ms: number | undefined): number {
 export function resolvePagesPerBrowser(value: number | null | undefined): number | null {
 	if (value === null || value === undefined) return null;
 	if (!Number.isInteger(value) || value < 1) {
-		throw invalid(`pagesPerBrowser must be an integer of at least 1, got ${value}`);
+		throw invalid(
+			`pagesPerBrowser must be an integer of at least 1, got ${value}`,
+			"pagesPerBrowser",
+			{ value, min: 1 },
+		);
 	}
 	return value;
 }

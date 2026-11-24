@@ -119,10 +119,46 @@ describe("page errors", () => {
 			composition: "comp",
 			retries: 1,
 		});
-		expect(e.message).toContain("(frame 4)");
+		expect(e.message).toBe("handle (frame 4)");
+		expect(
+			fromPageError(
+				{ code: "E_READINESS_TIMEOUT", message: "stuck while rendering frame 4", frame: 4 },
+				undefined,
+				undefined,
+			).message,
+		).toBe("stuck while rendering frame 4");
+		expect(e.details).toEqual({
+			frame: 4,
+			compositionId: "comp",
+			label: "fetch",
+			option: "timeoutInMilliseconds",
+		});
 		expect(fromPageError({ message: "boom" }, 7, undefined)).toMatchObject({
 			code: "E_RENDER_ERROR",
 			frame: 7,
+			details: { frame: 7 },
 		});
+	});
+
+	it("keeps the codes and details of missing assets", () => {
+		const e = fromPageError(
+			{
+				code: "E_ASSET_NOT_FOUND",
+				message: "<Img> could not load public/nope.png",
+				details: { path: "nope.png", suggestion: "note.png" },
+			},
+			2,
+			"Intro",
+		);
+		expect(e).toMatchObject({ code: "E_ASSET_NOT_FOUND", frame: 2 });
+		expect(e.details).toEqual({
+			frame: 2,
+			compositionId: "Intro",
+			path: "nope.png",
+			suggestion: "note.png",
+		});
+		expect(fromPageError({ code: "E_FONT_LOAD", message: "x" }, 0, undefined).code).toBe(
+			"E_FONT_LOAD",
+		);
 	});
 });
