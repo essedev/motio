@@ -59,6 +59,7 @@ export {
 	type TimelineState,
 	VideoConfigContext,
 } from "./timeline/contexts.js";
+export { HoldFrame } from "./timeline/freeze.js";
 export { type BufferHandle, BufferStateContext, useTimeline } from "./timeline/hooks.js";
 export {
 	computeSequence,

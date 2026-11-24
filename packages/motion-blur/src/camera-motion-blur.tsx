@@ -1,5 +1,5 @@
-import { AbsoluteFill, Freeze, useCurrentFrame, useVideoConfig } from "@motiojs/core";
-import { VideoConfigContext } from "@motiojs/core/internals";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "@motiojs/core";
+import { HoldFrame, VideoConfigContext } from "@motiojs/core/internals";
 import { type ReactNode, useContext } from "react";
 import { checkCount, checkNumber } from "./validate.js";
 
@@ -49,7 +49,7 @@ export function CameraMotionBlur({
 					key={i}
 					style={{ mixBlendMode: "plus-lighter", filter: `opacity(${1 / count})` }}
 				>
-					<Freeze frame={sampleFrame}>{children}</Freeze>
+					<HoldFrame frame={sampleFrame}>{children}</HoldFrame>
 				</AbsoluteFill>,
 			);
 		}

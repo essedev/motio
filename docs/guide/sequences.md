@@ -81,4 +81,4 @@ export const Repeats = () => (
 );
 ```
 
-`<Loop>` repeats a range of its children (`times` limits the repetitions; by default it loops until the parent ends). `<Freeze>` holds its children at one frame; its `active` prop can be a function of the frame, to freeze only part of the time.
+`<Loop>` repeats a range of its children (`times` limits the repetitions; by default it loops until the parent ends). `<Freeze>` holds its children at one frame; its `active` prop can be a function of the frame, to freeze only part of the time. The frame is held inside the composition: in a `<Still>`, or past the end of a shorter composition, a `<Freeze frame={90}>` shows the last frame of the composition instead, and Motio warns. To show frame 90 of a scene there, shift it with a sequence: `<Freeze frame={0}><Sequence from={-90}><Scene /></Sequence></Freeze>`.

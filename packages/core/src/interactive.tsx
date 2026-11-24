@@ -32,6 +32,7 @@ import {
 	TimelineContext,
 	type TimelineState,
 } from "./timeline/contexts.js";
+import { warnClampedFreeze } from "./timeline/freeze-range.js";
 import { useTimeline } from "./timeline/hooks.js";
 import {
 	computeSequence,
@@ -228,6 +229,10 @@ const useInteractiveSequence = (
 	const env = useRemotionEnvironment();
 	validateTimingProps(timing, componentName);
 	const { phase, child, loop } = computeSequence(parent, timing, !env.isRendering);
+	const freeze = timing.freeze;
+	if (child && freeze !== undefined && freeze !== null && child.frame !== freeze) {
+		warnClampedFreeze(`<${componentName}> "freeze"`, freeze, child);
+	}
 	return child === null ? null : { phase, child, loop };
 };
 

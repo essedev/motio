@@ -50,6 +50,16 @@ export interface TimelineState {
 	/** True while the nearest sequence is premounted or postmounted. */
 	premounted: boolean;
 	postmounted: boolean;
+	/** Length of the composition, whatever the enclosing sequences: the range a freeze is held in. */
+	compositionDurationInFrames: number;
+	/**
+	 * Maps composition frames to this subtree's frames, ignoring freezes:
+	 * `local = mapOffset + absolute * mapRate`. Built from the `from`, `trimBefore`, `playbackRate`
+	 * and loop iteration of the enclosing sequences.
+	 */
+	mapOffset: number;
+	/** Product of the enclosing playback rates; never 0. See `mapOffset`. */
+	mapRate: number;
 }
 
 /** The timeline state of the current subtree; null outside a composition. */
@@ -90,5 +100,8 @@ export function rootTimelineState(frame: number, durationInFrames: number): Time
 		frozen: false,
 		premounted: false,
 		postmounted: false,
+		compositionDurationInFrames: durationInFrames,
+		mapOffset: 0,
+		mapRate: 1,
 	};
 }

@@ -3,6 +3,7 @@ import { useRemotionEnvironment } from "../environment.js";
 import { SEQUENCE_FROM_ATTRIBUTE } from "../protocol.js";
 import { absoluteFillStyle } from "./absolute-fill-style.js";
 import { LoopContext, type LoopInfo, TimelineContext, type TimelineState } from "./contexts.js";
+import { clampFrozenFrame, warnClampedFreeze } from "./freeze-range.js";
 import { useTimeline } from "./hooks.js";
 
 /** Attribute next to `data-motio-from` with the cumulative playback rate, when not 1. */
@@ -189,8 +190,15 @@ export function computeSequence(
 		}
 	}
 
+	const mapRate = parent.mapRate * rate;
+	const mapOffset = trim + (parent.mapOffset - start) * rate;
 	const frozenByProp = props.freeze !== undefined && props.freeze !== null;
-	if (frozenByProp) frame = props.freeze as number;
+	if (frozenByProp) {
+		frame = clampFrozenFrame(
+			{ compositionDurationInFrames: parent.compositionDurationInFrames, mapOffset, mapRate },
+			props.freeze as number,
+		);
+	}
 	const absoluteStart =
 		parent.rate > 0 ? parent.absoluteFrame + (start - f) / parent.rate : parent.absoluteStart;
 	const held = phase !== "active" || frozenByProp || parent.frozen;
@@ -209,6 +217,9 @@ export function computeSequence(
 			frozen: parent.frozen || frozenByProp,
 			premounted: phase === "premount",
 			postmounted: phase === "postmount",
+			compositionDurationInFrames: parent.compositionDurationInFrames,
+			mapOffset,
+			mapRate,
 		},
 	};
 }
@@ -324,6 +335,9 @@ export const SequenceBase = forwardRef<HTMLDivElement, SequenceInternalProps>(
 
 		const { phase, child, loop } = computeSequence(parent, props, !env.isRendering);
 		if (!child) return null;
+		if (props.freeze !== undefined && props.freeze !== null && child.frame !== props.freeze) {
+			warnClampedFreeze(`<${componentName}> "freeze"`, props.freeze, child);
+		}
 		const childState: TimelineState = {
 			...child,
 			width: width ?? parent.width,

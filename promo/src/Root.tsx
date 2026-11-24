@@ -10,8 +10,8 @@ import { TEASER_FRAMES, Teaser } from "./teaser/Teaser";
 /**
  * A still is the resting frame of a scene that plays in the teaser. A sequence that starts
  * REST_FRAME frames before the still shows the scene at that frame, with a timeline long enough
- * for the sequences inside it. (`<Freeze>` would keep the still's one-frame length, and every
- * sequence below it that starts after frame 0 would be hidden.)
+ * for the sequences inside it. (`<Freeze frame={REST_FRAME}>` would show frame 0: a freeze is held
+ * inside the composition, and a still has only that frame.)
  */
 const resting = (Scene: React.ComponentType) => () => (
 	<Sequence from={-REST_FRAME}>

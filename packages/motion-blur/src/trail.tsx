@@ -1,5 +1,5 @@
-import { AbsoluteFill, Freeze, useCurrentFrame, useVideoConfig } from "@motiojs/core";
-import { VideoConfigContext } from "@motiojs/core/internals";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "@motiojs/core";
+import { HoldFrame, VideoConfigContext } from "@motiojs/core/internals";
 import { type ReactNode, useContext } from "react";
 import { checkCount, checkNumber } from "./validate.js";
 
@@ -35,9 +35,9 @@ export function Trail({ children, layers, lagInFrames, trailOpacity }: TrailProp
 	for (let i = layers; i >= 1; i--) {
 		copies.push(
 			<AbsoluteFill key={i} style={{ opacity: trailOpacity - (i / layers) * trailOpacity }}>
-				<Freeze frame={Math.max(0, Math.min(frame - i * lagInFrames, durationInFrames - 1))}>
+				<HoldFrame frame={Math.max(0, Math.min(frame - i * lagInFrames, durationInFrames - 1))}>
 					{children}
-				</Freeze>
+				</HoldFrame>
 			</AbsoluteFill>,
 		);
 	}

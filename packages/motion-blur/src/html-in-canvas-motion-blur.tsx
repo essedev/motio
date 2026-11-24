@@ -2,14 +2,13 @@ import {
 	AbsoluteFill,
 	continueRender,
 	delayRender,
-	Freeze,
 	getRemotionEnvironment,
 	Sequence,
 	type SequenceProps,
 	useCurrentFrame,
 	useVideoConfig,
 } from "@motiojs/core";
-import { useTimeline } from "@motiojs/core/internals";
+import { HoldFrame, useTimeline } from "@motiojs/core/internals";
 import { type CSSProperties, type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { checkNumber } from "./validate.js";
 
@@ -249,7 +248,7 @@ function Blurred(props: {
 						{...ATTRIBUTES_DRAWABLE}
 						style={layer(false)}
 					>
-						<Freeze frame={sampleFrame}>{children}</Freeze>
+						<HoldFrame frame={sampleFrame}>{children}</HoldFrame>
 					</div>
 				))}
 			</canvas>
