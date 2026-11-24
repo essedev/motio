@@ -8,6 +8,8 @@ Images, videos and audio files go in `public/` and are referenced with `staticFi
 
 <!-- example: examples/src/media.tsx#img -->
 ```tsx
+import { AbsoluteFill, Img, staticFile } from "@motiojs/motio";
+
 export const Cover = () => (
 	<AbsoluteFill>
 		{/* public/cover.jpg; the frame is captured only once the image has loaded. */}
@@ -27,6 +29,8 @@ A GIF or WebP in a plain `<img>` animates on the browser's own clock, so each re
 
 <!-- example: examples/src/media.tsx#animated-image -->
 ```tsx
+import { AbsoluteFill, AnimatedImage, staticFile } from "@motiojs/motio";
+
 export const Sticker = () => (
 	<AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
 		{/* public/sticker.webp on a 300x300 canvas, letterboxed if it is not square. It appears
@@ -57,6 +61,9 @@ Decoding uses the browser's `ImageDecoder`, which the renderer's Chrome has, as 
 
 <!-- example: examples/src/media.tsx#video -->
 ```tsx
+import { Video as CanvasVideo } from "@motiojs/media";
+import { AbsoluteFill, OffthreadVideo, staticFile, Video } from "@motiojs/motio";
+
 export const Clip = () => (
 	<AbsoluteFill>
 		{/* The exact source frame for every video frame, extracted by FFmpeg. Skips the first
@@ -84,6 +91,8 @@ All of them take `trimBefore` and `trimAfter` (in frames of the composition) to 
 
 <!-- example: examples/src/media.tsx#audio -->
 ```tsx
+import { Audio, interpolate, Sequence, staticFile } from "@motiojs/motio";
+
 export const Soundtrack = () => (
 	<>
 		{/* Fades in over the first second; the function gets the frame since the audio started. */}
@@ -109,6 +118,11 @@ A render never needs preloading: it waits for every file before capturing a fram
 
 <!-- example: examples/src/preload.tsx#preload -->
 ```tsx
+import { AbsoluteFill, Audio, OffthreadVideo, Sequence } from "@motiojs/motio";
+import { Player } from "@motiojs/player";
+import { preloadAudio, preloadVideo } from "@motiojs/preload";
+import { useEffect, useState } from "react";
+
 const TRAILER = "https://cdn.example.com/trailer.mp4";
 const MUSIC = "https://cdn.example.com/music.mp3";
 

@@ -78,6 +78,8 @@ Files in `public/` are served next to the bundle. Reference them with `staticFil
 
 <!-- example: examples/src/media.tsx#img -->
 ```tsx
+import { AbsoluteFill, Img, staticFile } from "@motiojs/motio";
+
 export const Cover = () => (
 	<AbsoluteFill>
 		{/* public/cover.jpg; the frame is captured only once the image has loaded. */}

@@ -4,6 +4,8 @@ A video is a sequence of still images, the frames, shown at a fixed rate: 30 fra
 
 <!-- example: examples/src/frames.tsx#clock -->
 ```tsx
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
+
 export const Clock = () => {
 	const frame = useCurrentFrame();
 	const { fps, durationInFrames, width, height } = useVideoConfig();
@@ -28,6 +30,8 @@ Motio renders a frame by setting the frame number, waiting until the page is rea
 
 <!-- example: examples/src/frames.tsx#random -->
 ```tsx
+import { AbsoluteFill, random, useVideoConfig } from "@motiojs/motio";
+
 export const Stars = () => {
 	const { width, height } = useVideoConfig();
 	// random(seed) returns the same number between 0 and 1 for the same seed, on every frame,

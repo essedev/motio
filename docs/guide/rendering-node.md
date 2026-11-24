@@ -64,6 +64,8 @@ Errors are `MotioError` instances with a stable `code` (`isMotioError()` tells t
 
 <!-- example: examples/src/media-node.ts#metadata -->
 ```ts
+import { getVideoMetadata } from "@motiojs/renderer";
+
 const meta = await getVideoMetadata("public/interview.mp4");
 console.log(`${meta.width}x${meta.height}, ${meta.fps} fps, ${meta.durationInSeconds} s`);
 console.log(`video ${meta.codec}, audio ${meta.audioCodec ?? "none"}`);
@@ -83,6 +85,8 @@ console.log(`shown at ${shown}`);
 
 <!-- example: examples/src/media-node.ts#extract-audio -->
 ```ts
+import { extractAudio } from "@motiojs/renderer";
+
 // The audio stream copied as is: the extension must name a container that holds its codec.
 if (meta.audioFileExtension !== null) {
 	await extractAudio({
@@ -98,6 +102,9 @@ Since nothing is converted, the output's extension must name a container that ho
 
 <!-- example: examples/src/media-node.ts#silent-parts -->
 ```ts
+import { bundle } from "@motiojs/bundler";
+import { getSilentParts, renderMedia, selectComposition } from "@motiojs/renderer";
+
 // Everything quieter than -35 dB for at least half a second counts as a pause.
 const { audibleParts, silentParts, durationInSeconds } = await getSilentParts({
 	src: "public/interview.mp4",
@@ -122,6 +129,14 @@ await renderMedia({
 
 <!-- example: examples/src/jump-cut.tsx#jump-cut -->
 ```tsx
+import {
+	type CalculateMetadataFunction,
+	Composition,
+	OffthreadVideo,
+	Series,
+	staticFile,
+} from "@motiojs/motio";
+
 /** A stretch of the recording to keep, in seconds: what getSilentParts() returns. */
 type Part = { startInSeconds: number; endInSeconds: number };
 type JumpCutProps = { src: string; parts: Part[] };
@@ -179,6 +194,9 @@ Each call normally launches Chrome and closes it at the end. A job that renders 
 
 <!-- example: examples/src/open-browser.ts#open-browser -->
 ```ts
+import { bundle } from "@motiojs/bundler";
+import { openBrowser, renderStill, selectComposition } from "@motiojs/renderer";
+
 const serveUrl = await bundle({ entryPoint: "src/index.ts" });
 const episodes = [
 	{ slug: "episode-1", title: "Episode 1", subtitle: "Getting started" },

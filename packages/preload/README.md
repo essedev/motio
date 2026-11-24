@@ -2,6 +2,7 @@
 
 Preload videos, audio, images and fonts so a [Motio](../../README.md) Player shows them without loading. Rendering never needs it: renders wait for every asset anyway.
 
+<!-- example: ../../docs/guide/examples/src/packages/preload.tsx#preload -->
 ```tsx
 import { preloadAudio, preloadFont, preloadImage, preloadVideo } from "@motiojs/preload";
 import { useEffect } from "react";
@@ -9,7 +10,9 @@ import { useEffect } from "react";
 export const usePreloads = () => {
 	useEffect(() => {
 		const frees = [
-			preloadVideo("https://example.com/intro.mp4", { onReady: () => console.log("intro buffered") }),
+			preloadVideo("https://example.com/intro.mp4", {
+				onReady: () => console.log("intro buffered"),
+			}),
 			preloadAudio("/music.mp3"),
 			preloadImage("/logo.png"),
 			preloadFont("/fonts/inter.woff2"),

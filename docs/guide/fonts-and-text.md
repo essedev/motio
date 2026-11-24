@@ -45,6 +45,9 @@ A CSS `background` on wrapped text gives one separate box per line. `<TextBackgr
 
 <!-- example: examples/src/text-background.tsx#component -->
 ```tsx
+import { AbsoluteFill, interpolate, useCurrentFrame } from "@motiojs/motio";
+import { TextBackground } from "@motiojs/text";
+
 export const Caption = ({ text }: { text: string }) => {
 	const frame = useCurrentFrame();
 	// The text appears word by word; the background follows the lines as they grow.
@@ -98,6 +101,9 @@ Children should be inline: text, `<span>`, `<b>`, `<br />`. Block elements insid
 
 <!-- example: examples/src/text-background.tsx#shape -->
 ```tsx
+import { measureText } from "@motiojs/layout-utils";
+import { makeTextBackground } from "@motiojs/text";
+
 export const Badge = () => {
 	const fontSize = 48;
 	const lineHeight = fontSize * 1.3;

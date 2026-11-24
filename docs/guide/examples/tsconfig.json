@@ -10,16 +10,50 @@
 	},
 	"include": ["src", "sync.ts", "sync.test.ts"],
 	"references": [
-		{ "path": "../../../packages/motio" },
-		{ "path": "../../../packages/media" },
-		{ "path": "../../../packages/fonts" },
-		{ "path": "../../../packages/google-fonts" },
-		{ "path": "../../../packages/captions" },
-		{ "path": "../../../packages/bundler" },
-		{ "path": "../../../packages/renderer" },
-		{ "path": "../../../packages/layout-utils" },
-		{ "path": "../../../packages/player" },
-		{ "path": "../../../packages/preload" },
-		{ "path": "../../../packages/text" }
+		{
+			"path": "../../../packages/motio"
+		},
+		{
+			"path": "../../../packages/media"
+		},
+		{
+			"path": "../../../packages/fonts"
+		},
+		{
+			"path": "../../../packages/google-fonts"
+		},
+		{
+			"path": "../../../packages/captions"
+		},
+		{
+			"path": "../../../packages/bundler"
+		},
+		{
+			"path": "../../../packages/renderer"
+		},
+		{
+			"path": "../../../packages/layout-utils"
+		},
+		{
+			"path": "../../../packages/player"
+		},
+		{
+			"path": "../../../packages/preload"
+		},
+		{
+			"path": "../../../packages/text"
+		},
+		{
+			"path": "../../../packages/ffmpeg"
+		},
+		{
+			"path": "../../../packages/gif"
+		},
+		{
+			"path": "../../../packages/transitions"
+		},
+		{
+			"path": "../../../packages/zod-types"
+		}
 	]
 }

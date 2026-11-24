@@ -11,7 +11,9 @@
 	"dependencies": {
 		"@motiojs/bundler": "workspace:*",
 		"@motiojs/captions": "workspace:*",
+		"@motiojs/ffmpeg": "workspace:*",
 		"@motiojs/fonts": "workspace:*",
+		"@motiojs/gif": "workspace:*",
 		"@motiojs/google-fonts": "workspace:*",
 		"@motiojs/layout-utils": "workspace:*",
 		"@motiojs/media": "workspace:*",
@@ -20,8 +22,11 @@
 		"@motiojs/preload": "workspace:*",
 		"@motiojs/renderer": "workspace:*",
 		"@motiojs/text": "workspace:*",
+		"@motiojs/transitions": "workspace:*",
+		"@motiojs/zod-types": "workspace:*",
 		"react": "19.3.1",
-		"react-dom": "19.3.1"
+		"react-dom": "19.3.1",
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@types/node": "^26.6.6",

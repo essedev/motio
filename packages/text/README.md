@@ -6,6 +6,7 @@ Text helpers for [Motio](../../README.md) videos.
 
 `<TextBackground>` draws a background shape that follows the lines of a block of text: one box per line, merged into a single outline. Where a line sticks out the corner is convex; where a line is shorter than its neighbour the outline turns inward with a concave corner. CSS backgrounds cannot draw this shape (a `background` on an inline element gives separate boxes per line, with no inner corners).
 
+<!-- example: ../../docs/guide/examples/src/packages/text.tsx#component -->
 ```tsx
 import { AbsoluteFill } from "@motiojs/motio";
 import { TextBackground } from "@motiojs/text";
@@ -49,7 +50,8 @@ Children should be inline content: text, `<span>`, `<b>`, `<br />`. Block elemen
 
 The shape as a pure function of line measurements, for SVG you build yourself, canvas drawing or Node:
 
-```ts
+<!-- example: ../../docs/guide/examples/src/packages/text.tsx#shape -->
+```tsx
 import { measureText } from "@motiojs/layout-utils";
 import { makeTextBackground } from "@motiojs/text";
 
@@ -58,7 +60,12 @@ const lines = ["Hello", "from Motio"].map((text) => ({
 	width: measureText({ text, ...font }).width,
 	height: 64 * 1.3,
 }));
-const { path, width, height, lines: boxes } = makeTextBackground({
+const {
+	path,
+	width,
+	height,
+	lines: boxes,
+} = makeTextBackground({
 	lines,
 	align: "center",
 	cornerRadius: 16,
@@ -75,11 +82,15 @@ It returns the SVG `path` (from (0, 0) to (`width`, `height`)), the same path as
 
 `@motiojs/text/rounded-text-box` exports `createRoundedTextBox()` with the API of `@remotion/rounded-text-box`, and the compat alias maps `@remotion/rounded-text-box` to it, so Remotion projects that use it build unchanged.
 
-```ts
+<!-- example: ../../docs/guide/examples/src/packages/text.tsx#rounded-text-box -->
+```tsx
 import { createRoundedTextBox } from "@motiojs/text/rounded-text-box";
 
 const { d, boundingBox, instructions } = createRoundedTextBox({
-	textMeasurements: [{ width: 300, height: 54 }, { width: 180, height: 54 }],
+	textMeasurements: [
+		{ width: 300, height: 54 },
+		{ width: 180, height: 54 },
+	],
 	textAlign: "center",
 	horizontalPadding: 20,
 	borderRadius: 20,

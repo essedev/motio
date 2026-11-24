@@ -8,6 +8,8 @@ Animation in Motio is a function from the frame number to a value. Three helpers
 
 <!-- example: examples/src/animation.tsx#interpolate -->
 ```tsx
+import { AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
+
 export const LowerThird = ({ name }: { name: string }) => {
 	const frame = useCurrentFrame();
 	const { durationInFrames } = useVideoConfig();
@@ -44,6 +46,15 @@ export const LowerThird = ({ name }: { name: string }) => {
 
 <!-- example: examples/src/animation.tsx#spring -->
 ```tsx
+import {
+	AbsoluteFill,
+	interpolate,
+	measureSpring,
+	spring,
+	useCurrentFrame,
+	useVideoConfig,
+} from "@motiojs/motio";
+
 export const Badge = () => {
 	const frame = useCurrentFrame();
 	const { fps } = useVideoConfig();
@@ -87,6 +98,8 @@ A spring's output is a progress value: feed it to `interpolate()` to move betwee
 
 <!-- example: examples/src/animation.tsx#colors -->
 ```tsx
+import { AbsoluteFill, interpolateColors, useCurrentFrame } from "@motiojs/motio";
+
 export const Sunset = () => {
 	const frame = useCurrentFrame();
 	const backgroundColor = interpolateColors(frame, [0, 60, 120], ["#87ceeb", "#ff8c42", "#2b1055"]);
@@ -100,6 +113,8 @@ export const Sunset = () => {
 
 <!-- example: examples/src/animation.tsx#easing -->
 ```tsx
+import { Easing } from "@motiojs/motio";
+
 // Built-in curves, composable: Easing.in, Easing.out and Easing.inOut wrap any of them.
 export const curves = [
 	Easing.linear,

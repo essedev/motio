@@ -4,6 +4,8 @@ A composition is something Motio can render: a component plus its size, frame ra
 
 <!-- example: examples/src/compositions.tsx#root -->
 ```tsx
+import { Composition, Folder, Still } from "@motiojs/motio";
+
 export const Root = () => (
 	<>
 		<Composition
@@ -52,6 +54,8 @@ In the preview, the props editor changes them live. Props must be JSON-serialisa
 
 <!-- example: examples/src/compositions.tsx#input-props -->
 ```tsx
+import { getInputProps } from "@motiojs/motio";
+
 // The props given with --props (or inputProps in Node), readable anywhere, even at module level.
 const { title } = getInputProps<{ title?: string }>();
 ```
@@ -62,6 +66,8 @@ const { title } = getInputProps<{ title?: string }>();
 
 <!-- example: examples/src/compositions.tsx#metadata -->
 ```tsx
+import { type CalculateMetadataFunction, Composition } from "@motiojs/motio";
+
 type ReportProps = { url: string; rows: string[] };
 
 const Report = ({ rows }: ReportProps) => (

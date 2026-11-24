@@ -4,6 +4,9 @@ Before each screenshot Motio waits until the frame is ready: images decoded, fon
 
 <!-- example: examples/src/readiness.tsx#delay-render -->
 ```tsx
+import { cancelRender, continueRender, delayRender, staticFile } from "@motiojs/motio";
+import { useEffect, useRef } from "react";
+
 // Draws a photo into a canvas with a filter. The canvas is empty until the image is decoded, so
 // the effect holds the frame until it has drawn.
 export const FilteredPhoto = ({ file, blur }: { file: string; blur: number }) => {
@@ -46,6 +49,9 @@ A handle times out after 30 seconds by default; the render then fails with code 
 
 <!-- example: examples/src/readiness.tsx#options -->
 ```tsx
+import { useDelayRender } from "@motiojs/motio";
+import { useEffect } from "react";
+
 export const ThreeDModel = ({ url }: { url: string }) => {
 	const { delayRender, continueRender, cancelRender } = useDelayRender();
 	useEffect(() => {

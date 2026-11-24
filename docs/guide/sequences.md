@@ -4,6 +4,8 @@
 
 <!-- example: examples/src/sequences.tsx#sequence -->
 ```tsx
+import { AbsoluteFill, Sequence } from "@motiojs/motio";
+
 export const Timeline = () => (
 	<AbsoluteFill>
 		{/* Frames 0-59 of the video. */}
@@ -37,6 +39,8 @@ Inside a sequence, `useVideoConfig().durationInFrames` is the length of the sequ
 
 <!-- example: examples/src/sequences.tsx#series -->
 ```tsx
+import { Series } from "@motiojs/motio";
+
 const chapters = [
 	{ title: "The problem", frames: 120 },
 	{ title: "The idea", frames: 150 },
@@ -67,6 +71,8 @@ Every `Series.Sequence` needs a `durationInFrames`; only the last one may be `In
 
 <!-- example: examples/src/sequences.tsx#loop-freeze -->
 ```tsx
+import { AbsoluteFill, Freeze, Loop } from "@motiojs/motio";
+
 export const Repeats = () => (
 	<AbsoluteFill>
 		{/* Plays frames 0-29 of the child three times. */}

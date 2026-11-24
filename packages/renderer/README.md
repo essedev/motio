@@ -8,6 +8,7 @@ Three functions read local media files with the FFmpeg and ffprobe the renderer 
 
 ### `getVideoMetadata(path, options?)`
 
+<!-- example: ../../docs/guide/examples/src/packages/renderer.ts#metadata -->
 ```ts
 import { getVideoMetadata } from "@motiojs/renderer";
 
@@ -31,6 +32,7 @@ const durationInFrames = Math.ceil(meta.durationInSeconds * 30);
 
 Copies the first audio stream into a file without re-encoding it. The extension of `audioOutput` chooses the container, so it must be one that holds the codec: `getVideoMetadata().audioFileExtension` names one (`aac`, `mp3`, `opus`, `wav`). `.m4a` and `.mka` also work for AAC. A wrong extension fails with `E_FFMPEG_FAILED` and a message naming the right one; a file without audio fails with `E_NO_AUDIO_STREAM`. The output's folder is created, an existing file is replaced, and a failed extraction leaves no partial file.
 
+<!-- example: ../../docs/guide/examples/src/packages/renderer.ts#extract-audio -->
 ```ts
 import { extractAudio, getVideoMetadata } from "@motiojs/renderer";
 
@@ -44,6 +46,7 @@ if (audioFileExtension) {
 
 Finds the silent and audible parts of a video or audio file with FFmpeg's `silencedetect`. Audio quieter than `noiseThresholdInDecibels` (default -20 dB relative to full scale, must be below 30) for at least `minDurationInSeconds` (default 1, must be above 0) is silent. Parts are in seconds, in order, and `audibleParts` covers the rest of the file.
 
+<!-- example: ../../docs/guide/examples/src/packages/renderer.ts#silent-parts -->
 ```ts
 import { getSilentParts } from "@motiojs/renderer";
 
@@ -71,6 +74,7 @@ Recorded against `@remotion/renderer@4.0.545` on the files in [`fixtures/node-ap
 
 Every render normally launches Chrome and kills it at the end. A pipeline that renders many stills or short videos can open the browser once and pass it to every call as `puppeteerInstance`:
 
+<!-- example: ../../docs/guide/examples/src/packages/renderer.ts#browser -->
 ```ts
 import { openBrowser, renderMedia, renderStill, selectComposition } from "@motiojs/renderer";
 
@@ -78,9 +82,27 @@ const browser = await openBrowser("chrome");
 try {
 	for (const user of users) {
 		const inputProps = { user };
-		const composition = await selectComposition({ serveUrl, id: "card", inputProps, puppeteerInstance: browser });
-		await renderStill({ serveUrl, composition, inputProps, output: `out/${user.id}.png`, puppeteerInstance: browser });
-		await renderMedia({ serveUrl, composition, inputProps, codec: "h264", outputLocation: `out/${user.id}.mp4`, puppeteerInstance: browser });
+		const composition = await selectComposition({
+			serveUrl,
+			id: "card",
+			inputProps,
+			puppeteerInstance: browser,
+		});
+		await renderStill({
+			serveUrl,
+			composition,
+			inputProps,
+			output: `out/${user.id}.png`,
+			puppeteerInstance: browser,
+		});
+		await renderMedia({
+			serveUrl,
+			composition,
+			inputProps,
+			codec: "h264",
+			outputLocation: `out/${user.id}.mp4`,
+			puppeteerInstance: browser,
+		});
 	}
 } finally {
 	await browser.close();
