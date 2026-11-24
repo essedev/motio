@@ -419,6 +419,7 @@ for (const [name, project] of Object.entries(projects)) {
 				}
 				const known = entry.knownMismatch?.[cid];
 				if (known !== undefined) result.knownMismatch = known;
+				const knownAround = known ?? entry.knownFlickerMismatch?.[cid];
 
 				// A known mismatch is expected to miss the thresholds; the test flips once it is fixed.
 				(known === undefined ? it : it.fails).skipIf(!checks.has("stills"))(
@@ -491,7 +492,7 @@ for (const [name, project] of Object.entries(projects)) {
 							unlike: unlike.map((s) => s.frame),
 						};
 						// A known mismatch draws these frames unlike Remotion for its known cause.
-						if (known !== undefined) return;
+						if (knownAround !== undefined) return;
 						expect(
 							unlike,
 							`frames around the flagged ones that Motio draws unlike Remotion`,

@@ -24,6 +24,8 @@ export interface ProjectEntry {
 	skip?: Record<string, string>;
 	/** Compositions whose stills are expected to miss the thresholds, with the cause. */
 	knownMismatch?: Record<string, string>;
+	/** Compositions whose frames around flagged flicker differ from Remotion's for a known cause. */
+	knownFlickerMismatch?: Record<string, string>;
 }
 
 export interface Project {
