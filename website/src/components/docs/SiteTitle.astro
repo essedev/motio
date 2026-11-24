@@ -1,0 +1,24 @@
+---
+/** Starlight's site title, replaced by the animated lockup and the pre-alpha badge. */
+import Logo from "../Logo.astro";
+import LogoReplay from "../LogoReplay.astro";
+
+const { siteTitleHref } = Astro.locals.starlightRoute;
+---
+
+<div class="title">
+	<Logo href={siteTitleHref} size="24px" label="Motio, home" />
+	<span class="badge">pre-alpha</span>
+</div>
+<LogoReplay />
+
+<style>
+	.title {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		min-width: 0;
+		--logo-bg: var(--sl-color-bg-nav);
+		color: var(--sl-color-white);
+	}
+</style>

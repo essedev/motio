@@ -18,7 +18,9 @@
 			"!packages/google-fonts/generate-report.json",
 			"!**/__golden__",
 			"!**/__oracle__",
-			"!docs/concepts"
+			"!docs/concepts",
+			"!website/.astro",
+			"!website/dist"
 		]
 	},
 	"formatter": {
@@ -44,5 +46,28 @@
 				"organizeImports": "on"
 			}
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.astro"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedVariables": "off",
+						"noUnusedImports": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["website/src/styles/**/*.css"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noDescendingSpecificity": "off"
+					}
+				}
+			}
+		}
+	]
 }

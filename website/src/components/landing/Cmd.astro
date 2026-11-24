@@ -1,0 +1,14 @@
+---
+/** A shell command on Plum, with a copy button that appears when JavaScript runs. */
+interface Props {
+	command: string;
+}
+const { command } = Astro.props;
+---
+
+<div class="cmd">
+	<code>{command}</code>
+	<button class="copy" type="button" data-copy={command} hidden>
+		<span data-label>Copy</span><span class="sr-only"> the command {command}</span>
+	</button>
+</div>

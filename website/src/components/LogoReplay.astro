@@ -1,0 +1,18 @@
+<script>
+	// Replays a logo's animation when a pointer enters it or it gets keyboard focus: removing and
+	// adding the class restarts the CSS animations. Reduced motion is handled in CSS.
+	const replay = (event: Event) => {
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		const logo = target.closest<HTMLElement>("[data-logo]");
+		const from = "relatedTarget" in event ? event.relatedTarget : null;
+		if (!logo || (event.type === "pointerover" && from instanceof Node && logo.contains(from))) return;
+		logo.classList.remove("is-playing");
+		void logo.offsetWidth;
+		logo.classList.add("is-playing");
+	};
+	document.addEventListener("pointerover", replay as EventListener);
+	document.addEventListener("focusin", (event) => {
+		if (event.target instanceof Element && event.target.matches(":focus-visible")) replay(event);
+	});
+</script>

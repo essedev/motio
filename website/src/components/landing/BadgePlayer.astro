@@ -1,0 +1,222 @@
+---
+/**
+ * The hero player: the guide's Badge composition (examples/src/animation.tsx#spring) at 60 frames,
+ * drawn from the frame number with Motio's own spring() and interpolate(). The server renders the
+ * last frame, the ruler and the curves; the script only moves the playhead and the disc.
+ */
+import { interpolate, spring } from "@motiojs/core";
+
+const DURATION = 60;
+const FPS = 30;
+const badgeAt = (frame: number) => ({
+	grow: spring({ frame, fps: FPS, delay: 10, config: { damping: 12, stiffness: 120 } }),
+	rise: spring({ frame, fps: FPS, durationInFrames: 30, config: { damping: 200 } }),
+});
+const last = DURATION - 1;
+const frames = Array.from({ length: DURATION }, (_, f) => f);
+const curve = (key: "grow" | "rise") =>
+	frames.map((f) => `${f ? "L" : "M"}${f} ${(30 - badgeAt(f)[key] * 30).toFixed(2)}`).join(" ");
+const end = badgeAt(last);
+// The disc's margin-top of the Badge (200 px at 1280 wide) moves it by half that in a centred
+// column: as a share of the screen width, in container query units.
+const dyOf = (rise: number) =>
+	`${((interpolate(rise, [0, 1], [200, 0]) / 2 / 1280) * 100).toFixed(4)}cqw`;
+---
+
+<div
+	class="player surface"
+	data-badge-player
+	data-autoplay
+	data-duration={DURATION}
+	data-fps={FPS}
+	style={`--t:1;--grow:${end.grow.toFixed(4)};--dy:${dyOf(end.rise)}`}
+>
+	<div class="screen" role="img" aria-label="The Badge composition: an amber disc that grows with a spring and rises into place.">
+		<span class="stamp">Badge, 1280x720, 30 fps</span>
+		<span class="disc"></span>
+	</div>
+	<div class="transport">
+		<button class="btn btn-secondary btn-sm js-only" type="button" data-play aria-pressed="false">Play</button>
+		<p class="readout" aria-live="off">
+			<span>frame <b data-r="frame">{last}</b></span>
+			<span>grow <b data-r="grow">{end.grow.toFixed(3)}</b></span>
+			<span>rise <b data-r="rise">{end.rise.toFixed(3)}</b></span>
+		</p>
+	</div>
+	<div class="track" data-track>
+		<svg class="ruler" aria-hidden="true">
+			{
+				frames.map((f) => {
+					const major = f % 10 === 0;
+					const x = `${((f / last) * 100).toFixed(3)}%`;
+					return (
+						<>
+							<line class:list={{ major, minor: !major && f % 5 !== 0 }} x1={x} x2={x} y1={major ? 16 : 20} y2="26" />
+							{major && (
+								<text x={x} y="12" text-anchor="middle">
+									{f}
+								</text>
+							)}
+						</>
+					);
+				})
+			}
+			<rect class="seq" x="0" y="32" width="100%" height="18" rx="4"></rect>
+			<text class="seq-label" x="6" y="45">Badge</text>
+		</svg>
+		<svg class="curves" viewBox={`0 0 ${last} 30`} preserveAspectRatio="none" aria-hidden="true">
+			<path class="rise" d={curve("rise")} fill="none" vector-effect="non-scaling-stroke"></path>
+			<path class="grow" d={curve("grow")} fill="none" vector-effect="non-scaling-stroke"></path>
+		</svg>
+		<div
+			class="playhead"
+			data-playhead
+			role="slider"
+			tabindex="0"
+			aria-label="Frame"
+			aria-valuemin="0"
+			aria-valuemax={last}
+			aria-valuenow={last}
+			aria-valuetext={`Frame ${last} of ${last}`}
+		>
+			<span class="knob" data-knob aria-hidden="true">{last}</span>
+		</div>
+	</div>
+	<p class="player-note">
+		<span class="js-only">Drag the playhead, or focus it and use the arrow keys (Shift moves ten frames).</span>
+		The picture depends on nothing but the frame number: frame 18 always looks like frame 18, in any order, on any tab.
+	</p>
+</div>
+
+<style>
+	.curves {
+		top: auto;
+		bottom: 10px;
+		height: 30px;
+	}
+	.ruler line.minor {
+		display: none;
+	}
+	@media (min-width: 600px) {
+		.ruler line.minor {
+			display: inline;
+		}
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		:global(.js) [data-badge-player][data-autoplay] {
+			--t: 0 !important;
+			--grow: 0 !important;
+		}
+	}
+</style>
+
+<script>
+	import { interpolate, spring } from "@motiojs/core";
+
+	const root = document.querySelector<HTMLElement>("[data-badge-player]");
+	if (root) {
+		const duration = Number(root.dataset.duration);
+		const fps = Number(root.dataset.fps);
+		const last = duration - 1;
+		const track = root.querySelector<HTMLElement>("[data-track]");
+		const head = root.querySelector<HTMLElement>("[data-playhead]");
+		const knob = root.querySelector<HTMLElement>("[data-knob]");
+		const play = root.querySelector<HTMLButtonElement>("[data-play]");
+		const out = Object.fromEntries(
+			[...root.querySelectorAll<HTMLElement>("[data-r]")].map((el) => [el.dataset.r, el]),
+		);
+		const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+
+		const badgeAt = (frame: number) => ({
+			grow: spring({ frame, fps, delay: 10, config: { damping: 12, stiffness: 120 } }),
+			rise: spring({ frame, fps, durationInFrames: 30, config: { damping: 200 } }),
+		});
+
+		let frame = last;
+		const draw = (next: number) => {
+			frame = Math.min(last, Math.max(0, Math.round(next)));
+			const { grow, rise } = badgeAt(frame);
+			const dy = (interpolate(rise, [0, 1], [200, 0]) / 2 / 1280) * 100;
+			root.removeAttribute("data-autoplay");
+			root.style.setProperty("--t", String(frame / last));
+			root.style.setProperty("--grow", grow.toFixed(4));
+			root.style.setProperty("--dy", `${dy.toFixed(4)}cqw`);
+			if (knob) knob.textContent = String(frame);
+			head?.setAttribute("aria-valuenow", String(frame));
+			head?.setAttribute("aria-valuetext", `Frame ${frame} of ${last}`);
+			if (out.frame) out.frame.textContent = String(frame);
+			if (out.grow) out.grow.textContent = grow.toFixed(3);
+			if (out.rise) out.rise.textContent = rise.toFixed(3);
+		};
+
+		let raf = 0;
+		const stop = () => {
+			cancelAnimationFrame(raf);
+			raf = 0;
+			if (play) {
+				play.textContent = "Play";
+				play.setAttribute("aria-pressed", "false");
+			}
+		};
+		const start = () => {
+			if (raf) return stop();
+			if (reduced.matches) return draw(last);
+			const from = frame >= last ? 0 : frame;
+			const t0 = performance.now();
+			if (play) {
+				play.textContent = "Pause";
+				play.setAttribute("aria-pressed", "true");
+			}
+			// Whole frames at the composition's rate, as a video plays them.
+			const tick = (t: number) => {
+				const f = from + Math.floor(((t - t0) / 1000) * fps);
+				draw(f);
+				if (f < last) raf = requestAnimationFrame(tick);
+				else stop();
+			};
+			raf = requestAnimationFrame(tick);
+		};
+		play?.addEventListener("click", start);
+
+		const frameAt = (clientX: number) => {
+			if (!track) return frame;
+			const pad = parseFloat(getComputedStyle(track).getPropertyValue("--pad")) || 0;
+			const r = track.getBoundingClientRect();
+			return ((clientX - r.left - pad) / (r.width - pad * 2)) * last;
+		};
+		track?.addEventListener("pointerdown", (e) => {
+			stop();
+			track.setPointerCapture(e.pointerId);
+			draw(frameAt(e.clientX));
+			head?.focus({ preventScroll: true });
+		});
+		track?.addEventListener("pointermove", (e) => {
+			if (track.hasPointerCapture(e.pointerId)) draw(frameAt(e.clientX));
+		});
+		head?.addEventListener("keydown", (e) => {
+			const step = e.shiftKey ? 10 : 1;
+			const moves: Record<string, number> = {
+				ArrowRight: step,
+				ArrowUp: step,
+				ArrowLeft: -step,
+				ArrowDown: -step,
+				PageUp: 10,
+				PageDown: -10,
+			};
+			const move = moves[e.key];
+			if (move !== undefined) draw(frame + move);
+			else if (e.key === "Home") draw(0);
+			else if (e.key === "End") draw(last);
+			else if (e.key === " " || e.key === "Enter") return void (e.preventDefault(), start());
+			else return;
+			stop();
+			e.preventDefault();
+		});
+
+		// The page's one orchestrated moment: the composition plays once after the title rises.
+		if (!reduced.matches) {
+			draw(0);
+			setTimeout(start, 500);
+		} else draw(last);
+	}
+</script>

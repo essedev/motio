@@ -1,0 +1,20 @@
+---
+/** Not-found page in the docs' frame (Starlight's own 404 route is disabled). */
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+---
+
+<StarlightPage
+	frontmatter={{
+		title: "Page not found",
+		description: "This page does not exist.",
+		template: "splash",
+		editUrl: false,
+		pagefind: false,
+	}}
+>
+	<p>
+		This page does not exist, or it moved. Start again from the <a href="/guide/">guide</a>, the
+		<a href="/reference/cli/">CLI reference</a> or the <a href="/">home page</a>, or search with the
+		box at the top.
+	</p>
+</StarlightPage>

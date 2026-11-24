@@ -1,0 +1,460 @@
+---
+import { Code } from "astro:components";
+import { spring } from "@motiojs/core";
+import { codeTheme } from "../brand/code-theme.ts";
+import { BRAND_SPRING, FPS, springEasing } from "../brand/mark.ts";
+import Logo from "../components/Logo.astro";
+import BadgePlayer from "../components/landing/BadgePlayer.astro";
+import Cmd from "../components/landing/Cmd.astro";
+import Perf from "../components/landing/Perf.astro";
+import Landing from "../layouts/Landing.astro";
+import { benchmarkBaselineVersion, example, packagesForLanding } from "../lib/landing-data.ts";
+import { REPO_URL, repoBlobUrl } from "../lib/repo.ts";
+
+const brand = springEasing(BRAND_SPRING);
+const sec = (frames: number) => `${(frames / FPS).toFixed(3)}s`;
+const heroStyle = `--ease-brand:${brand.easing};--dur-brand:${sec(brand.frames)}`;
+
+const badgeSource = await example("examples/src/animation.tsx", "spring");
+const compatSource = [
+	"# Add Motio next to the project's dependencies",
+	"pnpm add motio",
+	"pnpm add -D @motiojs/cli @motiojs/transitions",
+	"",
+	"# Imports stay as they are: check them, then render",
+	"pnpm exec motio doctor",
+	"pnpm exec motio render src/index.ts Intro out/intro.mp4",
+].join("\n");
+
+const stripFrames = [11, 14, 17, 20, 23, 26, 29].map((frame) => {
+	const grow = spring({ frame, fps: 30, delay: 10, config: { damping: 12, stiffness: 120 } });
+	const rise = spring({ frame, fps: 30, durationInFrames: 30, config: { damping: 200 } });
+	return { frame, size: (46 * grow).toFixed(1), shift: ((1 - rise) * 20).toFixed(1) };
+});
+
+const treeLines: [number, string][] = [
+	[0, '<Composition id="Intro">'],
+	[1, "<Series>"],
+	[2, "<Series.Sequence>"],
+	[3, "<Badge />"],
+	[2, "<Series.Sequence>"],
+	[3, "<LowerThird />"],
+];
+
+const { featured, others } = packagesForLanding();
+const baseline = benchmarkBaselineVersion();
+const github = REPO_URL;
+---
+
+<Landing
+	title="Motio: make videos with React"
+	description="Motio renders a React tree frame by frame in a real headless Chrome and encodes it with FFmpeg. Open source, Apache-2.0, pre-alpha."
+>
+	<header class="wrap">
+		<nav class="nav" aria-label="Main">
+			<Logo href="/" size="30px" play="load" label="Motio, home" />
+			<div class="nav-links">
+				<a href="/guide/">Guide</a>
+				<a href="/reference/cli/">Reference</a>
+				<a href={github}>
+					<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"
+						><path
+							d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0Z"
+						></path></svg
+					>GitHub
+				</a>
+				<button class="theme-toggle js-only" type="button" data-theme-toggle aria-label="Use the dark theme">
+					<svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"
+						><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+						></path></svg
+					>
+					<svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"
+						><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"></path></svg
+					>
+				</button>
+			</div>
+		</nav>
+	</header>
+
+	<main id="main">
+		<section class="hero wrap is-entering" style={heroStyle} aria-labelledby="hero-title">
+			<span class="badge">pre-alpha, not on npm yet</span>
+			<h1 class="hero-title" id="hero-title">
+				<span class="line"><span style={`--d:${sec(2)}`}>Make videos</span></span>
+				<span class="line"><span style={`--d:${sec(7)}`}>with React.</span></span>
+			</h1>
+			<div class="grid hero-grid">
+				<div class="hero-copy">
+					<p>
+						Motio renders a React tree frame by frame in a real headless Chrome and encodes it with
+						FFmpeg. Open source, Apache-2.0, free for any use.
+					</p>
+					<div class="actions">
+						<a class="btn btn-primary" href="/guide/getting-started/">Read the guide</a>
+						<a class="btn btn-secondary" href={github}>View on GitHub</a>
+					</div>
+					<Cmd command="pnpm create motio my-video" />
+					<p class="req">
+						Node 22 or later and FFmpeg 5.1 or later. Chrome is not needed: the first render
+						downloads a pinned headless shell.
+					</p>
+				</div>
+				<BadgePlayer />
+			</div>
+		</section>
+
+		<section class="section wrap" style="padding-top: 24px" aria-labelledby="install-title">
+			<div class="section-head">
+				<h2 id="install-title">Three commands to a video</h2>
+				<p>
+					Create a project from a starter, preview it in the browser, render an MP4. Every command
+					also runs without a terminal, for scripts and agents.
+				</p>
+			</div>
+			<ol class="steps">
+				<li class="step field f-pulse">
+					<span class="n" aria-hidden="true">1</span>
+					<Cmd command="pnpm create motio my-video" />
+					<p>Asks for a folder, a starter and a package manager, writes the project and installs it.</p>
+				</li>
+				<li class="step field f-spark">
+					<span class="n" aria-hidden="true">2</span>
+					<Cmd command="pnpm dev" />
+					<p>Opens a preview with play, scrub, frame stepping, a loop range and a props editor.</p>
+				</li>
+				<li class="step field f-drift">
+					<span class="n" aria-hidden="true">3</span>
+					<Cmd command="pnpm render" />
+					<p>
+						Writes <code>out/intro.mp4</code>. Flags pass through: <code>--frames=0-29</code> renders
+						the first second.
+					</p>
+				</li>
+			</ol>
+			<p class="note">
+				<span class="badge">pre-alpha</span>Nothing is published on npm yet. Until it is, a project can
+				only be built from a clone of the repository.
+			</p>
+		</section>
+
+		<section class="section wrap" aria-labelledby="component-title">
+			<div class="section-head">
+				<h2 id="component-title">A video is a component</h2>
+				<p>
+					This is the composition in the player above, as the <a href="/guide/animation/">Animation
+					guide</a> shows it. It reads the frame and returns what that frame looks like.
+				</p>
+			</div>
+			<div class="grid component-grid">
+				<figure class="code-card surface">
+					<figcaption class="code-head"><b>Badge.tsx</b><span>docs/guide/examples/src/animation.tsx</span></figcaption>
+					<Code code={badgeSource} lang="tsx" theme={codeTheme} />
+				</figure>
+				<div class="component-side">
+					<p>
+						No timeline state and no clock. Every moving value comes from
+						<code>useCurrentFrame()</code>, so any frame can be rendered on its own and always gives
+						the same pixels.
+					</p>
+					<dl class="terms">
+						<div><dt><code>useCurrentFrame()</code></dt><dd>The frame being drawn.</dd></div>
+						<div><dt><code>spring()</code></dt><dd>From 0 to 1 like a physical spring: it overshoots, then settles.</dd></div>
+						<div><dt><code>interpolate()</code></dt><dd>Maps a range of frames to a range of values.</dd></div>
+						<div><dt><code>measureSpring()</code></dt><dd>How many frames a spring needs to settle, to size a sequence.</dd></div>
+					</dl>
+				</div>
+			</div>
+		</section>
+
+		<section class="section wrap" aria-labelledby="render-title">
+			<div class="section-head">
+				<h2 id="render-title">How a render works</h2>
+				<p>
+					Motio sets the frame number, waits until the page is ready, takes a screenshot and hands
+					the screenshots to FFmpeg. Several tabs render different frames at the same time.
+				</p>
+			</div>
+			<ol class="pipeline">
+				<li class="stage surface">
+					<div class="stage-art field f-spark">
+						<ul class="tree" aria-label="A composition tree: a Series with two sequences, Badge and LowerThird.">
+							{treeLines.map(([depth, text]) => <li style={`padding-left:${depth * 18}px`}><code>{text}</code></li>)}
+						</ul>
+					</div>
+					<div class="stage-text">
+						<h3><span aria-hidden="true">1</span>React tree</h3>
+						<p>Compositions, sequences and your components, bundled with Vite.</p>
+					</div>
+				</li>
+				<li class="stage surface">
+					<div class="stage-art field f-pulse">
+						<div class="strip" role="img" aria-label="Frames 11 to 29 of the Badge composition: the disc grows and rises.">
+							{
+								stripFrames.map((f) => (
+									<figure aria-hidden="true">
+										<figcaption>{f.frame}</figcaption>
+										<i style={`width:${f.size}px;height:${f.size}px;transform:translateY(${f.shift}px)`} />
+									</figure>
+								))
+							}
+						</div>
+					</div>
+					<div class="stage-text">
+						<h3><span aria-hidden="true">2</span>Headless Chrome, frame by frame</h3>
+						<p>A pinned chrome-headless-shell draws each frame. If it looks right in Chrome, it renders right.</p>
+					</div>
+				</li>
+				<li class="stage surface">
+					<div class="stage-art field f-plum">
+						<div class="out">
+							<span class="file">out/intro.mp4</span>
+							<span class="meta"><span>H.264</span><span>BT.709</span><span>AAC</span><span>120 frames</span></span>
+						</div>
+					</div>
+					<div class="stage-text">
+						<h3><span aria-hidden="true">3</span>FFmpeg</h3>
+						<p>Encodes the frames and mixes the audio: H.264, H.265, AV1, VP8, VP9, ProRes, GIF.</p>
+					</div>
+				</li>
+			</ol>
+		</section>
+
+		<section class="section wrap" aria-labelledby="why-title">
+			<div class="section-head">
+				<h2 id="why-title">Why Motio</h2>
+				<p>Four promises, each one checked by the project rather than claimed.</p>
+			</div>
+			<div class="reasons">
+				<article class="reason field f-pulse">
+					<h3>Apache-2.0</h3>
+					<p>Open source. No per-render or per-seat fees, including distributed rendering and embedding the Player.</p>
+				</article>
+				<article class="reason surface">
+					<h3>Chrome pixels</h3>
+					<p>No reimplementation of CSS or layout. If it looks right in Chrome, it renders right.</p>
+				</article>
+				<article class="reason field f-spark">
+					<h3>Deterministic by test</h3>
+					<p>
+						The same project, props and frame give the same pixels in any order and on any number of
+						tabs, checked on decoded frame hashes.
+					</p>
+					<Cmd command="pnpm exec motio check determinism src/index.ts Intro" />
+				</article>
+				<article class="reason field f-drift">
+					<h3>Agent-first</h3>
+					<p>
+						Every command has <code>--json</code> output and errors with stable codes. Stills,
+						contact sheets, flicker and determinism checks.
+					</p>
+					<Cmd command="pnpm exec motio doctor --json" />
+				</article>
+			</div>
+		</section>
+
+		<section class="section wrap" aria-labelledby="perf-title">
+			<div class="section-head">
+				<h2 id="perf-title">Fast, measured</h2>
+				<p>
+					Wall time to render the benchmark's motion and timeline compositions at 1920x1080, both
+					summed, median of the runs. Shorter is better.
+				</p>
+			</div>
+			<Perf />
+		</section>
+
+		<section class="section wrap" aria-labelledby="packages-title">
+			<div class="section-head">
+				<h2 id="packages-title">Packages</h2>
+				<p>One package per job. Install the ones you use; the core stays small.</p>
+			</div>
+			<ul class="pkgs">
+				{
+					featured.map((p) => (
+						<li class="pkg">
+							<code>{p.name}</code>
+							<p>{p.line}</p>
+						</li>
+					))
+				}
+			</ul>
+			<p class="pkgs-more">
+				And {others.length} more:{" "}
+				{
+					others.map((name, i) => (
+						<>
+							<code>{name}</code>
+							{i < others.length - 1 ? ", " : "."}
+						</>
+					))
+				}
+			</p>
+		</section>
+
+		<section class="section wrap" aria-labelledby="compat-title">
+			<div class="section-head">
+				<h2 id="compat-title">Compatibility</h2>
+				<p>Projects written for Remotion's documented API run on Motio through an import alias.</p>
+			</div>
+			<div class="grid compat">
+				<div class="compat-text">
+					<p>
+						While it builds, the bundler resolves <code>remotion</code> to <code>motio</code> and
+						every <code>@remotion/&lt;name&gt;</code> to its Motio package, so imports can stay as
+						they are. The <code>motio</code> command takes the same arguments and flags.
+					</p>
+					<p>
+						Compatibility is pinned to the {baseline} API and checked against recordings of that
+						release. <code>motio doctor</code> lists every symbol a project uses: supported,
+						approximated, stubbed or missing. Details in
+						<a class="text-link" href="/guide/coming-from-remotion/">Coming from Remotion</a>.
+					</p>
+					<div class="callout">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"
+							><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5" stroke-linecap="round"></path></svg
+						>
+						<p>
+							Motio is an independent project, built from public API documentation. It is not
+							affiliated with or endorsed by Remotion.
+						</p>
+					</div>
+				</div>
+				<figure class="code-card surface">
+					<figcaption class="code-head"><b>Running an existing project</b><span>terminal</span></figcaption>
+					<Code code={compatSource} lang="bash" theme={codeTheme} />
+				</figure>
+			</div>
+		</section>
+
+		<section class="section wrap" aria-labelledby="starters-title">
+			<div class="section-head">
+				<h2 id="starters-title">Start from a starter</h2>
+				<p>
+					Each one installs, previews and renders with no edits; an integration test generates and
+					renders every starter.
+				</p>
+			</div>
+			<div class="starters">
+				<article class="starter surface">
+					<div class="starter-art f-plum" aria-hidden="true"><div class="art-basic"><b>Intro</b><i></i><i></i></div></div>
+					<div class="starter-body">
+						<h3>basic</h3>
+						<p>
+							A four-second title animation: <code>spring()</code> and <code>interpolate()</code>, two
+							scenes in a <code>&lt;Series&gt;</code>, an image, a local font and a still for the
+							thumbnail.
+						</p>
+						<Cmd command="pnpm create motio my-video" />
+					</div>
+				</article>
+				<article class="starter surface">
+					<div class="starter-art art-blank" aria-hidden="true"><b>Title</b></div>
+					<div class="starter-body">
+						<h3>blank</h3>
+						<p>One composition with a fading title, and nothing else.</p>
+						<Cmd command="pnpm create motio my-video --template blank" />
+					</div>
+				</article>
+				<article class="starter surface">
+					<div class="starter-art art-captions f-drift" aria-hidden="true">
+						<p>every word <mark>lands</mark> on time</p>
+					</div>
+					<div class="starter-body">
+						<h3>captions</h3>
+						<p>
+							Word-by-word captions from a JSON transcript with <code>@motiojs/captions</code>. The
+							transcript sets the length of the video.
+						</p>
+						<Cmd command="pnpm create motio my-video --template captions" />
+					</div>
+				</article>
+			</div>
+		</section>
+	</main>
+
+	<footer class="footer">
+		<div class="wrap">
+			<div class="footer-grid">
+				<div class="footer-brand">
+					<Logo href="/" size="36px" label="Motio, home" />
+					<p>Make videos with React. Open source, Apache-2.0.</p>
+					<span class="badge">pre-alpha</span>
+				</div>
+				<nav aria-labelledby="footer-learn">
+					<h2 id="footer-learn">Learn</h2>
+					<ul>
+						<li><a href="/guide/">Guide</a></li>
+						<li><a href="/guide/getting-started/">Getting started</a></li>
+						<li><a href="/guide/animation/">Animation</a></li>
+						<li><a href="/guide/rendering-cli/">Rendering from the CLI</a></li>
+					</ul>
+				</nav>
+				<nav aria-labelledby="footer-reference">
+					<h2 id="footer-reference">Reference</h2>
+					<ul>
+						<li><a href="/reference/cli/">CLI</a></li>
+						<li><a href="/reference/packages/renderer/">Node renderer</a></li>
+						<li><a href={repoBlobUrl("docs/ROADMAP.md")}>Roadmap</a></li>
+						<li><a href={repoBlobUrl("docs/DECISIONS.md")}>Decisions</a></li>
+					</ul>
+				</nav>
+				<nav aria-labelledby="footer-licence">
+					<h2 id="footer-licence">Licence</h2>
+					<ul>
+						<li><a href={repoBlobUrl("LICENSE")}>Apache-2.0</a></li>
+						<li><a href={repoBlobUrl("NOTICE")}>NOTICE</a></li>
+						<li><a href="/reference/packages/ffmpeg/">FFmpeg builds (GPL)</a></li>
+						<li><a href={github}>GitHub</a></li>
+					</ul>
+				</nav>
+			</div>
+			<div class="legal">
+				<p>
+					Remotion is a trademark of its owner. Motio is an independent project, not affiliated with
+					or endorsed by Remotion.
+				</p>
+				<p>Apache-2.0</p>
+			</div>
+		</div>
+	</footer>
+</Landing>
+
+<script>
+	// Copy buttons appear only with JavaScript; the command stays selectable without it.
+	for (const button of document.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
+		button.hidden = false;
+		button.addEventListener("click", async () => {
+			const label = button.querySelector("[data-label]") ?? button;
+			try {
+				await navigator.clipboard.writeText(button.dataset.copy ?? "");
+				label.textContent = "Copied";
+			} catch {
+				label.textContent = "Select it";
+			}
+			setTimeout(() => {
+				label.textContent = "Copy";
+			}, 1400);
+		});
+	}
+
+	// Theme: stored under Starlight's key so the docs follow the same choice.
+	const toggle = document.querySelector<HTMLButtonElement>("[data-theme-toggle]");
+	const root = document.documentElement;
+	const label = () => {
+		toggle?.setAttribute(
+			"aria-label",
+			root.dataset.theme === "dark" ? "Use the light theme" : "Use the dark theme",
+		);
+	};
+	label();
+	toggle?.addEventListener("click", () => {
+		const next = root.dataset.theme === "dark" ? "light" : "dark";
+		root.dataset.theme = next;
+		try {
+			localStorage.setItem("starlight-theme", next);
+		} catch {
+			// Storage can be unavailable (private windows); the choice then lasts for this page.
+		}
+		label();
+	});
+</script>

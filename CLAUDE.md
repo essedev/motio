@@ -10,6 +10,7 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 - `make build`, `make test`, `make lint`, `make format`, `make typecheck`.
 - `pnpm test:integration`: tests against the real Chrome and FFmpeg (serial, slower).
 - `make bench`: throughput against the pinned Remotion (`BENCH_ARGS="--assert"` checks the performance criterion; needs `pnpm install` in `tools/oracle-render`, which the target runs).
+- `make site` (dev server, http://localhost:4321), `make site-build` (build plus link check, also part of `make check`), `make brand` (regenerates `brand/`, the icons and the OG card from `website/src/brand/mark.ts`).
 - `pnpm --dir tools/oracle record`: re-record oracle fixtures from the published Remotion package (separate commit, state why).
 
 ## Layout
@@ -17,6 +18,7 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 - `packages/*`: workspace packages (`motio` entry, `@motiojs/core`, `renderer`, `cli`, `compat`, `bundler`, `testing`, ...).
 - `tools/oracle/`: standalone project that installs the pinned Remotion and records reference values. Outside the workspace.
 - `fixtures/*`: compositions used by integration and golden tests.
+- `website/`: landing and docs (Astro, Starlight). Pages are read from `docs/guide/`, the CLI's `COMMANDS` and schemas, and package READMEs at build time (`website/src/lib/docs-loader.ts`); never copy them into the site. `brand/`: generated brand kit.
 - `spike/`: throwaway measurements behind D-005 and D-006; not shipped.
 
 ## Hard rules
@@ -32,4 +34,5 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 - React must be deduplicated in user bundles (`resolve.dedupe`), or aliased packages load a second React.
 - FFmpeg resolution: option, `MOTIO_FFMPEG`, `@motiojs/ffmpeg` if installed, `PATH`. The package is found by walking `node_modules`, never `require.resolve`: `pnpm exec` sets `NODE_PATH` to the hoisted store, where this workspace's own `@motiojs/ffmpeg` is visible.
 - `tools/ffmpeg-build/` builds the GPL FFmpeg archives (not part of `make check`); archives go to its ignored `out/`, never into git. Do not edit `build.sh` while a build runs: `sh` reads it as it goes.
+- The website needs `make build` first: it imports `@motiojs/core` and `@motiojs/cli` from their `dist`. `astro check` runs with the website's own TypeScript 6 (it does not support 7 yet).
 - The clock shim never patches `MessageChannel`, `queueMicrotask` or `Promise`: React's scheduler depends on them.

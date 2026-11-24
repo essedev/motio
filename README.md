@@ -48,9 +48,13 @@ The downloaded binaries are GPL-licensed FFmpeg builds (GPL-3.0-or-later). Their
 
 ```bash
 pnpm install
-make check              # format, lint, build, tests
+make check              # format, lint, build, site build, tests
 make test-integration   # real Chrome and FFmpeg
 ```
+
+## Website
+
+`website/` holds the landing page and the docs (Astro and Starlight), not deployed yet. The docs are built from `docs/guide/` and from the CLI and package READMEs, with no copies. `make site` starts it on http://localhost:4321, `make site-build` builds it and checks every link. The brand kit (logo, palette, type, motion) is in [`brand/`](brand/README.md).
 
 ## Licence
 

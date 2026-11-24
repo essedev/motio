@@ -1,0 +1,204 @@
+/*
+ * Starlight themed to the brand: the calm reading style of the Kinetic concept. Paper (or Night)
+ * ground, Plum ink, one column of prose, colour only for the current page, list markers and code.
+ * Starlight's dark theme is `:root`, its light theme `:root[data-theme="light"]`.
+ */
+:root {
+	--sl-font: var(--font-sans);
+	--sl-font-mono: var(--font-mono);
+
+	--sl-color-white: #f6eff4;
+	--sl-color-gray-1: #ede3eb;
+	--sl-color-gray-2: #dccfda;
+	--sl-color-gray-3: #bea9c1;
+	--sl-color-gray-4: #8d7590;
+	--sl-color-gray-5: #4a2f4e;
+	--sl-color-gray-6: #28122c;
+	--sl-color-gray-7: #150717;
+	--sl-color-black: #1c0b1f;
+
+	--sl-color-accent-low: #4a1531;
+	--sl-color-accent: #ff3d8b;
+	--sl-color-accent-high: #ffb3d0;
+	--sl-color-text-accent: #ff86b6;
+	--sl-color-text-invert: #2a0e2e;
+
+	--sl-color-bg-nav: var(--sl-color-black);
+	--sl-color-bg-sidebar: var(--sl-color-black);
+	--sl-color-bg-inline-code: var(--sl-color-gray-6);
+	--sl-color-hairline-light: rgb(255 255 255 / 0.14);
+	--sl-color-hairline: rgb(255 255 255 / 0.1);
+	--sl-color-hairline-shade: rgb(255 255 255 / 0.14);
+	--sl-color-backdrop-overlay: rgb(21 7 23 / 0.7);
+
+	--doc-surface: #28122c;
+	--doc-line: rgb(255 255 255 / 0.14);
+	--doc-current-bg: var(--mist);
+	--doc-current-fg: var(--plum);
+
+	--sl-content-width: 46rem;
+	--sl-text-h1: 2.5rem;
+	--sl-text-h2: 1.75rem;
+	--sl-text-h3: 1.3rem;
+	--sl-text-h4: 1.1rem;
+	--sl-line-height: 1.7;
+	--sl-line-height-headings: 1.12;
+}
+
+:root[data-theme="light"] {
+	--sl-color-white: #2a0e2e;
+	--sl-color-gray-1: #3a1d3e;
+	--sl-color-gray-2: #4f3453;
+	--sl-color-gray-3: #6d5770;
+	--sl-color-gray-4: #9c899e;
+	--sl-color-gray-5: #d9cfd7;
+	--sl-color-gray-6: #efe8ed;
+	--sl-color-gray-7: #f7f3f6;
+	--sl-color-black: #ffffff;
+
+	--sl-color-accent-low: #ffe0ec;
+	--sl-color-accent: #ff3d8b;
+	--sl-color-accent-high: #a3124f;
+	--sl-color-text-accent: #a3124f;
+	--sl-color-text-invert: #2a0e2e;
+
+	--sl-color-bg-nav: var(--sl-color-black);
+	--sl-color-bg-sidebar: var(--sl-color-black);
+	--sl-color-bg-inline-code: var(--sl-color-gray-7);
+	--sl-color-hairline-light: rgb(42 14 46 / 0.15);
+	--sl-color-hairline: rgb(42 14 46 / 0.1);
+	--sl-color-hairline-shade: rgb(42 14 46 / 0.15);
+	--sl-color-backdrop-overlay: rgb(42 14 46 / 0.4);
+
+	--doc-surface: #f7f3f6;
+	--doc-line: rgb(42 14 46 / 0.15);
+	--doc-current-bg: var(--plum);
+	--doc-current-fg: var(--mist);
+}
+
+@media (min-width: 50em) {
+	:root {
+		--sl-text-h1: 3rem;
+		--sl-text-h2: 1.85rem;
+	}
+}
+
+:focus-visible {
+	outline: 3px solid var(--pulse);
+	outline-offset: 2px;
+}
+
+/* Headings: Anybody, a little wide; body stays Instrument Sans. */
+.content-panel h1,
+.sl-markdown-content :is(h1, h2, h3, h4) {
+	font-family: var(--font-display);
+	font-stretch: 105%;
+	letter-spacing: -0.012em;
+	color: var(--sl-color-white);
+}
+.content-panel h1 {
+	font-weight: 800;
+}
+.sl-markdown-content h2 {
+	font-weight: 750;
+	margin-top: 2.6em;
+}
+.sl-markdown-content h3 {
+	font-weight: 700;
+	margin-top: 2em;
+}
+
+/* Prose */
+.sl-markdown-content {
+	font-size: 1.03rem;
+}
+.sl-markdown-content a:not(:where(.not-content *, .sl-anchor-link)) {
+	color: var(--sl-color-white);
+	text-decoration-color: var(--pulse);
+	text-decoration-thickness: 2px;
+	text-underline-offset: 0.18em;
+}
+.sl-markdown-content a:not(:where(.not-content *, .sl-anchor-link)):hover {
+	text-decoration-thickness: 3px;
+}
+.sl-markdown-content li::marker {
+	color: var(--pulse);
+}
+.sl-markdown-content :not(pre) > code {
+	padding: 0.1em 0.35em;
+	border-radius: 5px;
+	background: var(--doc-surface);
+	box-shadow: inset 0 0 0 1px var(--doc-line);
+	font-size: 0.86em;
+	overflow-wrap: anywhere;
+}
+.sl-markdown-content table {
+	font-size: 0.94rem;
+	border-collapse: collapse;
+}
+.sl-markdown-content :is(th, td) {
+	border: 0;
+	border-bottom: 1px solid var(--doc-line);
+	padding: 0.6rem 0.9rem 0.6rem 0;
+	vertical-align: top;
+}
+.sl-markdown-content th {
+	font-weight: 600;
+	color: var(--sl-color-white);
+	background: transparent;
+}
+.sl-markdown-content tr:nth-child(2n) {
+	background: transparent;
+}
+
+/* Sidebar: the current page is the one solid block. */
+.sidebar-content a {
+	border-radius: var(--r-sm);
+	padding-inline: 0.6rem;
+}
+.sidebar-content a:hover {
+	background: var(--doc-surface);
+}
+.sidebar-content a[aria-current="page"],
+.sidebar-content a[aria-current="page"]:hover,
+.sidebar-content a[aria-current="page"]:focus {
+	background: var(--doc-current-bg);
+	color: var(--doc-current-fg);
+	font-weight: 600;
+}
+.sidebar-content .group-label .large {
+	font-family: var(--font-display);
+	font-stretch: 105%;
+	font-weight: 750;
+	color: var(--sl-color-white);
+}
+
+/* Previous and next */
+.pagination-links a {
+	border-radius: var(--r-md);
+	background: var(--doc-surface);
+	box-shadow: inset 0 0 0 1px var(--doc-line);
+	border: 0;
+}
+.pagination-links a:hover {
+	background: var(--sl-color-gray-6);
+}
+.pagination-links .link-title {
+	font-family: var(--font-display);
+	font-stretch: 105%;
+	font-weight: 700;
+	color: var(--sl-color-white);
+}
+
+/* Search button */
+site-search button[data-open-modal] {
+	border-radius: var(--r-md);
+	background: var(--doc-surface);
+	border: 0;
+	box-shadow: inset 0 0 0 1px var(--doc-line);
+}
+
+/* Code: the Plum block of the brand in both themes. */
+.expressive-code .frame {
+	box-shadow: none;
+}

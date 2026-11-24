@@ -50,9 +50,13 @@ La documentazione è in inglese:
 
 ```bash
 pnpm install
-make check              # format, lint, build, test
+make check              # format, lint, build, build del sito, test
 make test-integration   # Chrome e FFmpeg reali
 ```
+
+## Sito
+
+`website/` contiene la landing page e la documentazione (Astro e Starlight), non ancora pubblicate. La documentazione si costruisce da `docs/guide/` e dai README della CLI e dei pacchetti, senza copie. `make site` la avvia su http://localhost:4321, `make site-build` la costruisce e controlla ogni link. Il brand kit (logo, palette, caratteri, movimento) è in [`brand/`](brand/README.md).
 
 ## Licenza
 

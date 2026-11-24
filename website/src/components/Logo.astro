@@ -1,0 +1,172 @@
+---
+/**
+ * The Motio lockup or mark, animated like a composition: the frames scale in, then fan out with
+ * Motio's own spring(), and the letters of the wordmark rise one after another. The easings are
+ * the real spring() sampled at 30 fps into CSS linear(); no JavaScript runs to play it on load.
+ * Hover or focus replays it (LogoReplay.astro). Reduced motion shows the resting frame.
+ */
+import {
+	BRAND_SPRING,
+	CALM_SPRING,
+	FPS,
+	LOGO_GEOMETRY,
+	springEasing,
+	type Tone,
+	toneColors,
+} from "../brand/mark.ts";
+
+interface Props {
+	/** Font size of the wordmark; the mark is 1.18 em. */
+	size?: string;
+	tone?: Tone;
+	/** Colour of the wordmark (default: the text colour). */
+	ink?: string;
+	/** Mark only. */
+	markOnly?: boolean;
+	/** "load" plays once when the page opens; "hover" waits for a pointer. */
+	play?: "load" | "hover";
+	href?: string;
+	label?: string;
+	class?: string;
+}
+
+const {
+	size = "30px",
+	tone = "color",
+	ink,
+	markOnly = false,
+	play = "hover",
+	href,
+	label = "Motio",
+	class: className,
+} = Astro.props;
+
+const brand = springEasing(BRAND_SPRING);
+const calm = springEasing(CALM_SPRING, 8);
+const { pivot, frame, gap, cards } = LOGO_GEOMETRY;
+const colors = toneColors(tone);
+const sec = (frames: number) => `${(frames / FPS).toFixed(3)}s`;
+const style = [
+	`--fs:${size}`,
+	`--ease-brand:${brand.easing}`,
+	`--ease-calm:${calm.easing}`,
+	`--dur-brand:${sec(brand.frames)}`,
+	`--dur-calm:${sec(calm.frames)}`,
+	ink ? `--wm-ink:${ink}` : "",
+]
+	.filter(Boolean)
+	.join(";");
+const letters = [..."motio"];
+const Tag = href ? "a" : "span";
+---
+
+<Tag
+	class:list={["logo", { "is-playing": play === "load", "logo-mark": markOnly }, className]}
+	href={href}
+	style={style}
+	data-logo
+	role={href ? undefined : "img"}
+	aria-label={label}
+>
+	<svg class="mk" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+		{
+			cards.map((c, i) => (
+				<g
+					class="mk-card"
+					style={`--a:${c.angle}deg;--d:${sec(c.delay)};transform-origin:${pivot.x}px ${pivot.y}px`}
+				>
+					<rect
+						x={frame.x + pivot.x}
+						y={frame.y + pivot.y}
+						width={frame.w}
+						height={frame.h}
+						rx={frame.r}
+						fill={colors[i]}
+						stroke="var(--logo-bg)"
+						stroke-width={gap}
+					/>
+				</g>
+			))
+		}
+	</svg>
+	{
+		!markOnly && (
+			<span class="wm" aria-hidden="true">
+				{letters.map((ch, i) => (
+					<span style={`--d:${sec(LOGO_GEOMETRY.letterDelay(i))}`}>{ch}</span>
+				))}
+			</span>
+		)
+	}
+</Tag>
+
+<style>
+	.logo {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.22em;
+		font: 800 var(--fs) / 1 var(--font-display);
+		font-stretch: 112%;
+		letter-spacing: -0.015em;
+		color: var(--wm-ink, inherit);
+		text-decoration: none;
+		user-select: none;
+		-webkit-tap-highlight-color: transparent;
+	}
+	.mk {
+		width: 1.18em;
+		height: 1.18em;
+		flex: none;
+		display: block;
+		overflow: visible;
+	}
+	.logo-mark .mk {
+		width: var(--fs);
+		height: var(--fs);
+	}
+	.mk-card {
+		transform-box: view-box;
+		rotate: var(--a);
+	}
+	.wm {
+		display: inline-flex;
+		overflow: hidden;
+		padding: 0.06em 0.02em 0.14em;
+		margin: -0.06em 0 -0.14em;
+	}
+	.wm span {
+		display: inline-block;
+	}
+	.is-playing .mk-card {
+		animation:
+			logo-scale var(--dur-calm) var(--ease-calm) backwards,
+			logo-fan var(--dur-brand) var(--ease-brand) var(--d) backwards;
+	}
+	.is-playing .wm span {
+		animation: logo-rise var(--dur-brand) var(--ease-brand) var(--d) backwards;
+	}
+	@keyframes logo-scale {
+		from {
+			scale: 0;
+		}
+	}
+	@keyframes logo-fan {
+		from {
+			rotate: 0deg;
+		}
+		to {
+			rotate: var(--a);
+		}
+	}
+	@keyframes logo-rise {
+		from {
+			translate: 0 110%;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.is-playing .mk-card,
+		.is-playing .wm span {
+			animation: none;
+		}
+	}
+</style>

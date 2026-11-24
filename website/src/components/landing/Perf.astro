@@ -1,0 +1,105 @@
+---
+/**
+ * The benchmark of docs/ROADMAP.md as bars. The first platform is rendered on the server; the
+ * platform switch is the only script and appears only when it can run.
+ */
+import { performanceTable } from "../../lib/landing-data.ts";
+
+const platforms = performanceTable();
+const first = platforms[0];
+if (!first) throw new Error("No benchmark platform");
+const max = Math.max(...platforms.flatMap((p) => p.rows.flatMap((r) => [r.baseline, r.motio])));
+const pct = (v: number) => `${((v / max) * 100).toFixed(2)}%`;
+const data = platforms.map((p) => ({
+	id: p.id,
+	note: p.note,
+	rows: p.rows.map((r) => ({
+		motio: { w: pct(r.motio), text: `Motio ${r.motio.toFixed(2)} s` },
+		base: { w: pct(r.baseline), text: `Remotion ${r.baseline.toFixed(2)} s` },
+		factor: `${(r.baseline / r.motio).toFixed(1)}x`,
+	})),
+}));
+---
+
+<div class="perf surface" data-perf data-platforms={JSON.stringify(data)}>
+	<div class="perf-top">
+		<div class="seg" role="group" aria-label="Platform" data-seg hidden>
+			{
+				platforms.map((p, i) => (
+					<button type="button" data-platform={p.id} aria-pressed={i === 0 ? "true" : "false"}>
+						{p.label}
+					</button>
+				))
+			}
+		</div>
+		<p class="legend" data-static-label>{first.label}</p>
+		<div class="legend" aria-hidden="true">
+			<span><i style="background: var(--pulse)"></i>Motio</span>
+			<span><i style="background: color-mix(in srgb, var(--text) 22%, transparent)"></i>Remotion</span>
+		</div>
+	</div>
+	<div class="bars" aria-live="polite">
+		{
+			first.rows.map((r, i) => (
+				<div class="bar-group" data-row={i}>
+					<h3>
+						{r.concurrency} {r.concurrency === 1 ? "tab" : "tabs"}
+						<small>concurrency {r.concurrency}</small>
+					</h3>
+					<div class="bar-lines">
+						<div class="bline motio" data-bar="motio" style={`--w:${pct(r.motio)}`}>
+							<i />
+							<span>Motio {r.motio.toFixed(2)} s</span>
+						</div>
+						<div class="bline base" data-bar="base" style={`--w:${pct(r.baseline)}`}>
+							<i />
+							<span>Remotion {r.baseline.toFixed(2)} s</span>
+						</div>
+					</div>
+					<p class="factor">
+						<span data-factor>{(r.baseline / r.motio).toFixed(1)}x</span>
+						<small>faster</small>
+					</p>
+				</div>
+			))
+		}
+	</div>
+	<p class="perf-foot" data-note>{first.note} H.264 CRF 18, muted, medians.</p>
+</div>
+
+<script>
+	type Bar = { w: string; text: string };
+	type Platform = {
+		id: string;
+		note: string;
+		rows: { motio: Bar; base: Bar; factor: string }[];
+	};
+	const perf = document.querySelector<HTMLElement>("[data-perf]");
+	if (perf) {
+		const platforms = JSON.parse(perf.dataset.platforms ?? "[]") as Platform[];
+		const seg = perf.querySelector<HTMLElement>("[data-seg]");
+		const buttons = [...perf.querySelectorAll<HTMLButtonElement>("[data-platform]")];
+		perf.querySelector("[data-static-label]")?.setAttribute("hidden", "");
+		if (seg) seg.hidden = false;
+		const show = (id: string) => {
+			const platform = platforms.find((p) => p.id === id);
+			if (!platform) return;
+			for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.platform === id));
+			platform.rows.forEach((row, i) => {
+				const group = perf.querySelector(`[data-row="${i}"]`);
+				if (!group) return;
+				for (const key of ["motio", "base"] as const) {
+					const bar = group.querySelector<HTMLElement>(`[data-bar="${key}"]`);
+					bar?.style.setProperty("--w", row[key].w);
+					const text = bar?.querySelector("span");
+					if (text) text.textContent = row[key].text;
+				}
+				const factor = group.querySelector("[data-factor]");
+				if (factor) factor.textContent = row.factor;
+			});
+			const note = perf.querySelector("[data-note]");
+			if (note) note.textContent = `${platform.note} H.264 CRF 18, muted, medians.`;
+		};
+		for (const b of buttons) b.addEventListener("click", () => show(b.dataset.platform ?? ""));
+	}
+</script>

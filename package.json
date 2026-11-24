@@ -8,9 +8,10 @@
 		"test": "vitest run --project unit",
 		"lint": "biome check .",
 		"format": "biome check --write .",
-		"check": "pnpm format && pnpm lint && pnpm build && pnpm test:all",
+		"check": "pnpm format && pnpm lint && pnpm build && pnpm site:check && pnpm test:all",
 		"test:integration": "vitest run --project integration",
-		"test:all": "vitest run"
+		"test:all": "vitest run",
+		"site:check": "pnpm --dir website check && pnpm --dir website build"
 	},
 	"license": "Apache-2.0",
 	"devEngines": {
