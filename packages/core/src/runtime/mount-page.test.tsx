@@ -283,8 +283,9 @@ describe("mountPage", () => {
 		expect(first.warnings.filter((w) => w.code === "W_MATH_RANDOM")).toEqual([
 			{
 				code: "W_MATH_RANDOM",
+				key: "Math.random",
 				message: expect.stringMatching(
-					/^Math\.random\(\) was called \d+ times? while frame 0 rendered\. .*Use random\(seed\)/,
+					/^Math\.random\(\) was called while a frame rendered\. .*Use random\(seed\)/,
 				),
 			},
 		]);

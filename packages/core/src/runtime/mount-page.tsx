@@ -353,7 +353,7 @@ class PageRuntime {
 		try {
 			settled = await this.settleOrThrow(frame, "E_RENDER_ERROR");
 		} finally {
-			const random = this.random?.end(frame);
+			const random = this.random?.end();
 			if (random) pageWarnings.report(random);
 		}
 		// Elements mounted while settling may carry new animations.

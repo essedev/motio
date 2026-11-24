@@ -39,14 +39,20 @@ export class MathRandomWatch {
 		this.active = true;
 	}
 
-	/** Stops counting; returns the warning for the first frame that called it, once per page. */
-	end(frame: number): FrameWarning | null {
+	/**
+	 * Stops counting; returns the warning on the first frame that called it, once per page. The
+	 * message names neither the frame nor the count, so the renderer reports it once per render
+	 * with the first frame in its `frame` field.
+	 */
+	end(): FrameWarning | null {
 		this.active = false;
 		if (this.calls === 0 || this.reported) return null;
 		this.reported = true;
 		return {
 			code: "W_MATH_RANDOM",
-			message: `Math.random() was called ${this.calls} time${this.calls === 1 ? "" : "s"} while frame ${frame} rendered. It returns new values on every render, so frames differ between renders and pages. Use random(seed) from @motiojs/motio, which returns the same value for the same seed.`,
+			key: "Math.random",
+			message:
+				'Math.random() was called while a frame rendered. It returns new values on every render, so frames differ between renders and pages. Use random(seed) from @motiojs/motio, which returns the same value for the same seed, or render in the virtual time model (timeModel "virtual"), which reseeds Math.random on every frame.',
 		};
 	}
 }

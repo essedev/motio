@@ -128,6 +128,12 @@ export type FrameWarningCode =
 export interface FrameWarning {
 	code: FrameWarningCode;
 	message: string;
+	/**
+	 * Stable identity of the warning within a render, for deduplication across frames and pages
+	 * (a message may carry values that vary, such as a duration). Absent: the message is the
+	 * identity. The frame a warning was seen on travels separately, never in the message.
+	 */
+	key?: string;
 }
 
 /** A readiness handle still open while the page settles a frame, from `PageApi.pending()`. */

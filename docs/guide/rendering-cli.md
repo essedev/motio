@@ -44,7 +44,7 @@ A render prints its progress on stderr and, with `--json`, one JSON object on st
 - **Warnings** from the page are printed once each, with the first frame they were seen on, and listed in `renderWarnings` of the `--json` result:
 
   ```text
-  warning [W_MATH_RANDOM]: Math.random() was called 1 time while frame 0 rendered. ... (frame 0)
+  warning [W_MATH_RANDOM]: Math.random() was called while a frame rendered. ... (frame 0)
   ```
 
   The codes: `W_FONT_FALLBACK` (text fell back to another font), `W_MATH_RANDOM` (a frame called `Math.random()`), `W_STATIC_FILE_CASE` (a `staticFile()` name differs in case from the file in `public/`), `W_TIMELINE_SHORT` (a `<TransitionSeries>` ends before the composition), `W_SLOW_READINESS` (a `delayRender()` handle stayed open more than half its timeout), `W_ANIMATION_UNSEEKABLE` (a CSS or Web Animation that cannot follow the frame, such as one on a scroll timeline) and `W_FFMPEG_FALLBACK` (see [FFmpeg](ffmpeg.md)).

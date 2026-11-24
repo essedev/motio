@@ -16,14 +16,19 @@ export interface RenderWarning {
 	frame?: number;
 }
 
-/** Collects the warnings of a render, each code and message once, in the order first seen. */
+/**
+ * Collects the warnings of a render (one composition), each once, in the order first seen, with
+ * the first frame it was reported on. A warning is identified by its code and its `key`, else
+ * its message: the copies every page reports, and messages with values that vary (a duration),
+ * collapse into one entry that keeps the first message.
+ */
 export class WarningCollector {
 	private readonly byKey = new Map<string, RenderWarning>();
 
 	/** Adds the warnings of one frame, or of the render as a whole when `frame` is undefined. */
 	add(warnings: readonly (FrameWarning | RenderWarning)[], frame?: number): void {
 		for (const w of warnings) {
-			const key = `${w.code}\u0000${w.message}`;
+			const key = `${w.code}\u0000${("key" in w && w.key) || w.message}`;
 			const existing = this.byKey.get(key);
 			if (existing) {
 				if (frame !== undefined && (existing.frame === undefined || frame < existing.frame)) {

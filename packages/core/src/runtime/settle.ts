@@ -201,6 +201,8 @@ export async function settle(options: SettleOptions): Promise<SettleResult> {
 		if (closed.openMs >= closed.timeoutMs / 2) {
 			warnings.push({
 				code: "W_SLOW_READINESS",
+				key:
+					closed.label === null ? "delayRender()" : `delayRender(${JSON.stringify(closed.label)})`,
 				message: `${closed.label === null ? "A delayRender() handle" : `The delayRender() handle "${closed.label}"`} stayed open for ${Math.round(closed.openMs)}ms, more than half of its ${closed.timeoutMs}ms timeout.`,
 			});
 		}
