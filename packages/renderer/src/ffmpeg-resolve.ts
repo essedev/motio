@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -14,6 +15,12 @@ export interface ResolvedFfmpeg {
 	source: FfmpegSource;
 	/** Set when `source` is `package`: the pinned build's version and build number. */
 	pinned?: { version: string; build: number };
+	/**
+	 * Set when `@motiojs/ffmpeg` is installed but its pinned build could not be downloaded (its
+	 * archives are not published yet, the platform has none, the network failed) and the FFmpeg
+	 * on PATH was used instead. `message` says why, for a warning.
+	 */
+	fallback?: { reason: string; message: string; code: string };
 }
 
 /** Options naming FFmpeg explicitly. */
@@ -38,6 +45,13 @@ export interface FfmpegPackage {
 }
 
 const PACKAGE = "@motiojs/ffmpeg";
+
+/**
+ * How to get an FFmpeg, for `E_FFMPEG_NOT_FOUND`. Mentions `@motiojs/ffmpeg` as coming: its
+ * archives are not published yet (D-065); reword when they are.
+ */
+export const FFMPEG_INSTALL_HINT =
+	'Install FFmpeg 5.1 or later (for example "brew install ffmpeg" or "apt install ffmpeg") so it is on PATH, or set MOTIO_FFMPEG to an FFmpeg executable. The optional @motiojs/ffmpeg package will download a pinned build once its archives are published.';
 
 /**
  * The folder of `@motiojs/ffmpeg` in the nearest `node_modules` above `start`, or null. A plain
@@ -93,6 +107,31 @@ export function siblingFfprobe(ffmpeg: string): string {
 export interface ResolveFfmpegDeps {
 	env: Record<string, string | undefined>;
 	loadPackage: () => Promise<FfmpegPackage | null>;
+	/** Whether `ffmpeg` on PATH runs. Default: runs `ffmpeg -version`. */
+	pathFfmpegRuns?: () => Promise<boolean>;
+}
+
+/** Errors of `@motiojs/ffmpeg` after which the FFmpeg on PATH is used, when there is one. */
+const FALLBACK_CODES = new Set(["E_FFMPEG_DOWNLOAD", "E_FFMPEG_UNSUPPORTED_PLATFORM"]);
+
+/** Whether `ffmpeg -version` runs from PATH, within 10 seconds. */
+export function pathFfmpegRuns(command = "ffmpeg"): Promise<boolean> {
+	return new Promise((resolveRuns) => {
+		const child = spawn(command, ["-hide_banner", "-version"], { stdio: "ignore" });
+		const timer = setTimeout(() => {
+			child.kill("SIGKILL");
+			resolveRuns(false);
+		}, 10_000);
+		timer.unref();
+		child.on("error", () => {
+			clearTimeout(timer);
+			resolveRuns(false);
+		});
+		child.on("close", (code) => {
+			clearTimeout(timer);
+			resolveRuns(code === 0);
+		});
+	});
 }
 
 let packagePromise: Promise<FfmpegPackage | null> | undefined;
@@ -146,9 +185,27 @@ export async function resolveFfmpeg(
 			pinned = (await pkg.findFfmpeg?.()) ?? null;
 			if (!pinned) return null;
 		} else {
-			pinned = await pkg.ensureFfmpeg(
-				options.onDownloadProgress ? { onProgress: options.onDownloadProgress } : {},
-			);
+			try {
+				pinned = await pkg.ensureFfmpeg(
+					options.onDownloadProgress ? { onProgress: options.onDownloadProgress } : {},
+				);
+			} catch (err) {
+				const code = (err as { code?: unknown }).code;
+				if (typeof code !== "string" || !FALLBACK_CODES.has(code)) throw err;
+				if (!(await (deps.pathFfmpegRuns ?? pathFfmpegRuns)())) throw err;
+				const details = (err as { details?: { reason?: unknown } }).details;
+				const reason = typeof details?.reason === "string" ? details.reason : code;
+				return {
+					ffmpeg: "ffmpeg",
+					ffprobe: explicitProbe ?? "ffprobe",
+					source: "path",
+					fallback: {
+						code,
+						reason,
+						message: `@motiojs/ffmpeg is installed but its pinned FFmpeg could not be downloaded (${reason === "unpublished" ? "its archives are not published yet" : err instanceof Error ? err.message : String(err)}), so the FFmpeg on PATH was used.`,
+					},
+				};
+			}
 		}
 		return {
 			ffmpeg: pinned.ffmpeg,
@@ -167,7 +224,10 @@ export async function resolveRenderFfmpeg(
 ): Promise<ResolvedFfmpeg> {
 	const resolved = await resolveFfmpeg(options, deps);
 	if (!resolved) {
-		throw new MotioError("E_FFMPEG_NOT_FOUND", "FFmpeg could not be resolved.");
+		throw new MotioError(
+			"E_FFMPEG_NOT_FOUND",
+			`FFmpeg could not be resolved. ${FFMPEG_INSTALL_HINT}`,
+		);
 	}
 	return resolved;
 }

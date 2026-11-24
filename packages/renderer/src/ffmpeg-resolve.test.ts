@@ -6,6 +6,7 @@ import {
 	type FfmpegPackage,
 	findPackageDir,
 	loadFfmpegPackage,
+	pathFfmpegRuns,
 	resolveFfmpeg,
 } from "./ffmpeg-resolve.js";
 
@@ -37,6 +38,60 @@ const deps = (env: Record<string, string>, pkg: FfmpegPackage | null) => ({
 });
 
 describe("resolveFfmpeg (D-065)", () => {
+	it("falls back to the FFmpeg on PATH when the pinned build cannot be downloaded", async () => {
+		const unpublished = Object.assign(new Error("not published yet"), {
+			code: "E_FFMPEG_DOWNLOAD",
+			details: { reason: "unpublished" },
+		});
+		const pkg: FfmpegPackage = {
+			ensureFfmpeg: async () => {
+				throw unpublished;
+			},
+		};
+		const resolved = await resolveFfmpeg(
+			{},
+			{ env: {}, loadPackage: async () => pkg, pathFfmpegRuns: async () => true },
+		);
+		expect(resolved).toEqual({
+			ffmpeg: "ffmpeg",
+			ffprobe: "ffprobe",
+			source: "path",
+			fallback: {
+				code: "E_FFMPEG_DOWNLOAD",
+				reason: "unpublished",
+				message:
+					"@motiojs/ffmpeg is installed but its pinned FFmpeg could not be downloaded (its archives are not published yet), so the FFmpeg on PATH was used.",
+			},
+		});
+		// No FFmpeg on PATH: the download error stands.
+		await expect(
+			resolveFfmpeg(
+				{},
+				{ env: {}, loadPackage: async () => pkg, pathFfmpegRuns: async () => false },
+			),
+		).rejects.toBe(unpublished);
+		// A digest mismatch is not something to paper over.
+		const tampered = Object.assign(new Error("digest"), { code: "E_FFMPEG_DIGEST" });
+		await expect(
+			resolveFfmpeg(
+				{},
+				{
+					env: {},
+					loadPackage: async () => ({
+						ensureFfmpeg: async () => {
+							throw tampered;
+						},
+					}),
+					pathFfmpegRuns: async () => true,
+				},
+			),
+		).rejects.toBe(tampered);
+	});
+
+	it("tells whether ffmpeg runs from PATH", async () => {
+		expect(await pathFfmpegRuns("motio-no-such-ffmpeg")).toBe(false);
+	});
+
 	it("prefers the explicit option, then MOTIO_FFMPEG, then the package, then PATH", async () => {
 		const { pkg, calls } = fakePackage();
 		const env = { MOTIO_FFMPEG: "/env/ffmpeg" };

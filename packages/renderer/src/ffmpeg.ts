@@ -3,6 +3,7 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { proResProfileNumber, type ResolvedVideoEncoding } from "./codecs.js";
 import { MotioError } from "./errors.js";
+import { FFMPEG_INSTALL_HINT } from "./ffmpeg-resolve.js";
 import type { ColorSpace, PixelFormat, X264Preset } from "./options.js";
 
 /**
@@ -77,8 +78,8 @@ export function probeFfmpeg(path: string): Promise<FfmpegInfo> {
 			} catch (err) {
 				throw new MotioError(
 					"E_FFMPEG_NOT_FOUND",
-					`FFmpeg was not found at "${path}". Install FFmpeg ${MIN_FFMPEG_VERSION.join(".")} or later (for example "brew install ffmpeg" or "apt install ffmpeg"), or set MOTIO_FFMPEG.`,
-					{ details: { path } },
+					`FFmpeg was not found at "${path}". ${FFMPEG_INSTALL_HINT}`,
+					{ details: { path, hint: FFMPEG_INSTALL_HINT } },
 					err,
 				);
 			}

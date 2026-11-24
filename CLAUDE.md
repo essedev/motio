@@ -32,7 +32,7 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 
 - `chrome-headless-shell` is pinned (158.0.8127.36) and cached in `~/.cache/motio/browsers`.
 - React must be deduplicated in user bundles (`resolve.dedupe`), or aliased packages load a second React.
-- FFmpeg resolution: option, `MOTIO_FFMPEG`, `@motiojs/ffmpeg` if installed, `PATH`. The package is found by walking `node_modules`, never `require.resolve`: `pnpm exec` sets `NODE_PATH` to the hoisted store, where this workspace's own `@motiojs/ffmpeg` is visible.
+- FFmpeg resolution: option, `MOTIO_FFMPEG`, `@motiojs/ffmpeg` if installed, `PATH` (also when the package cannot download its build, with `W_FFMPEG_FALLBACK`). The package is found by walking `node_modules`, never `require.resolve`: `pnpm exec` sets `NODE_PATH` to the hoisted store, where this workspace's own `@motiojs/ffmpeg` is visible.
 - `tools/ffmpeg-build/` builds the GPL FFmpeg archives (not part of `make check`); archives go to its ignored `out/`, never into git. Do not edit `build.sh` while a build runs: `sh` reads it as it goes.
 - The website needs `make build` first: it imports `@motiojs/core` and `@motiojs/cli` from their `dist`. `astro check` runs with the website's own TypeScript 6 (it does not support 7 yet).
 - The clock shim never patches `MessageChannel`, `queueMicrotask` or `Promise`: React's scheduler depends on them.

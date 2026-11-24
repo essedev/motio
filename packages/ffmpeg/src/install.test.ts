@@ -3,7 +3,13 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { ensureFfmpeg, findFfmpeg, type InstallSource, install } from "./install.js";
+import {
+	archivesPublished,
+	ensureFfmpeg,
+	findFfmpeg,
+	type InstallSource,
+	install,
+} from "./install.js";
 import { FFMPEG_ARCHIVES, FFMPEG_BUILD, FFMPEG_VERSION } from "./manifest.js";
 import { ffmpegPlatform } from "./platform.js";
 import { fakeReleaseArchive, serveFiles } from "./test-support/archives.js";
@@ -162,7 +168,23 @@ describe("install", () => {
 		);
 		expect(err.code).toBe("E_FFMPEG_DOWNLOAD");
 		expect(err.message).toContain("MOTIO_FFMPEG_BASE_URL");
+		expect(err.message).toContain("Renders use the FFmpeg on PATH when there is one");
+		expect((err as { details?: unknown }).details).toMatchObject({ reason: "unpublished" });
 		expect(server.requests).toEqual([]);
+	});
+
+	it("says whether the archives can be downloaded, following MOTIO_FFMPEG_BASE_URL", () => {
+		const previous = process.env.MOTIO_FFMPEG_BASE_URL;
+		try {
+			delete process.env.MOTIO_FFMPEG_BASE_URL;
+			// The release owner is still the placeholder in this version of the package.
+			expect(archivesPublished()).toBe(false);
+			process.env.MOTIO_FFMPEG_BASE_URL = "https://mirror.example.com";
+			expect(archivesPublished()).toBe(true);
+		} finally {
+			if (previous === undefined) delete process.env.MOTIO_FFMPEG_BASE_URL;
+			else process.env.MOTIO_FFMPEG_BASE_URL = previous;
+		}
 	});
 });
 

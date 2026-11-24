@@ -97,8 +97,8 @@ function sourceFor(options: EnsureFfmpegOptions): InstallSource {
 	if (!archive) {
 		throw new FfmpegError(
 			"E_FFMPEG_UNSUPPORTED_PLATFORM",
-			`@motiojs/ffmpeg ${FFMPEG_VERSION}-${FFMPEG_BUILD} has no ${platform} archive yet: it is built by the release workflow and added when the release is published. Use the system FFmpeg meanwhile (uninstall @motiojs/ffmpeg or set MOTIO_FFMPEG).`,
-			{ platform, version: FFMPEG_VERSION, build: FFMPEG_BUILD },
+			`@motiojs/ffmpeg ${FFMPEG_VERSION}-${FFMPEG_BUILD} has no ${platform} archive yet: it is built by the release workflow and added when the release is published. Meanwhile renders use the FFmpeg on PATH when there is one; or set MOTIO_FFMPEG to an FFmpeg executable.`,
+			{ platform, version: FFMPEG_VERSION, build: FFMPEG_BUILD, reason: "unsupported-platform" },
 		);
 	}
 	const explicit = options.baseUrl ?? process.env.MOTIO_FFMPEG_BASE_URL;
@@ -165,7 +165,7 @@ async function download(
 		throw new FfmpegError(
 			"E_FFMPEG_DOWNLOAD",
 			`Could not download ${url}: ${err instanceof Error ? err.message : String(err)}. Check the network, or set MOTIO_FFMPEG_BASE_URL to a mirror.`,
-			{ url },
+			{ url, reason: "network" },
 			err,
 		);
 	}
@@ -173,7 +173,7 @@ async function download(
 		throw new FfmpegError(
 			"E_FFMPEG_DOWNLOAD",
 			`Downloading ${url} failed with HTTP ${response.status}. Check that the release exists, or set MOTIO_FFMPEG_BASE_URL to a mirror.`,
-			{ url, status: response.status },
+			{ url, status: response.status, reason: "http" },
 		);
 	}
 	const hash = createHash("sha256");
@@ -280,11 +280,11 @@ export async function install(
 ): Promise<InstalledFfmpeg> {
 	const dir = installDir(cacheDir, source);
 	if (await complete(dir, source)) return installed(dir, source, false);
-	if (source.defaultBaseUrl && RELEASE_OWNER === "OWNER_PLACEHOLDER") {
+	if (source.defaultBaseUrl && !archivesPublished()) {
 		throw new FfmpegError(
 			"E_FFMPEG_DOWNLOAD",
-			`The FFmpeg ${source.version}-${source.build} archives of this @motiojs/ffmpeg version are not published yet. Set MOTIO_FFMPEG_BASE_URL to a folder or server that holds ${source.archive.file}, or use the system FFmpeg (uninstall @motiojs/ffmpeg or set MOTIO_FFMPEG).`,
-			{ file: source.archive.file, platform: source.platform },
+			`The FFmpeg ${source.version}-${source.build} archives of this @motiojs/ffmpeg version are not published yet. Renders use the FFmpeg on PATH when there is one; otherwise install FFmpeg 5.1 or later, set MOTIO_FFMPEG to an FFmpeg executable, or set MOTIO_FFMPEG_BASE_URL to a folder or server that holds ${source.archive.file}.`,
+			{ file: source.archive.file, platform: source.platform, reason: "unpublished" },
 		);
 	}
 	await mkdir(cacheDir, { recursive: true });
@@ -340,6 +340,15 @@ export async function install(
 	} finally {
 		await rm(temp, { recursive: true, force: true });
 	}
+}
+
+/**
+ * Whether the pinned archives can be downloaded without configuration: true once the release
+ * that holds them is published, or when `MOTIO_FFMPEG_BASE_URL` names a mirror. Read at call
+ * time, so it follows the environment. Never makes a request.
+ */
+export function archivesPublished(): boolean {
+	return RELEASE_OWNER !== "OWNER_PLACEHOLDER" || process.env.MOTIO_FFMPEG_BASE_URL !== undefined;
 }
 
 const pending = new Map<string, Promise<InstalledFfmpeg>>();

@@ -1,5 +1,6 @@
 export { FfmpegError, type FfmpegErrorCode } from "./errors.js";
 export {
+	archivesPublished,
 	defaultFfmpegCacheDir,
 	type EnsureFfmpegOptions,
 	ensureFfmpeg,
