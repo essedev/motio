@@ -65,7 +65,14 @@ cd my-video
 pnpm dev
 ```
 
-`motio dev` starts a local server (port 3000, or the next free one) with a preview page: the list of compositions on the left, the selected one playing in a player with play, scrub, frame stepping, a loop range and keyboard shortcuts, and a JSON editor for its props. Saving a component updates the preview in place. "Render still" renders the current frame through the real render pipeline and can overlay it on the preview to compare.
+`motio dev` starts a local server (port 3000, or the next free one) with a preview page: the list of compositions on the left, the selected one playing in a player with play, scrub, frame stepping, a loop range and keyboard shortcuts, and a JSON editor for its props. Saving a component updates the preview in place.
+
+- **Time** is shown as a frame number and as a timecode, `HH:MM:SS:FF`, where the last two digits count frames inside the second: frame 40 at 30 fps is `00:00:01:10`.
+- **The timeline** under the player has one row per `<Sequence>`, `<Series.Sequence>`, `<Loop>` and media component, nested as in the code and labelled with the sequence's `name` (the component's name without one). Its ruler scrubs with the pointer or the arrow keys, and clicking a bar jumps to the first frame of that sequence.
+- **Problems** lists what a render would trip on while the player keeps playing: files that failed to load, `delayRender()` handles still open (with their age and where they were called), a `cancelRender()` with its error, and warnings such as a `staticFile()` name whose case differs from the file. The header shows how many there are.
+- **Errors** thrown by a composition, the root or `calculateMetadata()` are shown in the page with the message, the stack mapped back to your files, the lines around the one that threw, and, for a composition, the frame it was thrown at; the frames of React and other dependencies are folded. A syntax error or an unresolved import shows the file and the code around it, in the page and in the terminal.
+- **Props** keys that neither `defaultProps` nor the [schema](compositions.md) declare are flagged under the editor, with the closest known key: a `titel` asks whether you meant `title`.
+- **Render still** renders the current frame through the real render pipeline. The result can be laid over the player to show the differences, downloaded, or saved into the project as `out/<composition>-<frame>.png`.
 
 ## Render
 
