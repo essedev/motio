@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -604,5 +604,40 @@ describe("general", () => {
 		expect(validate("render", parseJson(unknown.io))).toBeNull();
 		const commandHelp = await run(["check", "flicker", "--help"]);
 		expect(commandHelp.io.out.join("")).toContain("--threshold");
+	});
+
+	it("suggests the closest command and lists the commands of a group", async () => {
+		const typo = await run(["rendr", "src/index.ts", "Main"]);
+		expect(typo.code).toBe(2);
+		expect(typo.io.err.join("")).toBe(
+			'error: Unknown command "rendr". Did you mean motio render? Run motio --help for the commands.\n',
+		);
+		expect((await run(["chek", "flicker"])).io.err.join("")).toContain(
+			"Did you mean motio check flicker?",
+		);
+		const group = await run(["check"]);
+		expect(group.io.err.join("")).toContain(
+			'"check" needs a subcommand: motio check determinism or motio check flicker.',
+		);
+		const flag = await run(["render", "Main", "--codex=h265"]);
+		expect(flag.code).toBe(2);
+		expect(flag.io.err.join("")).toContain("Unknown flag --codex. Did you mean --codec?");
+		const still = await run(["still", "Main", "--frames=3"]);
+		expect(still.io.err.join("")).toContain("Did you mean --frame?");
+	});
+
+	it("prints the version with --version and -v", async () => {
+		const { version } = JSON.parse(
+			readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+		) as { version: string };
+		for (const flag of ["--version", "-v"]) {
+			const result = await run([flag]);
+			expect(result.code).toBe(0);
+			expect(result.io.out.join("")).toBe(`${version}\n`);
+		}
+		const json = await run(["--version", "--json"]);
+		const payload = parseJson(json.io);
+		expect(validate("version", payload)).toBeNull();
+		expect(payload).toEqual({ ok: true, command: "version", version, warnings: [] });
 	});
 });

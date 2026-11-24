@@ -186,7 +186,7 @@ describe("motio dev", () => {
 		[["a.tsx", "b.tsx"], "Too many arguments"],
 		[["http://localhost:3000"], "not a serve URL"],
 		[["--props", "{nope"], "--props is not valid JSON"],
-		[["--frame", "3"], "Unknown option"],
+		[["--frame", "3"], "Unknown flag --frame."],
 	])("rejects %j with exit code 2", async (argv, message) => {
 		const started = await start([...argv, "--json"]);
 		expect(await started.done).toBe(2);

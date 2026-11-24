@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Flags, parseCommandArgs } from "./args.js";
+import { closest } from "./suggest.js";
 
 const specs = {
 	overwrite: { type: "boolean", description: "" },
@@ -33,6 +34,39 @@ describe("parseCommandArgs", () => {
 		expect(() => parseCommandArgs(["--codec"], specs)).toThrow(
 			expect.objectContaining({ code: "E_INVALID_ARGUMENT" }),
 		);
+	});
+
+	it("names the closest flag for a typo, with no parseArgs wording", () => {
+		expect(() => parseCommandArgs(["--codex=h265"], specs)).toThrow(
+			"Unknown flag --codex. Did you mean --codec? Run with --help for the flags of this command.",
+		);
+		expect(() => parseCommandArgs(["--overwrit"], specs)).toThrow(/Did you mean --overwrite\?/);
+		expect(() => parseCommandArgs(["--zzzzzz"], specs)).toThrow(
+			"Unknown flag --zzzzzz. Run with --help for the flags of this command.",
+		);
+		expect(() => parseCommandArgs(["-x"], specs)).toThrow(/Unknown flag -x\./);
+		// Negated booleans and values after `--` stay valid.
+		expect(parseCommandArgs(["--no-muted", "--", "--codex"], specs).positionals).toEqual([
+			"--codex",
+		]);
+	});
+
+	it("says how to pass a value instead of quoting parseArgs", () => {
+		expect(() => parseCommandArgs(["--codec"], specs)).toThrow(
+			"--codec needs a value: --codec=<value>.",
+		);
+		expect(() => parseCommandArgs(["--quiet=yes"], specs)).toThrow(
+			"--quiet takes no value: write --quiet, --quiet=false or --no-quiet.",
+		);
+	});
+});
+
+describe("closest", () => {
+	it("suggests near names and prefixes, never a distant one", () => {
+		expect(closest("prop", ["props", "port"])).toBe("props");
+		expect(closest("rendr", ["render", "still"])).toBe("render");
+		expect(closest("xyz", ["render", "still"])).toBeNull();
+		expect(closest("c", ["codec", "crf"])).toBeNull();
 	});
 });
 

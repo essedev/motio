@@ -1,0 +1,30 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "urn:motio:cli:version",
+	"title": "motio --version --json",
+	"description": "The version of @motiojs/cli.",
+	"oneOf": [
+		{
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["ok", "command", "version", "warnings"],
+			"properties": {
+				"ok": {
+					"const": true
+				},
+				"command": {
+					"const": "version"
+				},
+				"version": {
+					"type": "string"
+				},
+				"warnings": {
+					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				}
+			}
+		},
+		{
+			"$ref": "urn:motio:cli:common#/$defs/error"
+		}
+	]
+}

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import {
 	createBundle,
 	loadEnvVariables,
@@ -26,6 +27,7 @@ import type { CliDeps, CommandContext, CommandResult } from "./context.js";
 import { EXIT, exitCodeFor, toErrorJson, usageError } from "./errors.js";
 import { type CliIo, Reporter } from "./io.js";
 import { loadDistributed, loadRenderer } from "./renderer-api.js";
+import { closest } from "./suggest.js";
 
 interface CommandDefinition {
 	/** Words that select the command, e.g. `["check", "determinism"]`. */
@@ -140,6 +142,7 @@ function generalHelp(): string {
 		...COMMANDS.map((c) => `  ${commandName(c).padEnd(width)}${c.summary}`),
 		"",
 		"Every command takes --json (one JSON object on stdout) and --help.",
+		"motio --version prints the version.",
 		"Exit codes: 0 success, 1 error, 2 invalid arguments, 3 a check found problems.",
 		"",
 	].join("\n");
@@ -160,6 +163,51 @@ function commandHelp(definition: CommandDefinition): string {
 		}),
 		"",
 	].join("\n");
+}
+
+/** The version of `@motiojs/cli`, read from its package.json. */
+export function cliVersion(): string {
+	const manifest = JSON.parse(
+		readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+	) as { version?: string };
+	return manifest.version ?? "unknown";
+}
+
+/** `Unknown command "rendr". Did you mean motio render?`, or the commands of a group. */
+export function unknownCommandError(argv: readonly string[]) {
+	const words = argv.filter((a) => !a.startsWith("-")).slice(0, 2);
+	const typed = words.join(" ");
+	if (words.length === 0) {
+		return usageError(`Unknown flag ${argv[0]}. Run motio --help for the commands.`, {
+			flag: argv[0],
+		});
+	}
+	// A group word alone (`motio check`): list its commands.
+	const group = COMMANDS.filter((c) => c.words.length > 1 && c.words[0] === words[0]);
+	if (group.length > 0) {
+		const names = group.map((c) => `motio ${commandName(c)}`);
+		return usageError(
+			`"${words[0]}" needs a subcommand: ${names.join(" or ")}. Run motio --help for the commands.`,
+			{ command: typed, suggestions: names },
+		);
+	}
+	// Two words may be a mistyped group command (`chek flicker`), else the second is an argument.
+	const names = COMMANDS.map(commandName);
+	const pair = closest(
+		typed,
+		names.filter((n) => n.includes(" ")),
+	);
+	const command = pair ? typed : (words[0] as string);
+	const suggestion =
+		pair ??
+		closest(
+			command,
+			names.filter((n) => !n.includes(" ")),
+		);
+	return usageError(
+		`Unknown command "${command}".${suggestion ? ` Did you mean motio ${suggestion}?` : ""} Run motio --help for the commands.`,
+		{ command, ...(suggestion ? { suggestion } : {}) },
+	);
 }
 
 /** Default dependencies: the real renderer, bundler and FFmpeg. */
@@ -220,7 +268,8 @@ export async function runCli(argv: readonly string[], io: CliIo, deps: CliDeps):
 	const reporter = new Reporter(io, json, logLevel ?? "info");
 
 	if (!found) {
-		if (argv.length === 0 || argv[0] === "--help" || argv[0] === "-h" || argv[0] === "help") {
+		const onlyHelpFlags = argv.every((a) => a === "--json" || a === "--help" || a === "-h");
+		if (onlyHelpFlags || argv[0] === "help") {
 			if (json)
 				reporter.resultJson({
 					ok: true,
@@ -231,12 +280,13 @@ export async function runCli(argv: readonly string[], io: CliIo, deps: CliDeps):
 			else io.stdout(generalHelp());
 			return EXIT.ok;
 		}
-		const error = usageError(
-			`Unknown command "${argv
-				.filter((a) => !a.startsWith("-"))
-				.slice(0, 2)
-				.join(" ")}". Run motio --help.`,
-		);
+		if (argv[0] === "--version" || argv[0] === "-v" || argv[0] === "version") {
+			const version = cliVersion();
+			if (json) reporter.resultJson({ ok: true, command: "version", version, warnings: [] });
+			else io.stdout(`${version}\n`);
+			return EXIT.ok;
+		}
+		const error = unknownCommandError(argv);
 		if (json) reporter.resultJson({ ok: false, command: null, error: toErrorJson(error) });
 		else io.stderr(`error: ${error.message}\n`);
 		return EXIT.usage;
