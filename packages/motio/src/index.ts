@@ -42,6 +42,7 @@ export {
 	type InteractivePremountProps,
 	type InteractiveTransformProps,
 	type InteractivitySchema,
+	type InteractivitySchemaField,
 	type InterpolateColorsOptions,
 	type InterpolateOptions,
 	type InterpolateOutputType,
