@@ -1,7 +1,8 @@
 /**
  * Generates the brand kit in `brand/` and the icons in `website/public/` from one geometry
  * (`src/brand/mark.ts`) and the Anybody font: SVG marks and lockups with the wordmark outlined,
- * an animated mark, favicons (SVG, ICO, PNG) and the static Open Graph card.
+ * an animated mark and favicons (SVG, ICO, PNG). The Open Graph card and the README banner are
+ * rendered by Motio itself, from `promo/` (`make promo`).
  * PNGs are rasterized by the pinned chrome-headless-shell (`motio browser ensure`).
  *
  * Run with `make brand`. The outputs are committed; run it again after changing the geometry.
@@ -252,31 +253,6 @@ for (const [pkg, name] of [
 	);
 }
 
-// Open Graph card, 1200x630: a static frame of the brand until Motio renders its own (see website/README.md).
-const fontUrl = (pkg: string, file: string) => pathToFileURL(fontFile(pkg, file)).href;
-const ogLockup = lockup("ink", PALETTE.plum, "og");
-const ogArt = markElements("color", "oga");
-rasterize(
-	`<!doctype html><meta charset="utf-8"><style>
-@font-face{font-family:Anybody;src:url(${fontUrl("@fontsource-variable/anybody", "anybody-latin-wdth-normal.woff2")});font-weight:100 900;font-stretch:50% 150%}
-@font-face{font-family:Instrument;src:url(${fontUrl("@fontsource-variable/instrument-sans", "instrument-sans-latin-wdth-normal.woff2")});font-weight:400 700;font-stretch:75% 100%}
-html,body{margin:0}
-.card{width:1200px;height:630px;display:grid;grid-template-columns:760px 1fr;background:${PALETTE.pulse};color:${PALETTE.plum};overflow:hidden}
-.l{padding:64px 0 60px 72px;display:grid;align-content:space-between}
-.l svg{height:64px;width:auto;display:block}
-h1{margin:0;font:900 96px/0.88 Anybody;font-stretch:92%;letter-spacing:-0.035em}
-.os{display:inline-block;margin-top:18px;padding:8px 20px 14px;background:${PALETTE.spark};border-radius:14px;font:880 64px/1 Anybody;font-stretch:112%;letter-spacing:-0.03em}
-.r{background:${PALETTE.plum};position:relative}
-.r svg{position:absolute;left:-30px;top:120px;width:470px;height:470px}
-.meta{position:absolute;left:40px;bottom:52px;display:flex;gap:10px}
-.meta span{font:600 22px/1 Instrument;padding:12px 18px;border-radius:999px;background:rgb(255 255 255 / .12);color:${PALETTE.mist}}
-.meta .y{background:${PALETTE.spark};color:${PALETTE.plum}}
-</style><div class="card"><div class="l">${svgDoc(ogLockup.box, "Motio", ogLockup.body)}<div><h1>Make videos with React.</h1><span class="os">Open source.</span></div></div><div class="r"><svg viewBox="${[markBox.x, markBox.y, markBox.w, markBox.h].join(" ")}" aria-hidden="true">${ogArt}</svg><div class="meta"><span class="y">pre-alpha</span><span>Apache-2.0</span></div></div></div>`,
-	1200,
-	630,
-	join(publicDir, "og", "motio-card.png"),
-);
-
 console.log(
-	`Brand kit written to ${brandDir}; brand spring ${JSON.stringify(BRAND_SPRING)}; icons and OG card in ${publicDir}.`,
+	`Brand kit written to ${brandDir}; brand spring ${JSON.stringify(BRAND_SPRING)}; icons in ${publicDir}.`,
 );

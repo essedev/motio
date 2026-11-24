@@ -10,7 +10,7 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 - `make build`, `make test`, `make lint`, `make format`, `make typecheck`.
 - `pnpm test:integration`: tests against the real Chrome and FFmpeg (serial, slower).
 - `make bench`: throughput against the pinned Remotion (`BENCH_ARGS="--assert"` checks the performance criterion; needs `pnpm install` in `tools/oracle-render`, which the target runs).
-- `make site` (dev server, http://localhost:4321), `make site-build` (build plus link check, also part of `make check`), `make brand` (regenerates `brand/`, the icons and the OG card from `website/src/brand/mark.ts`).
+- `make site` (dev server, http://localhost:4321), `make site-build` (build plus link check, also part of `make check`), `make brand` (regenerates `brand/` and the icons from `website/src/brand/mark.ts`), `make promo` (renders the promotional material of `promo/`, a Motio project, into `promo/out/` and refreshes the OG card and the README banner).
 - `pnpm --dir tools/oracle record`: re-record oracle fixtures from the published Remotion package (separate commit, state why).
 
 ## Layout
@@ -18,7 +18,7 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 - `packages/*`: workspace packages (`motio` entry, `@motiojs/core`, `renderer`, `cli`, `compat`, `bundler`, `testing`, ...).
 - `tools/oracle/`: standalone project that installs the pinned Remotion and records reference values. Outside the workspace.
 - `fixtures/*`: compositions used by integration and golden tests.
-- `website/`: landing and docs (Astro, Starlight). Pages are read from `docs/guide/`, the CLI's `COMMANDS` and schemas, and package READMEs at build time (`website/src/lib/docs-loader.ts`); never copy them into the site. `brand/`: generated brand kit.
+- `website/`: landing and docs (Astro, Starlight). Pages are read from `docs/guide/`, the CLI's `COMMANDS` and schemas, and package READMEs at build time (`website/src/lib/docs-loader.ts`); never copy them into the site. `brand/`: generated brand kit. `promo/`: the promotional material, made with Motio.
 - `spike/`: throwaway measurements behind D-005 and D-006; not shipped.
 
 ## Hard rules

@@ -1,3 +1,5 @@
+![Motio: video fatti con React, resi fotogramma per fotogramma in Chrome headless, Apache-2.0.](brand/motio-readme-banner.png)
+
 # Motio
 
 Video fatti con React. Motio rende un albero React fotogramma per fotogramma in un vero Chrome headless e lo codifica con FFmpeg. La sua API pubblica è compatibile con quella documentata di Remotion: un progetto esistente si porta cambiando gli import, oppure senza toccare niente grazie all'alias del bundler. Licenza Apache-2.0, gratuito per qualsiasi uso.
@@ -56,7 +58,7 @@ make test-integration   # Chrome e FFmpeg reali
 
 ## Sito
 
-`website/` contiene la landing page e la documentazione (Astro e Starlight), non ancora pubblicate. La documentazione si costruisce da `docs/guide/` e dai README della CLI e dei pacchetti, senza copie. `make site` la avvia su http://localhost:4321, `make site-build` la costruisce e controlla ogni link. Il brand kit (logo, palette, caratteri, movimento) è in [`brand/`](brand/README.md).
+`website/` contiene la landing page e la documentazione (Astro e Starlight), non ancora pubblicate. La documentazione si costruisce da `docs/guide/` e dai README della CLI e dei pacchetti, senza copie. `make site` la avvia su http://localhost:4321, `make site-build` la costruisce e controlla ogni link. Il brand kit (logo, palette, caratteri, movimento) è in [`brand/`](brand/README.md). Il materiale promozionale (questo banner, la card Open Graph, i video teaser) è un progetto Motio, [`promo/`](promo/README.md), reso con `make promo`.
 
 ## Licenza
 

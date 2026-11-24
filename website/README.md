@@ -5,7 +5,8 @@ The landing page and the documentation, built with Astro and Starlight. Nothing 
 ```bash
 make site          # dev server: http://localhost:4321
 make site-build    # static build in website/dist, then the link check
-make brand         # regenerate brand/, the icons and the Open Graph card
+make brand         # regenerate brand/ and the icons
+make promo         # render the Open Graph card (and the rest of promo/) with Motio
 ```
 
 ## Where the content comes from
@@ -28,4 +29,4 @@ Both run in `make check`.
 
 - `REPO_OWNER` in `src/lib/repo.ts` (`OWNER_PLACEHOLDER`), like `RELEASE_OWNER` in `@motiojs/ffmpeg`: GitHub and edit links point to it until the repository is public.
 - `SITE_URL` (`https://motio.example`, or `MOTIO_SITE_URL` at build time): canonical and Open Graph URLs.
-- `public/og/motio-card.png`: a static 1200x630 card shared by every page. It is the slot for cards rendered by Motio itself; replace the file, or point `og:image` in `src/layouts/Landing.astro` and `astro.config.mjs` at the new images.
+- `public/og/motio-card.png`: one 1200x630 card shared by every page, rendered by Motio from `promo/` (`make promo`, composition `og-card`). Cards per page would point `og:image` in `src/layouts/Landing.astro` and `astro.config.mjs` at new images.

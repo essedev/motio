@@ -1,3 +1,5 @@
+![Motio: make videos with React. Rendered frame by frame in headless Chrome, Apache-2.0.](brand/motio-readme-banner.png)
+
 # Motio
 
 Make videos with React. Motio renders a React tree frame by frame in a real headless Chrome and encodes it with FFmpeg. Its public API is compatible with Remotion's documented API, so existing projects can move over by changing imports, or with no change through the bundler alias. Apache-2.0, free for any use.
@@ -54,7 +56,7 @@ make test-integration   # real Chrome and FFmpeg
 
 ## Website
 
-`website/` holds the landing page and the docs (Astro and Starlight), not deployed yet. The docs are built from `docs/guide/` and from the CLI and package READMEs, with no copies. `make site` starts it on http://localhost:4321, `make site-build` builds it and checks every link. The brand kit (logo, palette, type, motion) is in [`brand/`](brand/README.md).
+`website/` holds the landing page and the docs (Astro and Starlight), not deployed yet. The docs are built from `docs/guide/` and from the CLI and package READMEs, with no copies. `make site` starts it on http://localhost:4321, `make site-build` builds it and checks every link. The brand kit (logo, palette, type, motion) is in [`brand/`](brand/README.md). The promotional material (this banner, the Open Graph card, the teaser videos) is a Motio project, [`promo/`](promo/README.md), rendered with `make promo`.
 
 ## Licence
 

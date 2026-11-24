@@ -2,7 +2,7 @@
 
 The brand is Kinetic, with the Flipbook mark (D-077): three frames fanned out, the way a thumb fans the pages of a flipbook. The full direction, with the landing and docs pages it shapes, is `docs/concepts/concept-c-kinetic.html`.
 
-Every file here is generated from one geometry, `website/src/brand/mark.ts`, by `make brand` (it also writes the site's icons and Open Graph card). Edit the geometry, not the SVGs.
+Every file here is generated from one geometry, `website/src/brand/mark.ts`, by `make brand` (it also writes the site's icons). Edit the geometry, not the SVGs. The README banner below and the site's Open Graph card are rendered by Motio itself from `promo/` (`make promo`), with the same geometry.
 
 ## Files
 
@@ -15,6 +15,7 @@ Every file here is generated from one geometry, `website/src/brand/mark.ts`, by 
 | `motio-mark.svg` | Mark alone, colour. |
 | `motio-mark-ink.svg`, `motio-mark-mist.svg` | Mark alone, monochrome. |
 | `motio-mark-animated.svg` | The mark playing once on load: frames scale in, then fan out with the brand spring. Shows the resting frame with reduced motion. |
+| `motio-readme-banner.png` | The README banner, 1280x320 rendered at 2x. Made by `make promo`. |
 | `favicon/` | `favicon.svg`, `favicon.ico` (16, 32, 48), PNG favicons, `apple-touch-icon.png` (180), `icon-192.png` and `icon-512.png` on a Plum field, and their source `app-icon.svg`. |
 
 The gaps between the frames are transparent (SVG masks), so every file works on any background. The wordmark is outlined: no font is needed to display it.
