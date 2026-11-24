@@ -1,10 +1,40 @@
 # @motiojs/renderer
 
-The Node renderer of [Motio](../../README.md): it opens a bundle in a pinned headless Chrome, captures it frame by frame and encodes with FFmpeg (`renderMedia`, `renderStill`, `renderFrames`, `stitchFramesToVideo`, `getCompositions`, `selectComposition`). This page covers the media functions and the reusable browser; the architecture is in [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
+The Node renderer of [Motio](../../README.md): it opens a bundle in a pinned headless Chrome, captures it frame by frame and encodes with FFmpeg (`renderMedia`, `renderStill`, `renderFrames`, `stitchFramesToVideo`, `getCompositions`, `selectComposition`). This page covers warnings and errors, the media functions and the reusable browser; the architecture is in [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md), and [Rendering from Node](../../docs/guide/rendering-node.md) walks through a render script.
+
+## Warnings and errors
+
+<!-- example: ../../docs/guide/examples/src/packages/renderer.ts#diagnostics -->
+```ts
+import { isMotioError, renderMedia, selectComposition } from "@motiojs/renderer";
+
+const card = await selectComposition({ serveUrl, id: "card" });
+try {
+	const { warnings } = await renderMedia({
+		serveUrl,
+		composition: card,
+		codec: "h264",
+		outputLocation: "out/card.mp4",
+		onDelayRenderPending: (p) => console.log(`${p.label} still open after ${p.elapsedMs} ms`),
+	});
+	// [{ code: "W_FONT_FALLBACK", message: 'Font "Brand" is not available; ...', frame: 0 }]
+	if (warnings.length > 0) console.warn(warnings);
+} catch (error) {
+	if (!isMotioError(error)) throw error;
+	// E_RENDER_ERROR at frame 12 { file: "/project/src/Card.tsx", line: 20, column: 9 } undefined
+	console.error(error.code, "at frame", error.frame, error.details?.source, error.details?.hint);
+}
+```
+
+- `renderMedia()`, `renderStill()` and `renderFrames()` return `warnings: { code, message, frame? }[]` (a Motio extension), what the page reported while rendering, deduplicated by code and message and kept with the first frame each was seen on: `W_FONT_FALLBACK`, `W_MATH_RANDOM`, `W_STATIC_FILE_CASE`, `W_TIMELINE_SHORT`, `W_SLOW_READINESS`, `W_ANIMATION_UNSEEKABLE`, and `W_FFMPEG_FALLBACK` when `@motiojs/ffmpeg` could not download its build and the FFmpeg on `PATH` was used.
+- `onDelayRenderPending` (a Motio extension, on every function that opens a browser) is called every 5 seconds for each open `delayRender()` handle with `{ label, frame, compositionId, elapsedMs, timeoutMs }`; `frame` is null while compositions are listed or metadata resolves.
+- Errors are `MotioError` with a stable `code`, `frame`, `composition` and `details`. `details` repeats `frame` and `compositionId` when known and may carry `source` (`{ file, line, column }`, the first frame of the project's code in a page error's stack, mapped through the bundle's source maps), `rawStack` (the stack before mapping), `hint` and `option` (the option an invalid value was given to).
+- A file missing from `public/` fails at once instead of at the timeout: `E_ASSET_NOT_FOUND` from `<Img>`, `E_FONT_LOAD` from `@motiojs/fonts`, both with `details.path` and, when a file has a close name, `details.suggestion`. `E_FONT_LOAD` also covers undecodable font files and Google Fonts that cannot be downloaded.
+
 
 ## Media functions
 
-Three functions read local media files with the FFmpeg and ffprobe the renderer resolves (the `ffmpegExecutable` and `ffprobeExecutable` options, `MOTIO_FFMPEG` and `MOTIO_FFPROBE`, `@motiojs/ffmpeg` when installed, then `PATH`); `binariesDirectory` points at a folder holding both instead. Paths may be relative to the working directory; URLs are refused, so download remote files first.
+Three functions read local media files with the FFmpeg and ffprobe the renderer resolves (the `ffmpegExecutable` and `ffprobeExecutable` options, `MOTIO_FFMPEG` and `MOTIO_FFPROBE`, `@motiojs/ffmpeg` when installed, then `PATH`, which is also used when the package cannot download its build); `binariesDirectory` points at a folder holding both instead. Paths may be relative to the working directory; URLs are refused, so download remote files first.
 
 ### `getVideoMetadata(path, options?)`
 

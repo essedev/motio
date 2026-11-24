@@ -74,8 +74,57 @@ await renderStill({
 - `onBrowserLog`: the page's console output, with its location.
 - `outputLocation` (`output` for `renderStill()`): leave it out to get the file as a `Buffer` in the result.
 - `browserExecutable`, `ffmpegExecutable`: use another Chrome or FFmpeg.
+- `onDelayRenderPending`: called every 5 seconds for each `delayRender()` handle the render is waiting on, with its `label`, `frame` (null while compositions are listed or metadata resolves), `compositionId`, `elapsedMs` and `timeoutMs`, until the handle is released or times out.
 
-Errors are `MotioError` instances with a stable `code` (`isMotioError()` tells them apart) and context such as the frame and the composition.
+## Warnings and errors
+
+<!-- example: examples/src/render-node.ts#diagnostics -->
+```ts
+import { isMotioError, renderMedia, renderStill, type SourceLocation } from "@motiojs/renderer";
+
+const result = await renderMedia({
+	serveUrl,
+	composition,
+	inputProps,
+	codec: "h264",
+	outputLocation: "out/intro.mp4",
+	// Every 5 seconds for each delayRender() handle the render is waiting on.
+	onDelayRenderPending: ({ label, frame, elapsedMs, timeoutMs }) =>
+		console.log(
+			`Waiting on ${label ?? "delayRender()"} at frame ${frame}: ${elapsedMs}/${timeoutMs} ms`,
+		),
+});
+// Each warning once, with the first frame it was seen on.
+for (const { code, message, frame } of result.warnings) {
+	console.warn(`${code}: ${message}${frame === undefined ? "" : ` (frame ${frame})`}`);
+}
+
+try {
+	await renderStill({ serveUrl, composition, inputProps, frame: 30, output: "out/frame-30.png" });
+} catch (error) {
+	if (isMotioError(error, "E_ASSET_NOT_FOUND")) {
+		// details.path is the file in public/, details.suggestion the closest existing name.
+		console.error(`Missing public/${error.details?.path}, closest: ${error.details?.suggestion}`);
+	} else if (isMotioError(error)) {
+		// Where in the project's code a page error was thrown, mapped through the source maps.
+		const source = error.details?.source as SourceLocation | undefined;
+		const at = source ? ` in ${source.file}:${source.line}:${source.column}` : "";
+		console.error(`${error.code} at frame ${error.frame}${at}: ${error.message}`);
+	}
+	throw error;
+}
+```
+
+`renderMedia()`, `renderStill()` and `renderFrames()` return `warnings`: what the page reported while rendering, as `{ code, message, frame }`, each code and message once with the first frame it was seen on. The codes are `W_FONT_FALLBACK`, `W_MATH_RANDOM`, `W_STATIC_FILE_CASE`, `W_TIMELINE_SHORT`, `W_SLOW_READINESS`, `W_ANIMATION_UNSEEKABLE` and `W_FFMPEG_FALLBACK` (the pinned FFmpeg could not be downloaded, see [FFmpeg](ffmpeg.md)); [Rendering from the CLI](rendering-cli.md#what-a-render-tells-you-on-the-way) says what each means.
+
+Errors are `MotioError` instances with a stable `code` (`isMotioError(error, code)` tells them apart), `frame`, `composition` and `details`. Besides what the code itself carries (FFmpeg's output, a path, the available composition ids), `details` repeats `frame` and `compositionId` when they are known and may hold:
+
+- `source`: `{ file, line, column }`, the first place in the project's code in the stack of an error thrown in the page, mapped through the bundle's source maps (an absolute path when the bundle was built on this machine);
+- `rawStack`: the page's stack before the mapping;
+- `hint`: what to do, in a sentence;
+- `option`: the option an invalid value was given to (`frameRange`, `codec`, ...).
+
+A file missing from `public/` fails at once, without waiting for a timeout: `E_ASSET_NOT_FOUND` for an `<Img>`, `E_FONT_LOAD` for `loadFont()` from `@motiojs/fonts`, with `details.path` (the path in `public/`) and `details.suggestion` (the closest file name, when one is close). `E_FONT_LOAD` also reports a font file the browser cannot decode and a Google Font that cannot be downloaded.
 
 `bundle()` does not read a `remotion.config.ts` file, unlike the CLI: pass the values as options.
 

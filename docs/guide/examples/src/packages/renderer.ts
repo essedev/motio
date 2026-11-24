@@ -2,6 +2,7 @@ import {
 	extractAudio,
 	getSilentParts,
 	getVideoMetadata,
+	isMotioError,
 	openBrowser,
 	renderMedia,
 	renderStill,
@@ -69,6 +70,25 @@ try {
 	}
 } finally {
 	await browser.close();
+}
+// endregion
+
+// region: diagnostics
+const card = await selectComposition({ serveUrl, id: "card" });
+try {
+	const { warnings } = await renderMedia({
+		serveUrl,
+		composition: card,
+		codec: "h264",
+		outputLocation: "out/card.mp4",
+		onDelayRenderPending: (p) => console.log(`${p.label} still open after ${p.elapsedMs} ms`),
+	});
+	// [{ code: "W_FONT_FALLBACK", message: 'Font "Brand" is not available; ...', frame: 0 }]
+	if (warnings.length > 0) console.warn(warnings);
+} catch (error) {
+	if (!isMotioError(error)) throw error;
+	// E_RENDER_ERROR at frame 12 { file: "/project/src/Card.tsx", line: 20, column: 9 } undefined
+	console.error(error.code, "at frame", error.frame, error.details?.source, error.details?.hint);
 }
 // endregion
 
