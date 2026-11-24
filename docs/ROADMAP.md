@@ -68,7 +68,7 @@ Checked by `make bench BENCH_ARGS="--assert"`, outside `make check` (it needs th
 
 ## M4: a real production project
 
-Done when every video of a production Remotion project renders with no source changes, `doctor` reports no missing symbol, renders match the project's Remotion renders within the M1 thresholds and pass the flicker check. Needs a project chosen by the author.
+Done when every video of a production Remotion project renders with no source changes, `doctor` reports no missing symbol, renders match the project's Remotion renders within the M1 thresholds and pass the flicker check. Projects chosen by the author on 2026-11-24: Remocn (a library of animations, transitions, backgrounds and scenes) and snapcn (product demo components), both MIT, by third parties, pinned to a commit, fetched at test time and never vendored; their Remotion renders are recorded locally like the templates' (D-054).
 
 ## M5: scale and formats
 
