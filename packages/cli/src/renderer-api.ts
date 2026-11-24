@@ -45,6 +45,15 @@ export interface BrowserLog {
 	text: string;
 }
 
+/** A delayRender() handle still pending, as the renderer reports it. */
+export interface DelayRenderPending {
+	label: string | null;
+	frame: number | null;
+	compositionId?: string | null;
+	elapsedMs: number;
+	timeoutMs: number;
+}
+
 /** Options shared by every call that opens the bundle. */
 export interface SessionOptions {
 	serveUrl: string;
@@ -55,6 +64,11 @@ export interface SessionOptions {
 	browserExecutable?: string | null;
 	port?: number | null;
 	onBrowserLog?: (log: BrowserLog) => void;
+	/**
+	 * Called by the renderer every few seconds while a delayRender() handle is pending, once per
+	 * handle; `frame` is null outside a seek (calculateMetadata, collecting the root).
+	 */
+	onDelayRenderPending?: (info: DelayRenderPending) => void;
 	logLevel?: LogLevel;
 	captureMethod?: "auto" | "begin-frame" | "screenshot";
 	pagesPerBrowser?: number | null;
@@ -72,6 +86,11 @@ export interface ResolvedFfmpeg {
 	source: FfmpegSource;
 	/** The pinned build, when `source` is `package`. */
 	pinned?: { version: string; build: number };
+	/**
+	 * Set when the pinned build of `@motiojs/ffmpeg` could not be used (archives not published,
+	 * offline) and the FFmpeg on PATH is used instead.
+	 */
+	fallback?: { code?: string; reason: string; message: string };
 }
 
 /** Options of the FFmpeg resolution. */
@@ -189,6 +208,7 @@ export interface RendererApi {
 	selectComposition(options: SessionOptions & { id: string }): Promise<VideoConfig>;
 	renderMedia(options: RenderMediaOptions): Promise<unknown>;
 	renderStill(options: RenderStillOptions): Promise<unknown>;
+	/** Results may carry `warnings: { code, message, frame? }[]` (read with `renderWarningsOf`). */
 	renderFrames(options: RenderFramesOptions): Promise<{ frameCount: number }>;
 	ensureBrowser(options?: {
 		onProgress?: (progress: { downloadedBytes: number; totalBytes: number }) => void;

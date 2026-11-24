@@ -3,6 +3,8 @@ import { join } from "node:path";
 import type { BundleOptions, DevStillRequest, DevStillResult } from "@motiojs/bundler";
 import { MotioError } from "@motiojs/compat";
 import type { CommandContext } from "../context.js";
+import { renderWarningsOf } from "../io.js";
+import { ensureBrowserWithProgress } from "../project.js";
 import type { SessionOptions } from "../renderer-api.js";
 
 /** What the render check needs to build bundles and render. */
@@ -27,6 +29,7 @@ export class DevStillRenderer {
 	private serveUrl: string | null = null;
 	private queue: Promise<unknown> = Promise.resolve();
 	private count = 0;
+	private browserReady = false;
 
 	constructor(private readonly options: DevStillRendererOptions) {}
 
@@ -67,6 +70,10 @@ export class DevStillRenderer {
 		const { ctx, session, workDir } = this.options;
 		const started = Date.now();
 		const serveUrl = await this.ensureBundle();
+		if (!this.browserReady) {
+			await ensureBrowserWithProgress(ctx, session);
+			this.browserReady = true;
+		}
 		const renderer = await ctx.renderer();
 		const composition = await renderer.selectComposition({
 			...session,
@@ -88,7 +95,7 @@ export class DevStillRenderer {
 		const onAbort = () => cancel();
 		signal.addEventListener("abort", onAbort);
 		try {
-			await renderer.renderStill({
+			const result = await renderer.renderStill({
 				...session,
 				serveUrl,
 				inputProps: request.inputProps,
@@ -99,6 +106,12 @@ export class DevStillRenderer {
 				overwrite: true,
 				cancelSignal,
 			});
+			// The preview page shows the still; the terminal running motio dev shows why it may look off.
+			for (const warning of renderWarningsOf(result)) {
+				ctx.reporter.warn(
+					`Render check [${warning.code}]: ${warning.message}${warning.frame !== undefined ? ` (frame ${warning.frame})` : ""}`,
+				);
+			}
 		} finally {
 			signal.removeEventListener("abort", onAbort);
 		}

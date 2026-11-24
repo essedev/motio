@@ -8,7 +8,7 @@ import type { Flags } from "./args.js";
 import type { CommandContext } from "./context.js";
 import { usageError } from "./errors.js";
 import { parseProps, resolvePath } from "./options.js";
-import type { SessionOptions, VideoConfig } from "./renderer-api.js";
+import type { DelayRenderPending, SessionOptions, VideoConfig } from "./renderer-api.js";
 
 /** A project opened for rendering: config loaded, bundle built (or a serve URL given). */
 export interface Project {
@@ -148,7 +148,34 @@ export async function openProject(
 		serveUrl,
 		rendererPort: flags.integer("port", { min: 1, max: 65535 }) ?? config.rendererPort ?? undefined,
 	});
+	await ensureBrowserWithProgress(ctx, session);
 	return { config, serveUrl, session, bundle };
+}
+
+/**
+ * Downloads the pinned browser before the first render with a progress line, as
+ * `motio browser ensure` does: otherwise the renderer downloads about 200 MB in silence.
+ * Nothing happens when it is cached or `--browser-executable` names another Chrome.
+ */
+export async function ensureBrowserWithProgress(
+	ctx: CommandContext,
+	session: Pick<SessionOptions, "browserExecutable">,
+): Promise<void> {
+	if (session.browserExecutable) return;
+	const renderer = await ctx.renderer();
+	const browser = await renderer.ensureBrowser({
+		onProgress: ({ downloadedBytes, totalBytes }) =>
+			ctx.reporter.progress(
+				"Downloading chrome-headless-shell (first run only)",
+				totalBytes > 0 ? downloadedBytes / totalBytes : 0,
+				totalBytes >= 1e6 ? `of ${Math.round(totalBytes / 1e6)} MB` : "",
+			),
+	});
+	if (browser.downloaded) {
+		ctx.reporter.info(
+			`Downloaded chrome-headless-shell${browser.version ? ` ${browser.version}` : ""} to ${browser.executablePath}`,
+		);
+	}
 }
 
 /** Values of `--capture-method` (D-013). */
@@ -208,7 +235,26 @@ export function buildSessionOptions(
 				: {}),
 		},
 		onBrowserLog: (log) => ctx.reporter.verbose(`[browser ${log.type}] ${log.text}`),
+		onDelayRenderPending: (info) => ctx.reporter.info(delayRenderPendingLine(info)),
 	};
+}
+
+/**
+ * `Waiting on delayRender("Waiting for the API") at frame 0 of Api: 10/30 s (--timeout=<ms>
+ * raises the limit).`, the line printed while a page holds a frame.
+ */
+export function delayRenderPendingLine(info: DelayRenderPending): string {
+	const label = info.label ? `delayRender(${JSON.stringify(info.label)})` : "delayRender()";
+	const where = [
+		typeof info.frame === "number" ? `at frame ${info.frame}` : "",
+		info.compositionId
+			? `${typeof info.frame === "number" ? "of" : "in"} ${info.compositionId}`
+			: "",
+	]
+		.filter(Boolean)
+		.join(" ");
+	const seconds = (ms: number) => Math.round(ms / 1000);
+	return `Waiting on ${label}${where ? ` ${where}` : ""}: ${seconds(info.elapsedMs)}/${seconds(info.timeoutMs)} s (--timeout=<ms> raises the limit).`;
 }
 
 /** Lists composition ids, for the error raised when none was given. */

@@ -35,7 +35,7 @@ export async function renderToFiles(
 	const { cancelSignal, cancel } = renderer.makeCancelSignal();
 	const stopListening = ctx.onInterrupt(cancel);
 	try {
-		await renderer.renderFrames({
+		const result = await renderer.renderFrames({
 			...project.session,
 			composition,
 			outputDir: null,
@@ -55,6 +55,7 @@ export async function renderToFiles(
 				ctx.reporter.progress(options.label, files.size / options.frames.length);
 			},
 		});
+		ctx.reporter.renderResult(result);
 	} finally {
 		stopListening();
 	}

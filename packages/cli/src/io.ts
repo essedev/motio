@@ -12,6 +12,27 @@ export interface CliIo {
 
 const LEVELS: Record<LogLevel, number> = { trace: 0, verbose: 1, info: 2, warn: 3, error: 4 };
 
+/** A warning the renderer returns with a render result (`W_FONT_FALLBACK`, ...). */
+export interface RenderWarning {
+	code: string;
+	message: string;
+	frame?: number;
+}
+
+/**
+ * The warnings of a render result, read defensively: a renderer without them, or a malformed
+ * entry, gives none.
+ */
+export function renderWarningsOf(result: unknown): RenderWarning[] {
+	const list = (result as { warnings?: unknown } | null | undefined)?.warnings;
+	if (!Array.isArray(list)) return [];
+	return list.flatMap((item): RenderWarning[] => {
+		const { code, message, frame } = (item ?? {}) as Record<string, unknown>;
+		if (typeof code !== "string" || typeof message !== "string") return [];
+		return [{ code, message, ...(typeof frame === "number" ? { frame } : {}) }];
+	});
+}
+
 /**
  * Human output goes to stderr (progress, warnings) and stdout (the result); in JSON mode the
  * only thing on stdout is the final JSON object, and nothing is printed on stderr except
@@ -19,6 +40,8 @@ const LEVELS: Record<LogLevel, number> = { trace: 0, verbose: 1, info: 2, warn: 
  */
 export class Reporter {
 	readonly warnings: string[] = [];
+	/** Warnings from render results, deduplicated across the renders of a command. */
+	readonly renderWarnings: RenderWarning[] = [];
 	private lastProgressLine = "";
 	private progressOpen = false;
 
@@ -62,7 +85,31 @@ export class Reporter {
 		this.io.stderr(`warning: ${message}\n`);
 	}
 
-	/** Progress of a phase, `fraction` from 0 to 1. Rewrites one line on a terminal. */
+	/**
+	 * Records the warnings of a render result and prints each new one: `warning [W_FONT_FALLBACK]:
+	 * ... (frame 12)`. The same code and message seen again (another run of a check) is skipped.
+	 */
+	renderResult(result: unknown): void {
+		for (const warning of renderWarningsOf(result)) this.renderWarning(warning);
+	}
+
+	/** Records and prints one render warning, once per code and message. */
+	renderWarning(warning: RenderWarning): void {
+		if (this.renderWarnings.some((w) => w.code === warning.code && w.message === warning.message)) {
+			return;
+		}
+		this.renderWarnings.push(warning);
+		const text = `${warning.message}${warning.frame !== undefined ? ` (frame ${warning.frame})` : ""}`;
+		this.warnings.push(`[${warning.code}] ${text}`);
+		if (this.json || !this.enabled("warn")) return;
+		this.endProgress();
+		this.io.stderr(`warning [${warning.code}]: ${text}\n`);
+	}
+
+	/**
+	 * Progress of a phase, `fraction` from 0 to 1. Rewrites one line on a terminal; elsewhere (CI
+	 * logs) prints a line every 10%.
+	 */
 	progress(label: string, fraction: number, detail = ""): void {
 		if (this.json || !this.enabled("info")) return;
 		const percent = Math.max(0, Math.min(100, Math.round(fraction * 100)));

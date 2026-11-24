@@ -282,6 +282,138 @@ describe("render", () => {
 		);
 	});
 
+	it("prints the page warnings of a render and keeps them in --json", async () => {
+		const warnings = [
+			{
+				code: "W_FONT_FALLBACK",
+				message: '"Comic Neue Pro" is not loaded; a fallback font is drawn.',
+				frame: 0,
+			},
+			{
+				code: "W_MATH_RANDOM",
+				message: "Math.random() was called; use random() from @motiojs/motio.",
+			},
+			{ bogus: true },
+		];
+		const { renderer } = fakeRenderer();
+		renderer.renderMedia = async () => ({ warnings });
+		const deps = testDeps(renderer, fakeBundler().bundler);
+		const human = testIo(cwd);
+		expect(await runCli(["render", "Main"], human, deps)).toBe(0);
+		const stderr = human.err.join("");
+		expect(stderr).toContain(
+			'warning [W_FONT_FALLBACK]: "Comic Neue Pro" is not loaded; a fallback font is drawn. (frame 0)\n',
+		);
+		expect(stderr).toContain("warning [W_MATH_RANDOM]: Math.random() was called");
+		const json = testIo(cwd);
+		expect(await runCli(["render", "Main", "--json"], json, deps)).toBe(0);
+		const result = parseJson(json);
+		expect(validate("render", result)).toBeNull();
+		expect(result.renderWarnings).toEqual(warnings.slice(0, 2));
+		expect(result.warnings).toContain(
+			'[W_FONT_FALLBACK] "Comic Neue Pro" is not loaded; a fallback font is drawn. (frame 0)',
+		);
+	});
+
+	it("reports the warnings of every run of a check once", async () => {
+		const { renderer } = fakeRenderer({ level: () => 50 });
+		const renderFrames = renderer.renderFrames;
+		renderer.renderFrames = async (o) => ({
+			...(await renderFrames(o)),
+			warnings: [{ code: "W_SLOW_READINESS", message: "delayRender took 4 s.", frame: 3 }],
+		});
+		const io = testIo(cwd);
+		const code = await runCli(
+			["check", "determinism", "Main", "--frames=0-4", "--json"],
+			io,
+			testDeps(renderer, fakeBundler().bundler),
+		);
+		expect(code).toBe(0);
+		const result = parseJson(io);
+		expect(validate("check-determinism", result)).toBeNull();
+		expect(result.renderWarnings).toEqual([
+			{ code: "W_SLOW_READINESS", message: "delayRender took 4 s.", frame: 3 },
+		]);
+	});
+
+	it("warns when FFmpeg falls back to PATH and records it in the result", async () => {
+		const { renderer } = fakeRenderer();
+		const io = testIo(cwd);
+		const code = await runCli(
+			["render", "Main", "--json"],
+			io,
+			testDeps(renderer, fakeBundler().bundler, {
+				resolveFfmpeg: async () => ({
+					ffmpeg: "ffmpeg",
+					ffprobe: "ffprobe",
+					source: "path",
+					fallback: {
+						reason: "unpublished",
+						message: "The pinned FFmpeg is not published yet; using the FFmpeg on PATH.",
+					},
+				}),
+			}),
+		);
+		expect(code).toBe(0);
+		const result = parseJson(io);
+		expect(validate("render", result)).toBeNull();
+		expect(result.ffmpeg).toMatchObject({ source: "path", fallback: { reason: "unpublished" } });
+		expect(result.renderWarnings).toEqual([
+			{
+				code: "W_FFMPEG_FALLBACK",
+				message: "The pinned FFmpeg is not published yet; using the FFmpeg on PATH.",
+			},
+		]);
+	});
+
+	it("prints a line while a delayRender() handle holds a frame, naming --timeout", async () => {
+		const { renderer } = fakeRenderer();
+		renderer.renderStill = async (o) => {
+			o.onDelayRenderPending?.({
+				label: "Waiting for the API",
+				frame: 0,
+				compositionId: "Main",
+				elapsedMs: 10_000,
+				timeoutMs: 30_000,
+			});
+			o.onDelayRenderPending?.({
+				label: null,
+				frame: null,
+				compositionId: null,
+				elapsedMs: 5_000,
+				timeoutMs: 30_000,
+			});
+			return {};
+		};
+		const io = testIo(cwd);
+		expect(await runCli(["still", "Main"], io, testDeps(renderer, fakeBundler().bundler))).toBe(0);
+		const stderr = io.err.join("");
+		expect(stderr).toContain(
+			'Waiting on delayRender("Waiting for the API") at frame 0 of Main: 10/30 s (--timeout=<ms> raises the limit).\n',
+		);
+		expect(stderr).toContain(
+			"Waiting on delayRender(): 5/30 s (--timeout=<ms> raises the limit).\n",
+		);
+		// Nothing but the JSON object on stdout with --json, and no waiting lines on stderr.
+		const json = testIo(cwd);
+		expect(
+			await runCli(["still", "Main", "--json"], json, testDeps(renderer, fakeBundler().bundler)),
+		).toBe(0);
+		expect(json.err.join("")).not.toContain("Waiting on");
+	});
+
+	it("shows the browser download before the first render, unless another Chrome is given", async () => {
+		const { io, calls, code } = await run(["still", "Main"]);
+		expect(code).toBe(0);
+		expect(calls.ensureBrowser).toHaveLength(1);
+		const stderr = io.err.join("");
+		expect(stderr).toContain("Downloading chrome-headless-shell (first run only) 50%");
+		expect(stderr).toContain("Downloaded chrome-headless-shell 158.0.8127.36 to /cache/chrome");
+		const own = await run(["still", "Main", `--browser-executable=${process.execPath}`]);
+		expect(own.code).toBe(0);
+		expect(own.calls.ensureBrowser).toBeUndefined();
+	});
+
 	it("rejects invalid flags with exit code 2", async () => {
 		for (const argv of [
 			["render", "Main", "--crf=abc", "--json"],

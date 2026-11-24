@@ -308,6 +308,9 @@ export async function runCli(argv: readonly string[], io: CliIo, deps: CliDeps):
 					command: name,
 					...result.json,
 					warnings: reporter.warnings,
+					...(reporter.renderWarnings.length > 0
+						? { renderWarnings: reporter.renderWarnings }
+						: {}),
 				});
 			}
 		} else reporter.result(result.human);

@@ -76,7 +76,7 @@ export async function stillCommand(
 	const started = Date.now();
 	try {
 		ctx.reporter.info(`Rendering frame ${frame} of ${composition.id}`);
-		await renderer.renderStill({
+		const result = await renderer.renderStill({
 			...project.session,
 			composition,
 			output,
@@ -89,6 +89,7 @@ export async function stillCommand(
 				jpegQuality: jpegQuality ?? project.config.jpegQuality,
 			}),
 		});
+		ctx.reporter.renderResult(result);
 	} finally {
 		stopListening();
 	}

@@ -14,7 +14,13 @@ export async function commandFfmpeg(ctx: CommandContext): Promise<ResolvedFfmpeg
 			),
 	});
 	// Only `download: false` resolves to null.
-	return resolved as ResolvedFfmpeg;
+	const ffmpeg = resolved as ResolvedFfmpeg;
+	// The CLI passes this FFmpeg to the renderer explicitly, so the renderer cannot warn about
+	// the fallback itself: the warning is raised here.
+	if (ffmpeg.fallback) {
+		ctx.reporter.renderWarning({ code: "W_FFMPEG_FALLBACK", message: ffmpeg.fallback.message });
+	}
+	return ffmpeg;
 }
 
 /** How `doctor` and `render` name a source. */

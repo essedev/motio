@@ -83,6 +83,9 @@
 				},
 				"warnings": {
 					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				},
+				"renderWarnings": {
+					"$ref": "urn:motio:cli:common#/$defs/renderWarnings"
 				}
 			}
 		},

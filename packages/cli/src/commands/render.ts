@@ -201,7 +201,7 @@ export async function renderCommand(
 	try {
 		if (chunked) {
 			const distributed = await (ctx.distributed ?? loadDistributed)();
-			await distributed.renderDistributed({
+			const result = await distributed.renderDistributed({
 				...common,
 				...pick({
 					framesPerChunk,
@@ -235,8 +235,9 @@ export async function renderCommand(
 					);
 				},
 			});
-		} else
-			await renderer.renderMedia({
+			ctx.reporter.renderResult(result);
+		} else {
+			const result = await renderer.renderMedia({
 				...common,
 				...pick({
 					crf: crf ?? config.crf,
@@ -271,6 +272,8 @@ export async function renderCommand(
 					);
 				},
 			});
+			ctx.reporter.renderResult(result);
+		}
 	} finally {
 		stopListening();
 	}
@@ -288,6 +291,7 @@ export async function renderCommand(
 				version: ffmpegVersion,
 				source: ffmpeg.source,
 				...(ffmpeg.pinned ? { build: ffmpeg.pinned.build } : {}),
+				...(ffmpeg.fallback ? { fallback: ffmpeg.fallback } : {}),
 			},
 		},
 		human: [`Rendered ${composition.id} to ${output} in ${(durationMs / 1000).toFixed(1)}s`],
@@ -349,6 +353,7 @@ async function renderSequence(
 			},
 		});
 		renderedFrames = result.frameCount;
+		ctx.reporter.renderResult(result);
 	} finally {
 		stopListening();
 	}

@@ -67,11 +67,33 @@
 						"build": {
 							"type": "integer",
 							"description": "Build number of the pinned build, when source is package."
+						},
+						"fallback": {
+							"type": "object",
+							"description": "Set when the pinned build of @motiojs/ffmpeg could not be used (archives not published, offline) and the FFmpeg on PATH was used instead.",
+							"required": ["reason", "message"],
+							"additionalProperties": false,
+							"properties": {
+								"code": {
+									"type": "string",
+									"description": "The error code that made the pinned build unusable."
+								},
+								"reason": {
+									"type": "string",
+									"description": "unpublished, network, http or unsupported-platform."
+								},
+								"message": {
+									"type": "string"
+								}
+							}
 						}
 					}
 				},
 				"warnings": {
 					"$ref": "urn:motio:cli:common#/$defs/warnings"
+				},
+				"renderWarnings": {
+					"$ref": "urn:motio:cli:common#/$defs/renderWarnings"
 				},
 				"sequence": {
 					"const": true,

@@ -9,6 +9,29 @@
 			},
 			"description": "Warnings printed during the command (config, bundler, compat)."
 		},
+		"renderWarnings": {
+			"type": "array",
+			"description": "Warnings the page raised while rendering (a fallback font, Math.random, a slow delayRender...), deduplicated. Their messages are also in warnings. Present only when there is at least one.",
+			"items": {
+				"type": "object",
+				"required": ["code", "message"],
+				"additionalProperties": true,
+				"properties": {
+					"code": {
+						"type": "string",
+						"pattern": "^W_[A-Z0-9_]+$"
+					},
+					"message": {
+						"type": "string"
+					},
+					"frame": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "The frame it was first seen on, when it belongs to one."
+					}
+				}
+			}
+		},
 		"composition": {
 			"type": "object",
 			"required": ["id", "width", "height", "fps", "durationInFrames"],
