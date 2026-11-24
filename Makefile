@@ -35,9 +35,13 @@ site-build: ## Build the website into website/dist and check its links
 	pnpm build
 	pnpm --dir website build
 
-brand: ## Regenerate brand/, the site icons and the Open Graph card (needs the pinned Chrome)
+brand: ## Regenerate brand/ and the site icons from the mark geometry (needs the pinned Chrome)
 	pnpm build
 	pnpm --dir website brand
+
+promo: ## Render the promotional material into promo/out; refreshes the OG card and the README banner
+	pnpm build
+	pnpm --dir promo render
 
 test-integration: ## Run integration tests (real Chrome and FFmpeg, serial)
 	pnpm test:integration

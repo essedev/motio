@@ -31,7 +31,7 @@ export default defineConfig({
 			{
 				test: {
 					name: "integration",
-					include: ["packages/*/src/**/*.integration.test.{ts,tsx}"],
+					include: ["packages/*/src/**/*.integration.test.{ts,tsx}", "promo/*.integration.test.ts"],
 					environment: "node",
 					fileParallelism: false,
 					testTimeout: 120_000,

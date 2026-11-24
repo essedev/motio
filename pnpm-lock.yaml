@@ -1233,6 +1233,55 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
+  promo:
+    dependencies:
+      '@fontsource-variable/anybody':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/instrument-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/ibm-plex-mono':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@motiojs/fonts':
+        specifier: workspace:*
+        version: link:../packages/fonts
+      '@motiojs/transitions':
+        specifier: workspace:*
+        version: link:../packages/transitions
+      motio:
+        specifier: workspace:*
+        version: link:../packages/motio
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@motiojs/bundler':
+        specifier: workspace:*
+        version: link:../packages/bundler
+      '@motiojs/cli':
+        specifier: workspace:*
+        version: link:../packages/cli
+      '@motiojs/renderer':
+        specifier: workspace:*
+        version: link:../packages/renderer
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: ^5.1.1
+        version: 5.1.1(@types/node@26.6.6)(jsdom@31.0.1)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.1))
+
   spike:
     dependencies:
       puppeteer-core:

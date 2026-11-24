@@ -49,6 +49,12 @@
 	},
 	"overrides": [
 		{
+			"includes": ["promo/src/snippet/Hello.tsx"],
+			"formatter": {
+				"lineWidth": 64
+			}
+		},
+		{
 			"includes": ["**/*.astro"],
 			"linter": {
 				"rules": {
