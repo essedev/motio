@@ -17,6 +17,21 @@ export interface Prompter {
 	close(): void;
 }
 
+/** The numbered lines of a choice, labels padded so the hints form one column. */
+export function formatChoices<T extends string>(
+	choices: readonly Choice<T>[],
+	initial: T,
+): string[] {
+	const numberWidth = String(choices.length).length;
+	const labelWidth = Math.max(...choices.map((choice) => choice.label.length));
+	return choices.map((choice, index) => {
+		const marker = choice.value === initial ? "*" : " ";
+		const number = `${index + 1}.`.padStart(numberWidth + 1);
+		const label = choice.hint ? `${choice.label.padEnd(labelWidth)}  ${choice.hint}` : choice.label;
+		return `${marker} ${number} ${label}`;
+	});
+}
+
 function inputClosed(): MotioError {
 	return new MotioError(
 		"E_PROMPT_CLOSED",
@@ -63,11 +78,7 @@ export function terminalPrompter(
 			return answer === "" ? initial : answer;
 		},
 		async select(question, choices, initial) {
-			const lines = choices.map((choice, index) => {
-				const marker = choice.value === initial ? "*" : " ";
-				return `${marker} ${index + 1}. ${choice.label}${choice.hint ? `  ${choice.hint}` : ""}`;
-			});
-			output.write(`${question}\n${lines.join("\n")}\n`);
+			output.write(`${question}\n${formatChoices(choices, initial).join("\n")}\n`);
 			const defaultNumber = choices.findIndex((c) => c.value === initial) + 1;
 			for (;;) {
 				const answer = await ask(`Choose 1-${choices.length} (${defaultNumber}): `);

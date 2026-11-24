@@ -79,19 +79,23 @@ export const RENDER_FLAGS = {
 	},
 	sequence: {
 		type: "boolean",
-		description: "Output an image sequence (JPEG by default) into the output folder.",
+		description: "Output an image sequence (PNG by default) into the output folder.",
 	},
 	"image-sequence-pattern": {
 		type: "string",
-		description: 'Image sequence file names: [frame] and [ext] (default "element-[frame].[ext]").',
+		description: 'Image sequence file names: [frame] and [ext] (default "frame-[frame].[ext]").',
 	},
 } as const;
+
+/** File names of `motio render --sequence`: `frame-0042.png`. */
+export const DEFAULT_SEQUENCE_PATTERN = "frame-[frame].[ext]";
 
 /** `motio render [entry|serve-url] <composition-id> [output]` */
 export async function renderCommand(
 	ctx: CommandContext,
 	argv: readonly string[],
 ): Promise<CommandResult> {
+	const commandStarted = Date.now();
 	const { positionals, values } = parseCommandArgs(argv, RENDER_FLAGS);
 	const flags = new Flags(values);
 	const { entry, id, output: positionalOutput } = splitPositionals(positionals, ctx.io.cwd);
@@ -144,18 +148,21 @@ export async function renderCommand(
 		config.imageSequence ??
 		false;
 	if (sequence) {
-		return renderSequence(ctx, project, composition, {
+		return renderSequence(ctx, project, composition, commandStarted, {
 			output: resolvePath(
 				ctx.io.cwd,
 				requestedOutput ?? join("out", composition.defaultOutName ?? composition.id),
 			),
-			imageFormat: imageFormat ?? config.videoImageFormat,
+			// PNG: a sequence is usually an intermediate for another tool, where JPEG would lose
+			// quality at every step. Remotion's CLI writes element-[frame].jpeg; the config keeps both.
+			imageFormat: imageFormat ?? config.videoImageFormat ?? "png",
 			jpegQuality: jpegQuality ?? config.jpegQuality,
 			frameRange: frameRange ?? config.frameRange ?? undefined,
 			everyNthFrame: everyNthFrame ?? config.everyNthFrame,
 			concurrency: concurrency ?? config.concurrency ?? undefined,
 			scale: scale ?? config.scale,
-			imageSequencePattern: imageSequencePattern ?? config.imageSequencePattern,
+			imageSequencePattern:
+				imageSequencePattern ?? config.imageSequencePattern ?? DEFAULT_SEQUENCE_PATTERN,
 		});
 	}
 	if (requestedOutput && !codecFlag && !config.codec) assertInferableOutput(requestedOutput);
@@ -268,7 +275,10 @@ export async function renderCommand(
 					ctx.reporter.progress(
 						"Rendering",
 						progress.progress,
-						`(${progress.renderedFrames} rendered, ${progress.encodedFrames} encoded)`,
+						// Encoding starts after the first frames; "0 encoded" until then reads as stuck.
+						progress.encodedFrames > 0
+							? `(${progress.renderedFrames} rendered, ${progress.encodedFrames} encoded)`
+							: `(${progress.renderedFrames} rendered)`,
 					);
 				},
 			});
@@ -278,6 +288,7 @@ export async function renderCommand(
 		stopListening();
 	}
 	const durationMs = Date.now() - started;
+	const totalMs = Date.now() - commandStarted;
 	return {
 		json: {
 			composition: compositionJson(composition),
@@ -285,6 +296,7 @@ export async function renderCommand(
 			codec,
 			renderedFrames,
 			durationMs,
+			totalMs,
 			serveUrl: project.serveUrl,
 			ffmpeg: {
 				path: ffmpeg.ffmpeg,
@@ -294,8 +306,19 @@ export async function renderCommand(
 				...(ffmpeg.fallback ? { fallback: ffmpeg.fallback } : {}),
 			},
 		},
-		human: [`Rendered ${composition.id} to ${output} in ${(durationMs / 1000).toFixed(1)}s`],
+		human: [`Rendered ${composition.id} to ${output} in ${timing(totalMs, durationMs)}`],
 	};
+}
+
+/**
+ * `6.3s (rendering 5.1s)`: the time the command took, with the share spent rendering, so the
+ * line matches what the user waited.
+ */
+export function timing(totalMs: number, renderMs: number): string {
+	const seconds = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
+	return totalMs - renderMs >= 100
+		? `${seconds(totalMs)} (rendering ${seconds(renderMs)})`
+		: seconds(totalMs);
 }
 
 /** Whether `--frames` lists more than one single frame and no range. */
@@ -312,6 +335,7 @@ async function renderSequence(
 	ctx: CommandContext,
 	project: Awaited<ReturnType<typeof openProject>>,
 	composition: Awaited<ReturnType<typeof selectComposition>>,
+	commandStarted: number,
 	options: {
 		output: string;
 		imageFormat: "jpeg" | "png" | "none" | undefined;
@@ -358,19 +382,21 @@ async function renderSequence(
 		stopListening();
 	}
 	const durationMs = Date.now() - started;
+	const totalMs = Date.now() - commandStarted;
 	return {
 		json: {
 			composition: compositionJson(composition),
 			output: options.output,
 			codec: null,
 			sequence: true,
-			imageFormat: options.imageFormat ?? "jpeg",
+			imageFormat: options.imageFormat,
 			renderedFrames,
 			durationMs,
+			totalMs,
 			serveUrl: project.serveUrl,
 		},
 		human: [
-			`Rendered ${renderedFrames} frames of ${composition.id} to ${options.output} in ${(durationMs / 1000).toFixed(1)}s`,
+			`Rendered ${renderedFrames} frames of ${composition.id} to ${options.output} in ${timing(totalMs, durationMs)}`,
 		],
 	};
 }

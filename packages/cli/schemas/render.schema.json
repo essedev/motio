@@ -42,7 +42,13 @@
 				},
 				"durationMs": {
 					"type": "integer",
-					"minimum": 0
+					"minimum": 0,
+					"description": "Time spent rendering and encoding, from the first frame to the written file."
+				},
+				"totalMs": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Time the whole command took, bundling and opening the browser included."
 				},
 				"serveUrl": {
 					"type": "string"

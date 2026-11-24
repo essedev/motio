@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { DevLogLevel } from "@motiojs/bundler";
+import { DEFAULT_DEV_PORT, type DevLogLevel } from "@motiojs/bundler";
 import { Flags, parseCommandArgs } from "../args.js";
 import type { CommandContext, CommandResult } from "../context.js";
 import { usageError } from "../errors.js";
@@ -170,8 +170,12 @@ export async function devCommand(
 			warnings: ctx.reporter.warnings,
 		});
 	} else {
+		const wanted = port ?? config.studioPort ?? DEFAULT_DEV_PORT;
+		if (server.port !== wanted) {
+			ctx.reporter.info(`Port ${wanted} is in use; using ${server.port}.`);
+		}
 		ctx.io.stdout(`Motio preview: ${server.url}\n`);
-		ctx.reporter.info(
+		ctx.reporter.verbose(
 			`Entry point ${server.entryPoint} (${server.entryPointReason === "common paths" ? "found in a common path" : `from the ${server.entryPointReason}`})`,
 		);
 		ctx.reporter.info("Press Ctrl+C to stop.");

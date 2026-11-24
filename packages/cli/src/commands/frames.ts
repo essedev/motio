@@ -1,11 +1,14 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { Flags, parseCommandArgs } from "../args.js";
 import type { CommandContext, CommandResult } from "../context.js";
 import { usageError } from "../errors.js";
 import { commandFfmpeg } from "../ffmpeg.js";
 import { CAPTURE_FLAGS, PROJECT_FLAGS } from "../flags.js";
-import { composeContactSheet } from "../frames/ffmpeg.js";
+import { pngSize } from "../frames/compare.js";
+import { composeContactSheet, decodePngs } from "../frames/ffmpeg.js";
+import { drawLabels } from "../frames/labels.js";
+import { encodeRgbaPng } from "../frames/png.js";
 import { framesInRange, renderToFiles } from "../frames/render-to-files.js";
 import { parseConcurrency, parseFrameRange, resolvePath } from "../options.js";
 import { compositionJson, openProject, selectComposition, splitPositionals } from "../project.js";
@@ -30,6 +33,34 @@ export function sampleFrames(available: readonly number[], count: number): numbe
 		picked.add(available[Math.round((i * (available.length - 1)) / (count - 1))] as number);
 	}
 	return [...picked];
+}
+
+/** Writes each cell's frame number in its top-left corner, so a sheet can be read alone. */
+async function labelContactSheet(
+	ffmpeg: string,
+	file: string,
+	frames: readonly number[],
+	grid: { columns: number; cellWidth: number; cellHeight: number; padding: number },
+): Promise<void> {
+	const { width, height } = pngSize(await readFile(file));
+	let sheet: Buffer | undefined;
+	await decodePngs(ffmpeg, [file], (_, rgba) => {
+		sheet = Buffer.from(rgba);
+	});
+	if (!sheet) throw new Error(`Could not read back the contact sheet ${file}.`);
+	const dot = Math.max(2, Math.round(grid.cellWidth / 120));
+	drawLabels(
+		sheet,
+		width,
+		height,
+		frames.map((frame, index) => ({
+			x: grid.padding + (index % grid.columns) * (grid.cellWidth + grid.padding),
+			y: grid.padding + Math.floor(index / grid.columns) * (grid.cellHeight + grid.padding),
+			text: String(frame),
+		})),
+		dot,
+	);
+	await writeFile(file, encodeRgbaPng(sheet, width, height));
 }
 
 /** `motio frames [entry|serve-url] <composition-id> [output]`: a contact sheet. */
@@ -79,13 +110,15 @@ export async function framesCommand(
 		label: "Rendering frames",
 	});
 	const padding = 4;
+	const ffmpeg = (await commandFfmpeg(ctx)).ffmpeg;
 	await composeContactSheet(
-		(await commandFfmpeg(ctx)).ffmpeg,
+		ffmpeg,
 		frames.map((frame) => files.get(frame) as string),
 		{ columns, rows, cellWidth, padding },
 		output,
 	);
 	const cellHeight = 2 * Math.round((cellWidth * composition.height) / composition.width / 2);
+	await labelContactSheet(ffmpeg, output, frames, { columns, cellWidth, cellHeight, padding });
 	return {
 		json: {
 			composition: compositionJson(composition),

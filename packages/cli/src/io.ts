@@ -118,7 +118,7 @@ export class Reporter {
 		if (this.io.isTTY) {
 			this.io.stderr(`\r\x1b[2K${line}`);
 			this.progressOpen = true;
-		} else if (percent === 100 || percent % 25 === 0) {
+		} else if (percent === 100 || percent % 10 === 0) {
 			this.io.stderr(`${line}\n`);
 		}
 		this.lastProgressLine = line;

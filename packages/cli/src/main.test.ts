@@ -3,6 +3,9 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { timing } from "./commands/render.js";
+import { pngSize } from "./frames/compare.js";
+import { decodePngs } from "./frames/ffmpeg.js";
 import { runCli } from "./main.js";
 import type { VideoConfig } from "./renderer-api.js";
 import {
@@ -190,6 +193,9 @@ describe("render", () => {
 				[5, 5],
 				[9, 9],
 			],
+			// Without flags or config: frame-0005.png, lossless for the tool that reads them.
+			imageFormat: "png",
+			imageSequencePattern: "frame-[frame].[ext]",
 		});
 	});
 
@@ -503,6 +509,17 @@ describe("frames", () => {
 		expect(result.grid).toEqual({ columns: 3, rows: 2, cellWidth: 32, cellHeight: 16, padding: 4 });
 		expect(calls.renderFrames?.[0]).toMatchObject({ frames: [0, 5, 10, 14, 19], outputDir: null });
 		expect(existsSync(result.output as string)).toBe(true);
+		// Each tile carries its frame number: white digits on a black box in its top-left corner.
+		let sheet: Buffer | undefined;
+		await decodePngs(process.env.MOTIO_FFMPEG ?? "ffmpeg", [result.output as string], (_, rgba) => {
+			sheet = Buffer.from(rgba);
+		});
+		const { width } = pngSize(readFileSync(result.output as string));
+		const pixel = (x: number, y: number) => sheet?.[(y * width + x) * 4];
+		// The second tile (frame 5, grey 50) starts at x = 4 + 32 + 4; the font dot is 2 px.
+		expect(pixel(40, 4)).toBe(0);
+		expect(pixel(42, 6)).toBe(255);
+		expect(pixel(60, 14)).toBe(50);
 	});
 });
 
@@ -860,6 +877,67 @@ describe("doctor", () => {
 			"it reads media files (durations, audio tracks) and comes with FFmpeg",
 		);
 		expect(ffprobe).not.toContain("M3");
+	});
+});
+
+describe("human output", () => {
+	it("aligns the columns of the composition list", async () => {
+		const { io } = await run(["compositions"], {
+			compositions: [
+				{ ...COMPOSITION, id: "Intro", width: 1920, height: 1080, durationInFrames: 150 },
+				{
+					...COMPOSITION,
+					id: "Vertical",
+					width: 1080,
+					height: 1920,
+					fps: 60,
+					durationInFrames: 90,
+				},
+			],
+		});
+		expect(io.out.join("")).toBe(
+			[
+				"Intro     1920x1080  30 fps  150 frames  (5.00s)",
+				"Vertical  1080x1920  60 fps   90 frames  (1.50s)",
+				"",
+			].join("\n"),
+		);
+		expect(io.err.join("")).not.toContain("Entry point");
+	});
+
+	it("reports the time the command took, with the rendering share", () => {
+		expect(timing(6300, 1000)).toBe("6.3s (rendering 1.0s)");
+		expect(timing(1050, 1000)).toBe("1.1s");
+	});
+
+	it("prints render progress every 10% in logs, without an empty encoded count", async () => {
+		const { renderer } = fakeRenderer();
+		renderer.renderMedia = async (o) => {
+			for (let i = 0; i <= 20; i++) {
+				o.onProgress?.({ renderedFrames: i, encodedFrames: i > 10 ? i - 10 : 0, progress: i / 20 });
+			}
+			return {};
+		};
+		const io = testIo(cwd);
+		expect(await runCli(["render", "Main"], io, testDeps(renderer, fakeBundler().bundler))).toBe(0);
+		const lines = io.err
+			.join("")
+			.split("\n")
+			.filter((l) => l.startsWith("Rendering "));
+		expect(lines).toEqual([
+			"Rendering 0% (0 rendered)",
+			"Rendering 10% (2 rendered)",
+			"Rendering 20% (4 rendered)",
+			"Rendering 30% (6 rendered)",
+			"Rendering 40% (8 rendered)",
+			"Rendering 50% (10 rendered)",
+			"Rendering 60% (12 rendered, 2 encoded)",
+			"Rendering 70% (14 rendered, 4 encoded)",
+			"Rendering 80% (16 rendered, 6 encoded)",
+			"Rendering 90% (18 rendered, 8 encoded)",
+			"Rendering 100% (20 rendered, 10 encoded)",
+		]);
+		expect(io.out.join("")).toMatch(/^Rendered Main to .*Main\.mp4 in \d+\.\ds/);
 	});
 });
 

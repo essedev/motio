@@ -125,6 +125,22 @@ describe("motio dev", () => {
 		expect(started.io.out.join("")).toContain("Stopped.");
 	});
 
+	it("says when the default port was taken and another one is used", async () => {
+		const started = await start([], {
+			startDevServer: async (options) => ({
+				...(await fakeBundler().bundler.startDevServer(options)),
+				port: 3001,
+				url: "http://localhost:3001/",
+			}),
+		});
+		expect(started.io.err.join("")).toContain("Port 3000 is in use; using 3001.\n");
+		expect(started.io.out.join("")).toBe("Motio preview: http://localhost:3001/\n");
+		// The entry point line is a diagnostic now, printed with --log=verbose only.
+		expect(started.io.err.join("")).not.toContain("Entry point");
+		started.interrupt();
+		await started.done;
+	});
+
 	it("makes an explicit --port strict and leaves the default port to the config", async () => {
 		const explicit = await start(["--port", "4123", "--host", "127.0.0.1"]);
 		expect(lastServer()).toMatchObject({ port: 4123, strictPort: true, host: "127.0.0.1" });

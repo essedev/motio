@@ -6,7 +6,7 @@ import { PassThrough } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type CommandContext, defaultDeps } from "../index.js";
 import { detectPackageManager, PACKAGE_MANAGERS } from "../init/package-manager.js";
-import { type Prompter, terminalPrompter } from "../init/prompt.js";
+import { formatChoices, type Prompter, terminalPrompter } from "../init/prompt.js";
 import {
 	alignCodeComments,
 	fillPlaceholders,
@@ -359,5 +359,19 @@ describe("init helpers", () => {
 		input.end();
 		await expect(prompter.text("Dir", "x")).rejects.toMatchObject({ code: "E_PROMPT_CLOSED" });
 		prompter.close();
+	});
+});
+
+describe("init prompt", () => {
+	it("aligns the hints of choices with labels of different lengths", () => {
+		expect(
+			formatChoices(
+				[
+					{ value: "basic", label: "basic", hint: "A short title animation." },
+					{ value: "captions", label: "captions", hint: "Word-by-word captions." },
+				],
+				"basic",
+			),
+		).toEqual(["* 1. basic     A short title animation.", "  2. captions  Word-by-word captions."]);
 	});
 });

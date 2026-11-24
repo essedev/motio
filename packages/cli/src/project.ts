@@ -136,7 +136,7 @@ export async function openProject(
 		});
 		const outDir = bundle.serveUrl;
 		ctx.cleanup.push(() => rm(outDir, { recursive: true, force: true }));
-		ctx.reporter.info(
+		ctx.reporter.verbose(
 			`Entry point ${bundle.entryPoint} (${bundle.entryPointReason === "common paths" ? "found in a common path" : `from the ${bundle.entryPointReason}`})`,
 		);
 		serveUrl = outDir;

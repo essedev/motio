@@ -32,9 +32,39 @@ export async function compositionsCommand(
 		? [list.map((c) => c.id).join(" ")]
 		: list.length === 0
 			? ["No compositions registered."]
-			: list.map(
-					(c) =>
-						`${c.id.padEnd(Math.max(...list.map((x) => x.id.length)) + 2)}${c.width}x${c.height}  ${c.fps} fps  ${c.durationInFrames} frames (${(c.durationInFrames / c.fps).toFixed(2)}s)`,
-				);
+			: compositionTable(list);
 	return { json: { compositions: list }, human };
+}
+
+/** One aligned row per composition: id, size, frame rate, duration. */
+export function compositionTable(
+	list: ReadonlyArray<{
+		id: string;
+		width: number;
+		height: number;
+		fps: number;
+		durationInFrames: number;
+	}>,
+): string[] {
+	const rows = list.map((c) => [
+		c.id,
+		`${c.width}x${c.height}`,
+		`${c.fps} fps`,
+		`${c.durationInFrames} frames`,
+		`(${(c.durationInFrames / c.fps).toFixed(2)}s)`,
+	]);
+	// Text columns align left, numbers right, so digits line up.
+	const right = [false, true, true, true, true];
+	const widths =
+		rows[0]?.map((_, column) => Math.max(...rows.map((row) => (row[column] as string).length))) ??
+		[];
+	return rows.map((row) =>
+		row
+			.map((cell, column) => {
+				const width = widths[column] as number;
+				return right[column] ? cell.padStart(width) : cell.padEnd(width);
+			})
+			.join("  ")
+			.trimEnd(),
+	);
 }

@@ -107,6 +107,7 @@ describe("other options", () => {
 		expect(sampleFrames([0, 1, 2], 5)).toEqual([0, 1, 2]);
 		expect(sampleFrames([4, 5, 6], 1)).toEqual([4]);
 	});
+});
 
 describe("assertInferableOutput", () => {
 	it("names the supported extensions for an unknown or missing one", () => {
@@ -118,6 +119,7 @@ describe("assertInferableOutput", () => {
 		);
 		expect(() => assertInferableOutput("out/x.MP4")).not.toThrow();
 	});
+});
 
 describe("assertFrameRangeWithin", () => {
 	const composition = { id: "Intro", durationInFrames: 150 };
@@ -142,6 +144,7 @@ describe("assertFrameRangeWithin", () => {
 		expect(() => assertFrameRangeWithin([100, null], "100-", composition)).not.toThrow();
 		expect(() => assertFrameRangeWithin(149, "149", composition)).not.toThrow();
 	});
+});
 
 describe("findProjectRoot", () => {
 	it("walks up from the entry to the package.json, else stops at a working directory with public/", async () => {
@@ -159,7 +162,4 @@ describe("findProjectRoot", () => {
 		expect(findProjectRoot(loose, "index.ts")).toBe(loose);
 		await rm(root, { recursive: true, force: true });
 	});
-});
-});
-});
 });

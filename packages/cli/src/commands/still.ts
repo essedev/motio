@@ -7,7 +7,7 @@ import { usageError } from "../errors.js";
 import { CAPTURE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import { resolvePath } from "../options.js";
 import { compositionJson, openProject, selectComposition, splitPositionals } from "../project.js";
-import { pick } from "./render.js";
+import { pick, timing } from "./render.js";
 
 export const STILL_FLAGS = {
 	...PROJECT_FLAGS,
@@ -30,6 +30,7 @@ export async function stillCommand(
 	ctx: CommandContext,
 	argv: readonly string[],
 ): Promise<CommandResult> {
+	const commandStarted = Date.now();
 	const { positionals, values } = parseCommandArgs(argv, STILL_FLAGS);
 	const flags = new Flags(values);
 	const { entry, id, output: positionalOutput } = splitPositionals(positionals, ctx.io.cwd);
@@ -94,8 +95,18 @@ export async function stillCommand(
 		stopListening();
 	}
 	const durationMs = Date.now() - started;
+	const totalMs = Date.now() - commandStarted;
 	return {
-		json: { composition: compositionJson(composition), output, frame, imageFormat, durationMs },
-		human: [`Rendered frame ${frame} of ${composition.id} to ${output}`],
+		json: {
+			composition: compositionJson(composition),
+			output,
+			frame,
+			imageFormat,
+			durationMs,
+			totalMs,
+		},
+		human: [
+			`Rendered frame ${frame} of ${composition.id} to ${output} in ${timing(totalMs, durationMs)}`,
+		],
 	};
 }
