@@ -27,6 +27,11 @@ export function formatDuration(durationInFrames: number, fps: number): string {
 	return `${(durationInFrames / fps).toFixed(2)} s`;
 }
 
+/** Formats a number of frames with its noun: `1 frame`, `60 frames`. */
+export function formatFrameCount(frames: number): string {
+	return `${frames} ${frames === 1 ? "frame" : "frames"}`;
+}
+
 /** Formats a frame rate without trailing zeros: `30`, `29.97`. */
 export function formatFps(fps: number): string {
 	return String(Number(fps.toFixed(3)));

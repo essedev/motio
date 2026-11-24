@@ -33,7 +33,7 @@ import { formatProps, parseProps } from "./props.js";
 import { FULL_RANGE, fitRange, type LoopRange, setInPoint, setOutPoint } from "./range.js";
 import { isEditableTarget, SHORTCUTS, type ShortcutAction, shortcutFor } from "./shortcuts.js";
 import { type RenderedStill, requestStill } from "./still.js";
-import { clampFrame, formatDuration, formatFps } from "./time.js";
+import { clampFrame, formatDuration, formatFps, formatFrameCount } from "./time.js";
 import { Toolbar, type ToolbarActions } from "./toolbar.js";
 import { type ResolvedConfig, useResolvedComposition } from "./use-resolved.js";
 
@@ -561,9 +561,11 @@ export function PreviewApp({ root, options }: { root: ComponentType; options: Pr
 							</span>
 							<span className="mp-meta" data-testid="composition-meta">
 								{shownMeta ? describeComposition(shownMeta) : ""}
-								{config
-									? ` · ${formatFps(config.fps)} fps · ${config.durationInFrames} frames (${formatDuration(config.durationInFrames, config.fps)})`
-									: ""}
+								{selected.isStill
+									? " · still"
+									: config
+										? ` · ${formatFps(config.fps)} fps · ${formatFrameCount(config.durationInFrames)} (${formatDuration(config.durationInFrames, config.fps)})`
+										: ""}
 								{resolved.pending ? " · resolving metadata…" : ""}
 							</span>
 						</>

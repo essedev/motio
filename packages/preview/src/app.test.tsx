@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { Composition, Folder, useCurrentFrame } from "@motiojs/core";
+import { Composition, Folder, Still, useCurrentFrame } from "@motiojs/core";
 import { act, type ComponentType } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -53,6 +53,22 @@ function Compositions() {
 					calculateMetadata={calculateMetadata}
 				/>
 			</Folder>
+		</>
+	);
+}
+
+function StillAndBlink() {
+	return (
+		<>
+			<Still id="Card" component={Frame} width={1200} height={630} />
+			<Composition
+				id="Blink"
+				component={Frame}
+				width={320}
+				height={180}
+				fps={30}
+				durationInFrames={1}
+			/>
 		</>
 	);
 }
@@ -115,6 +131,17 @@ describe("PreviewApp", () => {
 		expect(window.location.hash).toBe("#/Intro");
 		expect(q("content")?.textContent).toBe("hello");
 		expect(text("frame-total")).toBe("/ 59");
+	});
+
+	it("shows a still as a still and counts one frame in the singular", async () => {
+		await mount(StillAndBlink);
+		expect(text("selected-id")).toBe("Card");
+		expect(text("composition-meta")).toBe("1200×630 · still");
+		await act(async () => {
+			(host.querySelector('[data-composition-id="Blink"]') as HTMLButtonElement).click();
+		});
+		await wait(0);
+		expect(text("composition-meta")).toBe("320×180 · 30 fps · 1 frame (0.03 s)");
 	});
 
 	it("selects from the hash and runs calculateMetadata, which the Player does not", async () => {
