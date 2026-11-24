@@ -1,5 +1,6 @@
 // Records the font list and a sample of getInfo() from the published @remotion/google-fonts
-// (public API only). Run: pnpm record:google-fonts
+// (public API only), and the family name each font module uses in CSS for the families whose name
+// has a digit (`fontFamily` of the module and of getInfo()). Run: pnpm record:google-fonts
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { getAvailableFonts } from "@remotion/google-fonts";
@@ -32,4 +33,17 @@ writeFileSync(
 	`${JSON.stringify({ remotion: pkg.dependencies["@remotion/google-fonts"], fonts: fonts.map((f) => ({ fontFamily: f.fontFamily, importName: f.importName })) }, null, "\t")}\n`,
 );
 writeFileSync(join(dir, "samples.json"), `${JSON.stringify(samples, null, "\t")}\n`);
+const cssNames: Array<{ fontFamily: string; module: string; info: string }> = [];
+for (const f of fonts.filter((x) => /[0-9]/.test(x.fontFamily))) {
+	const mod = (await f.load()) as { fontFamily: string; getInfo(): { fontFamily: string } };
+	cssNames.push({
+		fontFamily: f.fontFamily,
+		module: mod.fontFamily,
+		info: mod.getInfo().fontFamily,
+	});
+}
+writeFileSync(
+	join(dir, "css-family-names.json"),
+	`${JSON.stringify({ remotion: pkg.dependencies["@remotion/google-fonts"], families: cssNames }, null, "\t")}\n`,
+);
 console.log(`${fonts.length} fonts, ${Object.keys(samples).length} samples`);

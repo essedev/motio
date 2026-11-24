@@ -1,0 +1,350 @@
+{
+	"remotion": "4.0.545",
+	"families": [
+		{
+			"fontFamily": "B612",
+			"module": "BSixOneTwo",
+			"info": "BSixOneTwo"
+		},
+		{
+			"fontFamily": "B612 Mono",
+			"module": "BSixOneTwo Mono",
+			"info": "BSixOneTwo Mono"
+		},
+		{
+			"fontFamily": "Baloo 2",
+			"module": "Baloo Two",
+			"info": "Baloo Two"
+		},
+		{
+			"fontFamily": "Baloo Bhai 2",
+			"module": "Baloo Bhai Two",
+			"info": "Baloo Bhai Two"
+		},
+		{
+			"fontFamily": "Baloo Bhaijaan 2",
+			"module": "Baloo Bhaijaan Two",
+			"info": "Baloo Bhaijaan Two"
+		},
+		{
+			"fontFamily": "Baloo Bhaina 2",
+			"module": "Baloo Bhaina Two",
+			"info": "Baloo Bhaina Two"
+		},
+		{
+			"fontFamily": "Baloo Chettan 2",
+			"module": "Baloo Chettan Two",
+			"info": "Baloo Chettan Two"
+		},
+		{
+			"fontFamily": "Baloo Da 2",
+			"module": "Baloo Da Two",
+			"info": "Baloo Da Two"
+		},
+		{
+			"fontFamily": "Baloo Paaji 2",
+			"module": "Baloo Paaji Two",
+			"info": "Baloo Paaji Two"
+		},
+		{
+			"fontFamily": "Baloo Tamma 2",
+			"module": "Baloo Tamma Two",
+			"info": "Baloo Tamma Two"
+		},
+		{
+			"fontFamily": "Baloo Tammudu 2",
+			"module": "Baloo Tammudu Two",
+			"info": "Baloo Tammudu Two"
+		},
+		{
+			"fontFamily": "Baloo Thambi 2",
+			"module": "Baloo Thambi Two",
+			"info": "Baloo Thambi Two"
+		},
+		{
+			"fontFamily": "Brygada 1918",
+			"module": "Brygada OneNineOneEight",
+			"info": "Brygada OneNineOneEight"
+		},
+		{
+			"fontFamily": "DotGothic16",
+			"module": "DotGothicOneSix",
+			"info": "DotGothicOneSix"
+		},
+		{
+			"fontFamily": "Exo 2",
+			"module": "Exo Two",
+			"info": "Exo Two"
+		},
+		{
+			"fontFamily": "Gothic A1",
+			"module": "Gothic AOne",
+			"info": "Gothic AOne"
+		},
+		{
+			"fontFamily": "Goudy Bookletter 1911",
+			"module": "Goudy Bookletter OneNineOneOne",
+			"info": "Goudy Bookletter OneNineOneOne"
+		},
+		{
+			"fontFamily": "Jacquard 12",
+			"module": "Jacquard OneTwo",
+			"info": "Jacquard OneTwo"
+		},
+		{
+			"fontFamily": "Jacquard 12 Charted",
+			"module": "Jacquard OneTwo Charted",
+			"info": "Jacquard OneTwo Charted"
+		},
+		{
+			"fontFamily": "Jacquard 24",
+			"module": "Jacquard TwoFour",
+			"info": "Jacquard TwoFour"
+		},
+		{
+			"fontFamily": "Jacquard 24 Charted",
+			"module": "Jacquard TwoFour Charted",
+			"info": "Jacquard TwoFour Charted"
+		},
+		{
+			"fontFamily": "Jacquarda Bastarda 9",
+			"module": "Jacquarda Bastarda Nine",
+			"info": "Jacquarda Bastarda Nine"
+		},
+		{
+			"fontFamily": "Jacquarda Bastarda 9 Charted",
+			"module": "Jacquarda Bastarda Nine Charted",
+			"info": "Jacquarda Bastarda Nine Charted"
+		},
+		{
+			"fontFamily": "Jersey 10",
+			"module": "Jersey OneZero",
+			"info": "Jersey OneZero"
+		},
+		{
+			"fontFamily": "Jersey 10 Charted",
+			"module": "Jersey OneZero Charted",
+			"info": "Jersey OneZero Charted"
+		},
+		{
+			"fontFamily": "Jersey 15",
+			"module": "Jersey OneFive",
+			"info": "Jersey OneFive"
+		},
+		{
+			"fontFamily": "Jersey 15 Charted",
+			"module": "Jersey OneFive Charted",
+			"info": "Jersey OneFive Charted"
+		},
+		{
+			"fontFamily": "Jersey 20",
+			"module": "Jersey TwoZero",
+			"info": "Jersey TwoZero"
+		},
+		{
+			"fontFamily": "Jersey 20 Charted",
+			"module": "Jersey TwoZero Charted",
+			"info": "Jersey TwoZero Charted"
+		},
+		{
+			"fontFamily": "Jersey 25",
+			"module": "Jersey TwoFive",
+			"info": "Jersey TwoFive"
+		},
+		{
+			"fontFamily": "Jersey 25 Charted",
+			"module": "Jersey TwoFive Charted",
+			"info": "Jersey TwoFive Charted"
+		},
+		{
+			"fontFamily": "K2D",
+			"module": "KTwoD",
+			"info": "KTwoD"
+		},
+		{
+			"fontFamily": "Libre Barcode 128",
+			"module": "Libre Barcode OneTwoEight",
+			"info": "Libre Barcode OneTwoEight"
+		},
+		{
+			"fontFamily": "Libre Barcode 128 Text",
+			"module": "Libre Barcode OneTwoEight Text",
+			"info": "Libre Barcode OneTwoEight Text"
+		},
+		{
+			"fontFamily": "Libre Barcode 39",
+			"module": "Libre Barcode ThreeNine",
+			"info": "Libre Barcode ThreeNine"
+		},
+		{
+			"fontFamily": "Libre Barcode 39 Extended",
+			"module": "Libre Barcode ThreeNine Extended",
+			"info": "Libre Barcode ThreeNine Extended"
+		},
+		{
+			"fontFamily": "Libre Barcode 39 Extended Text",
+			"module": "Libre Barcode ThreeNine Extended Text",
+			"info": "Libre Barcode ThreeNine Extended Text"
+		},
+		{
+			"fontFamily": "Libre Barcode 39 Text",
+			"module": "Libre Barcode ThreeNine Text",
+			"info": "Libre Barcode ThreeNine Text"
+		},
+		{
+			"fontFamily": "Libre Barcode EAN13 Text",
+			"module": "Libre Barcode EANOneThree Text",
+			"info": "Libre Barcode EANOneThree Text"
+		},
+		{
+			"fontFamily": "M PLUS 1",
+			"module": "M PLUS One",
+			"info": "M PLUS One"
+		},
+		{
+			"fontFamily": "M PLUS 1 Code",
+			"module": "M PLUS One Code",
+			"info": "M PLUS One Code"
+		},
+		{
+			"fontFamily": "M PLUS 1p",
+			"module": "M PLUS Onep",
+			"info": "M PLUS Onep"
+		},
+		{
+			"fontFamily": "M PLUS 2",
+			"module": "M PLUS Two",
+			"info": "M PLUS Two"
+		},
+		{
+			"fontFamily": "M PLUS Rounded 1c",
+			"module": "M PLUS Rounded Onec",
+			"info": "M PLUS Rounded Onec"
+		},
+		{
+			"fontFamily": "Micro 5",
+			"module": "Micro Five",
+			"info": "Micro Five"
+		},
+		{
+			"fontFamily": "Micro 5 Charted",
+			"module": "Micro Five Charted",
+			"info": "Micro Five Charted"
+		},
+		{
+			"fontFamily": "Noto Sans Symbols 2",
+			"module": "Noto Sans Symbols Two",
+			"info": "Noto Sans Symbols Two"
+		},
+		{
+			"fontFamily": "Press Start 2P",
+			"module": "Press Start TwoP",
+			"info": "Press Start TwoP"
+		},
+		{
+			"fontFamily": "Redaction 10",
+			"module": "Redaction OneZero",
+			"info": "Redaction OneZero"
+		},
+		{
+			"fontFamily": "Redaction 100",
+			"module": "Redaction OneZeroZero",
+			"info": "Redaction OneZeroZero"
+		},
+		{
+			"fontFamily": "Redaction 20",
+			"module": "Redaction TwoZero",
+			"info": "Redaction TwoZero"
+		},
+		{
+			"fontFamily": "Redaction 35",
+			"module": "Redaction ThreeFive",
+			"info": "Redaction ThreeFive"
+		},
+		{
+			"fontFamily": "Redaction 50",
+			"module": "Redaction FiveZero",
+			"info": "Redaction FiveZero"
+		},
+		{
+			"fontFamily": "Redaction 70",
+			"module": "Redaction SevenZero",
+			"info": "Redaction SevenZero"
+		},
+		{
+			"fontFamily": "Rock 3D",
+			"module": "Rock ThreeD",
+			"info": "Rock ThreeD"
+		},
+		{
+			"fontFamily": "Rubik 80s Fade",
+			"module": "Rubik EightZeros Fade",
+			"info": "Rubik EightZeros Fade"
+		},
+		{
+			"fontFamily": "Shippori Antique B1",
+			"module": "Shippori Antique BOne",
+			"info": "Shippori Antique BOne"
+		},
+		{
+			"fontFamily": "Shippori Mincho B1",
+			"module": "Shippori Mincho BOne",
+			"info": "Shippori Mincho BOne"
+		},
+		{
+			"fontFamily": "Slabo 13px",
+			"module": "Slabo OneThreepx",
+			"info": "Slabo OneThreepx"
+		},
+		{
+			"fontFamily": "Slabo 27px",
+			"module": "Slabo TwoSevenpx",
+			"info": "Slabo TwoSevenpx"
+		},
+		{
+			"fontFamily": "Source Sans 3",
+			"module": "Source Sans Three",
+			"info": "Source Sans Three"
+		},
+		{
+			"fontFamily": "Source Serif 4",
+			"module": "Source Serif Four",
+			"info": "Source Serif Four"
+		},
+		{
+			"fontFamily": "Tiny5",
+			"module": "TinyFive",
+			"info": "TinyFive"
+		},
+		{
+			"fontFamily": "Tiny5 Duo",
+			"module": "TinyFive Duo",
+			"info": "TinyFive Duo"
+		},
+		{
+			"fontFamily": "VT323",
+			"module": "VTThreeTwoThree",
+			"info": "VTThreeTwoThree"
+		},
+		{
+			"fontFamily": "Yarndings 12",
+			"module": "Yarndings OneTwo",
+			"info": "Yarndings OneTwo"
+		},
+		{
+			"fontFamily": "Yarndings 12 Charted",
+			"module": "Yarndings OneTwo Charted",
+			"info": "Yarndings OneTwo Charted"
+		},
+		{
+			"fontFamily": "Yarndings 20",
+			"module": "Yarndings TwoZero",
+			"info": "Yarndings TwoZero"
+		},
+		{
+			"fontFamily": "Yarndings 20 Charted",
+			"module": "Yarndings TwoZero Charted",
+			"info": "Yarndings TwoZero Charted"
+		}
+	]
+}
