@@ -57,6 +57,7 @@ const LoopImpl = forwardRef<HTMLDivElement, LoopProps>(function Loop(props, ref)
 				ref={ref}
 				name={name}
 				componentName="Loop"
+				timelineLoop={{ durationInFrames, times }}
 				from={iteration * durationInFrames}
 				durationInFrames={durationInFrames * playbackRate}
 				playbackRate={playbackRate}

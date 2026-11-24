@@ -1,10 +1,24 @@
-import { type CSSProperties, forwardRef, type HTMLAttributes, type ReactNode, useRef } from "react";
+import {
+	type CSSProperties,
+	forwardRef,
+	type HTMLAttributes,
+	type ReactNode,
+	useContext,
+	useId,
+	useLayoutEffect,
+	useRef,
+} from "react";
 import { useRemotionEnvironment } from "../environment.js";
 import { SEQUENCE_FROM_ATTRIBUTE } from "../protocol.js";
 import { absoluteFillStyle } from "./absolute-fill-style.js";
 import { LoopContext, type LoopInfo, TimelineContext, type TimelineState } from "./contexts.js";
 import { clampFrozenFrame, warnClampedFreeze } from "./freeze-range.js";
 import { useTimeline } from "./hooks.js";
+import {
+	SequenceParentContext,
+	SequenceRegistryContext,
+	sequencePlacement,
+} from "./sequence-registry.js";
 
 /** Attribute next to `data-motio-from` with the cumulative playback rate, when not 1. */
 export const SEQUENCE_RATE_ATTRIBUTE = "data-motio-rate";
@@ -270,6 +284,11 @@ export interface SequenceInternalProps extends SequenceProps {
 	containerProps?: HTMLAttributes<HTMLDivElement>;
 	/** Component name used in error messages. */
 	componentName?: string;
+	/**
+	 * For `<Loop>`, which renders one iteration at a time: the whole loop, for the editor
+	 * timeline. `durationInFrames` is one iteration in parent frames.
+	 */
+	timelineLoop?: { durationInFrames: number; times: number };
 }
 
 /** The implementation behind `Sequence`, `Series.Sequence`, `Loop` and timed `AbsoluteFill`. */
@@ -334,6 +353,42 @@ export const SequenceBase = forwardRef<HTMLDivElement, SequenceInternalProps>(
 		}
 
 		const { phase, child, loop } = computeSequence(parent, props, !env.isRendering);
+
+		// The editor timeline (motio dev): register even when outside the range, so the timeline
+		// shows every sequence of the current tree, not only the visible ones.
+		const registry = useContext(SequenceRegistryContext);
+		const parentId = useContext(SequenceParentContext);
+		const id = useId();
+		const listed = registry !== null && props.showInTimeline !== false;
+		const timelineLoop = props.timelineLoop;
+		const placement = !listed
+			? null
+			: timelineLoop
+				? sequencePlacement(parent, {
+						from: 0,
+						durationInFrames: timelineLoop.durationInFrames * timelineLoop.times,
+					})
+				: sequencePlacement(parent, props);
+		if (placement && timelineLoop) {
+			placement.loopDurationInFrames = timelineLoop.durationInFrames / parent.mapRate;
+		}
+		const name = props.name ?? null;
+		const hidden = props.hidden === true;
+		useLayoutEffect(() => {
+			if (!registry || !listed) return;
+			return () => registry.remove(id);
+		}, [registry, listed, id]);
+		useLayoutEffect(() => {
+			if (!registry || !placement) return;
+			registry.set({ id, parentId, name, componentName, hidden, ...placement });
+		});
+		const withParent = (node: ReactNode) =>
+			listed ? (
+				<SequenceParentContext.Provider value={id}>{node}</SequenceParentContext.Provider>
+			) : (
+				node
+			);
+
 		if (!child) return null;
 		if (props.freeze !== undefined && props.freeze !== null && child.frame !== props.freeze) {
 			warnClampedFreeze(`<${componentName}> "freeze"`, props.freeze, child);
@@ -348,6 +403,7 @@ export const SequenceBase = forwardRef<HTMLDivElement, SequenceInternalProps>(
 			<TimelineContext.Provider value={childState}>{children}</TimelineContext.Provider>
 		);
 		if (loop) content = <LoopContext.Provider value={loop}>{content}</LoopContext.Provider>;
+		content = withParent(content);
 		if (layout === "none") return content;
 
 		// Remotion's Sequence container is an absolute fill without `flex-direction: column`

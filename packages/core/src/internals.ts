@@ -84,3 +84,11 @@ export {
 	type SequenceTimingProps,
 	validateTimingProps,
 } from "./timeline/sequence.js";
+export {
+	SequenceParentContext,
+	type SequencePlacementProps,
+	SequenceRegistry,
+	SequenceRegistryContext,
+	sequencePlacement,
+	type TimelineSequence,
+} from "./timeline/sequence-registry.js";
