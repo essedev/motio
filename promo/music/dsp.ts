@@ -7,7 +7,7 @@ export const SR = 48_000;
 export const FPS = 30;
 
 // The timeline, mirrored from promo/src/teaser/Teaser.tsx: keep the two in sync.
-const SCENES = [60, 75, 150, 135, 105, 75, 90];
+const SCENES = [60, 75, 150, 135, 105, 135, 90];
 export const TRANSITION_FRAMES = 16;
 export const TOTAL_FRAMES =
 	SCENES.reduce((a, b) => a + b, 0) - (SCENES.length - 1) * TRANSITION_FRAMES;

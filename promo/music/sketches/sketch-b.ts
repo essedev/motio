@@ -32,7 +32,10 @@ import {
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "sketch-b.wav");
 const rng = makeRng(0x2b57e9);
-const g = grid(11); // eleven beats from the speed cut to the end card: 133.8 BPM
+// Beat of the speed cut, counted back from the end card (beat 0): fifteen beats between them, so
+// both cuts fall on a beat (129.8 BPM). The bars before it are placed relative to it.
+const S = -15;
+const g = grid(-S);
 const s16 = g.beat / 4;
 const SWING = 0.6;
 const pos = (bar: number, p: number, sdMs = 0, lateMs = 0) =>
@@ -176,14 +179,14 @@ const subNote = (t: number, dur: number, midi: number, v = 1, decay = 0) => {
 	}
 };
 
-// Harmony, a chord per bar; the bar of the speed cut (beat -11) is Fm9, the one before it C7#9.
+// Harmony, a chord per bar; the bar of the speed cut (beat S) is Fm9, the one before it C7#9.
 type Chord = { root: number; notes: number[] };
 const FM9: Chord = { root: 41, notes: [56, 60, 63, 67] };
 const DBMAJ9: Chord = { root: 37, notes: [53, 56, 60, 63] };
 const BBM9: Chord = { root: 46, notes: [56, 60, 61, 65] };
 const C7S9: Chord = { root: 36, notes: [52, 58, 63, 67] };
 const CYCLE = [FM9, DBMAJ9, BBM9, C7S9];
-const chordOfBar = (bar: number) => CYCLE[((((bar + 11) / 4) % 4) + 4) % 4] as Chord;
+const chordOfBar = (bar: number) => CYCLE[((((bar - S) / 4) % 4) + 4) % 4] as Chord;
 
 // Kick patterns in sixteenths, alternating; stabs as [position, length in sixteenths].
 const KICKS = [
@@ -211,10 +214,10 @@ subNote(MARK, 0.6, 41, 0.9);
 rim(MARK, 0.7);
 
 let barIndex = 0;
-for (let bar = -35; bar <= -3; bar += 4) {
+for (let bar = S - 24; bar <= -3; bar += 4) {
 	const ch = chordOfBar(bar);
-	const full = bar >= -31 && bar < -3;
-	const gapFrom = bar === -15 ? 12 : 99; // the beat before the speed cut has no kick or sub
+	const full = bar >= S - 20 && bar < -3;
+	const gapFrom = bar === S - 4 ? 12 : 99; // the beat before the speed cut has no kick or sub
 	// Hats: shuffled sixteenths, open on the eighth off-beats.
 	if (bar < -3)
 		for (let p = 0; p < 16; p++) {
@@ -231,10 +234,10 @@ for (let bar = -35; bar <= -3; bar += 4) {
 			if (rng.next() < 0.4) rim(pos(bar, p, 6, 4), vel(0.22, 0.3), false, 0.3);
 		for (const [p, l, iv] of SUB)
 			if (p < gapFrom) subNote(pos(bar, p, 2), l * s16 * 0.95, ch.root + iv, vel(1, 0.05));
-	} else if (bar === -35) {
+	} else if (bar === S - 24) {
 		for (const p of [4, 12]) rim(pos(bar, p, 4, 9), vel(0.5, 0.1), false, 0.05);
 	}
-	if (bar < -3 && bar > -35)
+	if (bar < -3 && bar > S - 24)
 		for (const [p, l] of STABS) {
 			if (p >= gapFrom) continue;
 			if (p === 14 && rng.next() < 0.35) continue;
@@ -243,7 +246,7 @@ for (let bar = -35; bar <= -3; bar += 4) {
 	barIndex++;
 }
 // The speed cut: the resolution lands as a longer stab.
-organNotes(g.at(-11), g.beat * 0.9, FM9.notes, 1.15, 0.1);
+organNotes(g.at(S), g.beat * 0.9, FM9.notes, 1.15, 0.1);
 
 // The three beats before the end card: a held C7#9 swelling, a swung rim fill getting louder.
 organNotes(g.at(-3), g.beat * 2.5, C7S9.notes, 0.55, 0.05);
@@ -280,12 +283,12 @@ const out = master(m.l, m.r, {
 		["hshelf", 9000, 0.7, -1],
 	],
 	ratio: 1.6,
-	fadeStart: 19.1,
+	fadeStart: N / SR - 0.7,
 });
 const peak = writeWav(OUT, out.l, out.r, rng);
 console.log(`wrote ${OUT}`);
 console.log(
-	`tempo ${g.bpm.toFixed(2)} BPM, swing ${SWING * 100}%; speed cut beat -11 at ${g.at(-11).toFixed(3)} s, end card at ${END.toFixed(3)} s`,
+	`tempo ${g.bpm.toFixed(2)} BPM, swing ${SWING * 100}%; speed cut beat ${S} at ${g.at(S).toFixed(3)} s, end card at ${END.toFixed(3)} s`,
 );
 console.log(
 	`integrated ${out.lufs.toFixed(2)} LUFS (internal meter), sample peak ${peak.toFixed(2)} dBFS`,

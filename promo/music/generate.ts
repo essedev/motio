@@ -38,7 +38,10 @@ import {
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "teaser.wav");
 const rng = makeRng(0xa5ee7a);
-const g = grid(10); // ten beats from the speed cut to the end card: 121.6 BPM
+// Beat of the speed cut, counted back from the end card (beat 0): fourteen beats between them, so
+// both cuts fall on a beat (121.2 BPM). Every section below is placed relative to it.
+const S = -14;
+const g = grid(-S);
 const s16 = g.beat / 4;
 const SWING = 0.54;
 /** Time of sixteenth `p` of the bar starting at beat `bar`, swung, plus a human offset (ms sd). */
@@ -186,7 +189,7 @@ const DM9 = [53, 57, 60, 64];
 const G9 = [53, 57, 59, 62];
 // After the speed cut the voicing opens upwards: the ninth on top (E5 over Dm9, A4 over G9).
 const LIFT = { dm: [...DM9, 76], g: [...G9, 69] };
-const chordOfBar = (bar: number) => ((bar + 34) / 4) % 2 === 0;
+const chordOfBar = (bar: number) => ((bar - S + 24) / 4) % 2 === 0;
 // Loop rhythm in sixteenths: [position, length].
 const LOOP: Array<[number, number]> = [
 	[0, 2.5],
@@ -210,10 +213,11 @@ const BASS: Array<[number, number, number]> = [
 stab(MARK, 1.1, DM9, 1.1);
 bassNote(MARK, 0.9, 38, 0.8, false);
 
-// Bars every four beats counted back from the speed cut (beat -10); the end card is beat 0.
-for (let bar = -34; bar <= -2; bar += 4) {
+// Bars every four beats counted back from the speed cut (beat S); the end card is beat 0, after a
+// two-beat break.
+for (let bar = S - 24; bar <= -2; bar += 4) {
 	const dm = chordOfBar(bar);
-	const notes = bar >= -10 ? (dm ? LIFT.dm : LIFT.g) : dm ? DM9 : G9;
+	const notes = bar >= S ? (dm ? LIFT.dm : LIFT.g) : dm ? DM9 : G9;
 	const root = dm ? 38 : 43;
 	const beatsInBar = bar === -2 ? 2 : 4;
 	for (const [p, l] of LOOP) {
@@ -224,21 +228,21 @@ for (let bar = -34; bar <= -2; bar += 4) {
 	}
 	for (let b = bar; b < bar + beatsInBar; b++) {
 		const inBar = b - bar;
-		const gap = b === -11; // one empty beat before the speed cut
-		const groove = b >= -30 && b < -2;
-		if (groove && !gap) kick(g.at(b), b === -10 ? 1.1 : 1);
-		if (b >= -26 && b < -2) metalHat(pos(b, 2, 3), vel(b >= -10 ? 1 : 0.8), 0.11, 0.25);
-		if (b >= -22 && b < -2 && !gap && (inBar === 1 || inBar === 3))
+		const gap = b === S - 1; // one empty beat before the speed cut
+		const groove = b >= S - 20 && b < -2;
+		if (groove && !gap) kick(g.at(b), b === S ? 1.1 : 1);
+		if (b >= S - 16 && b < -2) metalHat(pos(b, 2, 3), vel(b >= S ? 1 : 0.8), 0.11, 0.25);
+		if (b >= S - 12 && b < -2 && !gap && (inBar === 1 || inBar === 3))
 			clap(g.at(b) + (rng.gauss() * 2) / 1000, vel(0.95, 0.06));
-		if (b >= -30 && b < -2)
+		if (b >= S - 20 && b < -2)
 			for (let k = 0; k < 4; k++)
-				shaker(pos(b, k, 3), (b < -22 ? 0.6 : 1) * vel(k === 2 ? 0.5 : k % 2 ? 0.8 : 1, 0.15));
+				shaker(pos(b, k, 3), (b < S - 12 ? 0.6 : 1) * vel(k === 2 ? 0.5 : k % 2 ? 0.8 : 1, 0.15));
 	}
-	if (bar >= -30 && bar < -2) {
+	if (bar >= S - 20 && bar < -2) {
 		for (const [p, l, iv] of BASS) {
 			const t = pos(bar, p, 1.5);
-			if (bar === -14 && t >= g.at(-11) - 0.01) continue; // the gap before speed
-			const lift = bar >= -10 && iv === 0 && p === 6 ? 12 : 0; // the bass climbs after speed
+			if (bar === S - 4 && t >= g.at(S - 1) - 0.01) continue; // the gap before speed
+			const lift = bar >= S && iv === 0 && p === 6 ? 12 : 0; // the bass climbs after speed
 			bassNote(t, l * s16 * 0.92, root + iv + lift, vel(p === 0 ? 1 : 0.85, 0.08), p !== 0);
 		}
 	}
@@ -262,8 +266,8 @@ const cutoffAt = (t: number): number => {
 				Math.exp(-Math.max(0, t - MARK) / 0.22) *
 				(t >= MARK ? Math.min(1, (t - MARK) / 0.03) : 0)
 		);
-	if (t < g.at(-11)) return ramp(t, 1.0, g.at(-11), 380, 2000);
-	if (t < SPEED) return ramp(t, g.at(-11), SPEED, 2000, 420);
+	if (t < g.at(S - 1)) return ramp(t, 1.0, g.at(S - 1), 380, 2000);
+	if (t < SPEED) return ramp(t, g.at(S - 1), SPEED, 2000, 420);
 	if (t < g.at(-2)) return 3300 + 3200 * Math.exp(-(t - SPEED) / 0.5);
 	if (t < END) return ramp(t, g.at(-2), END, 3300, 330);
 	return 300 + 4800 * Math.exp(-(t - END) / 0.45);
@@ -308,13 +312,13 @@ const out = master(m.l, m.r, {
 		["peak", 3000, 0.8, 1.5],
 		["hshelf", 8000, 0.7, -1.5],
 	],
-	fadeStart: 19.1,
+	fadeStart: N / SR - 0.7,
 	ratio: 2,
 });
 const peak = writeWav(OUT, out.l, out.r, rng);
 console.log(`wrote ${OUT}`);
 console.log(
-	`tempo ${g.bpm.toFixed(2)} BPM; speed cut beat -10 at ${g.at(-10).toFixed(3)} s, end card beat 0 at ${END.toFixed(3)} s`,
+	`tempo ${g.bpm.toFixed(2)} BPM; speed cut beat ${S} at ${g.at(S).toFixed(3)} s, end card beat 0 at ${END.toFixed(3)} s`,
 );
 console.log(
 	`integrated ${out.lufs.toFixed(2)} LUFS (internal meter), sample peak ${peak.toFixed(2)} dBFS`,

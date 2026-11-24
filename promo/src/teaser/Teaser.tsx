@@ -19,7 +19,7 @@ const SCENES = [
 	{ id: "code", Scene: CodeScene, frames: 150 },
 	{ id: "reasons", Scene: Reasons, frames: 135 },
 	{ id: "speed", Scene: Speed, frames: 105 },
-	{ id: "install", Scene: Install, frames: 75 },
+	{ id: "install", Scene: Install, frames: 135 },
 	{ id: "end", Scene: EndCard, frames: 90 },
 ] as const;
 

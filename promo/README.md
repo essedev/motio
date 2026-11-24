@@ -15,7 +15,7 @@ pnpm --dir promo render og-card teaser      # only some compositions
 | `og-card` | 1200x630 still | `out/og-card.png` | `website/public/og/motio-card.png` |
 | `readme-banner` | 1280x320 still, rendered at 2x | `out/readme-banner.png` | `brand/motio-readme-banner.png`, top of both READMEs |
 | `square-post` | 1080x1080 still | `out/square-post.png` | |
-| `teaser` | 1920x1080, 30 fps, 19.8 s, with music (AAC) | `out/teaser.mp4` | |
+| `teaser` | 1920x1080, 30 fps, 21.8 s, with music (AAC) | `out/teaser.mp4` | |
 | `teaser-vertical` | 1080x1920, the same scenes recomposed, the same music | `out/teaser-vertical.mp4` | |
 | `mark-loop` | 240x240, a loop of the mark | `out/mark-loop.gif` (15 fps) | |
 | `og-card-animated` | 1200x630, 3 s | | the card's entrance, for the preview |

@@ -29,7 +29,10 @@ import {
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "sketch-c.wav");
 const rng = makeRng(0xc0ffee);
-const g = grid(10); // 121.6 BPM
+// Beat of the speed cut, counted back from the end card (beat 0): fourteen beats between them
+// (121.2 BPM). The bars before it are placed relative to it.
+const S = -14;
+const g = grid(-S);
 const s16 = g.beat / 4;
 const SWING = 0.55;
 const pos = (bar: number, p: number, sdMs = 0) =>
@@ -157,10 +160,10 @@ const A2 = 45;
 });
 
 const silenceFrom = g.at(-1.5); // the silence before the end card
-for (let bar = -30; bar <= -2; bar += 4) {
-	const lift = bar >= -10;
-	const noKick = bar === -14; // the bar before the speed cut drops the kick
-	const drift = 1.6 + 1.4 * Math.sin(((bar + 30) / 4) * 0.9); // brightness drifting bar to bar
+for (let bar = S - 20; bar <= -2; bar += 4) {
+	const lift = bar >= S;
+	const noKick = bar === S - 4; // the bar before the speed cut drops the kick
+	const drift = 1.6 + 1.4 * Math.sin(((bar - S + 20) / 4) * 0.9); // brightness drifting bar to bar
 	for (const [p, l, v] of MOTIF) {
 		const t = pos(bar, p, 1.5);
 		if (t >= silenceFrom) continue;
@@ -171,14 +174,14 @@ for (let bar = -30; bar <= -2; bar += 4) {
 	for (let b = bar; b < bar + 4; b++) {
 		const inBar = b - bar;
 		if (g.at(b) >= silenceFrom - 0.001) continue;
-		if (b >= -26 && !noKick) kick(g.at(b), b === -10 ? 1.15 : vel(1, 0.04));
-		if (b >= -22 && inBar === 3) rimClick(pos(b, 0, 4), vel(0.9), 0.1);
-		if (b >= -22 && inBar === 1 && ((bar + 30) / 4) % 2 === 1)
+		if (b >= S - 16 && !noKick) kick(g.at(b), b === S ? 1.15 : vel(1, 0.04));
+		if (b >= S - 12 && inBar === 3) rimClick(pos(b, 0, 4), vel(0.9), 0.1);
+		if (b >= S - 12 && inBar === 1 && ((bar - S + 20) / 4) % 2 === 1)
 			woodblock(pos(b, 1, 4), vel(0.6), 1060, -0.3);
 		// Clicks: sparse at first, every sixteenth with random gaps after the speed cut.
 		for (let k = 0; k < 4; k++) {
 			const p = inBar * 4 + k;
-			const chance = b < -18 ? 0.25 : lift ? 0.8 : 0.5;
+			const chance = b < S - 8 ? 0.25 : lift ? 0.8 : 0.5;
 			const t = pos(bar, p, 3);
 			if (t >= silenceFrom) continue;
 			if (rng.next() < chance) click(t, vel(k === 2 ? 0.7 : 0.4, 0.3), rng.next() - 0.5);
@@ -251,7 +254,7 @@ const out = master(m.l, m.r, {
 		["peak", 2800, 0.8, 2.5],
 	],
 	ratio: 1.5,
-	fadeStart: 19.2,
+	fadeStart: N / SR - 0.6,
 });
 const peak = writeWav(OUT, out.l, out.r, rng);
 console.log(`wrote ${OUT}`);

@@ -6,14 +6,17 @@ import { Pill } from "../brand/Pill";
 import { Rise } from "../brand/Rise";
 import { MUTED, PALETTE } from "../brand/tokens";
 
-// The three commands of the guide's getting started, typed one after another.
+// The three commands of the guide's getting started, typed one after another, each with time to
+// be read before the next (the scene lasts 135 frames; the end card starts covering it at 119).
 const COMMANDS = [
 	{ text: "pnpm create motio my-video", note: "a project from a starter", start: 8 },
-	{ text: "pnpm dev", note: "preview in the browser", start: 26 },
-	{ text: "pnpm render", note: "out/intro.mp4", start: 36 },
+	{ text: "pnpm dev", note: "preview in the browser", start: 40 },
+	{ text: "pnpm render", note: "out/intro.mp4", start: 62 },
 ];
 /** Characters typed per frame. */
-const SPEED = 2;
+const SPEED = 1.5;
+/** Frame at which the pre-alpha note comes in, once the last command and its note are in. */
+const NOTE_AT = 86;
 
 const Command = ({
 	text,
@@ -83,7 +86,7 @@ const Command = ({
 /** Three commands to a video, and an honest note: nothing is on npm yet. */
 export const Install = () => {
 	const { tall } = useLayout();
-	const note = useCalmSpring(50, 14);
+	const note = useCalmSpring(NOTE_AT, 14);
 	return (
 		<AbsoluteFill
 			style={{
