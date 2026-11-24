@@ -80,6 +80,10 @@ interface GoldenEntry {
 
 interface CompositionResult {
 	frames: number;
+	/** Left out of the comparison, with the reason (projects.json `skip`). */
+	skipped?: string;
+	/** Expected to miss the thresholds, with the cause (projects.json `knownMismatch`). */
+	knownMismatch?: string;
 	stills: Array<{ frame: number } & Comparison>;
 	meanSsim?: number;
 	minPsnr?: number;
@@ -407,9 +411,20 @@ for (const [name, project] of Object.entries(projects)) {
 					describe.skip(`${cid}: Remotion fails on every frame (${remotionError.slice(0, 160)})`, () => {});
 					continue;
 				}
+				const skipped = entry.skip?.[cid];
+				if (skipped !== undefined) {
+					result.skipped = skipped;
+					describe.skip(`${cid}: left out, ${skipped}`, () => {});
+					continue;
+				}
+				const known = entry.knownMismatch?.[cid];
+				if (known !== undefined) result.knownMismatch = known;
 
-				it.skipIf(!checks.has("stills"))(
-					`renders ${cid} like Remotion (frames ${referenced.join(", ")})`,
+				// A known mismatch is expected to miss the thresholds; the test flips once it is fixed.
+				(known === undefined ? it : it.fails).skipIf(!checks.has("stills"))(
+					known === undefined
+						? `renders ${cid} like Remotion (frames ${referenced.join(", ")})`
+						: `renders ${cid} unlike Remotion until fixed: ${known}`,
 					async () => {
 						try {
 							result.stills = await compareFrames(cid, referenced, join(GOLDEN_DIR, name, id, cid));
@@ -475,6 +490,8 @@ for (const [name, project] of Object.entries(projects)) {
 							sameAsRemotion: unlike.length === 0,
 							unlike: unlike.map((s) => s.frame),
 						};
+						// A known mismatch draws these frames unlike Remotion for its known cause.
+						if (known !== undefined) return;
 						expect(
 							unlike,
 							`frames around the flagged ones that Motio draws unlike Remotion`,

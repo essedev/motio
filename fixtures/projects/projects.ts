@@ -20,6 +20,10 @@ export interface ProjectEntry {
 	tailwind?: boolean;
 	/** That script passes `ignoreRegisterRootWarning` to Remotion's `bundle()`. */
 	ignoreRegisterRootWarning?: boolean;
+	/** Compositions left out of the comparison, with the reason. */
+	skip?: Record<string, string>;
+	/** Compositions whose stills are expected to miss the thresholds, with the cause. */
+	knownMismatch?: Record<string, string>;
 }
 
 export interface Project {

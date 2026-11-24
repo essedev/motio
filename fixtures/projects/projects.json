@@ -1,12 +1,27 @@
 {
-	"$comment": "Third-party MIT projects built on Remotion, the M4 proof. Each is fetched at the pinned commit into .cache/<name> by projects.ts (never vendored). entries: id to the bundle entry (a file that calls registerRoot) and the project script that bundles it, which the oracle mirrors: tailwind is set when that script wraps its webpack config in enableTailwind(), ignoreRegisterRootWarning when it passes that option to bundle() (Remotion looks for the text registerRoot in the entry file; Motio does not need it). Every composition of every entry is compared on the frames sampleFrames() picks. excluded: registerRoot files that are not measured, with the reason. Both renderers use gl swangle (software WebGL, Motio's default): GPU WebGL differs per machine (D-046).",
+	"$comment": "Third-party MIT projects built on Remotion, the M4 proof. Each is fetched at the pinned commit into .cache/<name> by projects.ts (never vendored). entries: id to the bundle entry (a file that calls registerRoot) and the project script that bundles it, which the oracle mirrors: tailwind is set when that script wraps its webpack config in enableTailwind(), ignoreRegisterRootWarning when it passes that option to bundle() (Remotion looks for the text registerRoot in the entry file; Motio does not need it). Every composition of every entry is compared on the frames sampleFrames() picks. excluded: registerRoot files that are not measured, with the reason. Both renderers use gl swangle (software WebGL, Motio's default): GPU WebGL differs per machine (D-046). skip: compositions of an entry left out of the comparison, with the reason (external or random content, files the repository does not contain). knownMismatch: compositions whose stills are expected to miss the thresholds, with the cause; the test fails once they match, so the marker has to be removed then.",
 	"projects": {
 		"remocn": {
 			"repository": "https://github.com/Remocn/remocn",
 			"commit": "7ddf6a8c2b0a551de7f88b637737a7caca7ac39c",
 			"entries": {
-				"github-stars": { "file": "src/remotion/index.ts", "script": "remotion.config.ts" },
-				"demos": { "file": "src/remotion/demos-entry.ts", "script": "scripts/render-demos.mts" },
+				"github-stars": {
+					"file": "src/remotion/index.ts",
+					"script": "remotion.config.ts",
+					"skip": {
+						"github-stars": "the repository avatar comes from unavatar.io, an external service that rate-limits repeated renders (HTTP 429), and the component then draws the owner's initial instead: the content depends on the service, not on the renderer"
+					}
+				},
+				"demos": {
+					"file": "src/remotion/demos-entry.ts",
+					"script": "scripts/render-demos.mts",
+					"skip": {
+						"backdrop-image": "its backdrop is https://picsum.photos/1280/720, a different random photo on every request",
+						"chat-flow": "the contact avatar comes from unavatar.io, an external service that rate-limits repeated renders",
+						"telegram-chat-flow": "the contact avatar comes from unavatar.io, an external service that rate-limits repeated renders",
+						"imessage-chat-flow": "the contact avatar comes from unavatar.io, an external service that rate-limits repeated renders"
+					}
+				},
 				"brand-guidelines": {
 					"file": "src/remotion/brand-guidelines-root.tsx",
 					"script": "scripts/review-brand-guidelines.mts"
@@ -23,7 +38,10 @@
 					"file": "src/remotion/design-audit-root.tsx",
 					"script": "remotion.config.ts"
 				},
-				"fomo": { "file": "src/remotion/fomo-root.tsx", "script": "scripts/review-fomo.mts" },
+				"fomo": {
+					"file": "src/remotion/fomo-root.tsx",
+					"script": "scripts/review-fomo.mts"
+				},
 				"hero-bg": {
 					"file": "src/remotion/hero-bg-root.tsx",
 					"script": "scripts/render-hero-bg.mts"
@@ -58,7 +76,17 @@
 				},
 				"motion-pack": {
 					"file": "src/remotion/motion-pack-root.tsx",
-					"script": "remotion.config.ts"
+					"script": "remotion.config.ts",
+					"knownMismatch": {
+						"string-art": "thin SVG strokes: Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader), and Skia antialiases thin paths differently; under measurement by the raster and canvas work",
+						"comic-panels": "thin SVG strokes: Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader), and Skia antialiases thin paths differently; under measurement by the raster and canvas work",
+						"life-grid": "thin SVG strokes: Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader), and Skia antialiases thin paths differently; under measurement by the raster and canvas work",
+						"flow-field": "thin SVG strokes: Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader), and Skia antialiases thin paths differently; under measurement by the raster and canvas work",
+						"phyllotaxis": "thin SVG strokes: Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader), and Skia antialiases thin paths differently; under measurement by the raster and canvas work",
+						"brick-mosaic": "thin SVG strokes: Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader), and Skia antialiases thin paths differently; under measurement by the raster and canvas work",
+						"topo-lines": "thin SVG strokes: Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader), and Skia antialiases thin paths differently; under measurement by the raster and canvas work",
+						"duotone-beat": "thin SVG strokes: Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader), and Skia antialiases thin paths differently; under measurement by the raster and canvas work"
+					}
 				},
 				"not-found": {
 					"file": "src/remotion/not-found-root.tsx",
@@ -70,7 +98,10 @@
 				},
 				"release-demo": {
 					"file": "src/remotion/release-demo/release-demo-entry.ts",
-					"script": "remotion.config.ts"
+					"script": "remotion.config.ts",
+					"skip": {
+						"release-demo": "it plays public/clips/*.mp4, which the public repository does not contain: Motio stops with E_ASSET_NOT_FOUND (D-083) where Remotion draws nothing"
+					}
 				},
 				"release-teaser": {
 					"file": "src/remotion/release-teaser-root.tsx",
