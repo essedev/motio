@@ -1,5 +1,5 @@
 import { useCurrentFrame, useVideoConfig } from "@motiojs/core";
-import { SequenceBase } from "@motiojs/core/internals";
+import { pageWarnings, SequenceBase, TimelineContext } from "@motiojs/core/internals";
 import {
 	Children,
 	type CSSProperties,
@@ -9,6 +9,7 @@ import {
 	type ReactElement,
 	type ReactNode,
 	type Ref,
+	useContext,
 	useState,
 } from "react";
 import { HtmlInCanvasRegistry } from "./html-in-canvas/registry.js";
@@ -256,9 +257,22 @@ function htmlInCanvasRole(
 	return { kind: "alone", side: enter ? "prev" : "next" };
 }
 
+/**
+ * Warns once per page when the series ends before the time it is given (the composition, or the
+ * enclosing sequence): the frames after its last scene show nothing of it, black in a render
+ * without a background, which is easy to miss when transitions shorten the series.
+ */
+function warnIfShort(seriesFrames: number, available: number): void {
+	if (!Number.isFinite(seriesFrames) || !Number.isFinite(available)) return;
+	if (seriesFrames >= available) return;
+	const message = `<TransitionSeries> lasts ${seriesFrames} frames (its scenes minus the overlap of its transitions) but is given ${available}, so its last ${available - seriesFrames} frames show nothing. Lengthen the scenes, or set the composition's durationInFrames to ${seriesFrames} (calculateMetadata can compute it from the scenes).`;
+	if (pageWarnings.report({ code: "W_TIMELINE_SHORT", message })) console.warn(message);
+}
+
 function SeriesContent({ items }: { items: Child[] }): ReactNode {
 	const frame = useCurrentFrame();
 	const { fps } = useVideoConfig();
+	const timeline = useContext(TimelineContext);
 	const [registry] = useState(() => new HtmlInCanvasRegistry());
 	const layoutItems: LayoutItem[] = items.map((item) => {
 		if (item.kind === "sequence") {
@@ -288,6 +302,7 @@ function SeriesContent({ items }: { items: Child[] }): ReactNode {
 		};
 	});
 	const layout = layoutTransitionSeries(layoutItems, fps);
+	if (timeline) warnIfShort(layout.durationInFrames, timeline.durationInFrames);
 	// How many scenes each transition sits between: 2 for a transition between two scenes, 1 for
 	// one before the first scene or after the last.
 	const sceneCount = new Map<number, number>();

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "@motiojs/core";
+import { pageWarnings } from "@motiojs/core/internals";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clockWipe } from "./presentations/clock-wipe.js";
 import { fade } from "./presentations/fade.js";
@@ -365,6 +366,40 @@ describe("<TransitionSeries> props and errors", () => {
 		mounted.at(2);
 		expect(texts(mounted.container)).toEqual(["A 2"]);
 		expect(warn.mock.calls.filter(([m]) => String(m).includes('layout="none"'))).toHaveLength(1);
+	});
+
+	it("reports a series shorter than the composition as a page warning", () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		pageWarnings.reset();
+		const series = (
+			<TransitionSeries>
+				<TransitionSeries.Sequence durationInFrames={60}>
+					<Panel label="A" />
+				</TransitionSeries.Sequence>
+				<TransitionSeries.Transition
+					presentation={fade()}
+					timing={linearTiming({ durationInFrames: 20 })}
+				/>
+				<TransitionSeries.Sequence durationInFrames={60}>
+					<Panel label="B" />
+				</TransitionSeries.Sequence>
+			</TransitionSeries>
+		);
+		mounted = renderAtFrame(series, 0, { durationInFrames: 120 });
+		mounted.at(1);
+		expect(pageWarnings.list()).toEqual([
+			{
+				code: "W_TIMELINE_SHORT",
+				message: expect.stringContaining(
+					"<TransitionSeries> lasts 100 frames (its scenes minus the overlap of its transitions) but is given 120, so its last 20 frames show nothing.",
+				),
+			},
+		]);
+		expect(warn.mock.calls.filter(([m]) => String(m).includes("lasts 100 frames"))).toHaveLength(1);
+		mounted.unmount();
+		pageWarnings.reset();
+		mounted = renderAtFrame(series, 0, { durationInFrames: 100 });
+		expect(pageWarnings.list()).toEqual([]);
 	});
 
 	it("throws for children it does not accept and for markers used alone", () => {
