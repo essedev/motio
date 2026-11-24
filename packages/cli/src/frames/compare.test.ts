@@ -10,7 +10,9 @@ import {
 	hashPixels,
 	isFlicker,
 	meanAbsoluteDifference,
+	pixelDifference,
 	pngSize,
+	unionRegion,
 } from "./compare.js";
 
 const solid = (value: number, alpha = 255) =>
@@ -90,6 +92,48 @@ describe("determinism report", () => {
 		expect(diagnoseMismatches([{ frame: 0, hashes: ["a", "b", "a", "b"] }], runs).message).toMatch(
 			/depends on the frame rendered before it/,
 		);
+	});
+	it("calls differences of a few lines of pixels rasterisation, with the run pattern beside", () => {
+		const size = { width: 640, height: 360 };
+		// One antialiased column of a seam, rendered differently in every run.
+		const seam = { frame: 4, hashes: ["a", "b", "c", "d"], differingPixels: 360 };
+		const result = diagnoseMismatches([seam], runs, size);
+		expect(result).toMatchObject({ cause: "raster", pattern: "random" });
+		expect(result.message).toMatch(/at most 360 pixels/);
+		expect(result.message).toMatch(/Math\.random/);
+		// A moving element drawn elsewhere changes far more than four lines of pixels.
+		const content = { ...seam, differingPixels: 4 * 640 + 1 };
+		expect(diagnoseMismatches([content], runs, size).cause).toBe("random");
+		// Without measurements the run pattern decides, as before.
+		expect(diagnoseMismatches([{ frame: 4, hashes: seam.hashes }], runs, size).cause).toBe(
+			"random",
+		);
+		expect(diagnoseMismatches([seam], runs).cause).toBe("random");
+	});
+});
+
+describe("pixel difference", () => {
+	it("counts the differing pixels and bounds them", () => {
+		const a = new Uint8Array(8 * 4 * 4).fill(10);
+		const b = Uint8Array.from(a);
+		expect(pixelDifference(a, b, 8)).toBeNull();
+		b[(1 * 8 + 2) * 4 + 3] = 200; // alpha only, at x 2, y 1
+		b[(3 * 8 + 5) * 4] = 0; // red, at x 5, y 3
+		expect(pixelDifference(a, b, 8)).toEqual({
+			pixels: 2,
+			region: { x: 2, y: 1, width: 4, height: 3 },
+		});
+		expect(() => pixelDifference(a, b.subarray(4), 8)).toThrow(/different sizes/);
+	});
+
+	it("unites regions", () => {
+		const r = unionRegion(undefined, { x: 4, y: 4, width: 2, height: 2 });
+		expect(unionRegion(r, { x: 1, y: 5, width: 1, height: 4 })).toEqual({
+			x: 1,
+			y: 4,
+			width: 5,
+			height: 5,
+		});
 	});
 });
 

@@ -70,6 +70,8 @@ export function fakeRenderer(
 		compositions?: VideoConfig[];
 		/** Grey level of a frame; `run` counts renderFrames calls. */
 		level?: (frame: number, run: number) => number;
+		/** Grey level of one pixel, instead of `level` for the whole frame. */
+		pixel?: (frame: number, run: number, x: number, y: number) => number;
 	} = {},
 ): { renderer: RendererApi; calls: RendererCalls; distributed: DistributedApi } {
 	const compositions = options.compositions ?? [COMPOSITION];
@@ -114,8 +116,13 @@ export function fakeRenderer(
 			const frames = o.frameOrder ? o.frameOrder(o.frames ?? []) : (o.frames ?? []);
 			for (const frame of frames) {
 				const value = level(frame, run);
+				const pixel = options.pixel;
+				const grey = pixel ? (x: number, y: number) => pixel(frame, run, x, y) : () => value;
 				await o.onFrameBuffer?.(
-					encodePng(o.composition.width, o.composition.height, () => [value, value, value, 255]),
+					encodePng(o.composition.width, o.composition.height, (x, y) => {
+						const v = grey(x, y);
+						return [v, v, v, 255];
+					}),
 					frame,
 				);
 			}

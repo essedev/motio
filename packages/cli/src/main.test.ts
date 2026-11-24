@@ -602,6 +602,26 @@ describe("check determinism", () => {
 		expect(result.diagnosis).toMatchObject({ cause: "race" });
 	});
 
+	it("reads differences confined to one column of pixels as rasterisation", async () => {
+		// Every run draws the seam column at x 5 of frame 2 a little differently, as Chrome did
+		// with stale tile memory under two sliding scenes; the rest of the frame is identical.
+		const { io, code } = await run(["check", "determinism", "Main", "--frames=0-3", "--json"], {
+			pixel: (frame, run, x) => (frame === 2 && x === 5 ? 100 + run : frame * 10),
+		});
+		expect(code).toBe(3);
+		const result = parseJson(io);
+		expect(validate("check-determinism", result)).toBeNull();
+		expect(result.mismatches).toEqual([
+			expect.objectContaining({
+				frame: 2,
+				differingPixels: 8,
+				region: { x: 5, y: 0, width: 1, height: 8 },
+			}),
+		]);
+		expect(result.diagnosis).toMatchObject({ cause: "raster", pattern: "random" });
+		expect((result.diagnosis as { message: string }).message).toMatch(/at most 8 pixels/);
+	});
+
 	it("prints the differing frames as ranges with the likely cause", async () => {
 		// Every run draws every frame differently, as with Math.random().
 		const { io, code } = await run(["check", "determinism", "Main", "--frames=0-9"], {
@@ -612,7 +632,7 @@ describe("check determinism", () => {
 			[
 				"Not deterministic: 10 of 10 frames differ between runs.",
 				"Frames: 0-9",
-				"Every run drew these frames differently: the pixels depend on something random or on the clock (Math.random(), Date.now(), performance.now(), an animation running on real time). Use random(seed) and derive motion from useCurrentFrame().",
+				"Every run drew these frames differently: the pixels probably depend on something random or on the clock (Math.random(), Date.now(), performance.now(), an animation running on real time). Use random(seed) and derive motion from useCurrentFrame().",
 				"",
 			].join("\n"),
 		);

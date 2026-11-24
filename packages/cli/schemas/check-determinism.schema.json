@@ -77,19 +77,39 @@
 								"items": {
 									"type": "string"
 								}
+							},
+							"differingPixels": {
+								"type": "integer",
+								"description": "Most pixels any run changed against the first run."
+							},
+							"region": {
+								"type": "object",
+								"description": "Bounding box of the pixels that differ in any run, in captured pixels.",
+								"required": ["x", "y", "width", "height"],
+								"additionalProperties": false,
+								"properties": {
+									"x": { "type": "integer" },
+									"y": { "type": "integer" },
+									"width": { "type": "integer" },
+									"height": { "type": "integer" }
+								}
 							}
 						}
 					}
 				},
 				"diagnosis": {
 					"type": "object",
-					"description": "The likely cause, read from which runs disagree; present when frames differ.",
+					"description": "The likely cause, read from which runs disagree and how much of each frame differs; present when frames differ.",
 					"required": ["cause", "message"],
 					"additionalProperties": false,
 					"properties": {
 						"cause": {
+							"enum": ["random", "order", "race", "history", "mixed", "raster"],
+							"description": "random: every run differs (Math.random(), a clock); order: ascending and descending differ (a frame depends on the previous one); race: one tab and several tabs differ; history: the runs agree but not with a new page per frame; mixed: more than one; raster: every frame differs in no more than a few lines of pixels, as when Chrome rasterises the same content differently (pattern has what the runs point to otherwise)."
+						},
+						"pattern": {
 							"enum": ["random", "order", "race", "history", "mixed"],
-							"description": "random: every run differs (Math.random(), a clock); order: ascending and descending differ (a frame depends on the previous one); race: one tab and several tabs differ; history: the runs agree but not with a new page per frame; mixed: more than one."
+							"description": "With the raster cause: what the disagreeing runs point to if the composition is the cause."
 						},
 						"message": {
 							"type": "string"

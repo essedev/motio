@@ -29,6 +29,63 @@ export interface DeterminismMismatch {
 	frame: number;
 	/** Hash of the frame in each run, in run order. */
 	hashes: string[];
+	/** Most pixels any run changed against the first run, when the frames were compared. */
+	differingPixels?: number;
+	/** Bounding box of the pixels that differ in any run, in captured pixels. */
+	region?: Rect;
+}
+
+/** Where two decoded RGBA frames of the same size differ. */
+export interface PixelDifference {
+	/** Pixels with at least one channel different. */
+	pixels: number;
+	/** Bounding box of those pixels. */
+	region: Rect;
+}
+
+/** The pixels where two decoded RGBA frames differ, or null when they are identical. */
+export function pixelDifference(
+	a: Uint8Array,
+	b: Uint8Array,
+	width: number,
+): PixelDifference | null {
+	if (a.length !== b.length || a.length % 4 !== 0) {
+		throw new Error(
+			`Cannot compare frames of different sizes (${a.length} and ${b.length} bytes).`,
+		);
+	}
+	let pixels = 0;
+	let x0 = Number.POSITIVE_INFINITY;
+	let y0 = Number.POSITIVE_INFINITY;
+	let x1 = -1;
+	let y1 = -1;
+	for (let i = 0; i < a.length; i += 4) {
+		if (a[i] === b[i] && a[i + 1] === b[i + 1] && a[i + 2] === b[i + 2] && a[i + 3] === b[i + 3])
+			continue;
+		pixels++;
+		const p = i / 4;
+		const x = p % width;
+		const y = (p - x) / width;
+		if (x < x0) x0 = x;
+		if (x > x1) x1 = x;
+		if (y < y0) y0 = y;
+		if (y > y1) y1 = y;
+	}
+	if (pixels === 0) return null;
+	return { pixels, region: { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 } };
+}
+
+/** Bounding box of two regions. */
+export function unionRegion(a: Rect | undefined, b: Rect): Rect {
+	if (!a) return b;
+	const x = Math.min(a.x, b.x);
+	const y = Math.min(a.y, b.y);
+	return {
+		x,
+		y,
+		width: Math.max(a.x + a.width, b.x + b.width) - x,
+		height: Math.max(a.y + a.height, b.y + b.height) - y,
+	};
 }
 
 /** Frames whose hash differs between runs. Every run must contain the same frames. */
@@ -114,12 +171,22 @@ export interface DeterminismRunShape {
 	freshPage?: true;
 }
 
-/** Why frames differ, read from which runs disagree. */
-export type DeterminismCause = "random" | "order" | "race" | "history" | "mixed";
+/** Why frames differ, read from which runs disagree and from how much of each frame differs. */
+export type DeterminismCause = "random" | "order" | "race" | "history" | "mixed" | "raster";
 
-const CAUSE_MESSAGES: Record<DeterminismCause, string> = {
+/** What the pattern of disagreeing runs points to, whatever the size of the differences. */
+export type DeterminismPattern = Exclude<DeterminismCause, "raster">;
+
+/**
+ * Most differing pixels a frame may have, in lines of the longer side, for the differences to
+ * read as rasterisation rather than content: an antialiased edge rasterised differently changes
+ * about one line of pixels, content drawn differently usually far more.
+ */
+export const RASTER_LINES = 4;
+
+const CAUSE_MESSAGES: Record<DeterminismPattern, string> = {
 	random:
-		"Every run drew these frames differently: the pixels depend on something random or on the clock (Math.random(), Date.now(), performance.now(), an animation running on real time). Use random(seed) and derive motion from useCurrentFrame().",
+		"Every run drew these frames differently: the pixels probably depend on something random or on the clock (Math.random(), Date.now(), performance.now(), an animation running on real time). Use random(seed) and derive motion from useCurrentFrame().",
 	order:
 		"Ascending and descending renders differ while the number of tabs does not matter: a frame depends on the frame rendered before it (state kept in a module variable, a ref or a cache between frames).",
 	race: "One tab and several tabs disagree: a race, something that loads or finishes at a different moment in each run (a fetch, a font or an image not held with delayRender()).",
@@ -132,7 +199,7 @@ const CAUSE_MESSAGES: Record<DeterminismCause, string> = {
 function frameCause(
 	hashes: readonly string[],
 	runs: readonly DeterminismRunShape[],
-): DeterminismCause {
+): DeterminismPattern {
 	const fresh = runs.findIndex((run) => run.freshPage);
 	const indexed = runs
 		.map((run, index) => ({ run, hash: hashes[index] as string }))
@@ -149,19 +216,48 @@ function frameCause(
 	return "mixed";
 }
 
+/** Size of the captured frames, to judge how much of a frame differs. */
+export interface FrameSize {
+	width: number;
+	height: number;
+}
+
+/** The likely cause of the mismatches, with the run pattern when the cause is `raster`. */
+export interface DeterminismDiagnosis {
+	cause: DeterminismCause;
+	message: string;
+	/** What the disagreeing runs point to, when `cause` is `raster`. */
+	pattern?: DeterminismPattern;
+}
+
 /**
  * The likely cause of the mismatches, as the guide explains it: ascending against descending
  * means a frame depends on the previous one, one tab against several a race, every run
- * different something random or a clock.
+ * different something random or a clock. When every frame differs in no more than a few lines of
+ * pixels (`RASTER_LINES`), the likelier cause is Chrome rasterising the same content differently
+ * (antialiased edges of moving elements), which no run pattern tells apart from randomness: the
+ * message says so, and names the pattern as the alternative.
  */
 export function diagnoseMismatches(
 	mismatches: readonly DeterminismMismatch[],
 	runs: readonly DeterminismRunShape[],
-): { cause: DeterminismCause; message: string } {
+	size?: FrameSize,
+): DeterminismDiagnosis {
 	const causes = new Set(mismatches.map((m) => frameCause(m.hashes, runs)));
-	const cause: DeterminismCause =
-		causes.size === 1 ? ([...causes][0] as DeterminismCause) : "mixed";
-	return { cause, message: CAUSE_MESSAGES[cause] };
+	const pattern: DeterminismPattern =
+		causes.size === 1 ? ([...causes][0] as DeterminismPattern) : "mixed";
+	const limit = size ? RASTER_LINES * Math.max(size.width, size.height) : 0;
+	const thin =
+		size !== undefined &&
+		mismatches.length > 0 &&
+		mismatches.every((m) => m.differingPixels !== undefined && m.differingPixels <= limit);
+	if (!thin) return { cause: pattern, message: CAUSE_MESSAGES[pattern] };
+	const most = Math.max(...mismatches.map((m) => m.differingPixels as number));
+	return {
+		cause: "raster",
+		pattern,
+		message: `Each differing frame changes at most ${most} pixels, no more than ${RASTER_LINES} lines of the frame: that is how Chrome rasterising the same content differently looks (the antialiased edges of moving elements), rather than the composition. Motio resets the raster state before every capture to prevent it, so please report it with the composition; the region of each frame is in mismatches in --json. If a small element of the composition does change between runs, the pattern points to this: ${CAUSE_MESSAGES[pattern]}`,
+	};
 }
 
 /** Side of the square blocks `blockFlicker` compares, in captured pixels. */
@@ -247,7 +343,8 @@ export const FLICKER_MOTION_RADIUS = 4 * FLICKER_BLOCK_SIZE;
 /** Least luma range (0 to 255) a block needs to be located: a flat block matches anywhere. */
 const MIN_STRUCTURE = 32;
 
-interface Rect {
+/** A rectangle of a frame, in captured pixels. */
+export interface Rect {
 	x: number;
 	y: number;
 	width: number;

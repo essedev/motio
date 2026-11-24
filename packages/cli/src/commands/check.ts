@@ -10,14 +10,19 @@ import {
 	blockFlicker,
 	blockThresholdFor,
 	compareRuns,
+	type DeterminismMismatch,
 	diagnoseMismatches,
 	FLICKER_BLOCK_SIZE,
 	type FlickerFrame,
+	type FrameSize,
 	formatFrameList,
 	hashPixels,
 	isFlicker,
 	meanAbsoluteDifference,
+	pixelDifference,
 	pngSize,
+	type Rect,
+	unionRegion,
 } from "../frames/compare.js";
 import { decodePngs } from "../frames/ffmpeg.js";
 import { framesInRange, renderToFiles } from "../frames/render-to-files.js";
@@ -132,6 +137,43 @@ export function determinismRuns(
 }
 
 /**
+ * Fills in how many pixels of each differing frame changed against the first run, and where:
+ * differences confined to a few lines of pixels point to rasterisation rather than content
+ * (`diagnoseMismatches`). Decodes only the differing frames, one at a time.
+ */
+async function measureMismatches(
+	ffmpeg: string,
+	mismatches: DeterminismMismatch[],
+	runFiles: ReadonlyArray<ReadonlyMap<number, string>>,
+): Promise<FrameSize | undefined> {
+	let size: FrameSize | undefined;
+	for (const mismatch of mismatches) {
+		const runIndexes = mismatch.hashes
+			.map((hash, i) => (i === 0 || hash !== mismatch.hashes[0] ? i : -1))
+			.filter((i) => i >= 0);
+		const files = runIndexes.map((i) => runFiles[i]?.get(mismatch.frame) as string);
+		size ??= pngSize(await readFile(files[0] as string));
+		const width = size.width;
+		let first: Uint8Array | undefined;
+		let most = 0;
+		let region: Rect | undefined;
+		await decodePngs(ffmpeg, files, (i, rgba) => {
+			if (i === 0) {
+				first = Uint8Array.from(rgba);
+				return;
+			}
+			const difference = pixelDifference(first as Uint8Array, rgba, width);
+			if (!difference) return;
+			most = Math.max(most, difference.pixels);
+			region = unionRegion(region, difference.region);
+		});
+		mismatch.differingPixels = most;
+		if (region) mismatch.region = region;
+	}
+	return size;
+}
+
+/**
  * `motio check determinism [entry] <composition-id>`: renders the frames in two orders at two
  * concurrencies and compares the hashes of the decoded pixels.
  */
@@ -154,6 +196,8 @@ export async function checkDeterminismCommand(
 		);
 	const runs = determinismRuns(high, reference);
 	const hashes: Array<Map<number, string>> = [];
+	const runFiles: Array<Map<number, string>> = [];
+	const { ffmpeg } = await commandFfmpeg(ctx, project.settings);
 	for (const [index, run] of runs.entries()) {
 		const files = await renderToFiles(ctx, project, composition, {
 			frames,
@@ -168,15 +212,17 @@ export async function checkDeterminismCommand(
 		});
 		const runHashes = new Map<number, string>();
 		await decodePngs(
-			(await commandFfmpeg(ctx, project.settings)).ffmpeg,
+			ffmpeg,
 			frames.map((frame) => files.get(frame) as string),
 			(i, rgba) => void runHashes.set(frames[i] as number, hashPixels(rgba)),
 		);
 		hashes.push(runHashes);
+		runFiles.push(files);
 	}
 	const mismatches = compareRuns(hashes);
 	const deterministic = mismatches.length === 0;
-	const diagnosis = deterministic ? null : diagnoseMismatches(mismatches, runs);
+	const size = deterministic ? undefined : await measureMismatches(ffmpeg, mismatches, runFiles);
+	const diagnosis = deterministic ? null : diagnoseMismatches(mismatches, runs, size);
 	return {
 		json: {
 			composition: compositionJson(composition),
