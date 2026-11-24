@@ -14,9 +14,12 @@ export const Title = ({ title, subtitle }: { title: string; subtitle: string }) 
 	const frame = useCurrentFrame();
 	const { fps, durationInFrames } = useVideoConfig();
 
-	// A spring goes from 0 to 1; damping 200 settles without bouncing.
+	// A spring goes from 0 to 1; damping 200 settles without bouncing. Frame 0 is what the
+	// preview opens on and what many players show before playing, so the title is on screen
+	// from the first frame and the spring only settles its size and position.
 	const enter = spring({ frame, fps, config: { damping: 200 } });
 	const scale = interpolate(enter, [0, 1], [0.85, 1]);
+	const rise = interpolate(enter, [0, 1], [24, 0]);
 	const subtitleOpacity = interpolate(frame, [12, 30], [0, 1], {
 		easing: Easing.out(Easing.cubic),
 		extrapolateLeft: "clamp",
@@ -38,8 +41,7 @@ export const Title = ({ title, subtitle }: { title: string; subtitle: string }) 
 					fontSize: 110,
 					fontWeight: 700,
 					margin: 0,
-					opacity: enter,
-					transform: `scale(${scale})`,
+					transform: `translateY(${rise}px) scale(${scale})`,
 				}}
 			>
 				{title}

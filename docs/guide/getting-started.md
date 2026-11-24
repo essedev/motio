@@ -39,7 +39,7 @@ pnpm create motio my-video
 |---|---|
 | `basic` (default) | A four-second title animation: `spring()` and `interpolate()`, two scenes in a `<Series>`, an image from `public/`, a local font, and a still for the thumbnail. |
 | `blank` | One composition with a fading title, nothing else. |
-| `captions` | Word-by-word captions read from a JSON transcript with `@motiojs/captions`; the video length comes from the transcript. |
+| `captions` | Word-by-word captions read from a JSON transcript with `@motiojs/captions`, over a sound in step with the words; the video length comes from the transcript. |
 
 Every question has a flag, so scripts and agents can run it without a terminal:
 

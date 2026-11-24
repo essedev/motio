@@ -30,7 +30,7 @@ export const Root = () => (
 		height={1080}
 		fps={FPS}
 		durationInFrames={FPS}
-		defaultProps={{ src: "captions.json", captions: [] }}
+		defaultProps={{ src: "captions.json", captions: [], audio: "word-tones.mp3" }}
 		calculateMetadata={calculateMetadata}
 	/>
 );

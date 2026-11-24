@@ -1,11 +1,24 @@
 import { type Caption, createTikTokStyleCaptions, type TikTokPage } from "@motiojs/captions";
-import { AbsoluteFill, Sequence, spring, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
+import {
+	AbsoluteFill,
+	Audio,
+	Sequence,
+	spring,
+	staticFile,
+	useCurrentFrame,
+	useVideoConfig,
+} from "@motiojs/motio";
 
 export interface CaptionsProps {
 	/** File in public/ with the words, read by calculateMetadata() in Root.tsx. */
 	src: string;
 	/** Filled in by calculateMetadata(). */
 	captions: Caption[];
+	/**
+	 * Sound file in public/ played under the captions. The starter's word-tones.mp3 plays a note
+	 * as each word starts; replace it with the recording the transcript comes from.
+	 */
+	audio: string;
 }
 
 /** Words closer together than this end up on the same page. */
@@ -46,7 +59,7 @@ const Page = ({ page }: { page: TikTokPage }) => {
 	);
 };
 
-export const Captions = ({ captions }: CaptionsProps) => {
+export const Captions = ({ captions, audio }: CaptionsProps) => {
 	const { fps } = useVideoConfig();
 	const { pages } = createTikTokStyleCaptions({
 		captions,
@@ -55,6 +68,8 @@ export const Captions = ({ captions }: CaptionsProps) => {
 
 	return (
 		<AbsoluteFill style={{ backgroundColor: "#101820" }}>
+			{/* Mixed into the render by Motio, in step with the frames; it plays in the preview too. */}
+			<Audio src={staticFile(audio)} />
 			{pages.map((page) => {
 				const from = Math.round((page.startMs / 1000) * fps);
 				const durationInFrames = Math.max(1, Math.round((page.durationMs / 1000) * fps));

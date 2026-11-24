@@ -17,7 +17,8 @@ Rendering needs FFmpeg 5.1 or later with libx264 on `PATH` (`brew install ffmpeg
 
 - `src/index.ts`: the entry point; registers the root.
 - `src/Root.tsx`: the `Captions` composition. Its `calculateMetadata()` loads `public/captions.json` before rendering and sets the length from the last word.
-- `src/Captions.tsx`: groups the words into pages with `createTikTokStyleCaptions()` and shows each page in its own `<Sequence>`, highlighting the word being spoken.
-- `public/captions.json`: one entry per word, with start and end times in milliseconds. Replace it with your own transcript; `parseSrt()` from `@motiojs/captions` reads SRT files.
+- `src/Captions.tsx`: groups the words into pages with `createTikTokStyleCaptions()` and shows each page in its own `<Sequence>`, highlighting the word being spoken, over the sound file of the `audio` prop.
+- `public/word-tones.mp3`: a stand-in for a narration, one synthesised note as each word starts, so the starter ships no voice recording. Replace it with your recording (and `audio` in `src/Root.tsx` with its name).
+- `public/captions.json`: one entry per word, with start and end times in milliseconds. Replace it with the transcript of your recording; `parseSrt()` from `@motiojs/captions` reads SRT files.
 
 `{{exec}} motio compositions src/index.ts` lists the compositions. Every command takes `--json` for scripts and agents.
