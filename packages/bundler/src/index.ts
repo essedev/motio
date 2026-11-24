@@ -3,6 +3,8 @@
  * Motio reads it to detect Tailwind; `bundle()` rejects a `webpackOverride` (use `viteOverride`).
  */
 export type { WebpackOverrideFn } from "@motiojs/compat/config";
+/** The settings of `motio.config.ts`, as returned by `loadConfig`. */
+export type { MotioConfig } from "@motiojs/core/config";
 export {
 	BUNDLE_GLOBAL,
 	type BundleOptions,
@@ -51,5 +53,21 @@ export {
 	loadEnvVariables,
 	TOOL_VARIABLES,
 } from "./env.js";
+export {
+	CONFIG_ENV_VARIABLES,
+	type ConfigBundleOptions,
+	type ConfigEnvVariable,
+	type ConfigProblem,
+	type ConfigSessionOptions,
+	configFromEnv,
+	findMotioConfigFile,
+	isRemotionConfigFile,
+	type LoadedMotioConfig,
+	type LoadMotioConfigOptions,
+	loadConfig,
+	MOTIO_CONFIG_FILE_NAMES,
+	mergeConfig,
+	validateConfig,
+} from "./motio-config.js";
 export { encodeStaticPath, STATIC_FILES_LIMIT, type StaticFile } from "./public-dir.js";
 export { listStaticFiles } from "./static-files.js";

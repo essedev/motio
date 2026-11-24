@@ -10,18 +10,24 @@ export const ENV_PREFIX = "REMOTION_";
 export const ENV_PREFIXES: readonly string[] = ["MOTIO_", ENV_PREFIX];
 
 /**
- * Variables that configure Motio's tools (FFmpeg, the browser, caches). They start with `MOTIO_`
- * but are settings of the machine, not values for the video, so they never reach the bundle.
+ * Variables that configure Motio's tools (FFmpeg, the browser, caches, and the config keys of
+ * `CONFIG_ENV_VARIABLES`). They start with `MOTIO_` but are settings of the machine, not values
+ * for the video, so they never reach the bundle.
  */
 export const TOOL_VARIABLES: ReadonlySet<string> = new Set([
 	"MOTIO_BROWSER_CACHE",
 	"MOTIO_BROWSER_EXECUTABLE",
 	"MOTIO_CAPTURE_METHOD",
 	"MOTIO_CHROME_NO_SANDBOX",
+	"MOTIO_CONCURRENCY",
 	"MOTIO_FFMPEG",
 	"MOTIO_FFMPEG_BASE_URL",
 	"MOTIO_FFMPEG_CACHE",
 	"MOTIO_FFPROBE",
+	"MOTIO_GL",
+	"MOTIO_LOG",
+	"MOTIO_PAGES_PER_BROWSER",
+	"MOTIO_TIMEOUT",
 	"MOTIO_WHISPER_CPP",
 ]);
 
