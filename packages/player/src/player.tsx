@@ -257,6 +257,14 @@ function PlayerInner<Props extends Record<string, unknown>>(
 	const scaleRef = useRef(placement.scale);
 	scaleRef.current = placement.scale;
 
+	// The media the clock waits for at play: elements in the composition and the lent shared tags.
+	useEffect(() => {
+		store.setMediaElements(() => {
+			const inTree = container.current?.querySelectorAll<HTMLMediaElement>("video, audio") ?? [];
+			return [...inTree, ...(sharedAudio?.lent() ?? [])];
+		});
+	}, [store, sharedAudio]);
+
 	// Store lifecycle, autoplay and volume persistence.
 	useEffect(() => {
 		store.attach();

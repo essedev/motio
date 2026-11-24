@@ -6,7 +6,7 @@ import { createServer, type Server } from "node:http";
 import { join, resolve } from "node:path";
 import { build } from "esbuild";
 import puppeteer, { type Browser, type Page } from "puppeteer-core";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { testChromeArgs } from "../../testing/src/browser.js";
 
 const chrome =
@@ -127,11 +127,31 @@ const player = (method: string, ...args: unknown[]) =>
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Plays and waits for the clock to leave the first frame. The Player holds that frame until the
+ * media elements start (MediaStartGate), which takes the output device's start-up latency: a
+ * few milliseconds on built-in speakers, 0.25 s or more on Bluetooth headphones.
+ */
+async function playAndWaitForStart(): Promise<void> {
+	const start = await call<number>("frame");
+	await player("play");
+	const deadline = Date.now() + 2000;
+	while ((await call<number>("frame")) === start) {
+		if (Date.now() > deadline) throw new Error("The Player did not start within 2 s");
+		await sleep(10);
+	}
+}
+
 describe("media in the Player", () => {
+	// A failed assertion must not leave the Player playing into the next test.
+	afterEach(async () => {
+		await player("pause");
+	});
+
 	it("plays the video on the real clock in sync with the Player's frame", async () => {
 		await call("mount");
-		await player("play");
-		await sleep(500);
+		await playAndWaitForStart();
+		await sleep(300);
 		const samples: { t: number; frame: number; video: ElementState }[] = [];
 		for (let i = 0; i < 8; i++) {
 			const [frame, video] = await Promise.all([
@@ -184,24 +204,23 @@ describe("media in the Player", () => {
 
 	it("plays the audio from a shared audio tag, outside the composition's DOM", async () => {
 		await player("seekTo", 0);
-		await player("play");
-		await sleep(400);
+		await playAndWaitForStart();
+		await sleep(300);
 		const audio = await call<ElementState & { src: string }>("audio");
 		expect(audio.inDocument).toBe(false);
 		expect(audio.src).toBe("/clicks.wav");
 		expect(audio.paused).toBe(false);
+		// Without the start gate the audio lags the frame by the output device's latency.
 		expect(Math.abs(audio.currentTime - (await call<number>("frame")) / 30)).toBeLessThan(0.2);
-		await player("pause");
 	});
 
 	it("applies the Player's playback rate", async () => {
 		await call("mount", { playbackRate: 2 });
 		await player("seekTo", 0);
-		await player("play");
-		await sleep(400);
+		await playAndWaitForStart();
+		await sleep(300);
 		const video = await call<ElementState & { playbackRate: number }>("video");
 		expect(video.playbackRate).toBe(2);
 		expect(Math.abs(video.currentTime - (await call<number>("frame")) / 30)).toBeLessThan(0.3);
-		await player("pause");
 	});
 });

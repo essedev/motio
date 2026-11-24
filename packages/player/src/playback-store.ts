@@ -7,6 +7,7 @@ import {
 	playbackRange,
 	startFrameForPlay,
 } from "./frame-math.js";
+import { type MediaClock, MediaStartGate } from "./media-start.js";
 import type { PlayerEventTypes } from "./types.js";
 import { validateVolume } from "./validate.js";
 
@@ -60,6 +61,8 @@ export class PlaybackStore {
 	private rafId: number | null = null;
 	private lastTimeUpdate = Number.NEGATIVE_INFINITY;
 	private attached = true;
+	private readonly mediaStart = new MediaStartGate();
+	private mediaElements: () => Iterable<MediaClock> = () => [];
 
 	constructor(
 		options: PlaybackOptions,
@@ -78,6 +81,14 @@ export class PlaybackStore {
 			volume: init.volume,
 			muted: init.muted,
 		};
+	}
+
+	/**
+	 * Tells the store how to find the media elements the composition plays, so the clock can
+	 * wait for them to start (see {@link MediaStartGate}).
+	 */
+	setMediaElements(list: () => Iterable<MediaClock>): void {
+		this.mediaElements = list;
 	}
 
 	/** The value given to `BufferStateContext`. */
@@ -141,6 +152,7 @@ export class PlaybackStore {
 		this.playStartFrame = from;
 		this.setFrame(from, { playing: true, hasPlayed: true, ended: false });
 		this.reanchor();
+		this.mediaStart.open(now());
 		this.lastTimeUpdate = Number.NEGATIVE_INFINITY;
 		this.emitter.dispatch("play", undefined);
 		this.schedule();
@@ -150,6 +162,7 @@ export class PlaybackStore {
 		if (!this.snapshot.playing) return;
 		this.advanceToNow();
 		this.cancel();
+		this.mediaStart.close();
 		this.update({ playing: false });
 		this.emitter.dispatch("pause", undefined);
 	}
@@ -214,6 +227,9 @@ export class PlaybackStore {
 			// Freeze time at the moment buffering starts, and restart the clock when it ends.
 			if (buffering) this.advanceToNow();
 			this.reanchor();
+			// The media elements were paused while buffering and start again with latency.
+			if (buffering) this.mediaStart.close();
+			else this.mediaStart.open(now());
 		}
 		this.update({ buffering });
 		this.emitter.dispatch(buffering ? "waiting" : "resume", undefined);
@@ -245,12 +261,26 @@ export class PlaybackStore {
 			this.anchorFrame = this.snapshot.frame;
 			return;
 		}
+		if (this.mediaStart.isOpen) {
+			const gate = this.mediaStart.poll(t, this.mediaElements());
+			// Held: time does not pass. Released by the media: the clock starts when they did.
+			if (gate.hold) {
+				this.anchorFrame = this.snapshot.frame;
+				this.anchorTime = t;
+				return;
+			}
+			if (gate.startedMsAgo !== null) {
+				this.anchorFrame = this.snapshot.frame;
+				this.anchorTime = t - gate.startedMsAgo;
+			}
+		}
 		const { fps, playbackRate, loop, moveToBeginningWhenEnded } = this.options;
 		const delta = framesElapsed(t - this.anchorTime, fps, playbackRate);
 		const range = this.range;
 		const result = advance(this.anchorFrame, delta, range, loop);
 		if (result.ended) {
 			this.cancel();
+			this.mediaStart.close();
 			this.setFrame(result.frame, { playing: false, ended: true });
 			this.emitter.dispatch("pause", undefined);
 			this.emitter.dispatch("ended", undefined);

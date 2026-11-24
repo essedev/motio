@@ -143,10 +143,13 @@ describe("preloaded media in the Player", () => {
 	it("a preloaded audio file plays on through the Player's shared audio tags", async () => {
 		const cold = await scenario("audio", "/tone.wav?case=cold", false);
 		const warm = await scenario("audio", "/tone.wav?case=warm", true);
+		// After a buffering pause the Player's clock waits for the audio output to start again
+		// (MediaStartGate), which takes the output device's latency on top of any stall.
+		const latency = await call<number>("audioStartLatency");
 		console.log(
-			`audio, not preloaded: ${JSON.stringify(cold)}; preloaded: ${JSON.stringify(warm)}`,
+			`audio, not preloaded: ${JSON.stringify(cold)}; preloaded: ${JSON.stringify(warm)}; audio start latency ${latency.toFixed(0)} ms`,
 		);
-		expect(warm.longestStillMs).toBeLessThan(200);
+		expect(warm.longestStillMs).toBeLessThan(200 + latency);
 		expect(warm.downloads).toBeLessThan(1.05);
 		expect(warm.frame).toBeGreaterThanOrEqual(60);
 	});

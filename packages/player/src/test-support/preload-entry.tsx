@@ -96,7 +96,57 @@ const api = {
 			},
 		),
 	unmount: () => root.render(null),
+	/**
+	 * How long an audio element takes, after play(), to play 60 ms on this machine's output
+	 * device: the start-up latency the Player's clock waits for after buffering. A few
+	 * milliseconds on built-in speakers, 250 ms or more on Bluetooth headphones.
+	 */
+	audioStartLatency: () =>
+		new Promise<number>((resolve, reject) => {
+			const audio = new Audio(silentWav(1));
+			audio.addEventListener(
+				"canplaythrough",
+				() => {
+					const start = performance.now();
+					const tick = () => {
+						if (audio.currentTime >= 0.06) {
+							audio.pause();
+							resolve(performance.now() - start);
+						} else if (performance.now() - start > 3000) {
+							reject(new Error("The audio did not start within 3 s"));
+						} else requestAnimationFrame(tick);
+					};
+					audio.play().then(() => requestAnimationFrame(tick), reject);
+				},
+				{ once: true },
+			);
+		}),
 };
+
+/** A mono 16-bit WAV of silence, as a data URL. */
+function silentWav(seconds: number): string {
+	const rate = 44100;
+	const samples = Math.round(rate * seconds);
+	const view = new DataView(new ArrayBuffer(44 + samples * 2));
+	const text = (offset: number, s: string) => {
+		for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i));
+	};
+	text(0, "RIFF");
+	view.setUint32(4, 36 + samples * 2, true);
+	text(8, "WAVEfmt ");
+	view.setUint32(16, 16, true);
+	view.setUint16(20, 1, true);
+	view.setUint16(22, 1, true);
+	view.setUint32(24, rate, true);
+	view.setUint32(28, rate * 2, true);
+	view.setUint16(32, 2, true);
+	view.setUint16(34, 16, true);
+	text(36, "data");
+	view.setUint32(40, samples * 2, true);
+	let binary = "";
+	for (const byte of new Uint8Array(view.buffer)) binary += String.fromCharCode(byte);
+	return `data:audio/wav;base64,${btoa(binary)}`;
+}
 
 (window as unknown as { __preloadTest: typeof api }).__preloadTest = api;
 document.body.dataset.ready = "true";

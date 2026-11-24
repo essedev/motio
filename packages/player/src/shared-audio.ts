@@ -52,6 +52,11 @@ export class SharedAudioTags implements SharedAudioPool {
 		return this.elements.length;
 	}
 
+	/** The elements lent to media components; they are not in the document. */
+	lent(): HTMLAudioElement[] {
+		return [...this.inUse.keys()];
+	}
+
 	acquire(owner: string): HTMLAudioElement {
 		const free = this.elements.find((el) => !this.inUse.has(el));
 		if (!free) {
