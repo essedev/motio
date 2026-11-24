@@ -233,6 +233,17 @@ describe("bundle errors", () => {
 		});
 	});
 
+	it("finds registerRoot in a project file the entry imports", async () => {
+		const result = await createBundle(
+			testOptions({
+				entryPoint: "src/index.ts",
+				rootDir: join(fixtures, "indirect-root"),
+				outDir: await newOutDir(),
+			}),
+		);
+		expect(existsSync(join(result.serveUrl, "index.html"))).toBe(true);
+	});
+
 	it("wraps build failures with E_BUNDLE", async () => {
 		await expect(
 			bundle({

@@ -1,7 +1,7 @@
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { stripVTControlCharacters } from "node:util";
 import { type MotioCompatOptions, MotioError, motioCompat, scanSource } from "@motiojs/compat";
 import { analyzeWebpackOverrides, type ConfigValues } from "@motiojs/compat/config";
@@ -134,25 +134,71 @@ function assertSafeOutDir(outDir: string, rootDir: string, entryPoint: string): 
 	}
 }
 
-/** Checks, with a parser, that the entry file imports `registerRoot`. */
-async function assertRegistersRoot(entryPoint: string): Promise<void> {
-	const source = await readFile(entryPoint, "utf8");
-	const { imports } = scanSource(entryPoint, source, {
-		filter: (s) => s === "remotion" || s === "@motiojs/motio" || s === "@motiojs/core",
+/** Modules `registerRoot` is imported from. */
+const REGISTER_ROOT_SOURCES = new Set(["remotion", "@motiojs/motio", "@motiojs/core"]);
+const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"];
+/** Most project files read while looking for `registerRoot` from the entry. */
+const REGISTER_ROOT_SEARCH_LIMIT = 200;
+
+const isRelative = (specifier: string) => specifier.startsWith("./") || specifier.startsWith("../");
+
+/** Resolves a relative import to a source file, as a bundler would; null for anything else. */
+function resolveRelativeSource(from: string, specifier: string): string | null {
+	const base = resolve(dirname(from), specifier);
+	const extension = extname(base);
+	// TypeScript sources may import `./Root.js` for `./Root.tsx`.
+	const stem = [".js", ".jsx", ".mjs", ".cjs"].includes(extension)
+		? base.slice(0, -extension.length)
+		: null;
+	const candidates = [
+		base,
+		...SOURCE_EXTENSIONS.map((ext) => base + ext),
+		...(stem ? SOURCE_EXTENSIONS.map((ext) => stem + ext) : []),
+		...SOURCE_EXTENSIONS.map((ext) => join(base, `index${ext}`)),
+	];
+	const found = candidates.find((candidate) => {
+		try {
+			return statSync(candidate).isFile();
+		} catch {
+			return false;
+		}
 	});
-	const found = imports.some((usage) =>
-		usage.symbols.some((s) => s.name === "registerRoot" || s.name === "*"),
-	);
-	if (!found) {
-		throw new MotioError(
-			"E_NO_REGISTER_ROOT",
-			`The entry point ${entryPoint} does not call registerRoot(). Import registerRoot from "@motiojs/motio" and call it with the root component that renders your compositions.`,
-			{
-				entryPoint,
-				hint: "In the Node API, bundle({ ignoreRegisterRootWarning: true }) skips this check.",
-			},
-		);
+	return found && SOURCE_EXTENSIONS.includes(extname(found)) ? found : null;
+}
+
+/**
+ * Checks, with a parser, that the entry imports `registerRoot`, itself or through the project
+ * files it imports statically (`import "./Root"`, where `Root.tsx` calls it).
+ */
+async function assertRegistersRoot(entryPoint: string): Promise<void> {
+	const queue = [entryPoint];
+	const seen = new Set(queue);
+	while (queue.length > 0) {
+		const file = queue.shift() as string;
+		const { imports } = scanSource(file, await readFile(file, "utf8"), {
+			filter: (s) => REGISTER_ROOT_SOURCES.has(s) || isRelative(s),
+		});
+		for (const usage of imports) {
+			if (REGISTER_ROOT_SOURCES.has(usage.specifier)) {
+				if (usage.symbols.some((s) => s.name === "registerRoot" || s.name === "*")) return;
+				continue;
+			}
+			if (usage.kind !== "static" && usage.kind !== "reexport") continue;
+			const next = resolveRelativeSource(file, usage.specifier);
+			if (next && !seen.has(next) && seen.size < REGISTER_ROOT_SEARCH_LIMIT) {
+				seen.add(next);
+				queue.push(next);
+			}
+		}
 	}
+	throw new MotioError(
+		"E_NO_REGISTER_ROOT",
+		`The entry point ${entryPoint} does not call registerRoot(), and neither do the project files it imports. Import registerRoot from "@motiojs/motio" and call it with the root component that renders your compositions.`,
+		{
+			entryPoint,
+			hint: "In the Node API, bundle({ ignoreRegisterRootWarning: true }) skips this check.",
+		},
+	);
 }
 
 function normalizePublicPath(publicPath: string): string {
