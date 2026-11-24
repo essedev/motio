@@ -21,6 +21,12 @@ export function useTimeline(hook: string): TimelineState {
 /**
  * The current frame, 0-indexed, relative to the start of the nearest enclosing `Sequence`
  * (after its `trimBefore` and `playbackRate`), or the frame frozen by a `Freeze`.
+ *
+ * The only clock of a video: derive every moving value from it, with `interpolate()` or
+ * `spring()`. Frames render in any order and in several tabs at once, so CSS transitions,
+ * `setTimeout`, `setInterval`, `requestAnimationFrame` loops, `Date.now()` and state kept between
+ * frames give different pixels on every render (`motio check determinism` reports them). CSS
+ * `@keyframes` animations are seeked to the frame's time and are fine.
  */
 export function useCurrentFrame(): number {
 	return useTimeline("useCurrentFrame()").frame;

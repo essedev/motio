@@ -44,6 +44,10 @@ function staticBase(): string {
 /**
  * Turns a path inside the project's `public/` folder into a URL. Each path segment is encoded
  * with `encodeURIComponent`, so `#`, `?` and `&` in file names work; do not pre-encode.
+ *
+ * Reference files of `public/` through it rather than with a hard-coded `/file.png` URL: the
+ * preview, a bundle and a bundle served from a sub-path put them under different bases, which
+ * this URL follows.
  */
 export function staticFile(path: string): string {
 	if (typeof path !== "string") {

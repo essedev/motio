@@ -165,6 +165,10 @@ function useRegisteredComposition(
 /**
  * Registers a video. When the page renders this composition, its component is mounted in the
  * canvas with the resolved config and props.
+ *
+ * The component must draw each frame from `useCurrentFrame()` and its props alone: frames are
+ * rendered in any order, in several tabs, and retried on fresh ones. `motio check determinism
+ * <entry> <id>` renders the composition in different orders and compares the pixels.
  */
 export function Composition<Props extends AnyProps = AnyProps>(
 	props: CompositionProps<Props>,

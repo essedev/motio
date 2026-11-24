@@ -41,6 +41,11 @@ function validateOptions(options: DelayRenderOptions | undefined): void {
  * Blocks the capture of the current frame until `continueRender(handle)` is called. The handle
  * times out after `timeoutInMilliseconds` (default 30 s, real time), which fails the frame with
  * the label. Has no effect in the Player.
+ *
+ * Needed for anything a frame shows after an asynchronous step that Motio does not wait for on
+ * its own: data fetched in an effect or by a query hook, a file decoded by hand, a chart drawn
+ * later. Without it the screenshot is taken whenever the page looks idle, so the frame shows the
+ * loading state on some renders and the data on others.
  */
 export function delayRender(label?: string, options?: DelayRenderOptions): number {
 	if (label !== undefined && typeof label !== "string") {
