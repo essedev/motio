@@ -65,7 +65,99 @@ export const Explainer = () => (
 );
 ```
 
-Every `Series.Sequence` needs a `durationInFrames`; only the last one may be `Infinity`. For transitions between scenes (fades, slides, wipes), `@motiojs/transitions` provides `<TransitionSeries>` with ready-made presentations.
+Every `Series.Sequence` needs a `durationInFrames`; only the last one may be `Infinity`.
+
+## Transitions
+
+`<TransitionSeries>` from [`@motiojs/transitions`](../../packages/transitions/README.md) is a series with effects between its scenes. A `<TransitionSeries.Transition>` between two scenes overlaps them for its length, and its presentation (a fade, a slide, a wipe, ...) mixes them; its timing sets the length and the pace:
+
+<!-- example: examples/src/packages/transitions.tsx#series -->
+```tsx
+import { linearTiming, springTiming, TransitionSeries } from "@motiojs/transitions";
+import { fade } from "@motiojs/transitions/fade";
+import { slide } from "@motiojs/transitions/slide";
+
+export const Slides = () => (
+	<TransitionSeries>
+		<TransitionSeries.Sequence durationInFrames={60}>
+			<Scene label="One" color="#101820" />
+		</TransitionSeries.Sequence>
+		{/* For 15 frames "Two" fades in over "One". */}
+		<TransitionSeries.Transition
+			presentation={fade()}
+			timing={linearTiming({ durationInFrames: 15 })}
+		/>
+		<TransitionSeries.Sequence durationInFrames={60}>
+			<Scene label="Two" color="#3a1f5d" />
+		</TransitionSeries.Sequence>
+		{/* "Three" pushes "Two" out to the left; the spring sets the length (23 frames at 30 fps). */}
+		<TransitionSeries.Transition
+			presentation={slide({ direction: "from-right" })}
+			timing={springTiming({ config: { damping: 200 } })}
+		/>
+		<TransitionSeries.Sequence durationInFrames={60}>
+			<Scene label="Three" color="#ffb000" />
+		</TransitionSeries.Sequence>
+	</TransitionSeries>
+);
+```
+
+The package README lists the presentations and timings, overlays and custom effects.
+
+### How long a transition series is
+
+Each transition between two scenes shortens the series by its own length, and the composition's `durationInFrames` is not adjusted for you: a composition longer than the series ends on empty frames. Compute the length from the same data as the scenes:
+
+<!-- example: examples/src/packages/transitions.tsx#duration -->
+```tsx
+import { Composition } from "@motiojs/motio";
+import { springTiming, TransitionSeries } from "@motiojs/transitions";
+import { fade } from "@motiojs/transitions/fade";
+
+const FPS = 30;
+const scenes = [
+	{ label: "Intro", color: "#101820", frames: 90 },
+	{ label: "Feature", color: "#3a1f5d", frames: 120 },
+	{ label: "Outro", color: "#ffb000", frames: 90 },
+];
+const timing = springTiming({ config: { damping: 200 } });
+
+// Each transition between two scenes overlaps them, so it shortens the series by its own
+// length: 300 frames of scenes minus 2 transitions of 23 frames is 254 frames.
+const SERIES_DURATION =
+	scenes.reduce((total, scene) => total + scene.frames, 0) -
+	(scenes.length - 1) * timing.getDurationInFrames({ fps: FPS });
+
+const Story = () => (
+	<TransitionSeries>
+		{scenes.flatMap((scene, index) => [
+			index > 0 ? (
+				<TransitionSeries.Transition
+					key={`${scene.label}-in`}
+					presentation={fade()}
+					timing={timing}
+				/>
+			) : null,
+			<TransitionSeries.Sequence key={scene.label} durationInFrames={scene.frames}>
+				<Scene label={scene.label} color={scene.color} />
+			</TransitionSeries.Sequence>,
+		])}
+	</TransitionSeries>
+);
+
+export const StoryRoot = () => (
+	<Composition
+		id="Story"
+		component={Story}
+		width={1920}
+		height={1080}
+		fps={FPS}
+		durationInFrames={SERIES_DURATION}
+	/>
+);
+```
+
+A transition before the first scene or after the last one, and an overlay, do not change the length.
 
 ## Loop and Freeze
 

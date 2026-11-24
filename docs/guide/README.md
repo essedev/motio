@@ -8,8 +8,8 @@ This guide is for people starting with Motio. It assumes you know React and Type
 2. [Project structure](project-structure.md): what each file of a project does.
 3. Core concepts
    - [Frames and time](frames-and-time.md): `useCurrentFrame()`, frame rates, determinism.
-   - [Compositions](compositions.md): videos and stills, props, metadata computed from data.
-   - [Sequences and series](sequences.md): placing things on the timeline.
+   - [Compositions](compositions.md): videos and stills, props and their schema, metadata computed from data.
+   - [Sequences and series](sequences.md): placing things on the timeline, transitions between scenes.
    - [Animation](animation.md): `interpolate()`, `spring()`, easing, colours.
    - [Media](media.md): images, animated images, video, audio, preloading for the Player.
    - [Fonts and text](fonts-and-text.md): local files, Google Fonts, backgrounds that follow lines of text.

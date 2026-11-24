@@ -79,9 +79,15 @@ export const NativeClip = () => <Video src={staticFile("clip.mp4")} muted />;
 export const CanvasClip = () => <CanvasVideo src={staticFile("clip.mp4")} />;
 ```
 
-- `<OffthreadVideo>` is the default choice for renders: for each frame, Motio picks the exact source frame from the file's timestamps, extracts it with FFmpeg and shows it as an image. It handles any frame rate and codec FFmpeg reads. In the preview it plays a normal `<video>`.
-- `<Video>` keeps a real `<video>` element, seeked to each frame. Use it when you need the element: a ref, drawing it into a canvas, CSS on the element itself.
-- `Video` from `@motiojs/media` draws the extracted frames into a `<canvas>`.
+Motio has three video components. `<Video>` from `@motiojs/motio` and `Video` from `@motiojs/media` are different components with the same name, which is why the example imports the second one as `CanvasVideo`:
+
+| Component | Import | In a render | Choose it when |
+|---|---|---|---|
+| `<OffthreadVideo>` | `@motiojs/motio` | FFmpeg extracts the exact source frame, shown as an image. | By default: any codec FFmpeg reads (ProRes, HEVC), any frame rate, transparency with `transparent`. |
+| `<Video>` | `@motiojs/motio` | A real `<video>` element, seeked to each frame. | You need the element: a ref, drawing it into a canvas, CSS on the element. The file must play in Chrome. |
+| `Video` | `@motiojs/media` | The exact source frame, drawn into a `<canvas>`. | You process frames (`onVideoFrame`, `headless`) or want a canvas, with `objectFit`. |
+
+In the preview and the Player all three play a normal `<video>` on the real clock. The [`@motiojs/media` README](../../packages/media/README.md) has the props of each.
 
 All of them take `trimBefore` and `trimAfter` (in frames of the composition) to play part of the file, `playbackRate`, `volume` and `muted`; `<Video>` and the `@motiojs/media` `Video` also take `loop`. A video placed in a `<Sequence>` starts playing when the sequence starts.
 

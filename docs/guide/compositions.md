@@ -60,6 +60,60 @@ import { getInputProps } from "@motiojs/motio";
 const { title } = getInputProps<{ title?: string }>();
 ```
 
+## Schema
+
+A [Zod](https://zod.dev) schema describes the props once. Pass it as `schema` and the preview checks the props editor against it, listing each prop that does not match next to the editor; a render checks the final props too, logs a warning that lists the mismatches, and renders with the props as given. Install Zod in the project (`pnpm add zod`); [`@motiojs/zod-types`](../../packages/zod-types/README.md) adds `zColor()` and other schemas for values videos often hold.
+
+<!-- example: examples/src/schema.tsx#schema -->
+```tsx
+import { AbsoluteFill, Composition } from "@motiojs/motio";
+import { zColor } from "@motiojs/zod-types";
+import { z } from "zod";
+
+// The shape of the props, written once: the preview checks the props editor against it, a render
+// reports props that do not match, and TypeScript gets the props type from it.
+export const offerSchema = z.object({
+	product: z.string().min(1),
+	price: z.number().positive(),
+	accent: zColor(),
+	features: z.array(z.string()).max(4),
+});
+
+type OfferProps = z.infer<typeof offerSchema>;
+
+const Offer = ({ product, price, accent, features }: OfferProps) => (
+	<AbsoluteFill style={{ backgroundColor: "#101820", color: "white", padding: 96 }}>
+		<h1 style={{ fontSize: 110, color: accent, margin: 0 }}>{product}</h1>
+		<p style={{ fontSize: 64 }}>{price.toFixed(2)} EUR</p>
+		<ul style={{ fontSize: 48 }}>
+			{features.map((feature) => (
+				<li key={feature}>{feature}</li>
+			))}
+		</ul>
+	</AbsoluteFill>
+);
+
+export const OfferRoot = () => (
+	<Composition
+		id="Offer"
+		component={Offer}
+		schema={offerSchema}
+		width={1920}
+		height={1080}
+		fps={30}
+		durationInFrames={150}
+		defaultProps={{
+			product: "Motio Pro",
+			price: 19,
+			accent: "#ffb000",
+			features: ["Frame-exact video", "Fonts", "Captions"],
+		}}
+	/>
+);
+```
+
+Without a schema the preview says "No schema: props are not validated" and accepts any JSON object. Any object with a Zod-like `safeParse()` method works as a schema; Zod is not a dependency of Motio.
+
 ## Metadata from data
 
 `calculateMetadata()` runs before a composition renders, with the final props. It can load data and return new props, and set the length, frame rate or size from them, so a video can be exactly as long as its content:
