@@ -193,6 +193,31 @@ describe.each(STARTERS.map((starter) => [starter.name, starter] as const))(
 			expect(code, `${stdout}\n${stderr}`).toBe(0);
 		});
 
+		it("type-checks imports of assets through motio/client", async () => {
+			// What the bundle accepts, typed by the published `motio/client` the starter references.
+			const file = join(dir, "src/assets-check.ts");
+			await writeFile(
+				file,
+				[
+					'import font from "./font.woff2";',
+					'import logo from "./logo.png";',
+					'import icon from "./icon.svg";',
+					'import clip from "./clip.mp4";',
+					'import readme from "../README.md?raw";',
+					'import url from "../README.md?url";',
+					'import styles from "./card.module.css";',
+					"export const all: string[] = [font, logo, icon, clip, readme, url, styles.card ?? ''];",
+					"",
+				].join("\n"),
+			);
+			try {
+				const { code, stdout, stderr } = await run(join(dir, "node_modules/.bin/tsc"), [], dir);
+				expect(code, `${stdout}\n${stderr}`).toBe(0);
+			} finally {
+				await rm(file);
+			}
+		});
+
 		it("renders its still and its video with the expected size and frame count", async () => {
 			const listed = await motio(dir, ["compositions", "src/index.ts"], "compositions");
 			const compositions = listed.compositions as Array<{

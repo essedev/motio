@@ -4,7 +4,7 @@
 		"rootDir": ".",
 		"outDir": "dist",
 		"lib": ["esnext", "dom", "dom.iterable"],
-		"types": ["node"],
+		"types": ["node", "motio/client"],
 		"module": "preserve",
 		"moduleResolution": "bundler"
 	},

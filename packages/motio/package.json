@@ -28,10 +28,14 @@
 		"./remotion/no-react": {
 			"types": "./dist/remotion/no-react.d.ts",
 			"default": "./dist/remotion/no-react.js"
+		},
+		"./client": {
+			"types": "./client.d.ts"
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"client.d.ts"
 	],
 	"sideEffects": false,
 	"scripts": {},

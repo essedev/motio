@@ -91,6 +91,22 @@ export const Cover = () => (
 
 Do not import large media with `import video from "./clip.mp4"`; put it in `public/` instead, so it is copied once and never inlined into the JavaScript bundle. `getStaticFiles()` lists the files of `public/` at run time. `--public-dir` points at another directory.
 
+## Importing files
+
+Code can also import files, as in any Vite project. An image, font, video or audio file imports as its URL, `?raw` imports a file's text, `?url` the URL of any file, and a CSS module (`*.module.css`) its class names:
+
+<!-- example: examples/src/imports.tsx#imports -->
+```tsx
+import font from "./brand.woff2"; // a URL
+import styles from "./card.module.css"; // the class names: { card: "..." }
+import logo from "./logo.svg"; // a URL
+import notes from "./notes.md?raw"; // the text of the file
+```
+
+Imported files are part of the bundle: small ones are inlined, others copied next to it. Use this for files that belong to the code (a logo, a font, a data file); keep large media in `public/`.
+
+TypeScript knows these imports through the types of `motio/client`, which every starter's `tsconfig.json` lists in `"types": ["motio/client"]`. In a project created otherwise, add it there, or put `/// <reference types="motio/client" />` in a `.d.ts` file under `src/`.
+
 ## package.json
 
 | Script | Command |
