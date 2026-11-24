@@ -11,6 +11,7 @@ import { Easing, interpolate, interpolateColors, measureSpring, random, spring }
 import { CSS_NAMED_COLORS } from "./named-colors.mjs";
 import { recordEasingSpring } from "./record-easing-spring.mjs";
 import { recordExports } from "./record-exports.mjs";
+import { recordFreeze } from "./record-freeze.mjs";
 import { recordInteractive } from "./record-interactive.mjs";
 import { captureTyped, recordInterpolateOutputs } from "./record-interpolate-outputs.mjs";
 import { recordMotionBlur } from "./record-motion-blur.mjs";
@@ -807,6 +808,7 @@ recordMeasureSpring();
 recordRandom();
 recordInterpolateOutputs({ write, linspace, toRemotionOptions });
 recordInteractive({ write });
+recordFreeze({ write });
 recordExports({ write });
 // Late: some configs in it leave Remotion's spring code in a failing state.
 recordEasingSpring({ write, linspace, here });
