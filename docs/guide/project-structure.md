@@ -124,7 +124,7 @@ Dependencies: `@motiojs/motio` (components and hooks), React, and the feature pa
 
 ## Environment variables
 
-`process.env.NAME` in project code reads variables from a `.env` file at the project root (`--env-file` reads another), and variables whose name starts with `REMOTION_` from the environment of the command. They are compiled into the bundle, so never put secrets in them.
+`process.env.NAME` in project code reads variables from a `.env` file at the project root (`--env-file` reads another), and variables whose name starts with `MOTIO_` (or `REMOTION_`, as Remotion projects name them) from the environment of the command; the `MOTIO_` variables that configure Motio's own tools, such as `MOTIO_FFMPEG`, are not passed. They are compiled into the bundle, so never put secrets in them.
 
 ## Configuration
 

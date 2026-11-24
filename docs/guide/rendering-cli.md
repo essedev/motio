@@ -34,7 +34,7 @@ Without an output, the video goes to `out/<composition-id>` with the codec's ext
 | `--audio-codec`, `--audio-bitrate` | Override the codec's default audio (AAC at 320k for MP4). |
 | `--timeout` | How long a `delayRender()` handle may hold a frame, in milliseconds (default 30000). |
 | `--width`, `--height`, `--fps`, `--duration` | Override the composition's metadata for this render. |
-| `--sequence` | Write an image sequence into the output directory instead of a video. |
+| `--sequence` | Write an image sequence into the output directory instead of a video: PNG files named `frame-0000.png`, ... unless `--image-format` or `--image-sequence-pattern` say otherwise. |
 | `--chunks`, `--frames-per-chunk` | Render in chunks in parallel processes and join them without re-encoding. |
 
 A render prints its progress on stderr and, with `--json`, one JSON object on stdout with the output path, codec, rendered frames, time taken and the FFmpeg used.
@@ -65,4 +65,4 @@ pnpm exec motio compositions src/index.ts --json
 
 ## Exit codes
 
-0 success, 1 error, 2 invalid arguments, 3 a check found problems (`check determinism`, `check flicker`, `doctor`). Errors carry a stable code, such as `E_COMPOSITION_NOT_FOUND` or `E_READINESS_TIMEOUT`, in the message and in the `--json` output.
+0 success, 1 error, 2 invalid input (a flag, a value, a composition id that does not exist, such as `E_INVALID_OPTION` or `E_COMPOSITION_NOT_FOUND`), 3 a check found problems (`check determinism`, `check flicker`, `doctor`). Errors carry a stable code, such as `E_READINESS_TIMEOUT`, in the message and in the `--json` output.

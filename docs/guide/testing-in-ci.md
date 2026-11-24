@@ -6,7 +6,7 @@ Watching every video after every change does not scale. Motio's CLI can check a 
 
 With `--json`, a command prints exactly one JSON object on stdout and nothing else there; progress and logs go to stderr. A result has `ok: true`, the command name, its data and `warnings`; a failure has `ok: false` and an `error` with a stable `code`, a message and a `context` (the frame, the composition, the flag). The JSON schemas ship with the CLI, in `node_modules/@motiojs/cli/schemas/`.
 
-The exit code says what happened: 0 success, 1 error, 2 invalid arguments, 3 a check ran and found a problem. A CI step fails on anything but 0 without parsing the output.
+The exit code says what happened: 0 success, 1 error, 2 invalid input (a flag, a value, a composition id that does not exist), 3 a check ran and found a problem. A CI step fails on anything but 0 without parsing the output.
 
 ## Determinism
 
@@ -14,14 +14,15 @@ The exit code says what happened: 0 success, 1 error, 2 invalid arguments, 3 a c
 pnpm exec motio check determinism src/index.ts Intro --frames=0-
 ```
 
-Renders the frames four times (ascending and descending order, on one tab and on several) and compares the decoded pixels. A frame that differs between runs depends on something other than its number: state kept between frames, `Math.random()`, a clock, or an animation library running on real time (see [Frames and time](frames-and-time.md)). The report names the frames:
+Renders the frames several times (ascending and descending order, on one tab and on several) and compares the decoded pixels. A frame that differs between runs depends on something other than its number: state kept between frames, `Math.random()`, a clock, or an animation library running on real time (see [Frames and time](frames-and-time.md)). The report names the frames, as ranges, and says what the pattern of differences points to:
 
 ```text
 Not deterministic: 5 of 60 frames differ between runs.
-Frames: 51, 52, 53, 54, 55
+Frames: 51-55
+One tab and several tabs disagree: a race, something that loads or finishes at a different moment in each run (a fetch, a font or an image not held with delayRender()).
 ```
 
-By default it checks the first 60 frames; `--frames=0-` checks all of them. With `--json`, `mismatches` lists each differing frame with the pixel hash of every run, so you can see which runs disagree: ascending against descending means the frame depends on the previous one, one tab against several means a race.
+The diagnosis follows which runs disagree: every run different points to randomness or the clock, ascending against descending to a frame that depends on the previous one, one tab against several to a race. By default it checks the first 60 frames; `--frames=0-` checks all of them. With `--json`, `diagnosis` has the `cause` (`random`, `order`, `race`, `history` or `mixed`) and the message, and `mismatches` lists each differing frame with the pixel hash of every run.
 
 ## Flicker
 
@@ -29,7 +30,7 @@ By default it checks the first 60 frames; `--frames=0-` checks all of them. With
 pnpm exec motio check flicker src/index.ts Intro --frames=0-
 ```
 
-Flags frames that differ from both neighbours by more than a threshold (mean difference from 0 to 1, default 0.02): a single frame where an image had not loaded, a font fell back, or an element jumped. Fast cuts between scenes are legitimate jumps; raise `--threshold` or narrow `--frames` around them.
+Flags frames that differ from both neighbours by more than a threshold (mean difference from 0 to 1, default 0.02): a single frame where an image had not loaded, a font fell back, or an element jumped. It also compares the frames in blocks of 16 px, so a small element shown for one frame only is flagged even when the frame as a whole barely changes; the report gives the region of those blocks. Fast cuts between scenes are legitimate jumps; raise `--threshold` or narrow `--frames` around them.
 
 ## Looking without watching
 
