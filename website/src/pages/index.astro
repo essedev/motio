@@ -9,7 +9,7 @@ import Cmd from "../components/landing/Cmd.astro";
 import Perf from "../components/landing/Perf.astro";
 import Landing from "../layouts/Landing.astro";
 import { benchmarkBaselineVersion, example, packagesForLanding } from "../lib/landing-data.ts";
-import { REPO_URL, repoBlobUrl } from "../lib/repo.ts";
+import { REPO_URL, repoBlobUrl, TRY_FROM_CLONE_HREF } from "../lib/repo.ts";
 
 const brand = springEasing(BRAND_SPRING);
 const sec = (frames: number) => `${(frames / FPS).toFixed(3)}s`;
@@ -93,7 +93,7 @@ const github = REPO_URL;
 						<a class="btn btn-primary" href="/guide/getting-started/">Read the guide</a>
 						<a class="btn btn-secondary" href={github}>View on GitHub</a>
 					</div>
-					<Cmd command="pnpm create motio my-video" />
+					<Cmd command="pnpm create motio my-video" needsNpm />
 					<p class="req">
 						Node 22 or later and FFmpeg 5.1 or later. Chrome is not needed: the first render
 						downloads a pinned headless shell.
@@ -114,7 +114,7 @@ const github = REPO_URL;
 			<ol class="steps">
 				<li class="step field f-pulse">
 					<span class="n" aria-hidden="true">1</span>
-					<Cmd command="pnpm create motio my-video" />
+					<Cmd command="pnpm create motio my-video" needsNpm />
 					<p>Asks for a folder, a starter and a package manager, writes the project and installs it.</p>
 				</li>
 				<li class="step field f-spark">
@@ -132,8 +132,9 @@ const github = REPO_URL;
 				</li>
 			</ol>
 			<p class="note">
-				<span class="badge">pre-alpha</span>Nothing is published on npm yet. Until it is, a project can
-				only be built from a clone of the repository.
+				<span class="badge">pre-alpha</span>Nothing is published on npm yet. Until it is,
+				<a href={TRY_FROM_CLONE_HREF}>try it from a clone</a>: <code>make try DIR=../my-video</code>
+				creates the same project from the repository.
 			</p>
 		</section>
 
@@ -345,7 +346,7 @@ const github = REPO_URL;
 							scenes in a <code>&lt;Series&gt;</code>, an image, a local font and a still for the
 							thumbnail.
 						</p>
-						<Cmd command="pnpm create motio my-video" />
+						<Cmd command="pnpm create motio my-video" needsNpm />
 					</div>
 				</article>
 				<article class="starter surface">
@@ -353,7 +354,7 @@ const github = REPO_URL;
 					<div class="starter-body">
 						<h3>blank</h3>
 						<p>One composition with a fading title, and nothing else.</p>
-						<Cmd command="pnpm create motio my-video --template blank" />
+						<Cmd command="pnpm create motio my-video --template blank" needsNpm />
 					</div>
 				</article>
 				<article class="starter surface">
@@ -366,7 +367,7 @@ const github = REPO_URL;
 							Word-by-word captions from a JSON transcript with <code>@motiojs/captions</code>. The
 							transcript sets the length of the video.
 						</p>
-						<Cmd command="pnpm create motio my-video --template captions" />
+						<Cmd command="pnpm create motio my-video --template captions" needsNpm />
 					</div>
 				</article>
 			</div>

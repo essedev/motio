@@ -6,6 +6,18 @@ help: ## Show this help
 install: ## Install dependencies
 	pnpm install
 
+# The packages are not on npm yet: these create and refresh a project that installs them from
+# tarballs packed from this clone (tools/try/try.ts).
+try: ## Create a project from this clone: make try DIR=../my-video [TEMPLATE=basic|blank|captions]
+	@test -n "$(DIR)" || { echo "Usage: make try DIR=../my-video [TEMPLATE=basic|blank|captions]"; exit 2; }
+	pnpm build
+	node tools/try/try.ts "$(DIR)" --template "$(or $(TEMPLATE),basic)"
+
+try-update: ## Repack the packages into a project made by make try and reinstall: make try-update DIR=...
+	@test -n "$(DIR)" || { echo "Usage: make try-update DIR=../my-video"; exit 2; }
+	pnpm build
+	node tools/try/try.ts "$(DIR)" --update
+
 build: ## Build every package (tsc project references)
 	pnpm build
 

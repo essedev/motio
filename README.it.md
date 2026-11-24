@@ -17,12 +17,27 @@ Video fatti con React. Motio rende un albero React fotogramma per fotogramma in 
 
 ## Per iniziare
 
+Quando Motio sarà su npm:
+
 ```bash
 pnpm create motio my-video     # oppure: npm create motio@latest my-video
 cd my-video
 pnpm dev                       # anteprima nel browser
 pnpm render                    # render in out/intro.mp4
 ```
+
+### Provarlo da un clone
+
+Fino ad allora, il repository crea lo stesso progetto con i pacchetti impacchettati dal clone (servono pnpm e Node 22.18 o successivo):
+
+```bash
+pnpm install
+make try DIR=../my-video       # oppure TEMPLATE=blank, TEMPLATE=captions
+cd ../my-video
+pnpm dev
+```
+
+Dopo un pull, `make try-update DIR=../my-video` aggiorna i pacchetti del progetto. I dettagli sono in [Getting started](docs/guide/getting-started.md#try-it-from-a-clone).
 
 `motio init` (lo stesso comando dentro la CLI) crea un progetto da uno degli starter di Motio: `basic`, `blank` o `captions`. La [guida](docs/guide/README.md), in inglese, parte da lì: struttura del progetto, fotogrammi e tempo, composizioni, sequenze, animazione, media (immagini animate, precaricamento per il Player), font e sfondi per il testo, attesa dei dati, render da CLI e da Node (funzioni sui file media, un solo browser per molti render), FFmpeg, test dei render in CI e migrazione da Remotion.
 

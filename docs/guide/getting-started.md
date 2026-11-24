@@ -1,12 +1,31 @@
 # Getting started
 
-> Motio is not published on npm yet. The commands below are the ones that will work once it is; until then a project can only be built from a clone of the repository.
+> Motio is not published on npm yet, so `pnpm create motio` does not work today. [Try it from a clone](#try-it-from-a-clone) creates the same project from the repository; the rest of this page applies to both.
 
 ## Requirements
 
 - Node 22 or later.
 - FFmpeg 5.1 or later with libx264 on `PATH`, or the pinned build of `@motiojs/ffmpeg` (see [FFmpeg](ffmpeg.md)).
 - Chrome is not needed: the first render downloads a pinned `chrome-headless-shell` into `~/.cache/motio/browsers`.
+
+## Try it from a clone
+
+Until the packages are on npm, the repository builds a project that installs them from local tarballs. It needs pnpm, and Node 22.18 or later to run the script:
+
+```bash
+git clone https://github.com/OWNER_PLACEHOLDER/motio.git
+cd motio
+pnpm install
+make try DIR=../my-video                     # or TEMPLATE=blank, TEMPLATE=captions
+cd ../my-video
+pnpm dev
+```
+
+`make try` builds the workspace, packs every published package with `pnpm pack` (the same files npm will serve) into `my-video/.motio/tarballs/`, and runs the clone's `motio init`, with a `pnpm-workspace.yaml` that maps every `@motiojs/*` package to its tarball. The project is otherwise what `pnpm create motio` will make, and works with pnpm only:
+
+- `pnpm add @motiojs/transitions` (or any other Motio package) installs it from its tarball; `package.json` records the tarball's path.
+- After pulling new commits into the clone, `make try-update DIR=../my-video` packs the packages again and reinstalls them, leaving your files alone.
+- Once Motio is published, delete `.motio/` and `pnpm-workspace.yaml`, set the `@motiojs/*` versions in `package.json`, and install again.
 
 ## Create a project
 

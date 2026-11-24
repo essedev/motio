@@ -17,12 +17,27 @@ Make videos with React. Motio renders a React tree frame by frame in a real head
 
 ## Getting started
 
+Once Motio is on npm:
+
 ```bash
 pnpm create motio my-video     # or: npm create motio@latest my-video
 cd my-video
 pnpm dev                       # preview in the browser
 pnpm render                    # render out/intro.mp4
 ```
+
+### Try it from a clone
+
+Until then, the repository creates the same project with the packages packed from the clone (pnpm, Node 22.18 or later):
+
+```bash
+pnpm install
+make try DIR=../my-video       # or TEMPLATE=blank, TEMPLATE=captions
+cd ../my-video
+pnpm dev
+```
+
+`make try-update DIR=../my-video` refreshes the project's packages after a pull. Details in [Getting started](docs/guide/getting-started.md#try-it-from-a-clone).
 
 `motio init` (the same command inside the CLI) creates a project from one of Motio's starters: `basic`, `blank` or `captions`. The [guide](docs/guide/README.md) starts from there: project structure, frames and time, compositions, sequences, animation, media (animated images, preloading for the Player), fonts and text backgrounds, readiness, rendering from the CLI and from Node (media functions, one browser for many renders), FFmpeg, testing renders in CI, and coming from Remotion.
 

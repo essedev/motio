@@ -24,6 +24,15 @@ export const REPO_ROOT = (() => {
 	return dir;
 })();
 
+/**
+ * Whether the packages are on npm. While false, the landing shows the `pnpm create motio`
+ * commands without a copy button and links to the guide's way of trying Motio from a clone.
+ */
+export const NPM_PUBLISHED = false;
+
+/** Where the guide explains how to try Motio before it is published. */
+export const TRY_FROM_CLONE_HREF = "/guide/getting-started/#try-it-from-a-clone";
+
 /** URL of a repository file or folder on GitHub. */
 export const repoBlobUrl = (relPath: string, kind: "blob" | "tree" | "edit" = "blob") =>
 	`${REPO_URL}/${kind}/${REPO_BRANCH}/${relPath.replace(/^\/+/, "")}`;

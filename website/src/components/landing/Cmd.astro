@@ -1,14 +1,31 @@
 ---
-/** A shell command on Plum, with a copy button that appears when JavaScript runs. */
+/**
+ * A shell command on Plum, with a copy button that appears when JavaScript runs. A command that
+ * installs from npm (`needsNpm`) gets a link to trying Motio from a clone instead, until the
+ * packages are published.
+ */
+import { NPM_PUBLISHED, TRY_FROM_CLONE_HREF } from "../../lib/repo.ts";
+
 interface Props {
 	command: string;
+	needsNpm?: boolean;
 }
-const { command } = Astro.props;
+const { command, needsNpm = false } = Astro.props;
+const pending = needsNpm && !NPM_PUBLISHED;
 ---
 
-<div class="cmd">
+<div class:list={["cmd", { "is-pending": pending }]}>
 	<code>{command}</code>
-	<button class="copy" type="button" data-copy={command} hidden>
-		<span data-label>Copy</span><span class="sr-only"> the command {command}</span>
-	</button>
+	{
+		pending ? (
+			<a class="cmd-pending" href={TRY_FROM_CLONE_HREF}>
+				Not on npm yet: try it from a clone
+			</a>
+		) : (
+			<button class="copy" type="button" data-copy={command} hidden>
+				<span data-label>Copy</span>
+				<span class="sr-only"> the command {command}</span>
+			</button>
+		)
+	}
 </div>
