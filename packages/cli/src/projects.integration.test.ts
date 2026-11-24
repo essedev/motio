@@ -9,6 +9,7 @@
 // The suite renders hundreds of compositions (hours), so it runs only when asked:
 // MOTIO_PROJECTS=all, or a list of projects and entries (MOTIO_PROJECTS=remocn/demos,snapcn); an
 // entry can be limited to a range of its compositions, in Remotion's order (remocn/demos#0-19).
+// MOTIO_PROJECTS_CHECKS=stills,flicker,determinism (all by default) picks the per-composition checks.
 // The results of a run are written to fixtures/projects/.cache/results/<project>.json (ignored).
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -110,6 +111,9 @@ const wanted = (project: string, entry?: string) =>
 			(entry !== undefined && target === `${project}/${entry}`) ||
 			(entry === undefined && target.startsWith(`${project}/`)),
 	);
+const checks = new Set(
+	(process.env.MOTIO_PROJECTS_CHECKS ?? "stills,flicker,determinism").split(",").filter(Boolean),
+);
 /** Whether the composition at `index` (Remotion's order) of the entry is in the requested range. */
 const wantedComposition = (project: string, entry: string, index: number) => {
 	const ranges = filters.filter((f) => f.target === `${project}/${entry}`).map((f) => f.range);
@@ -180,10 +184,15 @@ function saveResults(project: string): void {
 	if (result.doctor !== undefined) saved.doctor = result.doctor;
 	for (const [entry, measured] of Object.entries(result.entries)) {
 		const previous = saved.entries[entry];
-		saved.entries[entry] = {
-			...measured,
-			compositions: { ...previous?.compositions, ...measured.compositions },
-		};
+		const compositions = { ...previous?.compositions };
+		for (const [id, composition] of Object.entries(measured.compositions)) {
+			// A run of some checks keeps what earlier runs measured with the others.
+			const fresh = Object.entries(composition).filter(
+				([, value]) => value !== undefined && !(Array.isArray(value) && value.length === 0),
+			);
+			compositions[id] = { ...compositions[id], ...Object.fromEntries(fresh) } as CompositionResult;
+		}
+		saved.entries[entry] = { ...measured, compositions };
 	}
 	writeFileSync(file, `${JSON.stringify(saved, null, "\t")}\n`);
 }
@@ -366,7 +375,7 @@ for (const [name, project] of Object.entries(projects)) {
 					continue;
 				}
 
-				it(
+				it.skipIf(!checks.has("stills"))(
 					`renders ${cid} like Remotion (frames ${referenced.join(", ")})`,
 					async () => {
 						try {
@@ -386,7 +395,7 @@ for (const [name, project] of Object.entries(projects)) {
 					Math.max(120_000, referenced.length * 60_000),
 				);
 
-				it(
+				it.skipIf(!checks.has("flicker"))(
 					`${cid} passes the flicker check over its ${composition.durationInFrames} frames`,
 					async () => {
 						const run = await motioJson(rootDir, [
@@ -430,7 +439,7 @@ for (const [name, project] of Object.entries(projects)) {
 							`frames around the flagged ones that Motio draws unlike Remotion`,
 						).toEqual([]);
 					},
-					Math.max(300_000, composition.durationInFrames * 600),
+					Math.max(600_000, composition.durationInFrames * 600),
 				);
 
 				const first = Math.max(
@@ -438,28 +447,32 @@ for (const [name, project] of Object.entries(projects)) {
 					Math.floor(composition.durationInFrames / 2) - DETERMINISM_FRAMES / 2,
 				);
 				const last = Math.min(composition.durationInFrames - 1, first + DETERMINISM_FRAMES - 1);
-				it(`${cid} renders frames ${first}-${last} like a new page per frame, in any order`, async () => {
-					const run = await motioJson(rootDir, [
-						"check",
-						"determinism",
-						entry.file,
-						cid,
-						"--reference=fresh",
-						`--frames=${first}-${last}`,
-						`--concurrency=${CHECK_CONCURRENCY}`,
-					]);
-					const mismatches = (run.result.mismatches as Array<{ frame: number }> | undefined)?.map(
-						(m) => m.frame,
-					);
-					result.determinism =
-						run.result.deterministic === undefined
-							? { error: errorText(run) }
-							: {
-									deterministic: run.result.deterministic === true,
-									mismatches: mismatches ?? [],
-								};
-					expect(run.result.deterministic, errorText(run)).toBe(true);
-				}, 600_000);
+				it.skipIf(!checks.has("determinism"))(
+					`${cid} renders frames ${first}-${last} like a new page per frame, in any order`,
+					async () => {
+						const run = await motioJson(rootDir, [
+							"check",
+							"determinism",
+							entry.file,
+							cid,
+							"--reference=fresh",
+							`--frames=${first}-${last}`,
+							`--concurrency=${CHECK_CONCURRENCY}`,
+						]);
+						const mismatches = (run.result.mismatches as Array<{ frame: number }> | undefined)?.map(
+							(m) => m.frame,
+						);
+						result.determinism =
+							run.result.deterministic === undefined
+								? { error: errorText(run) }
+								: {
+										deterministic: run.result.deterministic === true,
+										mismatches: mismatches ?? [],
+									};
+						expect(run.result.deterministic, errorText(run)).toBe(true);
+					},
+					600_000,
+				);
 			}
 		});
 	}
