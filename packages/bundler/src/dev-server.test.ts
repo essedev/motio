@@ -1,9 +1,10 @@
-import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { createBundle } from "./bundle.js";
 import {
 	type DevServer,
 	type DevServerOptions,
@@ -311,5 +312,137 @@ describe("listStaticFiles", () => {
 			["hello.txt", "/static/hello.txt"],
 		]);
 		expect(files.every((f) => f.sizeInBytes > 0 && f.lastModified > 0)).toBe(true);
+	});
+});
+
+describe("files outside the project", () => {
+	/**
+	 * A project in `base/proj` whose code references files in `base/shared`: a module, a `?raw`
+	 * text and an image imported from JavaScript, a font and an image from CSS, an image through
+	 * `new URL()`. `base/shared/secret.txt` is referenced by nothing.
+	 */
+	async function makeProject(workspace: boolean) {
+		const base = await realpath(await mkdtemp(join(tmpdir(), "motio-outside-")));
+		const proj = join(base, "proj");
+		const shared = join(base, "shared");
+		await mkdir(join(proj, "src"), { recursive: true });
+		await mkdir(shared, { recursive: true });
+		await writeFile(join(proj, "package.json"), '{ "name": "proj", "type": "module" }');
+		if (workspace) {
+			await writeFile(join(base, "package.json"), '{ "name": "root", "private": true }');
+			await writeFile(join(base, "pnpm-workspace.yaml"), "packages:\n  - proj\n");
+		}
+		for (const [name, content] of [
+			["util.ts", "export const answer = 42;\n"],
+			["notes.md", "# Notes\n"],
+			["photo.png", "PHOTO"],
+			["brand.woff2", "FONT"],
+			["paper.png", "PAPER"],
+			["sticker.png", "STICKER"],
+			["secret.txt", "SECRET"],
+		]) {
+			await writeFile(join(shared, name as string), content as string);
+		}
+		await writeFile(
+			join(proj, "src", "style.css"),
+			"@font-face { font-family: Brand; src: url(../../shared/brand.woff2); }\nbody { background: url('../../shared/paper.png'); }\n",
+		);
+		await writeFile(
+			join(proj, "src", "scene.ts"),
+			[
+				'import "./style.css";',
+				'import notes from "../../shared/notes.md?raw";',
+				'import photo from "../../shared/photo.png";',
+				'import { answer } from "../../shared/util.ts";',
+				'export const sticker = new URL("../../shared/sticker.png", import.meta.url).href;',
+				"export const values = [notes, photo, answer];",
+				"",
+			].join("\n"),
+		);
+		await writeFile(
+			join(proj, "src", "index.ts"),
+			'import { registerRoot } from "remotion";\nimport { values, sticker } from "./scene";\nregisterRoot(() => null);\nconsole.log(values, sticker);\n',
+		);
+		return { base, proj, shared };
+	}
+
+	it.each([
+		["outside a workspace", false],
+		["in a workspace", true],
+	])("serves every file the code references, %s", async (_label, workspace) => {
+		const { base, proj, shared } = await makeProject(workspace);
+		const logs: string[] = [];
+		try {
+			const server = await startDevServer({
+				entryPoint: "src/index.ts",
+				rootDir: proj,
+				port: 0,
+				host: "127.0.0.1",
+				onLog: (level, message) => logs.push(`${level}: ${message}`),
+				viteOverride: (config) => ({
+					...config,
+					cacheDir: join(proj, ".vite-cache"),
+					optimizeDeps: { noDiscovery: true, include: [] },
+				}),
+			});
+			servers.push(server);
+			const get = (path: string) => fetch(new URL(path, server.url));
+			// What the browser asks for first: the modules, then the URLs written in them.
+			const scene = await (await get("/src/scene.ts")).text();
+			const css = await (await get("/src/style.css?direct")).text();
+			const urls = [...`${scene}\n${css}`.matchAll(/\/@fs\/[^"'()\s]+/g)].map((m) => m[0]);
+			expect(urls.length).toBe(6);
+			for (const url of urls) {
+				const response = await get(url);
+				expect(response.status, url).toBe(200);
+			}
+			expect(await (await get(`/@fs${shared}/brand.woff2`)).text()).toBe("FONT");
+			expect(await (await get(`/@fs${shared}/sticker.png`)).text()).toBe("STICKER");
+
+			// A file nothing references: inside the workspace Vite serves it as before; outside, it is
+			// refused with a warning that names it and says how to include it.
+			const secret = await get(`/@fs${shared}/secret.txt`);
+			if (workspace) {
+				expect(secret.status).toBe(200);
+				expect(logs.filter((l) => l.includes("Not serving"))).toEqual([]);
+			} else {
+				expect(secret.status).toBe(403);
+				expect(logs).toContain(
+					`warn: Not serving ${shared}/secret.txt: it is outside the project and no module of the project references it. Import it, or reference it from CSS, so that renders include it too; or move it to public/ and use staticFile().`,
+				);
+			}
+		} finally {
+			await Promise.all(servers.splice(0).map((s) => s.close()));
+			await rm(base, { recursive: true, force: true });
+		}
+	});
+
+	it("are included by the bundle of a render, as the dev server serves them", async () => {
+		const { base, proj } = await makeProject(false);
+		try {
+			const outDir = join(base, "out");
+			await createBundle({
+				entryPoint: "src/index.ts",
+				rootDir: proj,
+				outDir,
+				runtimeModule: join(fixtures, "fake-runtime.js"),
+				compat: { aliases: { remotion: join(fixtures, "fake-motio.js") }, symbols: "off" },
+				minify: false,
+			});
+			const files = await readdir(outDir, { recursive: true });
+			const contents = await Promise.all(
+				files.map(async (f) => readFile(join(outDir, String(f)), "utf8").catch(() => "")),
+			);
+			const all = contents.join("\n");
+			// Small assets are inlined as base64 data URLs, larger ones copied next to the page.
+			for (const text of ["FONT", "PAPER", "STICKER", "PHOTO"]) {
+				const inlined = Buffer.from(text).toString("base64");
+				expect(all.includes(text) || all.includes(inlined), text).toBe(true);
+			}
+			expect(all).toContain("# Notes");
+			expect(all).toContain("42");
+		} finally {
+			await rm(base, { recursive: true, force: true });
+		}
 	});
 });

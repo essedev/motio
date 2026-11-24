@@ -21,6 +21,7 @@ import { compatAliases } from "./compat-aliases.js";
 import { type EntryPointReason, resolveEntryPoint } from "./entry-point.js";
 import { loadEnvVariables } from "./env.js";
 import { motioOptimizeDeps } from "./optimize-deps.js";
+import { allowReferencedFiles } from "./referenced-files.js";
 import { resolveOwnDependency } from "./resolve.js";
 import { listStaticFiles } from "./static-files.js";
 import { serveStaticFiles } from "./static-server.js";
@@ -523,6 +524,12 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
 			onFileChange: options.onFileChange,
 		}),
 		...(tailwind?.plugins ?? []),
+		allowReferencedFiles((file) =>
+			options.onLog?.(
+				"warn",
+				`Not serving ${file}: it is outside the project${searchForWorkspaceRoot(rootDir) === rootDir ? "" : " and its workspace"} and no module of the project references it. Import it, or reference it from CSS, so that renders include it too; or move it to public/ and use staticFile().`,
+			),
+		),
 	];
 
 	const motioDeps = motioOptimizeDeps(rootDir);

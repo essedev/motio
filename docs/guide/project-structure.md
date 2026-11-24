@@ -107,6 +107,8 @@ Imported files are part of the bundle: small ones are inlined, others copied nex
 
 TypeScript knows these imports through the types of `motio/client`, which every starter's `tsconfig.json` lists in `"types": ["motio/client"]`. In a project created otherwise, add it there, or put `/// <reference types="motio/client" />` in a `.d.ts` file under `src/`.
 
+A file outside the project directory (`import changelog from "../../CHANGELOG.md?raw"`) is bundled for renders like any other, and `motio dev` serves every file the project's code references, through an import, a CSS `url()` or `new URL(..., import.meta.url)`. Other files outside the project, or outside its workspace in a monorepo, are refused, and the dev server prints a warning that names the file.
+
 ## package.json
 
 | Script | Command |
