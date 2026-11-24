@@ -31,6 +31,8 @@ export const splitTitle = (source: string, file: string) => {
 /** First paragraph of a body, as plain text, for the page description. */
 const firstParagraph = (body: string) => {
 	const para = body
+		// A code block can hold blank lines, so drop it before splitting into paragraphs.
+		.replace(/^```[^\n]*\n[\s\S]*?^```\s*$/gm, "")
 		.split(/\n\s*\n/)
 		.map((p) => p.trim())
 		.find((p) => p && !/^[#>|`<-]|^\d+\./.test(p));
@@ -45,7 +47,8 @@ const firstParagraph = (body: string) => {
 
 const stripExampleMarkers = (body: string) => body.replace(/^<!-- example: [^\n]*-->\n/gm, "");
 
-type Entry = {
+/** A page of the docs collection, before rendering. */
+export type Entry = {
 	id: string;
 	file?: string;
 	title: string;
@@ -56,7 +59,8 @@ type Entry = {
 	extra?: Record<string, unknown>;
 };
 
-const guideEntries = (): Entry[] =>
+/** The guide's pages, from `docs/guide/*.md`. */
+export const guideEntries = (): Entry[] =>
 	readdirSync(GUIDE_DIR)
 		.filter((f) => f.endsWith(".md"))
 		.map((name) => {
@@ -73,7 +77,8 @@ const guideEntries = (): Entry[] =>
 			};
 		});
 
-const packageEntries = (): Entry[] =>
+/** One page per published package that has a README. */
+export const packageEntries = (): Entry[] =>
 	packagePages().map((pkg) => {
 		const { title, body } = splitTitle(readFileSync(pkg.readme, "utf8"), pkg.readme);
 		return {
@@ -86,7 +91,8 @@ const packageEntries = (): Entry[] =>
 		};
 	});
 
-const cliEntries = (): Entry[] =>
+/** The CLI reference: an overview and one page per command. */
+export const cliEntries = (): Entry[] =>
 	cliPages().map((page) => ({
 		id: page.slug,
 		title: page.title,
