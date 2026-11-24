@@ -51,6 +51,8 @@ brand: ## Regenerate brand/ and the site icons from the mark geometry (needs the
 	pnpm build
 	pnpm --dir website brand
 
+# A directory is called promo too: without .PHONY, make would consider the target up to date.
+.PHONY: promo
 promo: ## Render the promotional material into promo/out; refreshes the OG card and the README banner
 	pnpm build
 	pnpm --dir promo render
