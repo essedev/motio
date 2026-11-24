@@ -14,7 +14,15 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createBundle } from "@motiojs/bundler";
 import { renderStill, selectComposition } from "@motiojs/renderer";
-import { decodeImage, psnr, type RgbaImage, ssim } from "@motiojs/testing";
+import {
+	compareImages,
+	decodeImage,
+	describeBlock,
+	MAX_BLOCK_DIFFERENCE,
+	psnr,
+	type RgbaImage,
+	ssim,
+} from "@motiojs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -126,7 +134,11 @@ describe("LightLeak behaves like Remotion's on its reference stills", () => {
 			["light-leak-cut", 0],
 		] as const) {
 			const { ours, ref } = await still(id, frame);
-			expect(psnr(ours, ref), `${id} ${frame}`).toBeGreaterThanOrEqual(SAME_PSNR_DB);
+			const { psnr: p, block } = compareImages("light-leaks", id, frame, ours, ref);
+			expect(p, `${id} ${frame}`).toBeGreaterThanOrEqual(SAME_PSNR_DB);
+			expect(block.max, `${id} ${frame}: ${describeBlock(block)}`).toBeLessThanOrEqual(
+				MAX_BLOCK_DIFFERENCE,
+			);
 		}
 	}, 120_000);
 

@@ -9,7 +9,17 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { bundle } from "@motiojs/bundler";
 import { renderMedia, renderStill, selectComposition } from "@motiojs/renderer";
-import { decodeImage, decodeVideoFrames, psnr, type RgbaImage, ssim } from "@motiojs/testing";
+import {
+	type Comparison,
+	compareImages,
+	decodeImage,
+	decodeVideoFrames,
+	describeBlock,
+	MAX_BLOCK_DIFFERENCE,
+	psnr,
+	type RgbaImage,
+	ssim,
+} from "@motiojs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const FIXTURE = resolve(import.meta.dirname, "../../../fixtures/features");
@@ -40,7 +50,7 @@ for (const path of [
 		for (const [id, frames] of Object.entries(FRAMES)) {
 			it(`${id}: frames ${frames.join(", ")}`, async () => {
 				const composition = await selectComposition({ serveUrl, id, inputProps: {} });
-				const scores: { frame: number; ssim: number; psnr: number }[] = [];
+				const scores: ({ frame: number } & Comparison)[] = [];
 				for (const frame of frames) {
 					const { buffer } = await renderStill({
 						serveUrl,
@@ -54,19 +64,24 @@ for (const path of [
 					const ref = await decodeImage(
 						readFileSync(join(path.golden, id, `${String(frame).padStart(4, "0")}.${path.format}`)),
 					);
-					scores.push({ frame, ssim: ssim(ours, ref), psnr: psnr(ours, ref) });
+					scores.push({ frame, ...compareImages(`features-${path.name}`, id, frame, ours, ref) });
 				}
 				console.log(
 					scores
 						.map(
 							(s) =>
-								`${path.name} ${id} ${s.frame}: SSIM ${s.ssim.toFixed(5)}, PSNR ${s.psnr.toFixed(2)} dB`,
+								`${path.name} ${id} ${s.frame}: SSIM ${s.ssim.toFixed(5)}, PSNR ${s.psnr.toFixed(2)} dB, ${describeBlock(s.block)}`,
 						)
 						.join("\n"),
 				);
 				const mean = scores.reduce((sum, s) => sum + s.ssim, 0) / scores.length;
 				expect(mean).toBeGreaterThanOrEqual(MEAN_SSIM);
-				expect(scores.filter((s) => s.ssim < WORST_SSIM || s.psnr < MIN_PSNR_DB)).toEqual([]);
+				expect(
+					scores.filter(
+						(s) =>
+							s.ssim < WORST_SSIM || s.psnr < MIN_PSNR_DB || s.block.max > MAX_BLOCK_DIFFERENCE,
+					),
+				).toEqual([]);
 			});
 		}
 	});

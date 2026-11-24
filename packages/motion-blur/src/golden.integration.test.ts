@@ -10,7 +10,12 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createBundle } from "@motiojs/bundler";
 import { renderStill, selectComposition } from "@motiojs/renderer";
-import { decodeImage, psnr, ssim } from "@motiojs/testing";
+import {
+	type Comparison,
+	compareImages,
+	decodeImage,
+	MAX_BLOCK_DIFFERENCE,
+} from "@motiojs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -37,7 +42,7 @@ const aliases: Record<string, string> = {
 
 let outDir: string;
 let serveUrl: string;
-const scores: Array<{ id: string; frame: number; ssim: number; psnr: number }> = [];
+const scores: Array<{ id: string; frame: number } & Comparison> = [];
 
 beforeAll(async () => {
 	outDir = await mkdtemp(join(tmpdir(), "motio-motion-blur-golden-"));
@@ -83,11 +88,16 @@ describe("CameraMotionBlur and Trail match Remotion's reference stills", () => {
 				const ref = await decodeImage(
 					readFileSync(join(GOLDEN, id, `${String(frame).padStart(4, "0")}.png`)),
 				);
-				scores.push({ id, frame, ssim: ssim(ours, ref), psnr: psnr(ours, ref) });
+				scores.push({ id, frame, ...compareImages("motion-blur", id, frame, ours, ref) });
 			}
 		}
-		const failing = scores.filter((s) => s.ssim < WORST_SSIM || s.psnr < MIN_PSNR_DB);
-		expect(failing, "frames under the worst-frame SSIM or the PSNR threshold").toEqual([]);
+		const failing = scores.filter(
+			(s) => s.ssim < WORST_SSIM || s.psnr < MIN_PSNR_DB || s.block.max > MAX_BLOCK_DIFFERENCE,
+		);
+		expect(
+			failing,
+			"frames under the worst-frame SSIM or the PSNR threshold, or with a block over the block threshold",
+		).toEqual([]);
 		const mean = scores.reduce((sum, s) => sum + s.ssim, 0) / scores.length;
 		expect(mean).toBeGreaterThanOrEqual(MEAN_SSIM);
 	}, 180_000);

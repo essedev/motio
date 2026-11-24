@@ -16,8 +16,14 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createBundle, loadRemotionConfig } from "@motiojs/bundler";
-import { getCompositions, renderStill, selectComposition } from "@motiojs/renderer";
-import { decodeImage, psnr, ssim } from "@motiojs/testing";
+import { getCompositions, renderFrames, renderStill, selectComposition } from "@motiojs/renderer";
+import {
+	type Comparison,
+	compareImages,
+	decodeImage,
+	describeBlock,
+	MAX_BLOCK_DIFFERENCE,
+} from "@motiojs/testing";
 import type { Plugin } from "vite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -29,6 +35,7 @@ import {
 	GOLDEN_DIR,
 	PROJECTS_DIR,
 	readProjects,
+	SAMPLES,
 	stillName,
 } from "../../../fixtures/projects/projects.ts";
 import { defaultDeps, runCli } from "./main.js";
@@ -73,7 +80,7 @@ interface GoldenEntry {
 
 interface CompositionResult {
 	frames: number;
-	stills: Array<{ frame: number; ssim: number; psnr: number }>;
+	stills: Array<{ frame: number } & Comparison>;
 	meanSsim?: number;
 	minPsnr?: number;
 	worstSsim?: number;
@@ -337,23 +344,49 @@ for (const [name, project] of Object.entries(projects)) {
 			});
 
 			/** Renders `frames` of `cid` with Motio and compares each with Remotion's PNG in `dir`. */
+			/**
+			 * Renders `frames` of `cid` with Motio and compares each with Remotion's PNG in `dir`: one
+			 * still per frame for the few sampled frames, one render of every frame for the frames
+			 * around flicker (as `check flicker` renders them).
+			 */
 			async function compareFrames(cid: string, frames: readonly number[], dir: string) {
 				if (!serveUrl) throw new Error(`not built: ${String(bundleError)}`);
 				const selected = await selectComposition({ serveUrl, id: cid, inputProps: {} });
-				const scores: Array<{ frame: number; ssim: number; psnr: number }> = [];
-				for (const frame of frames) {
-					const { buffer } = await renderStill({
+				const buffers = new Map<number, Buffer>();
+				if (frames.length <= SAMPLES) {
+					for (const frame of frames) {
+						const { buffer } = await renderStill({
+							serveUrl,
+							composition: selected,
+							frame,
+							scale: golden.scale,
+							imageFormat: "png",
+							chromiumOptions: { gl: GL },
+						});
+						if (!buffer) throw new Error("renderStill returned no buffer");
+						buffers.set(frame, buffer);
+					}
+				} else {
+					await renderFrames({
 						serveUrl,
 						composition: selected,
-						frame,
+						outputDir: null,
+						frames: [...frames],
 						scale: golden.scale,
 						imageFormat: "png",
+						concurrency: Number(CHECK_CONCURRENCY),
 						chromiumOptions: { gl: GL },
+						inputProps: {},
+						onFrameBuffer: (buffer, frame) => void buffers.set(frame, Buffer.from(buffer)),
 					});
-					if (!buffer) throw new Error("renderStill returned no buffer");
+				}
+				const scores: Array<{ frame: number } & Comparison> = [];
+				for (const frame of frames) {
+					const buffer = buffers.get(frame);
+					if (!buffer) throw new Error(`frame ${frame} of ${cid} was not rendered`);
 					const ours = await decodeImage(buffer);
 					const ref = await decodeImage(readFileSync(join(dir, stillName(frame))));
-					scores.push({ frame, ssim: ssim(ours, ref), psnr: psnr(ours, ref) });
+					scores.push({ frame, ...compareImages(`m4-${name}`, `${id}/${cid}`, frame, ours, ref) });
 				}
 				return scores;
 			}
@@ -390,6 +423,11 @@ for (const [name, project] of Object.entries(projects)) {
 						result.minPsnr = Math.min(...result.stills.map((still) => still.psnr));
 						expect(result.worstSsim, `${cid} worst frame SSIM`).toBeGreaterThanOrEqual(WORST_SSIM);
 						expect(result.minPsnr, `${cid} PSNR`).toBeGreaterThanOrEqual(MIN_PSNR_DB);
+						const worstBlock = result.stills.reduce((a, b) => (b.block.max > a.block.max ? b : a));
+						expect(
+							worstBlock.block.max,
+							`${cid} frame ${worstBlock.frame}: ${describeBlock(worstBlock.block)}`,
+						).toBeLessThanOrEqual(MAX_BLOCK_DIFFERENCE);
 						expect(result.meanSsim, `${cid} mean SSIM`).toBeGreaterThanOrEqual(MEAN_SSIM);
 					},
 					Math.max(120_000, referenced.length * 60_000),
@@ -427,7 +465,10 @@ for (const [name, project] of Object.entries(projects)) {
 							`Flicker flagged on frames ${flagged.join(", ")}. Record Remotion's frames around them to tell the content's motion from flicker: pnpm --dir tools/oracle-render record:projects --around-flagged`,
 						).toEqual([]);
 						const scores = await compareFrames(cid, around, dir);
-						const unlike = scores.filter((s) => s.ssim < WORST_SSIM || s.psnr < MIN_PSNR_DB);
+						const unlike = scores.filter(
+							(s) =>
+								s.ssim < WORST_SSIM || s.psnr < MIN_PSNR_DB || s.block.max > MAX_BLOCK_DIFFERENCE,
+						);
 						result.flicker = {
 							clean: false,
 							flagged,

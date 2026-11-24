@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createBundle } from "@motiojs/bundler";
 import { getCompositions, renderStill, selectComposition } from "@motiojs/renderer";
-import { decodeImage, psnr, ssim } from "@motiojs/testing";
+import { compareImages, decodeImage, describeBlock, MAX_BLOCK_DIFFERENCE } from "@motiojs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const FIXTURE = resolve(import.meta.dirname, "../../../fixtures/compositions");
@@ -84,11 +84,13 @@ describe("stills match Remotion's reference renders", () => {
 				const ref = await decodeImage(
 					readFileSync(join(GOLDEN, id, `${String(frame).padStart(4, "0")}.png`)),
 				);
-				const s = ssim(ours, ref);
-				const p = psnr(ours, ref);
+				const { ssim: s, psnr: p, block } = compareImages("m1-png", id, frame, ours, ref);
 				scores.push({ id, frame, ssim: s, psnr: p });
 				expect(s, `${id} frame ${frame} SSIM`).toBeGreaterThanOrEqual(WORST_SSIM);
 				expect(p, `${id} frame ${frame} PSNR`).toBeGreaterThanOrEqual(MIN_PSNR_DB);
+				expect(block.max, `${id} frame ${frame}: ${describeBlock(block)}`).toBeLessThanOrEqual(
+					MAX_BLOCK_DIFFERENCE,
+				);
 			}
 		});
 	}
@@ -118,11 +120,13 @@ describe("JPEG stills (the default video capture) match Remotion's JPEG stills",
 				const ref = await decodeImage(
 					readFileSync(join(GOLDEN_JPEG, id, `${String(frame).padStart(4, "0")}.jpeg`)),
 				);
-				const s = ssim(ours, ref);
-				const p = psnr(ours, ref);
+				const { ssim: s, psnr: p, block } = compareImages("m1-jpeg", id, frame, ours, ref);
 				jpegScores.push({ ssim: s });
 				expect(s, `${id} frame ${frame} SSIM`).toBeGreaterThanOrEqual(WORST_SSIM);
 				expect(p, `${id} frame ${frame} PSNR`).toBeGreaterThanOrEqual(MIN_PSNR_DB);
+				expect(block.max, `${id} frame ${frame}: ${describeBlock(block)}`).toBeLessThanOrEqual(
+					MAX_BLOCK_DIFFERENCE,
+				);
 			}
 		});
 	}

@@ -14,7 +14,7 @@ import {
 	renderStill,
 	selectComposition,
 } from "@motiojs/renderer";
-import { decodeImage, psnr, ssim } from "@motiojs/testing";
+import { compareImages, decodeImage, describeBlock, MAX_BLOCK_DIFFERENCE } from "@motiojs/testing";
 import type { Plugin } from "vite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -221,11 +221,18 @@ for (const [name, template] of rendered) {
 				const ref = await decodeImage(
 					readFileSync(join(GOLDEN, name, id, `${String(frame).padStart(4, "0")}.png`)),
 				);
-				const s = ssim(ours, ref);
-				const p = psnr(ours, ref);
+				const {
+					ssim: s,
+					psnr: p,
+					block,
+				} = compareImages(`templates-${name}`, id, frame, ours, ref);
 				scores.push({ template: name, id, frame, ssim: s, psnr: p, known: mismatch !== undefined });
 				expect(s, `${name} ${id} frame ${frame} SSIM`).toBeGreaterThanOrEqual(WORST_SSIM);
 				expect(p, `${name} ${id} frame ${frame} PSNR`).toBeGreaterThanOrEqual(MIN_PSNR_DB);
+				expect(
+					block.max,
+					`${name} ${id} frame ${frame}: ${describeBlock(block)}`,
+				).toBeLessThanOrEqual(MAX_BLOCK_DIFFERENCE);
 			});
 		}
 
