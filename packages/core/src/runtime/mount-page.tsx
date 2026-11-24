@@ -1,6 +1,7 @@
 import { Component, type ComponentType, type ErrorInfo, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
+import { isAssetError } from "../asset-error.js";
 import {
 	CompositionRegistry,
 	CompositionRegistryContext,
@@ -16,6 +17,7 @@ import {
 } from "../composition/resolve.js";
 import { getRunContext } from "../environment.js";
 import { audioIntents } from "../media/audio-intents.js";
+import { pageWarnings } from "../page-warnings.js";
 import {
 	type CompositionInfo,
 	FRAME_ATTRIBUTE,
@@ -25,6 +27,7 @@ import {
 	type PageApi,
 	type PageError,
 	type PageErrorCode,
+	type PendingHandle,
 	PROTOCOL_VERSION,
 	type ResolvedComposition,
 	type SetCompositionOptions,
@@ -34,6 +37,7 @@ import { getVirtualClock, realTimers } from "../real-time.js";
 import type { VideoConfig } from "../timeline/contexts.js";
 import { seekAnimations } from "./animations.js";
 import { FontFallbackDetector } from "./fonts.js";
+import { MathRandomWatch } from "./math-random.js";
 import { isPageError, toPageError } from "./page-error.js";
 import { ImageTracker, settle } from "./settle.js";
 
@@ -123,6 +127,8 @@ class PageRuntime {
 	private readonly canvas: HTMLElement;
 	private readonly images = new ImageTracker();
 	private readonly fonts = new FontFallbackDetector();
+	/** Counts `Math.random()` calls per frame; null outside a frame-model render. */
+	private readonly random: MathRandomWatch | null;
 	private rootElement: ReactNode = null;
 	private selection: CompositionSelection | null = null;
 	private renderError: unknown;
@@ -137,6 +143,15 @@ class PageRuntime {
 		const { canvas, host } = prepareDocument(container);
 		this.canvas = canvas;
 		this.reactRoot = createRoot(host);
+		// Only renders in the frame model: the virtual model reseeds Math.random per frame, and in
+		// the preview it is harmless.
+		const context = getRunContext();
+		if (context?.isRendering === true && context.timeModel !== "virtual" && !getVirtualClock()) {
+			this.random = new MathRandomWatch();
+			this.random.install();
+		} else {
+			this.random = null;
+		}
 	}
 
 	private timeoutMs(): number {
@@ -207,7 +222,9 @@ class PageRuntime {
 				const Root = root;
 				this.rootElement = <Root />;
 				this.render();
-				await this.settleOrThrow(undefined, "E_INVALID_COMPOSITION");
+				// A missing asset or font loaded at module level fails the frames that need it, not
+				// the listing of every composition.
+				await this.settleOrThrow(undefined, "E_INVALID_COMPOSITION", isAssetError);
 			})();
 			this.collected.catch(() => {
 				// A failed collection is retried by the next getCompositions() call.
@@ -217,9 +234,14 @@ class PageRuntime {
 		return this.collected;
 	}
 
-	private async settleOrThrow(frame: number | undefined, renderCode: PageErrorCode) {
+	private async settleOrThrow(
+		frame: number | undefined,
+		renderCode: PageErrorCode,
+		tolerateCancellation?: (error: Error) => boolean,
+	) {
 		try {
 			return await settle({
+				...(tolerateCancellation ? { tolerateCancellation } : {}),
 				registry: readiness,
 				root: this.canvas,
 				...(frame === undefined ? {} : { frame }),
@@ -315,6 +337,7 @@ class PageRuntime {
 		const clock = getVirtualClock();
 		clock?.setFrame(frame, fps);
 		this.selection = { ...(this.selection as CompositionSelection), frame };
+		this.random?.begin();
 		this.render();
 		document.documentElement.setAttribute(FRAME_ATTRIBUTE, String(frame));
 		if (clock) {
@@ -326,12 +349,18 @@ class PageRuntime {
 		}
 		const warnings: FrameWarning[] = [...seekAnimations(frame, fps)];
 		const renderMs = real.now() - t0;
-		const settled = await this.settleOrThrow(frame, "E_RENDER_ERROR");
+		let settled: Awaited<ReturnType<PageRuntime["settleOrThrow"]>>;
+		try {
+			settled = await this.settleOrThrow(frame, "E_RENDER_ERROR");
+		} finally {
+			const random = this.random?.end(frame);
+			if (random) pageWarnings.report(random);
+		}
 		// Elements mounted while settling may carry new animations.
 		for (const w of seekAnimations(frame, fps)) {
 			if (!warnings.some((x) => x.message === w.message)) warnings.push(w);
 		}
-		warnings.push(...settled.warnings, ...this.fonts.scan(this.canvas));
+		warnings.push(...settled.warnings, ...this.fonts.scan(this.canvas), ...pageWarnings.take());
 		const readBack = Number(document.documentElement.getAttribute(FRAME_ATTRIBUTE));
 		if (readBack !== frame) {
 			warnings.push({
@@ -386,12 +415,17 @@ export function mountPage(options: MountPageOptions = {}): PageApi {
 			"E_INVALID_COMPOSITION",
 		),
 		seek: wrap(runtime, (frame: number) => runtime.seek(frame), "E_RENDER_ERROR"),
-		cancelled: () => {
+		cancelled: (): PageError | null => {
 			const error = readiness.cancelled();
-			if (!error) return null;
-			const out: PageError = { code: "E_CANCELLED", message: error.message };
-			if (error.stack !== undefined) out.stack = error.stack;
-			return out;
+			return error ? toPageError("E_CANCELLED", error) : null;
+		},
+		pending: (): PendingHandle[] => {
+			const now = realTimers().now();
+			return readiness.openHandles().map((h) => ({
+				label: h.label,
+				elapsedMs: Math.round(now - h.openedAt),
+				timeoutMs: h.timeoutMs,
+			}));
 		},
 	};
 	if (install) {

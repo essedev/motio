@@ -1,4 +1,10 @@
 import { cancelRender, continueRender, delayRender } from "@motiojs/core";
+import {
+	AssetError,
+	describeMissingAsset,
+	missingAssetDetails,
+	suggestionText,
+} from "@motiojs/core/internals";
 
 /** Font file formats `loadFont()` accepts. */
 export type FontFormat = "woff2" | "woff" | "opentype" | "truetype";
@@ -47,14 +53,30 @@ const files = new Map<string, Promise<ArrayBuffer>>();
 function fetchFont(url: string): Promise<ArrayBuffer> {
 	const cached = files.get(url);
 	if (cached) return cached;
-	const pending = fetch(url).then(async (response) => {
-		if (!response.ok) {
-			throw new Error(
-				`loadFont() could not fetch "${url}": the server answered HTTP ${response.status} ${response.statusText}.`,
+	const pending = fetch(url).then(
+		async (response) => {
+			if (!response.ok) {
+				const missing = describeMissingAsset(url);
+				const what =
+					response.status === 404 || response.status === 410
+						? `the file does not exist (HTTP ${response.status})`
+						: `the server answered HTTP ${response.status} ${response.statusText}`;
+				throw new AssetError(
+					"E_FONT_LOAD",
+					`loadFont() could not fetch ${missing.display}: ${what}.${suggestionText(missing)}`,
+					{ ...missingAssetDetails(missing), status: response.status },
+				);
+			}
+			return response.arrayBuffer();
+		},
+		(err: unknown) => {
+			throw new AssetError(
+				"E_FONT_LOAD",
+				`loadFont() could not fetch "${url}": ${err instanceof Error ? err.message : String(err)}.`,
+				{ url },
 			);
-		}
-		return response.arrayBuffer();
-	});
+		},
+	);
 	files.set(url, pending);
 	pending.catch(() => {
 		if (files.get(url) === pending) files.delete(url);
@@ -79,15 +101,25 @@ function descriptors(options: LoadFontOptions): FontFaceDescriptors {
 async function load(options: LoadFontOptions): Promise<void> {
 	const format = options.format ?? formatFromUrl(options.url);
 	if (format === null) {
-		throw new Error(
+		throw new AssetError(
+			"E_FONT_LOAD",
 			`loadFont() cannot tell the font format from the URL "${options.url}": pass format ("woff2", "woff", "opentype" or "truetype").`,
+			{ url: options.url },
 		);
 	}
 	// The font is fetched as bytes so a missing file fails with its HTTP status; the browser
 	// detects the actual format from the bytes, so `format` only has to be known.
 	const data = await fetchFont(options.url);
 	const face = new FontFace(options.family, data, descriptors(options));
-	await face.load();
+	try {
+		await face.load();
+	} catch (err) {
+		throw new AssetError(
+			"E_FONT_LOAD",
+			`loadFont() fetched "${options.url}" but the browser could not decode it as a font (${err instanceof Error ? err.message : String(err)}). Check that the file is a woff2, woff, otf or ttf font.`,
+			{ url: options.url, family: options.family },
+		);
+	}
 	document.fonts.add(face);
 }
 

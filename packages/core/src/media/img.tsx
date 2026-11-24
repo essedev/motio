@@ -10,6 +10,13 @@ import {
 	useRef,
 	useState,
 } from "react";
+import {
+	AssetError,
+	describeMissingAsset,
+	missingAssetDetails,
+	probeStatus,
+	suggestionText,
+} from "../asset-error.js";
 import { getPrefetchedUrl } from "../prefetch.js";
 import { cancelRender, continueRender, delayRender } from "../readiness/delay-render.js";
 import { realTimers } from "../real-time.js";
@@ -79,6 +86,16 @@ const ImgInner = forwardRef<HTMLImageElement, InnerProps>(function ImgInner(prop
 	const postmounted = timeline?.postmounted === true;
 	const [attempt, setAttempt] = useState(0);
 	const handleRef = useRef<number | null>(null);
+	const srcRef = useRef(src);
+	srcRef.current = src;
+	/** False once unmounted: a status check that ends later must not fail the render. */
+	const mounted = useRef(true);
+	useEffect(() => {
+		mounted.current = true;
+		return () => {
+			mounted.current = false;
+		};
+	}, []);
 	const retryTimer = useRef<number | null>(null);
 
 	const release = useCallback(() => {
@@ -117,18 +134,7 @@ const ImgInner = forwardRef<HTMLImageElement, InnerProps>(function ImgInner(prop
 		decoded.then(release, release);
 	};
 
-	const handleError = (event: SyntheticEvent<HTMLImageElement, Event>) => {
-		if (attempt < maxRetries) {
-			const delay = 1000 * 2 ** attempt;
-			retryTimer.current = realTimers().setTimeout(() => {
-				retryTimer.current = null;
-				setAttempt((a) => a + 1);
-			}, delay);
-			return;
-		}
-		const error = new Error(
-			`<Img> could not load "${src}" after ${maxRetries + 1} attempts. Check that the file exists and is reachable from the render, or pass onError to handle it.`,
-		);
+	const fail = (event: SyntheticEvent<HTMLImageElement, Event>, error: Error) => {
 		onImageError?.(error);
 		if (onError) {
 			onError(event);
@@ -140,6 +146,46 @@ const ImgInner = forwardRef<HTMLImageElement, InnerProps>(function ImgInner(prop
 			// cancelRender() throws by contract; the cancellation is recorded in the readiness
 			// registry and fails the frame, so rethrowing from an event handler adds nothing.
 		}
+	};
+
+	const retryOrFail = (event: SyntheticEvent<HTMLImageElement, Event>) => {
+		if (attempt < maxRetries) {
+			const delay = 1000 * 2 ** attempt;
+			retryTimer.current = realTimers().setTimeout(() => {
+				retryTimer.current = null;
+				setAttempt((a) => a + 1);
+			}, delay);
+			return;
+		}
+		fail(
+			event,
+			new Error(
+				`<Img> could not load "${src}" after ${maxRetries + 1} attempts. Check that the file exists and is reachable from the render, or pass onError to handle it.`,
+			),
+		);
+	};
+
+	const handleError = (event: SyntheticEvent<HTMLImageElement, Event>) => {
+		// A file that does not exist answers 404 on every attempt: fail at once, saying which file
+		// and the closest name in public/, instead of retrying for seconds. Any other failure (a
+		// network error, a server error, a status that cannot be read) is retried.
+		const failedSrc = src;
+		void probeStatus(getPrefetchedUrl(src) ?? src).then((status) => {
+			if (!mounted.current || failedSrc !== srcRef.current) return;
+			if (status === 404 || status === 410) {
+				const missing = describeMissingAsset(src);
+				fail(
+					event,
+					new AssetError(
+						"E_ASSET_NOT_FOUND",
+						`<Img> could not load ${missing.display}: the file does not exist (HTTP ${status}).${suggestionText(missing)}`,
+						missingAssetDetails(missing),
+					),
+				);
+				return;
+			}
+			retryOrFail(event);
+		});
 	};
 
 	const finalStyle: CSSProperties | undefined = premounted

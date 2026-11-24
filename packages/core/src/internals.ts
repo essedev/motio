@@ -3,6 +3,18 @@
  * Not part of the Remotion-compatible API and not re-exported by `@motiojs/motio`.
  */
 export {
+	AssetError,
+	type AssetErrorCode,
+	describeMissingAsset,
+	isAssetError,
+	type MissingAsset,
+	missingAssetDetails,
+	nearestName,
+	probeStatus,
+	staticPathOf,
+	suggestionText,
+} from "./asset-error.js";
+export {
 	CompositionFrame,
 	type CompositionFrameProps,
 	SUSPENSE_LABEL,
@@ -37,6 +49,7 @@ export {
 	type SharedAudioPool,
 	useMediaPlayback,
 } from "./media/playback-context.js";
+export { PageWarningRegistry, pageWarnings } from "./page-warnings.js";
 export { parseColor, type Rgba8 } from "./parse-color.js";
 export { getPrefetchedUrl } from "./prefetch.js";
 export {

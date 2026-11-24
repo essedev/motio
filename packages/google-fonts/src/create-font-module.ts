@@ -1,4 +1,5 @@
 import { cancelRender, continueRender, delayRender } from "@motiojs/core";
+import { AssetError } from "@motiojs/core/internals";
 
 /** Static description of a Google Font, as returned by `getInfo()`. */
 export interface FontInfo {
@@ -104,7 +105,11 @@ function loadFaces(
 		},
 		(err: unknown) => {
 			cancelRender(
-				err instanceof Error ? err : new Error(`Failed to load ${family}: ${String(err)}`),
+				new AssetError(
+					"E_FONT_LOAD",
+					`Could not load the Google Font ${family}: ${err instanceof Error ? err.message : String(err)}. Check the network connection of the render, or load the font from a file in public/ with @motiojs/fonts.`,
+					{ family },
+				),
 			);
 			throw err;
 		},

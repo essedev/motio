@@ -22,6 +22,12 @@ export interface SettleOptions {
 	images: ImageTracker;
 	/** Timeout for an image to load, in real milliseconds. */
 	imageTimeoutMs: number;
+	/**
+	 * Whether a `cancelRender()` error is let through instead of failing the settle. Used while
+	 * the compositions are collected: a font that failed to load at module level must not stop
+	 * the listing; the cancellation stays recorded and fails the first frame.
+	 */
+	tolerateCancellation?: (error: Error) => boolean;
 }
 
 /** Result of a settled frame. */
@@ -90,10 +96,18 @@ function delay(ms: number): Promise<void> {
 	});
 }
 
-function handleTimeoutMessage(label: string | null, timeoutMs: number, frame?: number): string {
+/**
+ * The message of a readiness timeout. It names the timeout for both the Node API and the CLI,
+ * since the same page error reaches both.
+ */
+export function handleTimeoutMessage(
+	label: string | null,
+	timeoutMs: number,
+	frame?: number,
+): string {
 	const what = label === null ? "A delayRender()" : `A delayRender() "${label}"`;
 	const at = frame === undefined ? "" : ` while rendering frame ${frame}`;
-	return `${what} was called but not cleared after ${Math.round(timeoutMs)}ms${at}. Call continueRender() with its handle, or raise timeoutInMilliseconds.`;
+	return `${what} was called but not cleared within ${Math.round(timeoutMs)} ms${at}. Call continueRender() with its handle once the work is done, or raise the timeout (timeoutInMilliseconds in the Node API, --timeout on the command line).`;
 }
 
 /**
@@ -129,7 +143,9 @@ export async function settle(options: SettleOptions): Promise<SettleResult> {
 			await realMacrotask();
 			if (observer) mutations += observer.takeRecords().length;
 			const cancelled = registry.cancelled();
-			if (cancelled) fail(toPageError("E_CANCELLED", cancelled, extra));
+			if (cancelled && !options.tolerateCancellation?.(cancelled)) {
+				fail(toPageError("E_CANCELLED", cancelled, extra));
+			}
 			const renderError = options.takeRenderError();
 			if (renderError !== undefined) fail(toPageError("E_RENDER_ERROR", renderError, extra));
 			const expired = registry.expired(real.now());
@@ -142,6 +158,7 @@ export async function settle(options: SettleOptions): Promise<SettleResult> {
 							...extra,
 							...(expired.label === null ? {} : { label: expired.label }),
 							retries: expired.retries,
+							timeoutMs: expired.timeoutMs,
 						},
 					),
 				);
@@ -164,8 +181,8 @@ export async function settle(options: SettleOptions): Promise<SettleResult> {
 					fail(
 						toPageError(
 							"E_READINESS_TIMEOUT",
-							`The image ${late.src} did not load within ${options.imageTimeoutMs}ms${frame === undefined ? "" : ` while rendering frame ${frame}`}.`,
-							{ ...extra, label: `<img src=${late.src}>` },
+							`The image ${late.src} did not load within ${options.imageTimeoutMs} ms${frame === undefined ? "" : ` while rendering frame ${frame}`}. Check that it is reachable, or raise the timeout (timeoutInMilliseconds in the Node API, --timeout on the command line).`,
+							{ ...extra, label: `<img src=${late.src}>`, timeoutMs: options.imageTimeoutMs },
 						),
 					);
 				}

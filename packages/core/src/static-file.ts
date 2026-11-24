@@ -1,4 +1,5 @@
 import { getRemotionEnvironment } from "./environment.js";
+import { pageWarnings } from "./page-warnings.js";
 
 /**
  * Global `@motiojs/bundler` sets before the user entry runs, with `staticBase` (the URL prefix
@@ -64,8 +65,38 @@ export function staticFile(path: string): string {
 		);
 	}
 	const trimmed = path.replace(/^\/+/, "");
+	warnOnCaseMismatch(trimmed);
 	const encoded = trimmed.split("/").map(encodeURIComponent).join("/");
 	return `${staticBase()}${encoded}`;
+}
+
+let caseIndex: { list: unknown[]; exact: Set<string>; lower: Map<string, string> } | null = null;
+
+/**
+ * Warns when `path` is not a file of `public/` but differs from one only in case. macOS and
+ * Windows file systems ignore case, so the render works there and fails on Linux, where CI and
+ * servers usually run.
+ */
+function warnOnCaseMismatch(path: string): void {
+	const list =
+		bundleContext()?.staticFiles ?? (globalThis as Record<string, unknown>)[STATIC_FILES_GLOBAL];
+	if (!Array.isArray(list) || list.length === 0) return;
+	if (caseIndex?.list !== list) {
+		const exact = new Set<string>();
+		const lower = new Map<string, string>();
+		for (const f of list) {
+			const name = f && typeof f === "object" ? (f as { name?: unknown }).name : undefined;
+			if (typeof name !== "string") continue;
+			exact.add(name);
+			lower.set(name.toLowerCase(), name);
+		}
+		caseIndex = { list, exact, lower };
+	}
+	if (caseIndex.exact.has(path)) return;
+	const actual = caseIndex.lower.get(path.toLowerCase());
+	if (actual === undefined) return;
+	const message = `staticFile(${JSON.stringify(path)}) names public/${actual} with a different case. It loads on macOS and Windows, whose file systems ignore case, and fails on Linux: write staticFile(${JSON.stringify(actual)}).`;
+	if (pageWarnings.report({ code: "W_STATIC_FILE_CASE", message })) console.warn(message);
 }
 
 /**

@@ -89,12 +89,43 @@ describe("loadFont", () => {
 		expect(added).toHaveLength(2);
 	});
 
-	it("fails the render and rejects on an HTTP error", async () => {
+	it("fails the render with E_FONT_LOAD on a missing file", async () => {
 		await expect(loadFont({ family: "M", url: "/missing.woff2" })).rejects.toThrow(
-			'loadFont() could not fetch "/missing.woff2": the server answered HTTP 404 Not Found.',
+			'loadFont() could not fetch "/missing.woff2": the file does not exist (HTTP 404).',
 		);
-		expect((core.cancelled[0] as Error).message).toContain("404 Not Found");
+		expect(core.cancelled[0]).toMatchObject({
+			code: "E_FONT_LOAD",
+			details: { url: "/missing.woff2", status: 404 },
+		});
 		expect(core.open.size).toBe(0);
+	});
+
+	it("names the file in public/ and the closest file when the bundle lists them", async () => {
+		vi.stubGlobal("__motioBundle", {
+			staticBase: "/public/",
+			staticFiles: [{ name: "fonts/inter-400.woff2" }, { name: "logo.png" }],
+		});
+		await expect(
+			loadFont({ family: "I", url: "/public/fonts/missing-inter-40.woff2" }),
+		).rejects.toThrow(
+			'loadFont() could not fetch public/fonts/missing-inter-40.woff2: the file does not exist (HTTP 404). Did you mean staticFile("fonts/inter-400.woff2")?',
+		);
+		expect(core.cancelled[0]).toMatchObject({
+			code: "E_FONT_LOAD",
+			details: { path: "fonts/missing-inter-40.woff2", suggestion: "fonts/inter-400.woff2" },
+		});
+	});
+
+	it("fails with E_FONT_LOAD when the browser cannot decode the file", async () => {
+		class BrokenFace extends FakeFontFace {
+			override async load(): Promise<this> {
+				throw new Error("A network error occurred.");
+			}
+		}
+		vi.stubGlobal("FontFace", BrokenFace);
+		await expect(loadFont({ family: "B", url: "/broken.woff2" })).rejects.toMatchObject({
+			code: "E_FONT_LOAD",
+		});
 	});
 
 	it("requires a format when the URL has no known extension, before fetching", async () => {

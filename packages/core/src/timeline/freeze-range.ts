@@ -34,7 +34,7 @@ export function warnClampedFreeze(what: string, requested: number, state: Freeze
 			? `past the end of the composition (its last frame is ${last} here)`
 			: `before the start of the composition (its first frame is ${first} here)`;
 	const message =
-		`${what}: frame ${requested} is ${where}, so the children show frame ${shown} instead, as in Remotion. ` +
+		`${what}: frame ${requested} is ${where}, so the children show frame ${shown} instead (a freeze holds a frame of the composition). ` +
 		`Sequences inside count from frame ${shown}, and content that starts later stays hidden. ` +
 		`To show frame ${requested} of a scene in a shorter composition or a <Still>, wrap the scene in ` +
 		`<Freeze frame={${first}}><Sequence from={${first - requested}}>...</Sequence></Freeze>.`;

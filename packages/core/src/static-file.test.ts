@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { pageWarnings } from "./page-warnings.js";
 import { RUN_CONTEXT_GLOBAL } from "./protocol.js";
 import {
 	BUNDLE_GLOBAL,
@@ -19,6 +20,29 @@ afterEach(() => {
 });
 
 describe("staticFile", () => {
+	it("warns once when the name differs from a public/ file only in case", () => {
+		pageWarnings.reset();
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		g[BUNDLE_GLOBAL] = {
+			staticBase: "/public",
+			staticFiles: [{ name: "cover.jpg" }, { name: "Logo.png" }],
+		};
+		expect(staticFile("Cover.JPG")).toBe("/public/Cover.JPG");
+		staticFile("Cover.JPG");
+		staticFile("Logo.png");
+		staticFile("missing.png");
+		expect(pageWarnings.list()).toEqual([
+			{
+				code: "W_STATIC_FILE_CASE",
+				message:
+					'staticFile("Cover.JPG") names public/cover.jpg with a different case. It loads on macOS and Windows, whose file systems ignore case, and fails on Linux: write staticFile("cover.jpg").',
+			},
+		]);
+		expect(warn).toHaveBeenCalledTimes(1);
+		warn.mockRestore();
+		pageWarnings.reset();
+	});
+
 	it("prefixes the public base and encodes each segment", () => {
 		expect(staticFile("photo.png")).toBe("/photo.png");
 		expect(staticFile("/my-image#portrait.png")).toBe("/my-image%23portrait.png");

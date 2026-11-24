@@ -117,11 +117,27 @@ export type FrameWarningCode =
 	| "W_FONT_FALLBACK"
 	| "W_SLOW_READINESS"
 	| "W_FRAME_MISMATCH"
-	| "W_ANIMATION_UNSEEKABLE";
+	| "W_ANIMATION_UNSEEKABLE"
+	/** `Math.random()` was called while a frame rendered: frames differ on every render. */
+	| "W_MATH_RANDOM"
+	/** `staticFile()` named a file whose case differs from the file in `public/`. */
+	| "W_STATIC_FILE_CASE"
+	/** A timeline (`<TransitionSeries>`) ends before the composition: the last frames are empty. */
+	| "W_TIMELINE_SHORT";
 
 export interface FrameWarning {
 	code: FrameWarningCode;
 	message: string;
+}
+
+/** A readiness handle still open while the page settles a frame, from `PageApi.pending()`. */
+export interface PendingHandle {
+	/** The label passed to `delayRender()`, or null. */
+	label: string | null;
+	/** Real milliseconds since the handle was opened. */
+	elapsedMs: number;
+	/** The handle's timeout in milliseconds. */
+	timeoutMs: number;
 }
 
 /**
@@ -168,7 +184,11 @@ export type PageErrorCode =
 	| "E_COMPOSITION_NOT_FOUND"
 	| "E_CALCULATE_METADATA"
 	| "E_INVALID_COMPOSITION"
-	| "E_RENDER_ERROR";
+	| "E_RENDER_ERROR"
+	/** A file the composition loads (an image, a static file) does not exist. */
+	| "E_ASSET_NOT_FOUND"
+	/** A font file could not be fetched or decoded. */
+	| "E_FONT_LOAD";
 
 /** Serialised error crossing the page boundary; `seek` and `setComposition` reject with it. */
 export interface PageError {
@@ -180,6 +200,10 @@ export interface PageError {
 	stack?: string;
 	/** For timeouts: the `retries` of the handle; the renderer retries the frame on a fresh page. */
 	retries?: number;
+	/** For timeouts: the timeout that elapsed, in milliseconds. */
+	timeoutMs?: number;
+	/** Structured context, JSON-serialisable (for missing assets: `path`, `url`, `suggestion`). */
+	details?: Record<string, unknown>;
 }
 
 /** Metadata a composition was already resolved to, for example by `selectComposition()`. */
@@ -228,4 +252,10 @@ export interface PageApi {
 	 * Optional: bundles built before it was added do not provide it.
 	 */
 	cancelled?(): PageError | null;
+	/**
+	 * The readiness handles open right now, answered at once (not queued behind a running
+	 * `seek`), so the renderer can report what a slow frame waits for. Optional: bundles built
+	 * before it was added do not provide it.
+	 */
+	pending?(): PendingHandle[];
 }

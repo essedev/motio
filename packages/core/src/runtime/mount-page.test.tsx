@@ -1,9 +1,11 @@
 import { lazy, useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { AssetError } from "../asset-error.js";
 import { Composition, Still } from "../composition/composition.js";
 import { Folder } from "../composition/folder.js";
 import { registerRoot, resetRoot } from "../composition/register-root.js";
 import { audioIntents } from "../media/audio-intents.js";
+import { pageWarnings } from "../page-warnings.js";
 import { RUN_CONTEXT_GLOBAL } from "../protocol.js";
 import { cancelRender, continueRender, delayRender } from "../readiness/delay-render.js";
 import { readiness } from "../readiness/registry.js";
@@ -17,6 +19,7 @@ let container: HTMLElement;
 beforeEach(() => {
 	resetRoot();
 	readiness.reset();
+	pageWarnings.reset();
 	container = document.createElement("div");
 	document.body.appendChild(container);
 	g[RUN_CONTEXT_GLOBAL] = {
@@ -218,6 +221,137 @@ describe("mountPage", () => {
 			frame: 2,
 			retries: 1,
 		});
+	});
+
+	it("names the timeout for the Node API and the CLI, and reports its length", async () => {
+		const Stuck = () => {
+			useState(() => delayRender("Waiting for the API", { timeoutInMilliseconds: 50 }));
+			return null;
+		};
+		registerRoot(() => (
+			<Composition id="a" component={Stuck} width={10} height={10} fps={30} durationInFrames={5} />
+		));
+		const api = mountPage({ container, installGlobal: false });
+		await api.setComposition("a", {});
+		await expect(api.seek(0)).rejects.toMatchObject({
+			code: "E_READINESS_TIMEOUT",
+			timeoutMs: 50,
+			message:
+				'A delayRender() "Waiting for the API" was called but not cleared within 50 ms while rendering frame 0. Call continueRender() with its handle once the work is done, or raise the timeout (timeoutInMilliseconds in the Node API, --timeout on the command line).',
+		});
+	});
+
+	it("lists the open readiness handles while a frame waits on them", async () => {
+		let release = () => {};
+		const Waits = () => {
+			useState(() => {
+				const handle = delayRender("Fetching data", { timeoutInMilliseconds: 1500 });
+				release = () => continueRender(handle);
+				return handle;
+			});
+			return null;
+		};
+		registerRoot(() => (
+			<Composition id="a" component={Waits} width={10} height={10} fps={30} durationInFrames={5} />
+		));
+		const api = mountPage({ container, installGlobal: false });
+		await api.setComposition("a", {});
+		const seeking = api.seek(0);
+		await new Promise((r) => setTimeout(r, 30));
+		// Answered while the seek is still waiting, not queued behind it.
+		const pending = api.pending?.() ?? [];
+		expect(pending).toEqual([
+			{ label: "Fetching data", elapsedMs: expect.any(Number), timeoutMs: 1500 },
+		]);
+		expect(pending[0]?.elapsedMs).toBeGreaterThanOrEqual(20);
+		release();
+		await expect(seeking).resolves.toMatchObject({ frame: 0 });
+		expect(api.pending?.()).toEqual([]);
+	});
+
+	it("warns once when a frame calls Math.random()", async () => {
+		const Random = () => {
+			const frame = useCurrentFrame();
+			return <div style={{ left: Math.random() * 100 }}>{frame}</div>;
+		};
+		registerRoot(() => (
+			<Composition id="a" component={Random} width={10} height={10} fps={30} durationInFrames={5} />
+		));
+		const api = mountPage({ container, installGlobal: false });
+		await api.setComposition("a", {});
+		const first = await api.seek(0);
+		expect(first.warnings.filter((w) => w.code === "W_MATH_RANDOM")).toEqual([
+			{
+				code: "W_MATH_RANDOM",
+				message: expect.stringMatching(
+					/^Math\.random\(\) was called \d+ times? while frame 0 rendered\. .*Use random\(seed\)/,
+				),
+			},
+		]);
+		const second = await api.seek(1);
+		expect(second.warnings.filter((w) => w.code === "W_MATH_RANDOM")).toEqual([]);
+	});
+
+	it("passes warnings reported by components into the frame report", async () => {
+		const Reports = () => {
+			pageWarnings.report({ code: "W_TIMELINE_SHORT", message: "short" });
+			return null;
+		};
+		registerRoot(() => (
+			<Composition
+				id="a"
+				component={Reports}
+				width={10}
+				height={10}
+				fps={30}
+				durationInFrames={5}
+			/>
+		));
+		const api = mountPage({ container, installGlobal: false });
+		await api.setComposition("a", {});
+		expect((await api.seek(0)).warnings).toContainEqual({
+			code: "W_TIMELINE_SHORT",
+			message: "short",
+		});
+		expect((await api.seek(1)).warnings).not.toContainEqual({
+			code: "W_TIMELINE_SHORT",
+			message: "short",
+		});
+	});
+
+	it("lists compositions when a module-level font fails, then fails the frame with its code", async () => {
+		// What loadFont() does at module level: a handle, then cancelRender() with an AssetError.
+		const handle = delayRender("Loading font");
+		setTimeout(() => {
+			continueRender(handle);
+			try {
+				cancelRender(
+					new AssetError("E_FONT_LOAD", "loadFont() could not fetch public/missing.woff2", {
+						path: "missing.woff2",
+					}),
+				);
+			} catch {
+				// cancelRender() throws by contract.
+			}
+		}, 10);
+		registerRoot(() => (
+			<Composition
+				id="a"
+				component={FrameText}
+				width={10}
+				height={10}
+				fps={30}
+				durationInFrames={5}
+			/>
+		));
+		const api = mountPage({ container, installGlobal: false });
+		expect((await api.getCompositions()).map((c) => c.id)).toEqual(["a"]);
+		await api.setComposition("a", {});
+		await expect(api.seek(0)).rejects.toMatchObject({
+			code: "E_FONT_LOAD",
+			details: { path: "missing.woff2" },
+		});
+		expect(api.cancelled?.()).toMatchObject({ code: "E_FONT_LOAD" });
 	});
 
 	it("fails with E_CANCELLED when cancelRender() is called", async () => {
