@@ -5,9 +5,15 @@ import { join } from "node:path";
 import { PassThrough } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type CommandContext, defaultDeps } from "../index.js";
-import { detectPackageManager } from "../init/package-manager.js";
+import { detectPackageManager, PACKAGE_MANAGERS } from "../init/package-manager.js";
 import { type Prompter, terminalPrompter } from "../init/prompt.js";
-import { fillPlaceholders, isValidPackageName, packageNameFrom } from "../init/scaffold.js";
+import {
+	alignCodeComments,
+	fillPlaceholders,
+	isValidPackageName,
+	packageNameFrom,
+	scaffold,
+} from "../init/scaffold.js";
 import { STARTERS, STARTERS_DIR } from "../init/starters.js";
 import { Reporter } from "../io.js";
 import { runCli } from "../main.js";
@@ -283,6 +289,52 @@ describe("init helpers", () => {
 		expect(fillPlaceholders(text, "n", "bun")).toBe(
 			"bun install | bun run dev | bunx motio | bun add -d x | {{unknown}}",
 		);
+	});
+
+	it("aligns the README command comments for every package manager and starter", async () => {
+		const root = await mkdtemp(join(tmpdir(), "motio-readme-"));
+		try {
+			for (const starter of STARTERS) {
+				for (const pm of PACKAGE_MANAGERS) {
+					const dir = join(root, `${starter.name}-${pm}`);
+					await scaffold({ dir, starter, name: "demo", pm, version: "0.0.0" });
+					const readme = await readFile(join(dir, "README.md"), "utf8");
+					const block = /```bash\n([\s\S]*?)```/.exec(readme)?.[1] ?? "";
+					const lines = block.trimEnd().split("\n");
+					expect(lines.length, `${starter.name} ${pm}`).toBeGreaterThan(1);
+					const columns = lines.map((line) => line.indexOf(" # ") + 1);
+					const longest = Math.max(...lines.map((line) => line.split(/\s+#/)[0]?.length ?? 0));
+					expect(new Set(columns), `${starter.name} ${pm}:\n${block}`).toEqual(
+						new Set([longest + 2]),
+					);
+				}
+			}
+		} finally {
+			await rm(root, { recursive: true, force: true });
+		}
+	});
+
+	it("aligns comments only inside code blocks, per run of commented lines", () => {
+		const text = [
+			"a  # not code",
+			"```bash",
+			"pnpm # one",
+			"pnpm install   # two",
+			"",
+			"x # three",
+			"echo '#'",
+			"```",
+		].join("\n");
+		expect(alignCodeComments(text).split("\n")).toEqual([
+			"a  # not code",
+			"```bash",
+			"pnpm          # one",
+			"pnpm install  # two",
+			"",
+			"x  # three",
+			"echo '#'",
+			"```",
+		]);
 	});
 
 	it("prompts on a stream: numbers, names, defaults, retries, and closed input", async () => {

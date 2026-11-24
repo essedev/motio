@@ -113,6 +113,36 @@ export function fillPlaceholders(text: string, name: string, pm: PackageManager)
 	return text.replace(/\{\{(\w+)\}\}/g, (match, key: string) => values[key] ?? match);
 }
 
+/**
+ * Aligns the trailing `# comments` of consecutive command lines in each fenced code block, two
+ * spaces after the longest command. The starters' READMEs are aligned for `{{run}}`, which
+ * expands to commands of different lengths per package manager (`pnpm`, `npm run`, `bun run`).
+ */
+export function alignCodeComments(text: string): string {
+	const lines = text.split("\n");
+	const commented = /^(.*?\S)\s+(# .*)$/;
+	let inFence = false;
+	for (let i = 0; i < lines.length; i++) {
+		if (/^\s*```/.test(lines[i] as string)) {
+			inFence = !inFence;
+			continue;
+		}
+		if (!inFence || !commented.test(lines[i] as string)) continue;
+		let end = i;
+		while (end + 1 < lines.length && commented.test(lines[end + 1] as string)) end++;
+		const parts = lines.slice(i, end + 1).map((line) => {
+			const [, command, comment] = commented.exec(line) as RegExpExecArray;
+			return { command: command as string, comment: comment as string };
+		});
+		const width = Math.max(...parts.map((p) => p.command.length)) + 2;
+		parts.forEach((p, j) => {
+			lines[i + j] = `${p.command.padEnd(width)}${p.comment}`;
+		});
+		i = end;
+	}
+	return lines.join("\n");
+}
+
 async function listFiles(root: string): Promise<string[]> {
 	const entries = await readdir(root, { recursive: true, withFileTypes: true });
 	return entries
@@ -140,7 +170,10 @@ export async function scaffold(options: ScaffoldOptions): Promise<string[]> {
 		await mkdir(dirname(destination), { recursive: true });
 		if (TEMPLATED.has(basename(target))) {
 			const text = await readFile(source, "utf8");
-			await writeFile(destination, fillPlaceholders(text, options.name, options.pm));
+			await writeFile(
+				destination,
+				alignCodeComments(fillPlaceholders(text, options.name, options.pm)),
+			);
 		} else {
 			await copyFile(source, destination);
 		}
