@@ -161,6 +161,7 @@ export async function openProject(
 		envVariables: env.variables,
 		serveUrl,
 		rendererPort: flags.integer("port", { min: 1, max: 65535 }) ?? config.rendererPort ?? undefined,
+		timeModel: settings.motio.render?.timeModel,
 	});
 	await ensureBrowserWithProgress(ctx, session);
 	return { config, settings, rootDir, serveUrl, session, bundle };
@@ -220,6 +221,8 @@ export function buildSessionOptions(
 		envVariables: Record<string, string>;
 		serveUrl: string;
 		rendererPort: number | undefined;
+		/** `render.timeModel` of the config file; `--time-model` wins. */
+		timeModel?: "frame" | "virtual" | undefined;
 	},
 ): SessionOptions {
 	const { config, serveUrl } = options;
@@ -235,6 +238,7 @@ export function buildSessionOptions(
 	const logLevel = logLevelFrom(flags) ?? config.logLevel;
 	const captureMethod = flags.oneOf("capture-method", CAPTURE_METHODS);
 	const pagesPerBrowser = flags.integer("pages-per-browser", { min: 1 });
+	const timeModel = flags.oneOf("time-model", ["frame", "virtual"] as const) ?? options.timeModel;
 
 	return {
 		serveUrl,
@@ -246,6 +250,7 @@ export function buildSessionOptions(
 		...(logLevel ? { logLevel } : {}),
 		...(captureMethod ? { captureMethod } : {}),
 		...(pagesPerBrowser ? { pagesPerBrowser } : {}),
+		...(timeModel ? { timeModel } : {}),
 		chromiumOptions: {
 			...(gl ? { gl } : {}),
 			...(userAgent ? { userAgent } : {}),

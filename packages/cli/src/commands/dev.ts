@@ -114,6 +114,7 @@ export async function devCommand(
 		envVariables: env.variables,
 		serveUrl: "",
 		rendererPort: config.rendererPort ?? undefined,
+		timeModel: settings.motio.render?.timeModel,
 	});
 	const stills = new DevStillRenderer({
 		ctx,

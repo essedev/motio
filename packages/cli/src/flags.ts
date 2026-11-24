@@ -40,6 +40,11 @@ export const PROJECT_FLAGS = {
 		description:
 			"Motio: pages sharing one browser process (default: the pages spread over two browsers).",
 	},
+	"time-model": {
+		type: "string",
+		description:
+			"Motio: frame (only the frame drives the composition) or virtual (Date, timers, requestAnimationFrame and Math.random follow the frame). Default: the composition's, else frame.",
+	},
 	width: { type: "string", description: "Override the composition width." },
 	height: { type: "string", description: "Override the composition height." },
 	fps: { type: "string", description: "Override the composition frame rate." },

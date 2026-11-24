@@ -110,6 +110,15 @@ describe("motio.config.ts in the CLI", () => {
 		});
 	});
 
+	it("takes render.timeModel from the file, and --time-model wins", async () => {
+		await writeConfig("motio.config.mjs", "export default { render: { timeModel: 'virtual' } };\n");
+		const fromFile = await run(["render", "Main"]);
+		expect(fromFile.code).toBe(0);
+		expect(fromFile.calls.renderMedia?.[0]).toMatchObject({ timeModel: "virtual" });
+		const fromFlag = await run(["render", "Main", "--time-model=frame"]);
+		expect(fromFlag.calls.renderMedia?.[0]).toMatchObject({ timeModel: "frame" });
+	});
+
 	it("gives still its own group", async () => {
 		await writeConfig(
 			"motio.config.mjs",

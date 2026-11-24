@@ -72,6 +72,7 @@ export interface SessionOptions {
 	logLevel?: LogLevel;
 	captureMethod?: "auto" | "begin-frame" | "screenshot";
 	pagesPerBrowser?: number | null;
+	timeModel?: "frame" | "virtual" | null;
 	ffmpegExecutable?: string | null;
 	ffprobeExecutable?: string | null;
 }
