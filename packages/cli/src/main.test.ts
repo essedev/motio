@@ -582,6 +582,23 @@ describe("check determinism", () => {
 		const mismatches = result.mismatches as Array<{ frame: number; hashes: string[] }>;
 		expect(mismatches.map((m) => m.frame)).toEqual([3]);
 		expect(new Set(mismatches[0]?.hashes).size).toBe(2);
+		expect(result.diagnosis).toMatchObject({ cause: "race" });
+	});
+
+	it("prints the differing frames as ranges with the likely cause", async () => {
+		// Every run draws every frame differently, as with Math.random().
+		const { io, code } = await run(["check", "determinism", "Main", "--frames=0-9"], {
+			level: (frame, run) => frame + run * 20,
+		});
+		expect(code).toBe(3);
+		expect(io.out.join("")).toBe(
+			[
+				"Not deterministic: 10 of 10 frames differ between runs.",
+				"Frames: 0-9",
+				"Every run drew these frames differently: the pixels depend on something random or on the clock (Math.random(), Date.now(), performance.now(), an animation running on real time). Use random(seed) and derive motion from useCurrentFrame().",
+				"",
+			].join("\n"),
+		);
 	});
 });
 

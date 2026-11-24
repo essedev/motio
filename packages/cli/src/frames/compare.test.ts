@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { determinismRuns } from "../commands/check.js";
 import { encodePng } from "../test-support/fakes.js";
-import { compareRuns, hashPixels, isFlicker, meanAbsoluteDifference, pngSize } from "./compare.js";
+import {
+	blockFlicker,
+	blockThresholdFor,
+	compareRuns,
+	diagnoseMismatches,
+	formatFrameList,
+	hashPixels,
+	isFlicker,
+	meanAbsoluteDifference,
+	pngSize,
+} from "./compare.js";
 
 const solid = (value: number, alpha = 255) =>
 	new Uint8Array([value, value, value, alpha, value, value, value, alpha]);
@@ -41,5 +52,109 @@ describe("frame comparison", () => {
 	it("reads PNG dimensions", () => {
 		expect(pngSize(encodePng(7, 3, () => [0, 0, 0, 255]))).toEqual({ width: 7, height: 3 });
 		expect(() => pngSize(new Uint8Array(30))).toThrow(/Not a PNG/);
+	});
+});
+
+describe("determinism report", () => {
+	it("folds consecutive frames into ranges", () => {
+		expect(formatFrameList(Array.from({ length: 30 }, (_, i) => i))).toBe("0-29");
+		expect(formatFrameList([12, 3, 5, 6, 7])).toBe("3, 5-7, 12");
+		expect(formatFrameList([4])).toBe("4");
+	});
+
+	// Runs: ascending x1, descending x1, ascending x4, descending x4.
+	const runs = determinismRuns(4);
+	const diagnose = (hashes: string[]) => diagnoseMismatches([{ frame: 0, hashes }], runs).cause;
+
+	it("reads the cause from which runs disagree", () => {
+		expect(diagnose(["a", "b", "c", "d"])).toBe("random");
+		expect(diagnose(["a", "b", "a", "b"])).toBe("order");
+		expect(diagnose(["a", "a", "b", "a"])).toBe("race");
+		expect(diagnose(["a", "a", "b", "c"])).toBe("race");
+		expect(diagnose(["a", "b", "c", "b"])).toBe("mixed");
+		const fresh = determinismRuns("50%", "fresh");
+		expect(diagnoseMismatches([{ frame: 0, hashes: ["f", "a", "a", "a", "a"] }], fresh).cause).toBe(
+			"history",
+		);
+	});
+
+	it("calls frames with different causes mixed and explains each cause", () => {
+		const result = diagnoseMismatches(
+			[
+				{ frame: 0, hashes: ["a", "b", "a", "b"] },
+				{ frame: 1, hashes: ["a", "a", "b", "a"] },
+			],
+			runs,
+		);
+		expect(result.cause).toBe("mixed");
+		expect(diagnoseMismatches([{ frame: 0, hashes: ["a", "b", "a", "b"] }], runs).message).toMatch(
+			/depends on the frame rendered before it/,
+		);
+	});
+});
+
+describe("block flicker", () => {
+	const width = 1920;
+	const height = 1080;
+	/** A dark frame with 30 white dots of 20 px at positions drawn from `seed`. */
+	function dots(seed: number): Uint8Array {
+		const frame = new Uint8Array(width * height * 4).fill(20);
+		let state = seed;
+		const next = () => {
+			state = (state * 1103515245 + 12345) % 2147483648;
+			return state / 2147483648;
+		};
+		for (let d = 0; d < 30; d++) {
+			const x0 = Math.floor(next() * (width - 20));
+			const y0 = Math.floor(next() * (height - 20));
+			for (let y = y0; y < y0 + 20; y++)
+				frame.fill(255, (y * width + x0) * 4, (y * width + x0 + 20) * 4);
+		}
+		return frame;
+	}
+	/** Vertical stripes 40 px wide, shifted `offset` px to the right. */
+	function stripes(offset: number): Uint8Array {
+		const frame = new Uint8Array(width * height * 4);
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
+				frame.fill(
+					Math.floor((x - offset) / 40) % 2 === 0 ? 230 : 30,
+					(y * width + x) * 4,
+					(y * width + x) * 4 + 4,
+				);
+			}
+		}
+		return frame;
+	}
+	const options = { threshold: blockThresholdFor(0.02) };
+
+	it("catches dots at random positions every frame, which the mean difference misses", () => {
+		const [previous, current, next] = [dots(1), dots(2), dots(3)];
+		const mean = [
+			meanAbsoluteDifference(previous, current),
+			meanAbsoluteDifference(current, next),
+			meanAbsoluteDifference(previous, next),
+		] as const;
+		expect(isFlicker(...mean, { threshold: 0.02 })).toBe(false);
+		const result = blockFlicker(previous, current, next, width, height, options);
+		expect(result?.blocks).toBeGreaterThanOrEqual(30);
+		expect(result?.maxDiff).toBeGreaterThan(0.5);
+	});
+
+	it("leaves a slow pan and a still frame alone", () => {
+		expect(blockFlicker(stripes(0), stripes(3), stripes(6), width, height, options)).toBeNull();
+		const still = dots(7);
+		expect(blockFlicker(still, still, still, width, height, options)).toBeNull();
+	});
+
+	it("locates a single element shown for one frame", () => {
+		const blank = new Uint8Array(64 * 64 * 4).fill(0);
+		const flash = Uint8Array.from(blank);
+		for (let y = 32; y < 48; y++) flash.fill(255, (y * 64 + 16) * 4, (y * 64 + 32) * 4);
+		expect(blockFlicker(blank, flash, blank, 64, 64, options)).toEqual({
+			blocks: 1,
+			region: { x: 16, y: 32, width: 16, height: 16 },
+			maxDiff: 1,
+		});
 	});
 });

@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { availableParallelism } from "node:os";
 import type { Concurrency } from "@motiojs/compat/config";
 import { Flags, parseCommandArgs } from "../args.js";
@@ -6,11 +7,17 @@ import { EXIT, usageError } from "../errors.js";
 import { commandFfmpeg } from "../ffmpeg.js";
 import { CAPTURE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import {
+	blockFlicker,
+	blockThresholdFor,
 	compareRuns,
+	diagnoseMismatches,
+	FLICKER_BLOCK_SIZE,
 	type FlickerFrame,
+	formatFrameList,
 	hashPixels,
 	isFlicker,
 	meanAbsoluteDifference,
+	pngSize,
 } from "../frames/compare.js";
 import { decodePngs } from "../frames/ffmpeg.js";
 import { framesInRange, renderToFiles } from "../frames/render-to-files.js";
@@ -43,7 +50,8 @@ export const FLICKER_FLAGS = {
 	...CHECK_FLAGS,
 	threshold: {
 		type: "string",
-		description: "Minimum mean difference from both neighbours, 0 to 1 (default 0.02).",
+		description:
+			"Minimum mean difference from both neighbours, 0 to 1 (default 0.02); each 16 px block is held to five times it, so a small element shown for one frame is caught.",
 	},
 } as const;
 
@@ -168,6 +176,7 @@ export async function checkDeterminismCommand(
 	}
 	const mismatches = compareRuns(hashes);
 	const deterministic = mismatches.length === 0;
+	const diagnosis = deterministic ? null : diagnoseMismatches(mismatches, runs);
 	return {
 		json: {
 			composition: compositionJson(composition),
@@ -180,6 +189,7 @@ export async function checkDeterminismCommand(
 			})),
 			deterministic,
 			mismatches,
+			...(diagnosis ? { diagnosis } : {}),
 		},
 		human: deterministic
 			? [
@@ -191,7 +201,8 @@ export async function checkDeterminismCommand(
 					reference === "fresh"
 						? `Not deterministic: ${mismatches.length} of ${frames.length} frames differ from a new page per frame in at least one run.`
 						: `Not deterministic: ${mismatches.length} of ${frames.length} frames differ between runs.`,
-					`Frames: ${mismatches.map((m) => m.frame).join(", ")}`,
+					`Frames: ${formatFrameList(mismatches.map((m) => m.frame))}`,
+					...(diagnosis ? [diagnosis.message] : []),
 				],
 		exitCode: deterministic ? EXIT.ok : EXIT.checkFailed,
 	};
@@ -220,6 +231,8 @@ export async function checkFlickerCommand(
 		label: "Rendering",
 	});
 	const flagged: FlickerFrame[] = [];
+	const { width, height } = pngSize(await readFile(files.get(frames[0] as number) as string));
+	const blockOptions = { threshold: blockThresholdFor(threshold) };
 	// Sliding window of the last three decoded frames; only consecutive frames are compared.
 	const window: Array<{ frame: number; rgba: Buffer }> = [];
 	await decodePngs(
@@ -234,8 +247,22 @@ export async function checkFlickerCommand(
 			const diffPrevious = meanAbsoluteDifference(previous.rgba, current.rgba);
 			const diffNext = meanAbsoluteDifference(current.rgba, next.rgba);
 			const diffNeighbours = meanAbsoluteDifference(previous.rgba, next.rgba);
-			if (isFlicker(diffPrevious, diffNext, diffNeighbours, { threshold })) {
-				flagged.push({ frame: current.frame, diffPrevious, diffNext, diffNeighbours });
+			const blocks = blockFlicker(
+				previous.rgba,
+				current.rgba,
+				next.rgba,
+				width,
+				height,
+				blockOptions,
+			);
+			if (isFlicker(diffPrevious, diffNext, diffNeighbours, { threshold }) || blocks) {
+				flagged.push({
+					frame: current.frame,
+					diffPrevious,
+					diffNext,
+					diffNeighbours,
+					...(blocks ? { blocks } : {}),
+				});
 			}
 		},
 	);
@@ -252,9 +279,10 @@ export async function checkFlickerCommand(
 			? [`No flicker in ${frames.length} frames (threshold ${threshold}).`]
 			: [
 					`Flicker on ${flagged.length} frame(s):`,
-					...flagged.map(
-						(f) =>
-							`  frame ${f.frame}: ${(f.diffPrevious * 100).toFixed(1)}% from the previous, ${(f.diffNext * 100).toFixed(1)}% from the next, neighbours ${(f.diffNeighbours * 100).toFixed(1)}% apart`,
+					...flagged.map((f) =>
+						f.blocks && !isFlicker(f.diffPrevious, f.diffNext, f.diffNeighbours, { threshold })
+							? `  frame ${f.frame}: ${f.blocks.blocks} block(s) of ${FLICKER_BLOCK_SIZE} px shown for this frame only, up to ${(f.blocks.maxDiff * 100).toFixed(0)}% different, in ${f.blocks.region.width}x${f.blocks.region.height} at ${f.blocks.region.x},${f.blocks.region.y}`
+							: `  frame ${f.frame}: ${(f.diffPrevious * 100).toFixed(1)}% from the previous, ${(f.diffNext * 100).toFixed(1)}% from the next, neighbours ${(f.diffNeighbours * 100).toFixed(1)}% apart`,
 					),
 				],
 		exitCode: clean ? EXIT.ok : EXIT.checkFailed,

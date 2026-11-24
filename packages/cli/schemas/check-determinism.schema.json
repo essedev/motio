@@ -81,6 +81,21 @@
 						}
 					}
 				},
+				"diagnosis": {
+					"type": "object",
+					"description": "The likely cause, read from which runs disagree; present when frames differ.",
+					"required": ["cause", "message"],
+					"additionalProperties": false,
+					"properties": {
+						"cause": {
+							"enum": ["random", "order", "race", "history", "mixed"],
+							"description": "random: every run differs (Math.random(), a clock); order: ascending and descending differ (a frame depends on the previous one); race: one tab and several tabs differ; history: the runs agree but not with a new page per frame; mixed: more than one."
+						},
+						"message": {
+							"type": "string"
+						}
+					}
+				},
 				"warnings": {
 					"$ref": "urn:motio:cli:common#/$defs/warnings"
 				},

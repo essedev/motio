@@ -57,6 +57,42 @@
 							},
 							"diffNeighbours": {
 								"type": "number"
+							},
+							"blocks": {
+								"type": "object",
+								"description": "Set when blocks of 16 px jumped away from both neighbours on their own: a small element shown for one frame.",
+								"required": ["blocks", "region", "maxDiff"],
+								"additionalProperties": false,
+								"properties": {
+									"blocks": {
+										"type": "integer",
+										"minimum": 1
+									},
+									"region": {
+										"type": "object",
+										"description": "Bounding box of the blocks, in captured pixels.",
+										"required": ["x", "y", "width", "height"],
+										"additionalProperties": false,
+										"properties": {
+											"x": {
+												"type": "integer"
+											},
+											"y": {
+												"type": "integer"
+											},
+											"width": {
+												"type": "integer"
+											},
+											"height": {
+												"type": "integer"
+											}
+										}
+									},
+									"maxDiff": {
+										"type": "number",
+										"description": "Largest difference of a block from its neighbours, 0 to 1."
+									}
+								}
 							}
 						}
 					}
