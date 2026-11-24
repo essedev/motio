@@ -6,7 +6,7 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 
 ## Commands
 
-- `make check`: format, lint, build (`tsc -b`), tests. Must be green before every commit.
+- `make check`: format, lint, build (`tsc -b`), tests (15 to 30 minutes). Green before every commit that touches `packages/`, `tools/`, `fixtures/` or the build, and before any push. A commit confined to `promo/` or to docs (`docs/`, READMEs, `website/` content) needs only Biome, `pnpm exec tsc -b`, and that area's own checks: `node docs/guide/examples/sync.ts --check` and the guide tests for docs, `make site-build` for the site, `promo/promo.integration.test.ts` for promo. With several agents on one machine, take turns for the full run (one at a time).
 - `make build`, `make test`, `make lint`, `make format`, `make typecheck`.
 - `pnpm test:integration`: tests against the real Chrome and FFmpeg (serial, slower).
 - `make bench`: throughput against the pinned Remotion (`BENCH_ARGS="--assert"` checks the performance criterion; needs `pnpm install` in `tools/oracle-render`, which the target runs).
