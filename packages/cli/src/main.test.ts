@@ -212,7 +212,7 @@ describe("render", () => {
 		const { io, code } = await run(["render", "--json"], {
 			compositions: [COMPOSITION, { ...COMPOSITION, id: "Other" } as VideoConfig],
 		});
-		expect(code).toBe(1);
+		expect(code).toBe(2);
 		const result = parseJson(io);
 		expect(validate("render", result)).toBeNull();
 		expect(result).toMatchObject({
@@ -224,7 +224,7 @@ describe("render", () => {
 
 	it("reports renderer errors with their code and context", async () => {
 		const { io, code } = await run(["render", "Nope", "--json"]);
-		expect(code).toBe(1);
+		expect(code).toBe(2);
 		expect(parseJson(io)).toMatchObject({
 			ok: false,
 			error: { code: "E_COMPOSITION_NOT_FOUND", context: { composition: "Nope" } },
@@ -237,6 +237,9 @@ describe("render", () => {
 			["render", "Main", "--unknown-flag", "--json"],
 			["render", "Main", "--frames=9-1", "--json"],
 			["render", "Main", "--props=[1]", "--json"],
+			["render", "Main", "out/x.avi", "--json"],
+			["render", "Main", "out/x", "--json"],
+			["render", "Main", "--frames=200-300", "--json"],
 		]) {
 			const { io, code } = await run(argv);
 			expect(code, argv.join(" ")).toBe(2);

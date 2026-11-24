@@ -143,7 +143,7 @@ describe("motio CLI end to end", () => {
 
 	it("reports a missing composition with a stable code", async () => {
 		const { code, result } = await motio(["still", "Nope"], "still");
-		expect(code).toBe(1);
+		expect(code).toBe(2);
 		expect(result).toMatchObject({ ok: false, error: { code: "E_COMPOSITION_NOT_FOUND" } });
 	});
 });

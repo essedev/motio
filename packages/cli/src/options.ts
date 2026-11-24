@@ -115,6 +115,57 @@ const EXTENSION_CODECS: Record<string, Codec> = {
 	wav: "wav",
 };
 
+/** Output extensions a codec can be inferred from, in help order. */
+export const OUTPUT_EXTENSIONS = Object.keys(EXTENSION_CODECS).map((e) => `.${e}`);
+
+/**
+ * Checks the output name when no codec was chosen, so the codec comes from the extension:
+ * an unknown or missing extension is an input error naming the ones that work, instead of
+ * a codec mismatch the user never asked for.
+ */
+export function assertInferableOutput(output: string): void {
+	const extension = extname(output).toLowerCase();
+	const supported = OUTPUT_EXTENSIONS.join(" ");
+	if (extension === "") {
+		throw usageError(
+			`The output ${output} has no extension: add one (${supported}) or pass --codec.`,
+			{ output, supported: OUTPUT_EXTENSIONS },
+		);
+	}
+	if (!EXTENSION_CODECS[extension.slice(1)]) {
+		throw usageError(`Unknown output extension ${extension}. Supported: ${supported}.`, {
+			output,
+			extension,
+			supported: OUTPUT_EXTENSIONS,
+		});
+	}
+}
+
+/** Checks that `--frames` stays inside the composition, naming the flag and the valid frames. */
+export function assertFrameRangeWithin(
+	range: FrameRange,
+	flagValue: string,
+	composition: { id: string; durationInFrames: number },
+): void {
+	const last = composition.durationInFrames - 1;
+	const items: ReadonlyArray<number | readonly [number, number | null]> =
+		typeof range === "number"
+			? [range]
+			: range.length === 2 && typeof range[0] === "number"
+				? [range as readonly [number, number | null]]
+				: (range as ReadonlyArray<readonly [number, number | null]>);
+	const outside = items.some((item) =>
+		typeof item === "number" ? item > last : item[0] > last || (item[1] !== null && item[1] > last),
+	);
+	if (outside) {
+		throw usageError(`--frames ${flagValue} is outside ${composition.id} (frames 0 to ${last}).`, {
+			flag: "frames",
+			value: flagValue,
+			durationInFrames: composition.durationInFrames,
+		});
+	}
+}
+
 /** Codec implied by an output file name, as Remotion infers it; `undefined` if unknown. */
 export function codecFromOutput(output: string | undefined): Codec | undefined {
 	if (!output) return undefined;

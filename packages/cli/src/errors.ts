@@ -1,3 +1,5 @@
+import { isAbsolute, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { isCodedError, MotioError } from "@motiojs/compat";
 
 /** Process exit codes of the `motio` binary. */
@@ -48,7 +50,113 @@ export function toErrorJson(error: unknown): ErrorJson {
 	return { code: "E_INTERNAL", message: String(error), context: {} };
 }
 
-/** Exit code for an error: 2 for argument errors, 1 otherwise. */
+/**
+ * Codes that mean the input was wrong (a flag, a value, a composition id) rather than the
+ * render failing: they exit with 2, whether the CLI or the renderer raised them.
+ */
+const USAGE_CODES = new Set([
+	"E_INVALID_ARGUMENT",
+	"E_INVALID_OPTION",
+	"E_UNSUPPORTED_OPTION",
+	"E_UNSUPPORTED_CODEC",
+	"E_COMPOSITION_REQUIRED",
+	"E_COMPOSITION_NOT_FOUND",
+]);
+
+/** Exit code for an error: 2 for invalid input, 1 otherwise. */
 export function exitCodeFor(error: unknown): number {
-	return isCodedError(error) && error.code === "E_INVALID_ARGUMENT" ? EXIT.usage : EXIT.error;
+	return isCodedError(error) && USAGE_CODES.has(error.code) ? EXIT.usage : EXIT.error;
+}
+
+/** The CLI flag of each renderer option, so human messages name what the user can type. */
+const OPTION_FLAGS: Readonly<Record<string, string>> = {
+	frameRange: "--frames",
+	frame: "--frame",
+	codec: "--codec",
+	outputLocation: "the output path",
+	output: "the output path",
+	scale: "--scale",
+	timeoutInMilliseconds: "--timeout",
+	crf: "--crf",
+	jpegQuality: "--jpeg-quality",
+	everyNthFrame: "--every-nth-frame",
+	concurrency: "--concurrency",
+	pixelFormat: "--pixel-format",
+	colorSpace: "--color-space",
+	x264Preset: "--x264-preset",
+	proResProfile: "--prores-profile",
+	numberOfGifLoops: "--number-of-gif-loops",
+	audioCodec: "--audio-codec",
+	audioBitrate: "--audio-bitrate",
+	imageFormat: "--image-format",
+	sampleRate: "--sample-rate",
+	separateAudioTo: "--separate-audio-to",
+	enforceAudioTrack: "--enforce-audio-track",
+	inputProps: "--props",
+	browserExecutable: "--browser-executable",
+	imageSequencePattern: "--image-sequence-pattern",
+	envFile: "--env-file",
+	publicDir: "--public-dir",
+};
+
+const record = (value: unknown): Record<string, unknown> =>
+	typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
+
+/**
+ * The lines printed on stderr for a failed command in human mode: the message with renderer
+ * option names replaced by their flags, where it happened (frame, composition, source file),
+ * and a hint. Every field is read defensively: renderers that do not set them print the
+ * message alone.
+ */
+export function formatErrorLines(error: ErrorJson, cwd: string): string[] {
+	const context = error.context;
+	const details = record(context.details);
+	const option = typeof details.option === "string" ? details.option : undefined;
+	const flag = option ? OPTION_FLAGS[option] : undefined;
+	// A message that already names the flag ("timeoutInMilliseconds in the Node API, --timeout on
+	// the command line") is kept as written.
+	const message =
+		option && flag && !error.message.includes(flag)
+			? error.message.replace(new RegExp(`\\b${option}\\b`, "g"), flag)
+			: error.message;
+	const lines = [`error [${error.code}]: ${message}`];
+
+	const frame = details.frame ?? context.frame;
+	const composition = details.compositionId ?? context.composition;
+	const source = record(details.source);
+	const where: string[] = [];
+	if (typeof frame === "number") where.push(`at frame ${frame}`);
+	if (typeof composition === "string" && composition) {
+		where.push(`${where.length > 0 ? "of" : "in"} ${composition}`);
+	}
+	let at = where.join(" ");
+	if (typeof source.file === "string" && source.file) {
+		const file = displayPath(source.file, cwd);
+		const position =
+			typeof source.line === "number"
+				? `:${source.line}${typeof source.column === "number" ? `:${source.column}` : ""}`
+				: "";
+		at = at ? `${at}, ${file}${position}` : `at ${file}${position}`;
+	}
+	if (at) lines.push(`  ${at}`);
+
+	const hints: string[] = [];
+	if (typeof details.hint === "string" && details.hint) hints.push(details.hint);
+	// The renderer's message may already name the flag; the hint is for those that do not.
+	if (error.code === "E_READINESS_TIMEOUT" && !message.includes("--timeout")) {
+		const timeout = details.timeoutMs ?? context.timeoutMs;
+		hints.push(
+			`Raise the limit with --timeout=<ms>${typeof timeout === "number" ? ` (now ${timeout} ms)` : ""}, or call continueRender() once the work is done.`,
+		);
+	}
+	for (const hint of hints) lines.push(`  hint: ${hint}`);
+	return lines;
+}
+
+/** A path relative to `cwd` when it is inside it, else as given. */
+function displayPath(file: string, cwd: string): string {
+	const path = file.startsWith("file://") ? fileURLToPath(file) : file;
+	if (!isAbsolute(path)) return path;
+	const rel = relative(cwd, path);
+	return rel && !rel.startsWith("..") && !isAbsolute(rel) ? rel : path;
 }

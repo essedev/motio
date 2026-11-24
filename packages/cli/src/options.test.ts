@@ -4,7 +4,14 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { sampleFrames } from "./commands/frames.js";
 import { framesInRange } from "./frames/render-to-files.js";
-import { codecFromOutput, parseConcurrency, parseFrameRange, parseProps } from "./options.js";
+import {
+	assertFrameRangeWithin,
+	assertInferableOutput,
+	codecFromOutput,
+	parseConcurrency,
+	parseFrameRange,
+	parseProps,
+} from "./options.js";
 import { splitPositionals } from "./project.js";
 
 let cwd: string;
@@ -100,4 +107,41 @@ describe("other options", () => {
 		expect(sampleFrames([0, 1, 2], 5)).toEqual([0, 1, 2]);
 		expect(sampleFrames([4, 5, 6], 1)).toEqual([4]);
 	});
+
+describe("assertInferableOutput", () => {
+	it("names the supported extensions for an unknown or missing one", () => {
+		expect(() => assertInferableOutput("out/x.avi")).toThrow(
+			"Unknown output extension .avi. Supported: .mp4 .webm .mov .mkv .ts .gif .mp3 .aac .m4a .wav.",
+		);
+		expect(() => assertInferableOutput("out/x")).toThrow(
+			"The output out/x has no extension: add one (.mp4 .webm .mov .mkv .ts .gif .mp3 .aac .m4a .wav) or pass --codec.",
+		);
+		expect(() => assertInferableOutput("out/x.MP4")).not.toThrow();
+	});
+
+describe("assertFrameRangeWithin", () => {
+	const composition = { id: "Intro", durationInFrames: 150 };
+	it("rejects frames past the end with the flag name", () => {
+		expect(() => assertFrameRangeWithin([200, 300], "200-300", composition)).toThrow(
+			"--frames 200-300 is outside Intro (frames 0 to 149).",
+		);
+		expect(() => assertFrameRangeWithin(150, "150", composition)).toThrow(/outside Intro/);
+		expect(() =>
+			assertFrameRangeWithin(
+				[
+					[0, 0],
+					[100, 160],
+				],
+				"0,100-160",
+				composition,
+			),
+		).toThrow(/outside Intro/);
+	});
+	it("accepts ranges inside the composition and open ranges", () => {
+		expect(() => assertFrameRangeWithin([0, 149], "0-149", composition)).not.toThrow();
+		expect(() => assertFrameRangeWithin([100, null], "100-", composition)).not.toThrow();
+		expect(() => assertFrameRangeWithin(149, "149", composition)).not.toThrow();
+	});
+});
+});
 });

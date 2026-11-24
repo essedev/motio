@@ -24,7 +24,7 @@ import { INIT_FLAGS, initCommand } from "./commands/init.js";
 import { RENDER_FLAGS, renderCommand } from "./commands/render.js";
 import { STILL_FLAGS, stillCommand } from "./commands/still.js";
 import type { CliDeps, CommandContext, CommandResult } from "./context.js";
-import { EXIT, exitCodeFor, toErrorJson, usageError } from "./errors.js";
+import { EXIT, exitCodeFor, formatErrorLines, toErrorJson, usageError } from "./errors.js";
 import { type CliIo, Reporter } from "./io.js";
 import { loadDistributed, loadRenderer } from "./renderer-api.js";
 import { closest } from "./suggest.js";
@@ -143,7 +143,7 @@ function generalHelp(): string {
 		"",
 		"Every command takes --json (one JSON object on stdout) and --help.",
 		"motio --version prints the version.",
-		"Exit codes: 0 success, 1 error, 2 invalid arguments, 3 a check found problems.",
+		"Exit codes: 0 success, 1 error, 2 invalid input (a flag, a value, a composition id), 3 a check found problems.",
 		"",
 	].join("\n");
 }
@@ -318,7 +318,7 @@ export async function runCli(argv: readonly string[], io: CliIo, deps: CliDeps):
 			reporter.resultJson({ ok: false, command: name, error: payload });
 		} else {
 			reporter.finish();
-			io.stderr(`error [${payload.code}]: ${payload.message}\n`);
+			io.stderr(`${formatErrorLines(payload, io.cwd).join("\n")}\n`);
 			if (logLevel === "verbose" || logLevel === "trace") {
 				io.stderr(`${JSON.stringify(payload.context, null, 2)}\n`);
 			}

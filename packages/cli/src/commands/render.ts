@@ -17,6 +17,8 @@ import { usageError } from "../errors.js";
 import { commandFfmpeg } from "../ffmpeg.js";
 import { CAPTURE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import {
+	assertFrameRangeWithin,
+	assertInferableOutput,
 	CODEC_EXTENSIONS,
 	codecFromOutput,
 	parseConcurrency,
@@ -131,6 +133,9 @@ export async function renderCommand(
 	const composition = await selectComposition(ctx, project, flags, id);
 	const { config } = project;
 
+	if (frameRange !== undefined && frameRangeFlag) {
+		assertFrameRangeWithin(frameRange, frameRangeFlag, composition);
+	}
 	const requestedOutput = outputFlag ?? positionalOutput ?? config.outputLocation;
 	// A list of single frames (`--frames=0,30,60`) renders an image sequence, as in Remotion.
 	const sequence =
@@ -153,6 +158,7 @@ export async function renderCommand(
 			imageSequencePattern: imageSequencePattern ?? config.imageSequencePattern,
 		});
 	}
+	if (requestedOutput && !codecFlag && !config.codec) assertInferableOutput(requestedOutput);
 	const codec: Codec =
 		codecFlag ??
 		config.codec ??
