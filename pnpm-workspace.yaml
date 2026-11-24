@@ -4,5 +4,6 @@ packages:
   - spike
   - tools/benchmark
   - docs/guide/examples
+  - website
 allowBuilds:
   esbuild: true
