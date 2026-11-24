@@ -21,7 +21,8 @@
 		"record:node-api": "node record-node-api.ts",
 		"record:preload": "node record-preload.ts",
 		"record:animated-image": "node record-animated-image.ts",
-		"record:projects": "node record-projects.ts"
+		"record:projects": "node record-projects.ts",
+		"record:html-in-canvas-supported": "node record-html-in-canvas-supported.ts"
 	},
 	"dependencies": {
 		"@fontsource/inter": "5.3.0",

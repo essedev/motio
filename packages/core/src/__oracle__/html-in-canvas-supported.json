@@ -1,0 +1,8 @@
+{
+	"remotion": "4.0.545",
+	"node": false,
+	"render": {
+		"gl": "swangle",
+		"supported": true
+	}
+}
