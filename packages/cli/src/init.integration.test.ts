@@ -4,7 +4,7 @@
 // list and rewrites `workspace:` ranges, as publishing does) and points the project at the
 // tarballs through pnpm overrides. Everything runs through the project's own installed `motio`.
 import { spawn } from "node:child_process";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -206,7 +206,8 @@ describe.each(STARTERS.map((starter) => [starter.name, starter] as const))(
 			).toMatchObject({
 				status: "pass",
 				message: "Using motio.config.ts.",
-				details: { kind: "motio", file: join(dir, "motio.config.ts") },
+				// The child process sees the real path of the temporary folder (/private/var on macOS).
+				details: { kind: "motio", file: join(realpathSync(dir), "motio.config.ts") },
 			});
 		});
 
