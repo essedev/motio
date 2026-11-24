@@ -20,6 +20,7 @@ export function toCompositionInfo(entry: RegisteredComposition): CompositionInfo
 		defaultVideoImageFormat: null,
 		defaultProResProfile: null,
 		defaultSampleRate: null,
+		...(entry.timeModel ? { timeModel: entry.timeModel } : {}),
 	};
 }
 

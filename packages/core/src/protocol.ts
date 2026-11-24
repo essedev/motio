@@ -22,7 +22,16 @@ export const FRAME_ATTRIBUTE = "data-motio-frame";
 /** Attribute a `Sequence` writes on its wrapper: the absolute frame it starts at. */
 export const SEQUENCE_FROM_ATTRIBUTE = "data-motio-from";
 
+/**
+ * How a page's clock relates to the frame (ARCHITECTURE, "Time"). `frame`: the clock is the real
+ * one and only the frame drives the composition, any frame renders in any order. `virtual`: a shim
+ * makes `Date`, `performance.now`, timers, `requestAnimationFrame` and `Math.random` follow the
+ * frame, and each page renders ascending frames, stepping through every frame from frame 0.
+ */
 export type TimeModel = "frame" | "virtual";
+
+/** Values of `TimeModel`, for validating options. */
+export const TIME_MODELS: readonly TimeModel[] = ["frame", "virtual"];
 
 /** Injected by the renderer with `Page.addScriptToEvaluateOnNewDocument`. */
 export interface RunContext {
@@ -106,6 +115,8 @@ export interface CompositionInfo {
 	defaultVideoImageFormat: string | null;
 	defaultProResProfile?: string | null;
 	defaultSampleRate?: number | null;
+	/** The time model the composition declares; absent when it declares none (the frame model). */
+	timeModel?: TimeModel;
 }
 
 /** A composition after `calculateMetadata` ran with the final props. */
@@ -249,8 +260,25 @@ export interface PageApi {
 		props: Record<string, unknown>,
 		options?: SetCompositionOptions,
 	): Promise<ResolvedComposition>;
-	/** Resolves when the frame is ready to capture; rejects with a `PageError`. */
+	/**
+	 * Resolves when the frame is ready to capture; rejects with a `PageError`. In the virtual time
+	 * model the page first steps through every frame between the last one it rendered and `frame`
+	 * (from frame 0 on a new page), and rejects a frame at or before the last one.
+	 */
 	seek(frame: number): Promise<FrameReport>;
+	/**
+	 * The time models the page implements. The renderer refuses the virtual model on a page that
+	 * does not list it. Optional: bundles built before the virtual model was wired do not provide
+	 * it, and implement the frame model only.
+	 */
+	timeModels?: readonly TimeModel[];
+	/**
+	 * Virtual time model: steps through every frame after the last one rendered up to `frame`
+	 * included, as `seek` does before its frame, without reporting them. The renderer warms a new
+	 * page up in several calls, so each stays within the watchdog. Present when `timeModels`
+	 * lists `virtual`; rejects in the frame model.
+	 */
+	advance?(frame: number): Promise<void>;
 	/**
 	 * The error passed to `cancelRender()`, if it was called, as an `E_CANCELLED` page error.
 	 * `cancelRender()` throws, so a call outside React's render (a timer, a promise callback)

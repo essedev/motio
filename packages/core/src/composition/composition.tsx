@@ -8,6 +8,7 @@ import {
 	useRef,
 } from "react";
 import { createPortal } from "react-dom";
+import type { TimeModel } from "../protocol.js";
 import { FolderContext } from "../timeline/contexts.js";
 import { CompositionFrame } from "./composition-frame.js";
 import { CompositionRegistryContext, CompositionSelectionContext } from "./manager.js";
@@ -43,6 +44,15 @@ interface CommonProps<Props extends AnyProps> {
 	calculateMetadata?: CalculateMetadataFunction<Props>;
 	/** A Zod object schema the props are checked against. */
 	schema?: SchemaLike;
+	/**
+	 * Motio extension: the time model renders of this composition use unless the render passes
+	 * its own (`timeModel` option, `--time-model`). `"frame"` (the default): only the frame drives
+	 * the composition. `"virtual"`: `Date`, `performance.now`, timers, `requestAnimationFrame` and
+	 * `Math.random` follow the frame, for code that reads the clock (GSAP-style timelines, canvas
+	 * loops); renders cost more, since every page steps through each frame from frame 0. The
+	 * preview and the Player always run the real clock.
+	 */
+	timeModel?: TimeModel;
 }
 
 /** Props of `<Composition>`. */
@@ -109,6 +119,12 @@ function buildEntry(
 	if (schema !== null && typeof schema.safeParse !== "function") {
 		throw new Error(`${where("schema")} must be a Zod schema.`);
 	}
+	const timeModel = props.timeModel;
+	if (timeModel !== undefined && timeModel !== "frame" && timeModel !== "virtual") {
+		throw new Error(
+			`${where("timeModel")} must be "frame" or "virtual", got ${JSON.stringify(timeModel)}.`,
+		);
+	}
 	const component: AnyComponent = hasComponent
 		? (props.component as AnyComponent)
 		: lazyFor(props.lazyComponent as () => Promise<{ default: ComponentType<AnyProps> }>);
@@ -124,6 +140,7 @@ function buildEntry(
 		component,
 		isStill,
 		folder,
+		...(timeModel ? { timeModel } : {}),
 	};
 }
 

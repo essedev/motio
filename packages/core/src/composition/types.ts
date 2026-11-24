@@ -1,4 +1,5 @@
 import type { ComponentType, LazyExoticComponent } from "react";
+import type { TimeModel } from "../protocol.js";
 
 /** Arguments passed to `calculateMetadata()`. */
 export interface CalculateMetadataOptions<Props> {
@@ -59,4 +60,6 @@ export interface RegisteredComposition {
 	isStill: boolean;
 	/** Slash-separated folder path, or null at the top level. */
 	folder: string | null;
+	/** The time model renders use by default (Motio extension); absent: the frame model. */
+	timeModel?: TimeModel;
 }

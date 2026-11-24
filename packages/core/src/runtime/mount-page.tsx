@@ -33,7 +33,7 @@ import {
 	type SetCompositionOptions,
 } from "../protocol.js";
 import { readiness } from "../readiness/registry.js";
-import { getVirtualClock, realTimers } from "../real-time.js";
+import { getVirtualClock, realTimers, type VirtualClock } from "../real-time.js";
 import type { VideoConfig } from "../timeline/contexts.js";
 import { seekAnimations } from "./animations.js";
 import { FontFallbackDetector } from "./fonts.js";
@@ -138,6 +138,8 @@ class PageRuntime {
 	private collected: Promise<void> | null = null;
 	private metadataController: AbortController | null = null;
 	private queue: Promise<unknown> = Promise.resolve();
+	/** The last frame the virtual clock moved to; -1 before the first seek. */
+	private virtualFrame = -1;
 
 	constructor(container: HTMLElement) {
 		const { canvas, host } = prepareDocument(container);
@@ -268,6 +270,12 @@ class PageRuntime {
 		options: SetCompositionOptions = {},
 	): Promise<ResolvedComposition> {
 		await this.collect();
+		if (getVirtualClock() && this.virtualFrame >= 0) {
+			throw toPageError(
+				"E_INVALID_COMPOSITION",
+				"In the virtual time model the composition is selected once, before the first frame: its clock cannot go back. Open a new page to render another composition.",
+			);
+		}
 		const entry = this.registry.get(id);
 		if (!entry) {
 			const ids = this.registry.list().map((c) => c.id);
@@ -323,7 +331,7 @@ class PageRuntime {
 				{ frame },
 			);
 		}
-		const { durationInFrames, fps } = selection.config;
+		const { durationInFrames } = selection.config;
 		if (!Number.isInteger(frame) || frame < 0 || frame >= durationInFrames) {
 			throw toPageError(
 				"E_RENDER_ERROR",
@@ -331,11 +339,77 @@ class PageRuntime {
 				{ frame },
 			);
 		}
+		const clock = getVirtualClock();
+		if (!clock) return this.step(frame, null, false);
+		// Virtual time model (ARCHITECTURE, "Time"): virtual time only moves forward, one frame at a
+		// time from frame 0, so the state timers and animation frames accumulate on this page is the
+		// state of one ascending render, whatever frame the page started at.
+		if (frame <= this.virtualFrame) {
+			throw toPageError(
+				"E_RENDER_ERROR",
+				`In the virtual time model a page renders frames in ascending order, but frame ${frame} was asked after frame ${this.virtualFrame}. The renderer opens a new page before going back; this is a bug in the renderer, please report it.`,
+				{ frame },
+			);
+		}
+		await this.warmUp(frame - 1, clock);
+		return this.step(frame, clock, false);
+	}
+
+	/** Virtual time model: steps through the frames after the last one up to `frame` included. */
+	async advance(frame: number): Promise<void> {
+		const clock = getVirtualClock();
+		if (!clock) {
+			throw toPageError(
+				"E_RENDER_ERROR",
+				"advance() is only available in the virtual time model.",
+				{ frame },
+			);
+		}
+		const selection = this.selection;
+		if (!selection) {
+			throw toPageError(
+				"E_COMPOSITION_NOT_FOUND",
+				"advance() was called before setComposition(): select a composition first.",
+				{ frame },
+			);
+		}
+		if (
+			!Number.isInteger(frame) ||
+			frame <= this.virtualFrame ||
+			frame >= selection.config.durationInFrames
+		) {
+			throw toPageError(
+				"E_RENDER_ERROR",
+				`advance(${frame}) needs a frame after the last one rendered (${this.virtualFrame}) and before ${selection.config.durationInFrames}.`,
+				{ frame },
+			);
+		}
+		await this.warmUp(frame, clock);
+	}
+
+	private async warmUp(to: number, clock: VirtualClock): Promise<void> {
+		while (this.virtualFrame < to) {
+			await this.step(this.virtualFrame + 1, clock, true);
+		}
+	}
+
+	/**
+	 * Renders `frame` and settles (ARCHITECTURE, `seek` steps 1 to 6). With a virtual clock it
+	 * first moves the clock to the frame and runs the timers and animation frames due. A warm-up
+	 * step (a frame before the one asked, in the virtual model) runs the same steps and drops the
+	 * frame's own warnings: the page that captures that frame reports them.
+	 */
+	private async step(
+		frame: number,
+		clock: VirtualClock | null,
+		warmUp: boolean,
+	): Promise<FrameReport> {
+		const { fps } = (this.selection as CompositionSelection).config;
 		const real = realTimers();
 		const t0 = real.now();
 		if (this.failed) this.resetAfterError();
-		const clock = getVirtualClock();
 		clock?.setFrame(frame, fps);
+		this.virtualFrame = frame;
 		this.selection = { ...(this.selection as CompositionSelection), frame };
 		this.random?.begin();
 		this.render();
@@ -355,6 +429,11 @@ class PageRuntime {
 		} finally {
 			const random = this.random?.end();
 			if (random) pageWarnings.report(random);
+		}
+		// The page warning registry reports each warning once per page: those found while warming up
+		// stay pending and go out with the next reported frame.
+		if (warmUp) {
+			return { frame, warnings: [], audio: [], timings: { renderMs, settleMs: settled.settleMs } };
 		}
 		// Elements mounted while settling may carry new animations.
 		for (const w of seekAnimations(frame, fps)) {
@@ -407,6 +486,7 @@ export function mountPage(options: MountPageOptions = {}): PageApi {
 	);
 	const api: PageApi = {
 		protocol: PROTOCOL_VERSION,
+		timeModels: ["frame", "virtual"],
 		getCompositions: wrap(runtime, () => runtime.getCompositions(), "E_INVALID_COMPOSITION"),
 		setComposition: wrap(
 			runtime,
@@ -415,6 +495,7 @@ export function mountPage(options: MountPageOptions = {}): PageApi {
 			"E_INVALID_COMPOSITION",
 		),
 		seek: wrap(runtime, (frame: number) => runtime.seek(frame), "E_RENDER_ERROR"),
+		advance: wrap(runtime, (frame: number) => runtime.advance(frame), "E_RENDER_ERROR"),
 		cancelled: (): PageError | null => {
 			const error = readiness.cancelled();
 			return error ? toPageError("E_CANCELLED", error) : null;
