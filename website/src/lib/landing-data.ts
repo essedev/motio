@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { publishedPackages } from "./pages.ts";
+import { type PerfPlatform, parseBaselineVersion, parsePerformanceTable } from "./perf-table.ts";
 import { REPO_ROOT } from "./repo.ts";
 
 /**
@@ -22,66 +23,20 @@ export const example = async (file: string, region?: string): Promise<string> =>
 	return mod.exampleText(file, region);
 };
 
-export type PerfRow = { concurrency: number; baseline: number; motio: number };
-export type PerfPlatform = { id: string; label: string; rows: PerfRow[]; note: string };
+export type { PerfPlatform, PerfRow } from "./perf-table.ts";
 
 /** Version of Remotion the benchmark runs against (tools/oracle-render pins it). */
-export const benchmarkBaselineVersion = (): string => {
-	const pkg = JSON.parse(
+export const benchmarkBaselineVersion = (): string =>
+	parseBaselineVersion(
 		readFileSync(join(REPO_ROOT, "tools", "oracle-render", "package.json"), "utf8"),
-	) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
-	const version = { ...pkg.devDependencies, ...pkg.dependencies }.remotion;
-	if (!version) throw new Error("tools/oracle-render/package.json does not pin remotion");
-	return version;
-};
+	);
 
-/**
- * The performance table of docs/ROADMAP.md: a header `| Platform | Concurrency 1 | 4 | 8 |` and
- * rows `| <platform>: Remotion / Motio | 6.54 / 1.75 s | ... |`. Throws if the table changes
- * shape, so the landing page never shows stale or misparsed numbers.
- */
-export const performanceTable = (): PerfPlatform[] => {
-	const roadmap = readFileSync(join(REPO_ROOT, "docs", "ROADMAP.md"), "utf8");
-	const lines = roadmap.split("\n");
-	const header = lines.findIndex((l) => /^\|\s*Platform\s*\|\s*Concurrency/.test(l));
-	if (header === -1) throw new Error("docs/ROADMAP.md: performance table not found");
-	const cells = (line: string) =>
-		line
-			.split("|")
-			.slice(1, -1)
-			.map((c) => c.trim());
-	const concurrency = cells(lines[header] ?? "")
-		.slice(1)
-		.map((c) => Number(/(\d+)$/.exec(c)?.[1]));
-	const version = benchmarkBaselineVersion();
-	const platforms: PerfPlatform[] = [];
-	for (const line of lines.slice(header + 2)) {
-		if (!line.startsWith("|")) break;
-		const [name = "", ...values] = cells(line);
-		const label = name.replace(/:\s*Remotion\s*\/\s*Motio\s*$/, "");
-		if (label === name) throw new Error(`docs/ROADMAP.md: unexpected performance row "${name}"`);
-		const rows = values.map((v, i) => {
-			const m = /^([\d.]+)\s*\/\s*([\d.]+)\s*s$/.exec(v);
-			const c = concurrency[i];
-			if (!m || c === undefined || Number.isNaN(c)) {
-				throw new Error(`docs/ROADMAP.md: cannot read "${v}" in row "${name}"`);
-			}
-			return { concurrency: c, baseline: Number(m[1]), motio: Number(m[2]) };
-		});
-		const linux = /linux/i.test(label);
-		const where = linux
-			? `in the pinned Linux image (${/linux-\w+/.exec(label)?.[0] ?? "linux"})`
-			: `on ${label}`;
-		platforms.push({
-			id: linux ? "linux" : "macos",
-			label: linux ? `Linux image, ${/linux-(\w+)/.exec(label)?.[1] ?? ""}` : label,
-			rows,
-			note: `Measured with make bench against Remotion ${version} ${where}, 1920x1080.`,
-		});
-	}
-	if (platforms.length === 0) throw new Error("docs/ROADMAP.md: performance table has no rows");
-	return platforms;
-};
+/** The performance table of docs/ROADMAP.md (see `parsePerformanceTable()`). */
+export const performanceTable = (): PerfPlatform[] =>
+	parsePerformanceTable(
+		readFileSync(join(REPO_ROOT, "docs", "ROADMAP.md"), "utf8"),
+		benchmarkBaselineVersion(),
+	);
 
 /** Packages shown on the landing page, with a one-line description written for it. */
 const FEATURED: [dir: string, line: string][] = [
