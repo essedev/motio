@@ -11,3 +11,8 @@ out/
 spike/dist-page/
 spike/video-page/*.mp4
 packages/google-fonts/generate-report.json
+
+# promo/music: generated audio and analysis images (regenerate with the scripts in promo/music)
+promo/music/**/*.wav
+promo/music/**/*.png
+promo/music/stems/

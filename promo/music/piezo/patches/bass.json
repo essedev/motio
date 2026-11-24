@@ -1,0 +1,333 @@
+{
+	"schema_version": 3,
+	"modules": [
+		{
+			"id": "tastiera-1",
+			"type": "keyboard",
+			"params": {
+				"voices": 2.0
+			}
+		},
+		{
+			"id": "cristallo-1",
+			"type": "osc",
+			"params": {
+				"tune": 0.04,
+				"shape": 0.0,
+				"level": 0.5,
+				"drift": 0.05
+			}
+		},
+		{
+			"id": "cristallo-2",
+			"type": "osc",
+			"params": {
+				"tune": -0.04,
+				"shape": 0.0,
+				"level": 0.5,
+				"drift": 0.05
+			}
+		},
+		{
+			"id": "orbita-1",
+			"type": "fm",
+			"params": {
+				"tune": 0.0,
+				"ratio": 1.0,
+				"index": 0.0,
+				"feedback": 0.0,
+				"level": 0.35
+			}
+		},
+		{
+			"id": "fiume-1",
+			"type": "mixer",
+			"params": {
+				"level1": 0.8,
+				"level2": 0.8,
+				"level3": 0.0,
+				"level4": 0.0,
+				"pan1": 0.0,
+				"pan2": 0.0,
+				"pan3": 0.0,
+				"pan4": 0.0,
+				"master": 1.0
+			}
+		},
+		{
+			"id": "prisma-1",
+			"type": "ladder",
+			"params": {
+				"cutoff": 420.0,
+				"resonance": 0.3,
+				"cv_amount": 2.5
+			}
+		},
+		{
+			"id": "respiro-1",
+			"type": "env",
+			"params": {
+				"attack": 0.002,
+				"decay": 0.12,
+				"sustain": 0.0,
+				"release": 0.05
+			}
+		},
+		{
+			"id": "respiro-2",
+			"type": "env",
+			"params": {
+				"attack": 0.003,
+				"decay": 0.1,
+				"sustain": 0.75,
+				"release": 0.04
+			}
+		},
+		{
+			"id": "valvola-1",
+			"type": "vca",
+			"params": {
+				"gain": 1.0
+			}
+		},
+		{
+			"id": "valvola-2",
+			"type": "vca",
+			"params": {
+				"gain": 1.0
+			}
+		},
+		{
+			"id": "fornace-1",
+			"type": "drive",
+			"params": {
+				"drive": 6.0,
+				"shape": 0.0,
+				"tone": 3000.0,
+				"mix": 0.5,
+				"level": 0.9
+			}
+		},
+		{
+			"id": "altoparlante-1",
+			"type": "output",
+			"params": {
+				"volume": 0.9
+			}
+		}
+	],
+	"cables": [
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "pitch"
+			},
+			"to": {
+				"module": "cristallo-1",
+				"port": "pitch"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "pitch"
+			},
+			"to": {
+				"module": "cristallo-2",
+				"port": "pitch"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "pitch"
+			},
+			"to": {
+				"module": "orbita-1",
+				"port": "pitch"
+			}
+		},
+		{
+			"from": {
+				"module": "cristallo-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "fiume-1",
+				"port": "in1"
+			}
+		},
+		{
+			"from": {
+				"module": "cristallo-2",
+				"port": "out"
+			},
+			"to": {
+				"module": "fiume-1",
+				"port": "in2"
+			}
+		},
+		{
+			"from": {
+				"module": "fiume-1",
+				"port": "left"
+			},
+			"to": {
+				"module": "prisma-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "gate"
+			},
+			"to": {
+				"module": "respiro-1",
+				"port": "gate"
+			}
+		},
+		{
+			"from": {
+				"module": "respiro-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "prisma-1",
+				"port": "cutoff_cv"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "gate"
+			},
+			"to": {
+				"module": "respiro-2",
+				"port": "gate"
+			}
+		},
+		{
+			"from": {
+				"module": "prisma-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "fornace-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "fornace-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "orbita-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "respiro-2",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "cv"
+			}
+		},
+		{
+			"from": {
+				"module": "valvola-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-2",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "velocity"
+			},
+			"to": {
+				"module": "valvola-2",
+				"port": "cv"
+			}
+		},
+		{
+			"from": {
+				"module": "valvola-2",
+				"port": "out"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "left"
+			}
+		}
+	],
+	"layout": {
+		"modules": {
+			"tastiera-1": {
+				"x": 0.0,
+				"y": 0.0
+			},
+			"cristallo-1": {
+				"x": 320.0,
+				"y": 0.0
+			},
+			"cristallo-2": {
+				"x": 640.0,
+				"y": 0.0
+			},
+			"orbita-1": {
+				"x": 960.0,
+				"y": 0.0
+			},
+			"fiume-1": {
+				"x": 1280.0,
+				"y": 0.0
+			},
+			"prisma-1": {
+				"x": 0.0,
+				"y": 260.0
+			},
+			"respiro-1": {
+				"x": 320.0,
+				"y": 260.0
+			},
+			"respiro-2": {
+				"x": 640.0,
+				"y": 260.0
+			},
+			"valvola-1": {
+				"x": 960.0,
+				"y": 260.0
+			},
+			"valvola-2": {
+				"x": 1280.0,
+				"y": 260.0
+			},
+			"fornace-1": {
+				"x": 0.0,
+				"y": 520.0
+			},
+			"altoparlante-1": {
+				"x": 320.0,
+				"y": 520.0
+			}
+		}
+	}
+}

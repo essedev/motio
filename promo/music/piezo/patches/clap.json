@@ -1,0 +1,182 @@
+{
+	"schema_version": 3,
+	"modules": [
+		{
+			"id": "tastiera-1",
+			"type": "keyboard",
+			"params": {
+				"voices": 1.0
+			}
+		},
+		{
+			"id": "grandine-1",
+			"type": "burst",
+			"params": {
+				"count": 3.0,
+				"spacing": 0.0105,
+				"width": 0.3,
+				"accel": 0.0
+			}
+		},
+		{
+			"id": "tamburo-1",
+			"type": "drum",
+			"params": {
+				"tune": 0.0,
+				"decay": 0.09,
+				"sweep": 0.0,
+				"noise": 1.0,
+				"tone": 0.5,
+				"level": 1.0,
+				"seed": 7.0
+			}
+		},
+		{
+			"id": "lente-1",
+			"type": "svf",
+			"params": {
+				"cutoff": 1300.0,
+				"resonance": 0.25,
+				"cv_amount": 0.0
+			}
+		},
+		{
+			"id": "valvola-1",
+			"type": "vca",
+			"params": {
+				"gain": 1.6
+			}
+		},
+		{
+			"id": "grotta-1",
+			"type": "reverb",
+			"params": {
+				"decay": 1.2,
+				"size": 0.8,
+				"damp": 0.5,
+				"mix": 0.22
+			}
+		},
+		{
+			"id": "altoparlante-1",
+			"type": "output",
+			"params": {
+				"volume": 0.9
+			}
+		}
+	],
+	"cables": [
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "gate"
+			},
+			"to": {
+				"module": "grandine-1",
+				"port": "trigger"
+			}
+		},
+		{
+			"from": {
+				"module": "grandine-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "tamburo-1",
+				"port": "gate"
+			}
+		},
+		{
+			"from": {
+				"module": "tamburo-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "lente-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "lente-1",
+				"port": "bandpass"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "velocity"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "cv"
+			}
+		},
+		{
+			"from": {
+				"module": "valvola-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "grotta-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "grotta-1",
+				"port": "left"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "left"
+			}
+		},
+		{
+			"from": {
+				"module": "grotta-1",
+				"port": "right"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "right"
+			}
+		}
+	],
+	"layout": {
+		"modules": {
+			"tastiera-1": {
+				"x": 0.0,
+				"y": 0.0
+			},
+			"grandine-1": {
+				"x": 320.0,
+				"y": 0.0
+			},
+			"tamburo-1": {
+				"x": 640.0,
+				"y": 0.0
+			},
+			"lente-1": {
+				"x": 960.0,
+				"y": 0.0
+			},
+			"valvola-1": {
+				"x": 1280.0,
+				"y": 0.0
+			},
+			"grotta-1": {
+				"x": 0.0,
+				"y": 260.0
+			},
+			"altoparlante-1": {
+				"x": 320.0,
+				"y": 260.0
+			}
+		}
+	}
+}

@@ -1,0 +1,282 @@
+{
+	"schema_version": 3,
+	"modules": [
+		{
+			"id": "tastiera-1",
+			"type": "keyboard",
+			"params": {
+				"voices": 14.0
+			}
+		},
+		{
+			"id": "cristallo-1",
+			"type": "osc",
+			"params": {
+				"tune": -0.09,
+				"shape": 0.0,
+				"level": 0.4,
+				"drift": 0.2
+			}
+		},
+		{
+			"id": "cristallo-2",
+			"type": "osc",
+			"params": {
+				"tune": 0.03,
+				"shape": 0.0,
+				"level": 0.4,
+				"drift": 0.2
+			}
+		},
+		{
+			"id": "cristallo-3",
+			"type": "osc",
+			"params": {
+				"tune": 0.09,
+				"shape": 0.0,
+				"level": 0.4,
+				"drift": 0.2
+			}
+		},
+		{
+			"id": "prisma-1",
+			"type": "ladder",
+			"params": {
+				"cutoff": 600.0,
+				"resonance": 0.1,
+				"cv_amount": 2.5
+			}
+		},
+		{
+			"id": "respiro-1",
+			"type": "env",
+			"params": {
+				"attack": 0.35,
+				"decay": 0.5,
+				"sustain": 1.0,
+				"release": 0.6
+			}
+		},
+		{
+			"id": "valvola-1",
+			"type": "vca",
+			"params": {
+				"gain": 1.0
+			}
+		},
+		{
+			"id": "stormo-1",
+			"type": "chorus",
+			"params": {
+				"rate": 0.3,
+				"depth": 0.5,
+				"delay": 14.0,
+				"feedback": 0.0,
+				"mix": 0.5
+			}
+		},
+		{
+			"id": "grotta-1",
+			"type": "reverb",
+			"params": {
+				"decay": 3.0,
+				"size": 1.6,
+				"damp": 0.5,
+				"mix": 0.3
+			}
+		},
+		{
+			"id": "altoparlante-1",
+			"type": "output",
+			"params": {
+				"volume": 0.5
+			}
+		}
+	],
+	"cables": [
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "pitch"
+			},
+			"to": {
+				"module": "cristallo-1",
+				"port": "pitch"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "pitch"
+			},
+			"to": {
+				"module": "cristallo-2",
+				"port": "pitch"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "pitch"
+			},
+			"to": {
+				"module": "cristallo-3",
+				"port": "pitch"
+			}
+		},
+		{
+			"from": {
+				"module": "cristallo-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "prisma-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "cristallo-2",
+				"port": "out"
+			},
+			"to": {
+				"module": "prisma-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "cristallo-3",
+				"port": "out"
+			},
+			"to": {
+				"module": "prisma-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "velocity"
+			},
+			"to": {
+				"module": "prisma-1",
+				"port": "cutoff_cv"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "gate"
+			},
+			"to": {
+				"module": "respiro-1",
+				"port": "gate"
+			}
+		},
+		{
+			"from": {
+				"module": "prisma-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "respiro-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "cv"
+			}
+		},
+		{
+			"from": {
+				"module": "valvola-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "stormo-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "stormo-1",
+				"port": "left"
+			},
+			"to": {
+				"module": "grotta-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "grotta-1",
+				"port": "left"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "left"
+			}
+		},
+		{
+			"from": {
+				"module": "grotta-1",
+				"port": "right"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "right"
+			}
+		}
+	],
+	"layout": {
+		"modules": {
+			"tastiera-1": {
+				"x": 0.0,
+				"y": 0.0
+			},
+			"cristallo-1": {
+				"x": 320.0,
+				"y": 0.0
+			},
+			"cristallo-2": {
+				"x": 640.0,
+				"y": 0.0
+			},
+			"cristallo-3": {
+				"x": 960.0,
+				"y": 0.0
+			},
+			"prisma-1": {
+				"x": 1280.0,
+				"y": 0.0
+			},
+			"respiro-1": {
+				"x": 0.0,
+				"y": 260.0
+			},
+			"valvola-1": {
+				"x": 320.0,
+				"y": 260.0
+			},
+			"stormo-1": {
+				"x": 640.0,
+				"y": 260.0
+			},
+			"grotta-1": {
+				"x": 960.0,
+				"y": 260.0
+			},
+			"altoparlante-1": {
+				"x": 1280.0,
+				"y": 260.0
+			}
+		}
+	}
+}

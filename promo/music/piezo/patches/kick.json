@@ -1,0 +1,126 @@
+{
+	"schema_version": 3,
+	"modules": [
+		{
+			"id": "tastiera-1",
+			"type": "keyboard",
+			"params": {
+				"voices": 1.0
+			}
+		},
+		{
+			"id": "tamburo-1",
+			"type": "drum",
+			"params": {
+				"tune": -27.0,
+				"decay": 0.34,
+				"sweep": 0.5,
+				"noise": 0.04,
+				"tone": 0.3,
+				"level": 1.0,
+				"seed": 1.0
+			}
+		},
+		{
+			"id": "fornace-1",
+			"type": "drive",
+			"params": {
+				"drive": 8.0,
+				"shape": 0.0,
+				"tone": 5000.0,
+				"mix": 0.45,
+				"level": 0.9
+			}
+		},
+		{
+			"id": "valvola-1",
+			"type": "vca",
+			"params": {
+				"gain": 1.0
+			}
+		},
+		{
+			"id": "altoparlante-1",
+			"type": "output",
+			"params": {
+				"volume": 0.9
+			}
+		}
+	],
+	"cables": [
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "gate"
+			},
+			"to": {
+				"module": "tamburo-1",
+				"port": "gate"
+			}
+		},
+		{
+			"from": {
+				"module": "tamburo-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "fornace-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "fornace-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "velocity"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "cv"
+			}
+		},
+		{
+			"from": {
+				"module": "valvola-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "left"
+			}
+		}
+	],
+	"layout": {
+		"modules": {
+			"tastiera-1": {
+				"x": 0.0,
+				"y": 0.0
+			},
+			"tamburo-1": {
+				"x": 320.0,
+				"y": 0.0
+			},
+			"fornace-1": {
+				"x": 640.0,
+				"y": 0.0
+			},
+			"valvola-1": {
+				"x": 960.0,
+				"y": 0.0
+			},
+			"altoparlante-1": {
+				"x": 1280.0,
+				"y": 0.0
+			}
+		}
+	}
+}

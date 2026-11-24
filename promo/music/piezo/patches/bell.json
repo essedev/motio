@@ -1,0 +1,235 @@
+{
+	"schema_version": 3,
+	"modules": [
+		{
+			"id": "tastiera-1",
+			"type": "keyboard",
+			"params": {
+				"voices": 10.0
+			}
+		},
+		{
+			"id": "vento-1",
+			"type": "noise",
+			"params": {
+				"color": 0.0,
+				"level": 0.8,
+				"seed": 5.0
+			}
+		},
+		{
+			"id": "respiro-1",
+			"type": "env",
+			"params": {
+				"attack": 0.001,
+				"decay": 0.004,
+				"sustain": 0.0,
+				"release": 0.004
+			}
+		},
+		{
+			"id": "valvola-1",
+			"type": "vca",
+			"params": {
+				"gain": 1.0
+			}
+		},
+		{
+			"id": "valvola-2",
+			"type": "vca",
+			"params": {
+				"gain": 1.0
+			}
+		},
+		{
+			"id": "campana-1",
+			"type": "modal",
+			"params": {
+				"tune": 0.0,
+				"decay": 1.6,
+				"brightness": 0.45,
+				"structure": 0.25,
+				"level": 0.8
+			}
+		},
+		{
+			"id": "valle-1",
+			"type": "delay",
+			"params": {
+				"time": 0.3713,
+				"feedback": 0.3,
+				"tone": 4000.0,
+				"mix": 0.18
+			}
+		},
+		{
+			"id": "grotta-1",
+			"type": "reverb",
+			"params": {
+				"decay": 3.0,
+				"size": 1.6,
+				"damp": 0.4,
+				"mix": 0.4
+			}
+		},
+		{
+			"id": "altoparlante-1",
+			"type": "output",
+			"params": {
+				"volume": 0.8
+			}
+		}
+	],
+	"cables": [
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "gate"
+			},
+			"to": {
+				"module": "respiro-1",
+				"port": "gate"
+			}
+		},
+		{
+			"from": {
+				"module": "vento-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "respiro-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "cv"
+			}
+		},
+		{
+			"from": {
+				"module": "valvola-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-2",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "velocity"
+			},
+			"to": {
+				"module": "valvola-2",
+				"port": "cv"
+			}
+		},
+		{
+			"from": {
+				"module": "valvola-2",
+				"port": "out"
+			},
+			"to": {
+				"module": "campana-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "pitch"
+			},
+			"to": {
+				"module": "campana-1",
+				"port": "pitch"
+			}
+		},
+		{
+			"from": {
+				"module": "campana-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valle-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "valle-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "grotta-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "grotta-1",
+				"port": "left"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "left"
+			}
+		},
+		{
+			"from": {
+				"module": "grotta-1",
+				"port": "right"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "right"
+			}
+		}
+	],
+	"layout": {
+		"modules": {
+			"tastiera-1": {
+				"x": 0.0,
+				"y": 0.0
+			},
+			"vento-1": {
+				"x": 320.0,
+				"y": 0.0
+			},
+			"respiro-1": {
+				"x": 640.0,
+				"y": 0.0
+			},
+			"valvola-1": {
+				"x": 960.0,
+				"y": 0.0
+			},
+			"valvola-2": {
+				"x": 1280.0,
+				"y": 0.0
+			},
+			"campana-1": {
+				"x": 0.0,
+				"y": 260.0
+			},
+			"valle-1": {
+				"x": 320.0,
+				"y": 260.0
+			},
+			"grotta-1": {
+				"x": 640.0,
+				"y": 260.0
+			},
+			"altoparlante-1": {
+				"x": 960.0,
+				"y": 260.0
+			}
+		}
+	}
+}

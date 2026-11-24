@@ -1,0 +1,206 @@
+{
+	"schema_version": 3,
+	"modules": [
+		{
+			"id": "tastiera-1",
+			"type": "keyboard",
+			"params": {
+				"voices": 2.0
+			}
+		},
+		{
+			"id": "vento-1",
+			"type": "noise",
+			"params": {
+				"color": 1.0,
+				"level": 0.8,
+				"seed": 31.0
+			}
+		},
+		{
+			"id": "respiro-1",
+			"type": "env",
+			"params": {
+				"attack": 0.3,
+				"decay": 0.15,
+				"sustain": 0.0,
+				"release": 0.18
+			}
+		},
+		{
+			"id": "lente-1",
+			"type": "svf",
+			"params": {
+				"cutoff": 450.0,
+				"resonance": 0.35,
+				"cv_amount": 2.8
+			}
+		},
+		{
+			"id": "valvola-1",
+			"type": "vca",
+			"params": {
+				"gain": 1.0
+			}
+		},
+		{
+			"id": "valvola-2",
+			"type": "vca",
+			"params": {
+				"gain": 1.0
+			}
+		},
+		{
+			"id": "bilico-1",
+			"type": "panner",
+			"params": {
+				"pan": 0.3
+			}
+		},
+		{
+			"id": "altoparlante-1",
+			"type": "output",
+			"params": {
+				"volume": 0.9
+			}
+		}
+	],
+	"cables": [
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "gate"
+			},
+			"to": {
+				"module": "respiro-1",
+				"port": "gate"
+			}
+		},
+		{
+			"from": {
+				"module": "vento-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "lente-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "respiro-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "lente-1",
+				"port": "cutoff_cv"
+			}
+		},
+		{
+			"from": {
+				"module": "lente-1",
+				"port": "bandpass"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "respiro-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-1",
+				"port": "cv"
+			}
+		},
+		{
+			"from": {
+				"module": "valvola-1",
+				"port": "out"
+			},
+			"to": {
+				"module": "valvola-2",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "tastiera-1",
+				"port": "velocity"
+			},
+			"to": {
+				"module": "valvola-2",
+				"port": "cv"
+			}
+		},
+		{
+			"from": {
+				"module": "valvola-2",
+				"port": "out"
+			},
+			"to": {
+				"module": "bilico-1",
+				"port": "in"
+			}
+		},
+		{
+			"from": {
+				"module": "bilico-1",
+				"port": "left"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "left"
+			}
+		},
+		{
+			"from": {
+				"module": "bilico-1",
+				"port": "right"
+			},
+			"to": {
+				"module": "altoparlante-1",
+				"port": "right"
+			}
+		}
+	],
+	"layout": {
+		"modules": {
+			"tastiera-1": {
+				"x": 0.0,
+				"y": 0.0
+			},
+			"vento-1": {
+				"x": 320.0,
+				"y": 0.0
+			},
+			"respiro-1": {
+				"x": 640.0,
+				"y": 0.0
+			},
+			"lente-1": {
+				"x": 960.0,
+				"y": 0.0
+			},
+			"valvola-1": {
+				"x": 1280.0,
+				"y": 0.0
+			},
+			"valvola-2": {
+				"x": 0.0,
+				"y": 260.0
+			},
+			"bilico-1": {
+				"x": 320.0,
+				"y": 260.0
+			},
+			"altoparlante-1": {
+				"x": 640.0,
+				"y": 260.0
+			}
+		}
+	}
+}
