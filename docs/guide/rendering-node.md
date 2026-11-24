@@ -3,8 +3,31 @@
 The CLI is a thin layer over two packages you can call yourself, for a render server, a batch job or a test: `@motiojs/bundler` builds the project and `@motiojs/renderer` renders it.
 
 ```bash
-pnpm add -D @motiojs/bundler @motiojs/renderer
+pnpm add -D @motiojs/bundler @motiojs/renderer @types/node
 ```
+
+## Where the script goes
+
+A render script runs in Node, not in the browser, so it stays out of `src/`, which holds the code Motio bundles for the page and which the project's `tsconfig.json` type-checks with browser types only (`process` is unknown there). Put it in its own folder, for example `scripts/render.ts`, with a `scripts/tsconfig.json` that adds Node's types:
+
+```json
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": { "types": ["node"] },
+	"include": ["."]
+}
+```
+
+`pnpm exec tsc -p scripts` type-checks it. Run it from the project root, since `entryPoint` and `public/` are found from the working directory:
+
+```bash
+node scripts/render.ts        # Node 22.18 or later runs TypeScript directly
+npx tsx scripts/render.ts     # older Node 22
+```
+
+Node runs TypeScript by removing the types, so the script cannot use TypeScript-only syntax such as `enum`, and imports of its own files carry the `.ts` extension. It never imports the compositions themselves: they are JSX for the browser, and reach the renderer through the bundle.
+
+## Three steps
 
 A render takes three steps:
 
