@@ -3,7 +3,7 @@
 // clean shutdown.
 import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { decodeImage, type RgbaImage, ssim } from "@motiojs/testing";
 import puppeteer, { type Browser, type Page } from "puppeteer-core";
@@ -155,7 +155,9 @@ describe("motio dev", () => {
 		const panel = await page.$eval("[data-testid=still-panel]", (e) => e.textContent);
 		const still = await page.$("[data-testid=still-image]");
 		expect(still, panel ?? "").not.toBeNull();
-		stillsDir = panel?.match(/\/\S+\/stills\//)?.[0];
+		// The still is a temporary file of the dev session, removed when it stops.
+		const file = await page.$eval("[data-testid=still-image]", (e) => e.getAttribute("data-file"));
+		stillsDir = file ? dirname(file) : undefined;
 		expect(stillsDir && existsSync(stillsDir)).toBe(true);
 		const src = await page.$eval("[data-testid=still-image]", (e) => e.getAttribute("src"));
 		expect(await page.$eval("[data-testid=still-image]", (e) => e.getAttribute("data-frame"))).toBe(
