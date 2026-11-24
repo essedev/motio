@@ -45,7 +45,13 @@ export const FilteredPhoto = ({ file, blur }: { file: string; blur: number }) =>
 
 ## Timeouts and retries
 
-A handle times out after 30 seconds by default; the render then fails with code `E_READINESS_TIMEOUT`, the label and the frame. `--timeout` (milliseconds) changes the default for a render. Per handle:
+A handle times out after 30 seconds by default; the render then fails with code `E_READINESS_TIMEOUT`, the label and the frame. `--timeout` (milliseconds) changes the default for a render. A long wait is not silent: every 5 seconds the CLI prints which handle holds which frame (`onDelayRenderPending` in the [Node API](rendering-node.md)):
+
+```text
+Waiting on delayRender("Loading the model /models/robot.glb") at frame 0 of Intro: 10/120 s (--timeout=<ms> raises the limit).
+```
+
+A handle that is released after more than half its timeout adds a `W_SLOW_READINESS` warning to the render, a sign that the limit is close. Per handle:
 
 <!-- example: examples/src/readiness.tsx#options -->
 ```tsx
@@ -75,4 +81,4 @@ With `retries`, a frame whose handle times out is rendered again on a fresh brow
 
 ## In the preview
 
-`delayRender()` does nothing in the preview: the player plays on real time and does not wait. Components should look acceptable while their data loads (the example shows an empty canvas).
+`delayRender()` does not hold the preview: the player plays on real time and does not wait. Components should look acceptable while their data loads (the example shows an empty canvas). The preview's Problems panel lists the handles still open, with how long they have been open and where `delayRender()` was called, and a `cancelRender()` with its error, so a handle that is never released shows up before a render times out on it.

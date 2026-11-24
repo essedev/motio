@@ -106,7 +106,7 @@ The package README lists the presentations and timings, overlays and custom effe
 
 ### How long a transition series is
 
-Each transition between two scenes shortens the series by its own length, and the composition's `durationInFrames` is not adjusted for you: a composition longer than the series ends on empty frames. Compute the length from the same data as the scenes:
+Each transition between two scenes shortens the series by its own length, and the composition's `durationInFrames` is not adjusted for you: a composition longer than the series ends on empty frames, and the render warns with `W_TIMELINE_SHORT`, giving the series' length. Compute the length from the same data as the scenes:
 
 <!-- example: examples/src/packages/transitions.tsx#duration -->
 ```tsx

@@ -1,6 +1,6 @@
 # Fonts and text
 
-Text is rendered by Chrome, so any CSS works: `font-family`, `letter-spacing`, `text-shadow`, line clamping, variable fonts. What matters is that the font has loaded before the frame is captured, or the frame shows a fallback font. Motio waits for `document.fonts.ready` before every screenshot and warns when text fell back to a system font, but a font that starts loading late can still miss a frame. Load fonts through one of the two packages below, which hold the render until the files are ready.
+Text is rendered by Chrome, so any CSS works: `font-family`, `letter-spacing`, `text-shadow`, line clamping, variable fonts. What matters is that the font has loaded before the frame is captured, or the frame shows a fallback font. Motio waits for `document.fonts.ready` before every screenshot and warns when text fell back to another font (`W_FONT_FALLBACK`, with the family that was missing, printed by the CLI and returned with the render's warnings), but a font that starts loading late can still miss a frame. Load fonts through one of the two packages below, which hold the render until the files are ready.
 
 ## A font file
 
@@ -17,7 +17,14 @@ loadFont({ family: "Brand", url: staticFile("fonts/brand.woff2"), weight: 700 })
 export const Title = () => <h1 style={{ fontFamily: "Brand", fontWeight: 700 }}>Hello</h1>;
 ```
 
-Call `loadFont()` at module level in a file the root imports (the `basic` starter does it in `src/fonts.ts`), once per weight and style. It accepts the `@font-face` descriptors (`weight`, `style`, `stretch`, `unicodeRange`, `display`, `featureSettings`) and returns a promise. A file that fails to load fails the render with its URL.
+Call `loadFont()` at module level in a file the root imports (the `basic` starter does it in `src/fonts.ts`), once per weight and style. It accepts the `@font-face` descriptors (`weight`, `style`, `stretch`, `unicodeRange`, `display`, `featureSettings`) and returns a promise. A file that fails to load fails the first frame with `E_FONT_LOAD`; a missing file says so with its path in `public/` and the closest file name, if one is close:
+
+```text
+error [E_FONT_LOAD]: loadFont() could not fetch public/fonts/brand.wof2: the file does not exist (HTTP 404). Did you mean staticFile("fonts/brand.woff2")?
+  at frame 0 of Intro
+```
+
+The same code reports a file the browser cannot decode as a font, and a URL whose format cannot be told from its extension (pass `format`). Since `loadFont()` runs at module level, listing the compositions (`motio compositions`) still works when the font is missing; renders fail.
 
 ## Google Fonts
 
@@ -33,7 +40,7 @@ const { fontFamily } = loadFont("normal", { weights: ["400", "700"], subsets: ["
 export const Body = () => <p style={{ fontFamily }}>Text in Inter</p>;
 ```
 
-The files are downloaded from Google's servers when the page loads, so rendering needs a network connection; for offline or reproducible builds, download the files into `public/` and use `@motiojs/fonts`. Name only the weights and subsets you use: each one is a separate request.
+The files are downloaded from Google's servers when the page loads, so rendering needs a network connection, and a font that cannot be downloaded fails the render with `E_FONT_LOAD`; for offline or reproducible builds, download the files into `public/` and use `@motiojs/fonts`. Name only the weights and subsets you use: each one is a separate request.
 
 ## Captions
 

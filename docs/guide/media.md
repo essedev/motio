@@ -21,7 +21,16 @@ export const Cover = () => (
 );
 ```
 
-A plain `<img>` or a CSS `background-image` also works: Motio waits for the images a page requests before each screenshot. `<Img>` adds retries (`maxRetries`, default 2) and then fails the render with the file name, instead of capturing an empty box.
+A plain `<img>` or a CSS `background-image` also works: Motio waits for the images a page requests before each screenshot. `<Img>` also fails the render instead of capturing an empty box. A file that does not exist (HTTP 404) fails it at once with `E_ASSET_NOT_FOUND`, its path in `public/` and the closest file name, if one is close:
+
+```text
+error [E_ASSET_NOT_FOUND]: <Img> could not load public/logo.svgg: the file does not exist (HTTP 404). Did you mean staticFile("logo.svg")?
+  at frame 0 of Intro
+```
+
+Other failures, such as a network error, are retried (`maxRetries`, default 2, waiting 1 s, then 2 s) before the render fails with the file name. Pass `onError` to carry on without the image.
+
+`staticFile()` names are case-sensitive on Linux, where CI and render servers usually run, but not on macOS and Windows. When a name differs from the file in `public/` only in case (`Logo.svg` for `logo.svg`), the render works on your machine and warns with `W_STATIC_FILE_CASE`, naming the right spelling, so the difference shows before a Linux render fails.
 
 ### Animated images
 
