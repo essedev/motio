@@ -41,4 +41,5 @@ export {
 	scanSource,
 	type UsedSymbol,
 } from "./scan.js";
+export { closest, editDistance } from "./suggest.js";
 export { readTailwindMarker, TAILWIND_MARKER, type TailwindVersion } from "./tailwind.js";
