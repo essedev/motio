@@ -44,6 +44,21 @@ describe("loadEnvVariables", () => {
 		);
 	});
 
+	it("also exposes MOTIO_ variables, but never Motio's own tool settings", () => {
+		expect(
+			loadEnvVariables({
+				rootDir: root,
+				processEnv: {
+					MOTIO_API_URL: "https://api.example.com",
+					REMOTION_OLD: "1",
+					MOTIO_FFMPEG: "/opt/ffmpeg",
+					MOTIO_BROWSER_EXECUTABLE: "/opt/chrome",
+					OTHER: "x",
+				},
+			}).variables,
+		).toEqual({ MOTIO_API_URL: "https://api.example.com", REMOTION_OLD: "1" });
+	});
+
 	it("returns only REMOTION_ variables without a file", () => {
 		expect(loadEnvVariables({ rootDir: root, processEnv: { PATH: "/bin" } })).toEqual({
 			variables: {},

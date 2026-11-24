@@ -226,7 +226,11 @@ describe("bundle errors", () => {
 	it("requires registerRoot in the entry unless told otherwise", async () => {
 		await expect(
 			bundle(testOptions({ entryPoint: "src/Root.tsx", rootDir: root, outDir: await newOutDir() })),
-		).rejects.toMatchObject({ code: "E_NO_REGISTER_ROOT" });
+		).rejects.toMatchObject({
+			code: "E_NO_REGISTER_ROOT",
+			message: expect.not.stringContaining("ignoreRegisterRootWarning"),
+			context: { hint: expect.stringContaining("ignoreRegisterRootWarning") },
+		});
 	});
 
 	it("wraps build failures with E_BUNDLE", async () => {

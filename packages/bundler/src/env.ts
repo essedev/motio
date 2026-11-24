@@ -3,15 +3,39 @@ import { isAbsolute, join } from "node:path";
 import { parseEnv } from "node:util";
 import { MotioError } from "@motiojs/compat";
 
-/** Prefix of the shell variables exposed to the bundle, as in Remotion. */
+/** Prefix of the shell variables exposed to the bundle that Remotion projects use. */
 export const ENV_PREFIX = "REMOTION_";
+
+/** Prefixes of the shell variables exposed to the bundle: Motio's own, and Remotion's. */
+export const ENV_PREFIXES: readonly string[] = ["MOTIO_", ENV_PREFIX];
+
+/**
+ * Variables that configure Motio's tools (FFmpeg, the browser, caches). They start with `MOTIO_`
+ * but are settings of the machine, not values for the video, so they never reach the bundle.
+ */
+export const TOOL_VARIABLES: ReadonlySet<string> = new Set([
+	"MOTIO_BROWSER_CACHE",
+	"MOTIO_BROWSER_EXECUTABLE",
+	"MOTIO_CAPTURE_METHOD",
+	"MOTIO_CHROME_NO_SANDBOX",
+	"MOTIO_FFMPEG",
+	"MOTIO_FFMPEG_BASE_URL",
+	"MOTIO_FFMPEG_CACHE",
+	"MOTIO_FFPROBE",
+	"MOTIO_WHISPER_CPP",
+]);
+
+/** Whether a shell variable is exposed to the bundle. */
+export function isBundleVariable(key: string): boolean {
+	return ENV_PREFIXES.some((p) => key.startsWith(p)) && !TOOL_VARIABLES.has(key);
+}
 
 export interface LoadEnvOptions {
 	/** Project root; the default `.env` / `.env.local` and relative `envFile` resolve here. */
 	rootDir: string;
 	/** `--env-file` or `Config.setDotEnvLocation()`; must exist when given. */
 	envFile?: string | undefined;
-	/** Shell environment to take `REMOTION_` variables from. Defaults to `process.env`. */
+	/** Shell environment to take `MOTIO_` and `REMOTION_` variables from. Defaults to `process.env`. */
 	processEnv?: Record<string, string | undefined>;
 }
 
@@ -22,9 +46,9 @@ export interface LoadedEnv {
 }
 
 /**
- * Environment variables for the bundle, following Remotion's rules: the dotenv file (an
- * explicit `envFile`, else `.env`, else `.env.local` in the root; only one is read) plus the
- * shell variables starting with `REMOTION_`, which win over the file.
+ * Environment variables for the bundle: the dotenv file (an explicit `envFile`, else `.env`, else
+ * `.env.local` in the root; only one is read) plus the shell variables starting with `MOTIO_` or
+ * `REMOTION_` (except Motio's own tool settings, `TOOL_VARIABLES`), which win over the file.
  */
 export function loadEnvVariables(options: LoadEnvOptions): LoadedEnv {
 	let file: string | null = null;
@@ -48,7 +72,7 @@ export function loadEnvVariables(options: LoadEnvOptions): LoadedEnv {
 		}
 	}
 	for (const [key, value] of Object.entries(options.processEnv ?? process.env)) {
-		if (key.startsWith(ENV_PREFIX) && typeof value === "string") variables[key] = value;
+		if (isBundleVariable(key) && typeof value === "string") variables[key] = value;
 	}
 	return { variables, file };
 }

@@ -28,7 +28,7 @@ async function importFromProject(
 	if (!path) {
 		throw new MotioError(
 			"E_TAILWIND_MISSING",
-			`remotion.config.ts enables Tailwind, but "${specifier}" is not installed. Run: ${install}`,
+			`The config file enables Tailwind, but "${specifier}" is not installed. Run: ${install}`,
 			{ specifier },
 		);
 	}

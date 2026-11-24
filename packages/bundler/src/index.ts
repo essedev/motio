@@ -42,6 +42,14 @@ export {
 	type ResolveEntryPointOptions,
 	resolveEntryPoint,
 } from "./entry-point.js";
-export { ENV_PREFIX, type LoadEnvOptions, type LoadedEnv, loadEnvVariables } from "./env.js";
+export {
+	ENV_PREFIX,
+	ENV_PREFIXES,
+	isBundleVariable,
+	type LoadEnvOptions,
+	type LoadedEnv,
+	loadEnvVariables,
+	TOOL_VARIABLES,
+} from "./env.js";
 export { encodeStaticPath, STATIC_FILES_LIMIT, type StaticFile } from "./public-dir.js";
 export { listStaticFiles } from "./static-files.js";

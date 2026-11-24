@@ -68,7 +68,7 @@ export function resolveEntryPoint(options: ResolveEntryPointOptions): ResolvedEn
 	}
 	throw new MotioError(
 		"E_ENTRY_POINT_NOT_FOUND",
-		`No entry point found in ${rootDir}. Pass it as an argument, call Config.setEntryPoint() in remotion.config.ts, or create one of: ${ENTRY_POINT_CANDIDATES.join(", ")}.`,
+		`No entry point found in ${rootDir}. Pass the file that calls registerRoot() as an argument, or create one of: ${ENTRY_POINT_CANDIDATES.join(", ")}.`,
 		{ rootDir, tried: ENTRY_POINT_CANDIDATES },
 	);
 }

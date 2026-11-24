@@ -47,7 +47,9 @@ describe("resolveEntryPoint", () => {
 		expect(() => resolveEntryPoint({ rootDir: root })).toThrow(
 			expect.objectContaining({
 				code: "E_ENTRY_POINT_NOT_FOUND",
-				message: expect.stringContaining("src/index.ts"),
+				message: expect.stringMatching(
+					/^No entry point found in .*\. Pass the file that calls registerRoot\(\) as an argument, or create one of: src\/index\.ts,/,
+				),
 			}),
 		);
 		expect(() => resolveEntryPoint({ rootDir: root, entryPoint: "missing.ts" })).toThrow(

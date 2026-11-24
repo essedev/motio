@@ -64,7 +64,10 @@ export interface BundleOptions {
 	rspack?: boolean;
 
 	// Motio additions
-	/** Variables exposed as `process.env`; by default the `.env` file and `REMOTION_` variables. */
+	/**
+	 * Variables exposed as `process.env`; by default the `.env` file and the shell variables
+	 * starting with `MOTIO_` or `REMOTION_`.
+	 */
 	envVariables?: Record<string, string>;
 	/** Dotenv file to read instead of `.env` (`--env-file`). */
 	envFile?: string;
@@ -143,8 +146,11 @@ async function assertRegistersRoot(entryPoint: string): Promise<void> {
 	if (!found) {
 		throw new MotioError(
 			"E_NO_REGISTER_ROOT",
-			`The entry point ${entryPoint} does not call registerRoot(). Import it from "remotion" or "@motiojs/motio" and register the root component, or pass ignoreRegisterRootWarning.`,
-			{ entryPoint },
+			`The entry point ${entryPoint} does not call registerRoot(). Import registerRoot from "@motiojs/motio" and call it with the root component that renders your compositions.`,
+			{
+				entryPoint,
+				hint: "In the Node API, bundle({ ignoreRegisterRootWarning: true }) skips this check.",
+			},
 		);
 	}
 }
