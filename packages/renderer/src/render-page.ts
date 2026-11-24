@@ -79,8 +79,8 @@ const TRACKED_RESOURCES = new Set(["Image", "Font", "Stylesheet"]);
 
 /**
  * Installed in an isolated world of every page (ARCHITECTURE, "Raster reset"): `hide()` makes the
- * document invisible, `show()` restores its own opacity, and `hideForOneFrame()` hides it until a
- * frame was painted hidden.
+ * document invisible, `show()` makes it visible again, `restore()` removes what `show()` added
+ * for the capture, and `hideForOneFrame()` hides it until a frame was painted hidden.
  *
  * Blink skips the raster invalidation of a transform change below 0.01 px of translation or 1e-4
  * in the other matrix components and keeps the transform it last rasterised with as the
@@ -90,21 +90,44 @@ const TRACKED_RESOURCES = new Set(["Image", "Font", "Stylesheet"]);
  * frame is rasterised as on a fresh page. A task queued from an animation frame callback runs
  * once that frame was painted. In the isolated world `requestAnimationFrame` and `setTimeout` are
  * the browser's own even when page code replaced them, and nothing is left on the page's globals.
+ *
+ * Transparent captures also need the tiles cleared. Blink marks a layer opaque when opaque
+ * drawings cover it, also two that only meet at a fractional edge (the scenes of `slide()`), and
+ * Chrome then rasterises its tiles without clearing them first: a pixel the antialiased edges
+ * leave partly uncovered blends with whatever the reused tile memory held, which is transparent on
+ * a new page and an earlier frame's pixels on a page that rendered before. With a transparent
+ * background nothing opaque is drawn below, so `show()` adds a translucent 1 px square just below
+ * the viewport, outside the capture: the document's layer then reaches past what its opaque
+ * drawings cover, it is no longer opaque, and every tile is cleared before it is rasterised.
+ * Lowering the root element's opacity would do the same, but where the document has composited
+ * layers Chrome applies that opacity when compositing and writes alpha 254.
  */
-const RASTER_RESET_WORLD = `(() => {
+const rasterResetWorld = (transparent: boolean) => `(() => {
+	const clearTiles = ${transparent};
 	let saved = null;
+	let marker = null;
 	globalThis.hide = () => {
 		const style = document.documentElement.style;
 		if (!saved) saved = [style.getPropertyValue("opacity"), style.getPropertyPriority("opacity")];
 		style.setProperty("opacity", "0", "important");
 	};
 	globalThis.show = () => {
-		if (!saved) return;
-		const style = document.documentElement.style;
-		const [value, priority] = saved;
-		saved = null;
-		if (value) style.setProperty("opacity", value, priority);
-		else style.removeProperty("opacity");
+		if (saved) {
+			const style = document.documentElement.style;
+			const [value, priority] = saved;
+			saved = null;
+			if (value) style.setProperty("opacity", value, priority);
+			else style.removeProperty("opacity");
+		}
+		if (clearTiles && !marker) {
+			marker = document.createElement("div");
+			marker.setAttribute("style", "position:absolute!important;left:0!important;top:100vh!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;opacity:1!important;transform:none!important;background:rgba(0,0,0,0.5)!important;pointer-events:none!important");
+			document.documentElement.appendChild(marker);
+		}
+	};
+	globalThis.restore = () => {
+		marker?.remove();
+		marker = null;
 	};
 	let frameSeen = false;
 	globalThis.watchFrame = () => {
@@ -705,7 +728,7 @@ export class RenderPage {
 			worldName: "motio-raster-reset",
 		});
 		this.isolatedWorld = world.executionContextId;
-		await this.evaluateIsolated(RASTER_RESET_WORLD);
+		await this.evaluateIsolated(rasterResetWorld(this.config.transparent));
 	}
 
 	/** Evaluates `expression` in the isolated world, awaits its promise and returns its value. */
@@ -917,6 +940,19 @@ export class RenderPage {
 
 	/** Captures the viewport as JPEG, PNG or WebP. */
 	async capture(format: "jpeg" | "png" | "webp", quality: number, frame: number): Promise<Buffer> {
+		const image = await this.captureFrame(format, quality, frame);
+		// A transparent capture added a square below the viewport (see `rasterResetWorld`), removed
+		// before page code runs again. After a failed capture it stays, outside the viewport, until
+		// the next capture removes it.
+		if (this.config.transparent) await this.evaluateIsolated("restore()");
+		return image;
+	}
+
+	private async captureFrame(
+		format: "jpeg" | "png" | "webp",
+		quality: number,
+		frame: number,
+	): Promise<Buffer> {
 		const timeout = this.config.timeoutInMilliseconds + WATCHDOG_GRACE_MS;
 		if (this.captureMethod === "begin-frame") {
 			return this.guardCapture(this.captureBeginFrame(format, quality, frame), timeout, frame);

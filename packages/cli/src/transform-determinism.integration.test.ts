@@ -5,6 +5,8 @@
 // Blink's raster tolerance (0.01 px of translation, 1e-4 in the other transform components), where
 // a frame can show content rasterised for the frame the same page rendered before (ARCHITECTURE,
 // "Raster reset"); without the reset these runs differ from the reference by up to 222 levels.
+// A transparent capture of two opaque scenes sharing a fractional edge also needs its tiles
+// cleared, or the antialiased seam blends with whatever the reused tile memory held.
 
 import { mkdtemp, rm } from "node:fs/promises";
 import { availableParallelism, tmpdir } from "node:os";
@@ -147,6 +149,10 @@ const COMPOSITIONS = [
 	"tiny-steps",
 	"subpixel-translate",
 	"will-change",
+	// Two opaque scenes meeting at a fractional edge (slide()): Chrome rasterises the layer without
+	// clearing its tiles, and the seam column blends over stale tile memory. Only transparent
+	// captures show it: JPEG draws the opaque background below the seam.
+	"slide-seam",
 ];
 // JPEG composites in software and PNG with alpha on the CPU (D-041): both paths are checked on the
 // compositions below the tolerance.

@@ -171,6 +171,30 @@ const WillChange: React.FC = () => {
 	);
 };
 
+/**
+ * Two opaque scenes that share an edge at a fractional x, as `slide()` pushes one scene out with
+ * the next: Blink counts the pair as covering the layer, so Chrome rasterises its tiles without
+ * clearing them, and the antialiased seam column blends over whatever the tile held before.
+ */
+const SlideSeam: React.FC = () => {
+	const frame = useCurrentFrame();
+	const { fps } = useVideoConfig();
+	const progress = spring({ frame, fps, config: { damping: 200 }, durationInFrames: 40 });
+	const scene = (background: string, label: string, offset: number) => (
+		<AbsoluteFill
+			style={{ ...centred, backgroundColor: background, transform: `translateX(${offset}%)` }}
+		>
+			<div style={{ color: "white", fontSize: 56, fontFamily: "sans-serif" }}>{label}</div>
+		</AbsoluteFill>
+	);
+	return (
+		<AbsoluteFill>
+			{scene("#2a0e2e", "Outgoing", -progress * 100)}
+			{scene("#ff3d8b", "Incoming", (1 - progress) * 100)}
+		</AbsoluteFill>
+	);
+};
+
 const size = { width: 640, height: 360, fps: 30, durationInFrames: 60 } as const;
 
 export const Root: React.FC = () => (
@@ -181,5 +205,6 @@ export const Root: React.FC = () => (
 		<Composition id="tiny-steps" component={TinySteps} {...size} />
 		<Composition id="subpixel-translate" component={SubpixelTranslate} {...size} />
 		<Composition id="will-change" component={WillChange} {...size} />
+		<Composition id="slide-seam" component={SlideSeam} {...size} />
 	</>
 );
