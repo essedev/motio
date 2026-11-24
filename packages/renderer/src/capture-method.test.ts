@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type BeginFrameProbe, resolveCaptureMethod } from "./capture-method.js";
+import {
+	BEGIN_FRAME_DEPRECATION_CODE,
+	type BeginFrameProbe,
+	resolveCaptureMethod,
+} from "./capture-method.js";
 
 const probeWith = (result: BeginFrameProbe) => vi.fn(async () => result);
 
@@ -51,5 +55,26 @@ describe("resolveCaptureMethod", () => {
 		await expect(
 			resolveCaptureMethod(undefined, "chrome", {}, "linux", probe),
 		).rejects.toMatchObject({ code: "E_INVALID_OPTION" });
+	});
+
+	it("warns once per process that begin-frame is deprecated, and never for the other methods (D-078)", async () => {
+		vi.resetModules();
+		const fresh = await import("./capture-method.js");
+		const emit = vi.spyOn(process, "emitWarning").mockImplementation(() => {});
+		try {
+			const probe = probeWith({ supported: true });
+			await fresh.resolveCaptureMethod("screenshot", "chrome", {}, "linux", probe);
+			await fresh.resolveCaptureMethod("auto", "chrome", {}, "linux", probe);
+			expect(emit).not.toHaveBeenCalled();
+			await fresh.resolveCaptureMethod("begin-frame", "chrome", {}, "linux", probe);
+			await fresh.resolveCaptureMethod("begin-frame", "chrome", {}, "linux", probe);
+			expect(emit).toHaveBeenCalledTimes(1);
+			expect(emit.mock.calls[0]?.[1]).toMatchObject({
+				type: "DeprecationWarning",
+				code: BEGIN_FRAME_DEPRECATION_CODE,
+			});
+		} finally {
+			emit.mockRestore();
+		}
 	});
 });

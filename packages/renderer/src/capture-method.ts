@@ -14,6 +14,24 @@ export type CaptureMethodOption = CaptureMethod | "auto";
 
 export const CAPTURE_METHODS = ["auto", "begin-frame", "screenshot"] as const;
 
+/** Node warning code of the BeginFrame deprecation (D-078). */
+export const BEGIN_FRAME_DEPRECATION_CODE = "MOTIO_DEP_BEGIN_FRAME";
+
+let beginFrameWarned = false;
+
+/**
+ * Emits the BeginFrame deprecation once per process, as a Node `DeprecationWarning` on stderr
+ * (`--json` output on stdout stays clean; `--no-deprecation` silences it).
+ */
+function warnBeginFrameDeprecated(): void {
+	if (beginFrameWarned) return;
+	beginFrameWarned = true;
+	process.emitWarning(
+		'captureMethod "begin-frame" is deprecated and will be removed in a future release. Screenshots (the default) are as fast or faster, work on every platform and render pages in parallel; use captureMethod "auto" or "screenshot".',
+		{ type: "DeprecationWarning", code: BEGIN_FRAME_DEPRECATION_CODE },
+	);
+}
+
 /** Attempts at a BeginFrame screenshot: the first frames after a navigation can carry none. */
 export const BEGIN_FRAME_ATTEMPTS = 10;
 
@@ -118,8 +136,8 @@ function withTimeout<T>(work: Promise<T>, ms: number, what: string): Promise<T> 
  * Resolves `captureMethod`: the option, else `$MOTIO_CAPTURE_METHOD`, else `auto`. `auto` is the
  * screenshot path on every platform: with frames drawn unthrottled (D-041) it captures as fast as
  * BeginFrame on one page and faster on several, because pages can share a browser (D-043). An
- * explicit `begin-frame` probes for BeginFrame and fails with `E_BEGIN_FRAME_UNSUPPORTED` when
- * the probe fails.
+ * explicit `begin-frame` is deprecated (D-078): it warns once, then probes for BeginFrame and fails
+ * with `E_BEGIN_FRAME_UNSUPPORTED` when the probe fails.
  */
 export async function resolveCaptureMethod(
 	option: CaptureMethodOption | null | undefined,
@@ -138,6 +156,7 @@ export async function resolveCaptureMethod(
 		);
 	}
 	if (value === "screenshot") return "screenshot";
+	warnBeginFrameDeprecated();
 	const result = await probe(executablePath, chromiumOptions);
 	if (!result.supported) {
 		throw new MotioError(
