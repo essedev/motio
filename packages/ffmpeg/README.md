@@ -1,5 +1,7 @@
 # @motiojs/ffmpeg
 
+> **Coming soon: do not install this package yet.** The FFmpeg archives of this version are not published, so it cannot download them; use the FFmpeg on your `PATH`, or `MOTIO_FFMPEG`, until a release of the archives exists. The rest of this page describes how it will work.
+
 An optional, pinned FFmpeg and ffprobe for [Motio](../../README.md). Install it and every render uses the same FFmpeg build, with every encoder Motio needs, on every machine of the same platform:
 
 ```bash

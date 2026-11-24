@@ -5,7 +5,7 @@
 ## Requirements
 
 - Node 22 or later.
-- FFmpeg 5.1 or later with libx264 on `PATH`, or the pinned build of `@motiojs/ffmpeg` (see [FFmpeg](ffmpeg.md)).
+- FFmpeg 5.1 or later with libx264 on `PATH` (`brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Debian and Ubuntu). A pinned build, `@motiojs/ffmpeg`, is coming: see [FFmpeg](ffmpeg.md).
 - Chrome is not needed: the first render downloads a pinned `chrome-headless-shell` into `~/.cache/motio/browsers`.
 
 ## Try it from a clone

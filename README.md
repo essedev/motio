@@ -44,14 +44,14 @@ pnpm dev
 ## Requirements
 
 - Node 22 or later, pnpm.
-- FFmpeg 5.1 or later with libx264 on `PATH` (`motio doctor` checks it), or the optional pinned build below.
+- FFmpeg 5.1 or later with libx264 on `PATH` (`motio doctor` checks it).
 - The pinned `chrome-headless-shell` is downloaded on first use (`motio browser ensure`).
 
-## Pinned FFmpeg (optional)
+## Pinned FFmpeg (coming soon)
 
-`pnpm add -D @motiojs/ffmpeg` gives every render the same FFmpeg 8.1.3 build, with every encoder Motio uses (H.264, H.265, AV1, VP8, VP9, ProRes, AAC, MP3, Opus), downloaded on first use (or with `motio ffmpeg ensure`) and checked against a SHA-256 committed in the package. Without it, Motio uses the FFmpeg on `PATH`; `MOTIO_FFMPEG` always wins over both.
+`@motiojs/ffmpeg` will give every render the same FFmpeg 8.1.3 build, with every encoder Motio uses (H.264, H.265, AV1, VP8, VP9, ProRes, AAC, MP3, Opus), downloaded on first use and checked against a SHA-256 committed in the package. Its archives are not published yet, so do not install it for now: Motio uses the FFmpeg on `PATH`, and `MOTIO_FFMPEG` points it at another one.
 
-The downloaded binaries are GPL-licensed FFmpeg builds (GPL-3.0-or-later). Their exact sources, the build scripts ([`tools/ffmpeg-build/`](tools/ffmpeg-build/)) and the licence texts are published with each release of the archives. Motio runs FFmpeg as a separate program, so using them does not change the licence of Motio, of your project or of your videos. Details in [the package README](packages/ffmpeg/README.md) and D-065.
+The binaries will be GPL-licensed FFmpeg builds (GPL-3.0-or-later), published with their exact sources, the build scripts ([`tools/ffmpeg-build/`](tools/ffmpeg-build/)) and the licence texts. Motio runs FFmpeg as a separate program, so using them does not change the licence of Motio, of your project or of your videos. Details in [the package README](packages/ffmpeg/README.md) and D-065.
 
 ## Documentation
 

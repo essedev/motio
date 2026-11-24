@@ -51,7 +51,7 @@ const FEATURED: [dir: string, line: string][] = [
 	["google-fonts", "Google Fonts with types, holding the render until they load."],
 	["three", "React Three Fiber scenes that follow the timeline."],
 	["distributed", "Renders ranges of frames in parallel and joins them without re-encoding."],
-	["ffmpeg", "An optional pinned FFmpeg, checked against a SHA-256."],
+	["ffmpeg", "A pinned FFmpeg checked against a SHA-256 (coming soon)."],
 ];
 
 export const packagesForLanding = () => {

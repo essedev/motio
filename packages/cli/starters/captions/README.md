@@ -11,7 +11,7 @@ A captioned video made with Motio: React components rendered frame by frame in h
 {{run}} still     # render frame 30 to out/captions.png
 ```
 
-Rendering needs FFmpeg 5.1 or later with libx264 on `PATH`, or the pinned build (`{{add}} @motiojs/ffmpeg`). The first render downloads the pinned headless Chrome. `{{exec}} motio doctor` checks both.
+Rendering needs FFmpeg 5.1 or later with libx264 on `PATH` (`brew install ffmpeg`, `sudo apt install ffmpeg`). The first render downloads the pinned headless Chrome. `{{exec}} motio doctor` checks both.
 
 ## Layout
 

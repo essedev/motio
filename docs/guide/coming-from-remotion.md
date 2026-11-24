@@ -40,5 +40,5 @@ Compatibility is a stable layer, not a moving target (D-066 in the project's dec
 
 - **Bundler**: Motio builds with Vite, not Webpack. `Config.overrideWebpackConfig()` is read only to detect Tailwind; use the `viteOverride` option of `bundle()` for other changes.
 - **Studio**: `motio dev` is a preview page with a player, a props editor and a render check, not Remotion's Studio editor.
-- **Rendering**: frames are captured from a pinned `chrome-headless-shell`, downloaded on first use; FFmpeg is the system one or the optional pinned build of `@motiojs/ffmpeg` (see [FFmpeg](ffmpeg.md)).
+- **Rendering**: frames are captured from a pinned `chrome-headless-shell`, downloaded on first use; FFmpeg is the one on `PATH` or the one `MOTIO_FFMPEG` names; a pinned build, `@motiojs/ffmpeg`, is coming (see [FFmpeg](ffmpeg.md)).
 - **Licence**: Motio is Apache-2.0, free for any use, including companies, distributed rendering and embedding the player in a product.

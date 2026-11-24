@@ -18,7 +18,7 @@ Rendering needs FFmpeg 5.1 or later with libx264 on `PATH`, or the pinned build 
 - `src/index.ts`: the entry point; registers the root.
 - `src/Root.tsx`: the `Intro` video and the `Thumbnail` still, with their default props.
 - `src/Intro.tsx`: two scenes played one after the other with `<Series>`.
-- `src/Title.tsx`: a title that springs in and fades with `spring()` and `interpolate()`.
+- `src/Title.tsx`: a title that settles into place with `spring()`, visible from frame 0, and fades out with `interpolate()`.
 - `src/Logo.tsx`: an image from `public/`, loaded with `staticFile()`.
 - `src/Thumbnail.tsx`: a single frame, rendered with `motio still`.
 - `src/fonts.ts`: loads Inter from `public/fonts/`; the render waits for it before capturing a frame.

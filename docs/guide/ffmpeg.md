@@ -8,7 +8,7 @@ In this order:
 
 1. `ffmpegExecutable` (and `ffprobeExecutable`) passed to a [Node API](rendering-node.md) call;
 2. the `MOTIO_FFMPEG` (and `MOTIO_FFPROBE`) environment variables;
-3. `@motiojs/ffmpeg`, when the project installs it;
+3. `@motiojs/ffmpeg`, when the project installs it (coming soon, see below);
 4. `ffmpeg` and `ffprobe` on `PATH`.
 
 `motio doctor` reports which one it found, its version and, for each codec, the encoder it would use. A render checks the version and the encoders it needs before opening any browser tab, so a missing encoder fails at once with `E_FFMPEG_ENCODER_MISSING` and the encoder's name. The `--json` result of `motio render` records the path, version and source of the FFmpeg that encoded the video.
@@ -22,18 +22,13 @@ sudo apt install ffmpeg      # Debian, Ubuntu
 
 Both builds have every encoder in the table below. Distributions differ in versions and options, so two machines with different FFmpeg builds can produce slightly different files.
 
-## The pinned FFmpeg
+## The pinned FFmpeg (coming soon)
 
-```bash
-pnpm add -D @motiojs/ffmpeg
-pnpm exec motio ffmpeg ensure    # optional: download now instead of on the first render
-```
+`@motiojs/ffmpeg` will make every render use the same FFmpeg 8.1.3 build on every machine of a platform (macOS and Linux, arm64 and x64; not Windows yet), with every encoder Motio uses: downloaded on first use into `~/.cache/motio/ffmpeg`, checked against a SHA-256 written in the package, and never downloaded again. It is meant for CI and render servers, where the system FFmpeg is old, missing or different from your machine's.
 
-With `@motiojs/ffmpeg` installed, every render uses the same FFmpeg 8.1.3 build on every machine of a platform (macOS and Linux, arm64 and x64; not Windows yet), with every encoder Motio uses. It is downloaded on first use into `~/.cache/motio/ffmpeg`, checked against a SHA-256 written in the package, and never downloaded again. It suits CI and render servers, where the system FFmpeg is old, missing or different from your machine's.
+The package is in the repository, but the archives it downloads are not published yet, so do not install it for now: use the system FFmpeg above, or point `MOTIO_FFMPEG` at the build you want. This page will say when it can be installed.
 
-The downloaded binaries are GPL-licensed builds of FFmpeg. Motio runs them as a separate program, so they do not change the licence of your project or of your videos; if you redistribute the binaries yourself (inside a container image, for example), the GPL's conditions for distributing them apply. The package README has the details and the source of every library.
-
-`MOTIO_FFMPEG=ffmpeg` (or any path) goes back to another FFmpeg without uninstalling the package.
+The binaries will be GPL-licensed builds of FFmpeg. Motio runs them as a separate program, so they do not change the licence of your project or of your videos; if you redistribute the binaries yourself (inside a container image, for example), the GPL's conditions for distributing them apply. The [package README](../../packages/ffmpeg/README.md) has the details and the source of every library.
 
 ## Codecs
 

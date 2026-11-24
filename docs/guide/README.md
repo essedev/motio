@@ -16,7 +16,7 @@ This guide is for people starting with Motio. It assumes you know React and Type
    - [Readiness](readiness.md): making the render wait for data with `delayRender()`.
 4. [Rendering from the CLI](rendering-cli.md): videos, stills, image sequences, codecs.
 5. [Rendering from Node](rendering-node.md): the same pipeline as a library, media functions, one browser for many renders.
-6. [FFmpeg](ffmpeg.md): which FFmpeg Motio uses, the pinned build, codecs and encoders.
+6. [FFmpeg](ffmpeg.md): which FFmpeg Motio uses, codecs and encoders, the pinned build to come.
 7. [Testing renders in CI](testing-in-ci.md): determinism and flicker checks, `--json`.
 8. [Coming from Remotion](coming-from-remotion.md): running a Remotion project on Motio.
 

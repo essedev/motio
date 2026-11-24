@@ -39,7 +39,7 @@ Flags frames that differ from both neighbours by more than a threshold (mean dif
 
 ## A CI job
 
-The job needs Node, the project's dependencies and FFmpeg (installing `@motiojs/ffmpeg` in the project avoids depending on the runner's FFmpeg). Chrome is downloaded on first use; cache `~/.cache/motio` between runs to skip the download.
+The job needs Node, the project's dependencies and FFmpeg (`sudo apt-get install -y ffmpeg` on Ubuntu runners; pin a version, for example in a container image, when two runners must produce the same files). Chrome is downloaded on first use; cache `~/.cache/motio` between runs to skip the download.
 
 ```bash
 pnpm install --frozen-lockfile
