@@ -7,6 +7,7 @@ my-video/
   package.json        scripts and dependencies
   tsconfig.json       TypeScript, strict
   README.md
+  AGENTS.md           notes for coding agents (CLAUDE.md imports it)
   public/             static files: images, fonts, videos, data
     logo.svg
     fonts/inter-400.woff2, inter-700.woff2, inter-LICENSE.txt

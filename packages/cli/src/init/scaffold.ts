@@ -11,7 +11,7 @@ import { SHARED_DIR, STARTERS_DIR, type Starter } from "./starters.js";
 const RENAMED: Readonly<Record<string, string>> = { gitignore: ".gitignore" };
 
 /** Text files whose `{{placeholders}}` are filled in. */
-const TEMPLATED = new Set(["README.md"]);
+const TEMPLATED = new Set(["README.md", "AGENTS.md"]);
 
 /** Third-party versions the generated project depends on, tested with this release. */
 export const THIRD_PARTY_VERSIONS = {

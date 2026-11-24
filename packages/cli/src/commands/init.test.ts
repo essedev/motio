@@ -118,7 +118,15 @@ describe("motio init", () => {
 				nextSteps: [`cd ${starter.name}`, "pnpm install", "pnpm dev"],
 			});
 			const files = result.files as string[];
-			expect(files).toEqual(expect.arrayContaining([".gitignore", "package.json", "README.md"]));
+			expect(files).toEqual(
+				expect.arrayContaining([
+					".gitignore",
+					"package.json",
+					"README.md",
+					"AGENTS.md",
+					"CLAUDE.md",
+				]),
+			);
 			expect(files).toEqual(
 				expect.arrayContaining(["src/index.ts", "src/Root.tsx", "tsconfig.json"]),
 			);
@@ -138,6 +146,11 @@ describe("motio init", () => {
 			const readme = await readFile(join(dir, "README.md"), "utf8");
 			expect(readme).toContain(`# ${starter.name}`);
 			expect(readme).not.toMatch(/\{\{\w+\}\}/);
+
+			const agents = await readFile(join(dir, "AGENTS.md"), "utf8");
+			expect(agents).toContain("pnpm exec motio check determinism");
+			expect(agents).not.toMatch(/\{\{\w+\}\}/);
+			expect(await readFile(join(dir, "CLAUDE.md"), "utf8")).toBe("@AGENTS.md\n");
 		}
 	});
 
