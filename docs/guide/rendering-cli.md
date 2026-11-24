@@ -1,6 +1,6 @@
 # Rendering from the CLI
 
-The `motio` command comes with `@motiojs/cli`, a development dependency of every project. Run it through the package manager (`pnpm exec motio`, `npx motio`) or from the package.json scripts. `motio --help` lists the commands and `motio <command> --help` every flag.
+The `motio` command comes with `@motiojs/cli`, a development dependency of every project. Run it through the package manager (`pnpm exec motio`, `npx motio`) or from the package.json scripts. `motio --help` lists the commands, `motio <command> --help` every flag, and `motio --version` prints the version. A mistyped command or flag is refused with the closest valid one: `motio rendr` asks "Did you mean motio render?", `--frame` on `motio render` "Did you mean --frames?".
 
 ## Videos
 
@@ -16,7 +16,7 @@ pnpm exec motio render src/index.ts Intro out/part.mp4 --frames=0-59
 pnpm exec motio render src/index.ts Intro out/intro.mp3        # the audio only
 ```
 
-Without an output, the video goes to `out/<composition-id>` with the codec's extension. Without `--codec`, the extension picks it: `.mp4` H.264, `.webm` VP8, `.mov` ProRes, `.mkv` H.264 in Matroska, `.ts` H.264 in MPEG-TS, `.gif` GIF, `.mp3`, `.aac`/`.m4a` and `.wav` audio only. With `--codec`, the extension must be one the codec can be written to, and it names the container: `--codec=h264` to `out/intro.mov` writes H.264 in a MOV file, while `--codec=vp9` to `out/intro.mp4` is refused before rendering (the table in [FFmpeg](ffmpeg.md#codecs) lists the extensions of each codec).
+Without an output, the video goes to `out/<composition-id>` with the codec's extension. Without `--codec`, the extension picks it: `.mp4` H.264, `.webm` VP8, `.mov` ProRes, `.mkv` H.264 in Matroska, `.ts` H.264 in MPEG-TS, `.gif` GIF, `.mp3`, `.aac`/`.m4a` and `.wav` audio only. With `--codec`, the extension must be one the codec can be written to, and it names the container: `--codec=h264` to `out/intro.mov` writes H.264 in a MOV file, while `--codec=vp9` to `out/intro.mp4` is refused before rendering (the table in [FFmpeg](ffmpeg.md#codecs) lists the extensions of each codec). An extension no codec writes, such as `.avi`, is refused with the list of supported ones.
 
 | Flag | Meaning |
 |---|---|
@@ -34,10 +34,34 @@ Without an output, the video goes to `out/<composition-id>` with the codec's ext
 | `--audio-codec`, `--audio-bitrate` | Override the codec's default audio (AAC at 320k for MP4). |
 | `--timeout` | How long a `delayRender()` handle may hold a frame, in milliseconds (default 30000). |
 | `--width`, `--height`, `--fps`, `--duration` | Override the composition's metadata for this render. |
-| `--sequence` | Write an image sequence into the output directory instead of a video: PNG files named `frame-0000.png`, ... unless `--image-format` or `--image-sequence-pattern` say otherwise. |
+| `--sequence` | Write an image sequence into the output directory instead of a video: PNG files named after the pattern `frame-[frame].[ext]`, the frame zero-padded to the digits of the last one (`frame-00.png` to `frame-89.png` for 90 frames). `--image-format=jpeg`, `--image-sequence-pattern` and the config file's settings change them. `--frames=0,30,60`, a list of single frames, also writes a sequence. |
 | `--chunks`, `--frames-per-chunk` | Render in chunks in parallel processes and join them without re-encoding. |
 
 A render prints its progress on stderr and, with `--json`, one JSON object on stdout with the output path, codec, rendered frames, time taken and the FFmpeg used.
+
+### What a render tells you on the way
+
+- **Warnings** from the page are printed once each, with the first frame they were seen on, and listed in `renderWarnings` of the `--json` result:
+
+  ```text
+  warning [W_MATH_RANDOM]: Math.random() was called 1 time while frame 0 rendered. ... (frame 0)
+  ```
+
+  The codes: `W_FONT_FALLBACK` (text fell back to another font), `W_MATH_RANDOM` (a frame called `Math.random()`), `W_STATIC_FILE_CASE` (a `staticFile()` name differs in case from the file in `public/`), `W_TIMELINE_SHORT` (a `<TransitionSeries>` ends before the composition), `W_SLOW_READINESS` (a `delayRender()` handle stayed open more than half its timeout), `W_ANIMATION_UNSEEKABLE` (a CSS or Web Animation that cannot follow the frame, such as one on a scroll timeline) and `W_FFMPEG_FALLBACK` (see [FFmpeg](ffmpeg.md)).
+- **Waiting**: while a `delayRender()` handle holds a frame, a line every 5 seconds says which one and for how long, so a long wait is not silent:
+
+  ```text
+  Waiting on delayRender("Waiting for the API") at frame 0 of Intro: 5/30 s (--timeout=<ms> raises the limit).
+  ```
+
+- **Errors** say where they happened: the frame, the composition and, for an error thrown by your code, the file, line and column, mapped from the bundle back to the source and relative to the working directory, so a terminal can open it:
+
+  ```text
+  error [E_RENDER_ERROR]: boom
+    at frame 5 of Intro, src/Intro.tsx:20:29
+  ```
+
+  A missing file in `public/` fails at once with `E_ASSET_NOT_FOUND` (an image, a video) or `E_FONT_LOAD` (a font), its path, and the closest file name when there is one: `Did you mean staticFile("logo.svg")?`.
 
 ## Stills
 
@@ -65,4 +89,4 @@ pnpm exec motio compositions src/index.ts --json
 
 ## Exit codes
 
-0 success, 1 error, 2 invalid input (a flag, a value, a composition id that does not exist, such as `E_INVALID_OPTION` or `E_COMPOSITION_NOT_FOUND`), 3 a check found problems (`check determinism`, `check flicker`, `doctor`). Errors carry a stable code, such as `E_READINESS_TIMEOUT`, in the message and in the `--json` output.
+0 success, 1 error, 2 invalid input, 3 a check found problems (`check determinism`, `check flicker`, `doctor`). Every invalid input exits with 2, whichever part of Motio noticed it: an unknown command or flag, a value out of range, an output extension that does not fit, a composition id that does not exist (`E_INVALID_ARGUMENT`, `E_INVALID_OPTION`, `E_UNSUPPORTED_OPTION`, `E_UNSUPPORTED_CODEC`, `E_COMPOSITION_REQUIRED`, `E_COMPOSITION_NOT_FOUND`). Errors carry a stable code, such as `E_READINESS_TIMEOUT`, in the message and in the `--json` output.
