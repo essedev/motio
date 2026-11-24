@@ -18,6 +18,8 @@ export interface ProjectEntry {
 	script: string;
 	/** That script wraps the webpack config in `enableTailwind()`. */
 	tailwind?: boolean;
+	/** That script passes `ignoreRegisterRootWarning` to Remotion's `bundle()`. */
+	ignoreRegisterRootWarning?: boolean;
 }
 
 export interface Project {
@@ -53,6 +55,23 @@ export function sampleFrames(durationInFrames: number, samples = SAMPLES): numbe
 	const frames = new Set<number>();
 	for (let i = 0; i < samples; i++) {
 		frames.add(Math.round((last * i) / Math.max(1, samples - 1)));
+	}
+	return [...frames].sort((a, b) => a - b);
+}
+
+/**
+ * Directory, inside a composition's references, of Remotion's frames around the ones
+ * `motio check flicker` flagged on Motio's render.
+ */
+export const AROUND_DIR = "around";
+
+/** The flagged frames and their neighbours, within the composition. */
+export function framesAround(flagged: readonly number[], durationInFrames: number): number[] {
+	const frames = new Set<number>();
+	for (const frame of flagged) {
+		for (const f of [frame - 1, frame, frame + 1]) {
+			if (f >= 0 && f < durationInFrames) frames.add(f);
+		}
 	}
 	return [...frames].sort((a, b) => a - b);
 }

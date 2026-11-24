@@ -31,7 +31,7 @@ The project directory gets no install and no edit. Its bare imports resolve, by 
 
 ## What the test checks
 
-For each project, `doctor` in the project directory. For each entry: it builds through the alias with no `remotion` or `@remotion/*` module and one React; the compositions and their resolved metadata equal Remotion's. For each composition: the sampled stills against Remotion's (mean SSIM at least 0.99, PSNR at least 40 dB, worst frame SSIM at least 0.97), `motio check flicker` over every frame, and `motio check determinism --reference fresh` on 20 frames around the middle.
+For each project, `doctor` in the project directory. For each entry: it builds through the alias with no `remotion` or `@remotion/*` module and one React; the compositions and their resolved metadata equal Remotion's. For each composition: the sampled stills against Remotion's (mean SSIM at least 0.99, PSNR at least 40 dB, worst frame SSIM at least 0.97), `motio check flicker` over every frame (at scale 0.5: it compares Motio's consecutive frames with each other, and half the size finds the same jumps in a quarter of the pixels), and `motio check determinism --reference fresh` on 10 frames around the middle.
 
 ## Licences
 

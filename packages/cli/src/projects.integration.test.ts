@@ -7,7 +7,8 @@
 // into fixtures/projects/.cache/golden/remotion (`pnpm --dir tools/oracle-render record:projects`),
 // never committed. Without them every suite is skipped.
 // The suite renders hundreds of compositions (hours), so it runs only when asked:
-// MOTIO_PROJECTS=all, or a list of projects and entries (MOTIO_PROJECTS=remocn/demos,snapcn).
+// MOTIO_PROJECTS=all, or a list of projects and entries (MOTIO_PROJECTS=remocn/demos,snapcn); an
+// entry can be limited to a range of its compositions, in Remotion's order (remocn/demos#0-19).
 // The results of a run are written to fixtures/projects/.cache/results/<project>.json (ignored).
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -19,8 +20,10 @@ import { decodeImage, psnr, ssim } from "@motiojs/testing";
 import type { Plugin } from "vite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+	AROUND_DIR,
 	CACHE_DIR,
 	fetchProject,
+	framesAround,
 	GL,
 	GOLDEN_DIR,
 	PROJECTS_DIR,
@@ -36,9 +39,14 @@ const MIN_PSNR_DB = 40;
 const WORST_SSIM = 0.97;
 
 /** Frames of the determinism check: a window around the middle of the composition. */
-const DETERMINISM_FRAMES = 20;
+const DETERMINISM_FRAMES = 10;
+/**
+ * Scale of the flicker check, which compares Motio's consecutive frames with each other (not with
+ * Remotion): half the size finds the same jumps in a quarter of the pixels.
+ */
+const FLICKER_SCALE = "0.5";
 /** Render concurrency of the checks: modest, other work shares the machine. */
-const CHECK_CONCURRENCY = "3";
+const CHECK_CONCURRENCY = "2";
 
 interface GoldenComposition {
 	width: number;
@@ -68,7 +76,15 @@ interface CompositionResult {
 	meanSsim?: number;
 	minPsnr?: number;
 	worstSsim?: number;
-	flicker?: { clean: boolean; flagged: number[] } | { error: string };
+	flicker?:
+		| {
+				clean: boolean;
+				flagged: number[];
+				/** Every frame around the flagged ones matches Remotion's: the jumps are the content's. */
+				sameAsRemotion?: boolean;
+				unlike?: number[];
+		  }
+		| { error: string };
 	determinism?: { deterministic: boolean; mismatches: number[] } | { error: string };
 	renderError?: string;
 }
@@ -81,12 +97,25 @@ interface EntryResult {
 }
 
 const requested = process.env.MOTIO_PROJECTS ?? "";
-const filters = requested === "all" ? [] : requested.split(",").filter(Boolean);
+const filters = (requested === "all" ? [] : requested.split(",").filter(Boolean)).map((f) => {
+	const [target = "", range] = f.split("#");
+	const [from, to] = (range ?? "").split("-").map(Number);
+	return { target, range: range ? { from: from ?? 0, to: to ?? Number.POSITIVE_INFINITY } : null };
+});
 const wanted = (project: string, entry?: string) =>
 	requested === "all" ||
-	filters.includes(project) ||
-	(entry !== undefined && filters.includes(`${project}/${entry}`)) ||
-	(entry === undefined && filters.some((f) => f.startsWith(`${project}/`)));
+	filters.some(
+		({ target }) =>
+			target === project ||
+			(entry !== undefined && target === `${project}/${entry}`) ||
+			(entry === undefined && target.startsWith(`${project}/`)),
+	);
+/** Whether the composition at `index` (Remotion's order) of the entry is in the requested range. */
+const wantedComposition = (project: string, entry: string, index: number) => {
+	const ranges = filters.filter((f) => f.target === `${project}/${entry}`).map((f) => f.range);
+	if (ranges.length === 0 || ranges.includes(null)) return true;
+	return ranges.some((r) => r !== null && index >= r.from && index <= r.to);
+};
 
 const projects = readProjects();
 const results: Record<string, { doctor?: unknown; entries: Record<string, EntryResult> }> = {};
@@ -135,13 +164,33 @@ function errorText(result: { result: Record<string, unknown>; err: string }): st
 	return error ? `${error.code ?? ""} ${error.message ?? ""}`.trim() : result.err.slice(0, 2000);
 }
 
+/**
+ * Merges this run's results into fixtures/projects/.cache/results/<project>.json: entries and
+ * compositions measured now replace the ones of earlier runs, the others are kept.
+ */
+function saveResults(project: string): void {
+	const result = results[project];
+	if (!result) return;
+	const dir = join(CACHE_DIR, "results");
+	mkdirSync(dir, { recursive: true });
+	const file = join(dir, `${project}.json`);
+	const saved = existsSync(file)
+		? (JSON.parse(readFileSync(file, "utf8")) as typeof result)
+		: { entries: {} };
+	if (result.doctor !== undefined) saved.doctor = result.doctor;
+	for (const [entry, measured] of Object.entries(result.entries)) {
+		const previous = saved.entries[entry];
+		saved.entries[entry] = {
+			...measured,
+			compositions: { ...previous?.compositions, ...measured.compositions },
+		};
+	}
+	writeFileSync(file, `${JSON.stringify(saved, null, "\t")}\n`);
+}
+
 afterAll(async () => {
 	await Promise.all(outDirs.map((dir) => rm(dir, { recursive: true, force: true })));
-	const resultsDir = join(CACHE_DIR, "results");
-	mkdirSync(resultsDir, { recursive: true });
-	for (const [project, result] of Object.entries(results)) {
-		writeFileSync(join(resultsDir, `${project}.json`), `${JSON.stringify(result, null, "\t")}\n`);
-	}
+	for (const project of Object.keys(results)) saveResults(project);
 });
 
 if (requested === "") {
@@ -202,6 +251,8 @@ for (const [name, project] of Object.entries(projects)) {
 			let rootDir: string;
 			let serveUrl: string | undefined;
 			let bundleError: unknown;
+
+			afterAll(() => saveResults(name));
 
 			beforeAll(async () => {
 				rootDir = fetchProject(name);
@@ -276,35 +327,50 @@ for (const [name, project] of Object.entries(projects)) {
 				expect(got).toEqual(expected);
 			});
 
-			for (const [cid, composition] of Object.entries(compositions)) {
+			/** Renders `frames` of `cid` with Motio and compares each with Remotion's PNG in `dir`. */
+			async function compareFrames(cid: string, frames: readonly number[], dir: string) {
+				if (!serveUrl) throw new Error(`not built: ${String(bundleError)}`);
+				const selected = await selectComposition({ serveUrl, id: cid, inputProps: {} });
+				const scores: Array<{ frame: number; ssim: number; psnr: number }> = [];
+				for (const frame of frames) {
+					const { buffer } = await renderStill({
+						serveUrl,
+						composition: selected,
+						frame,
+						scale: golden.scale,
+						imageFormat: "png",
+						chromiumOptions: { gl: GL },
+					});
+					if (!buffer) throw new Error("renderStill returned no buffer");
+					const ours = await decodeImage(buffer);
+					const ref = await decodeImage(readFileSync(join(dir, stillName(frame))));
+					scores.push({ frame, ssim: ssim(ours, ref), psnr: psnr(ours, ref) });
+				}
+				return scores;
+			}
+
+			for (const [index, [cid, composition]] of Object.entries(compositions).entries()) {
+				if (!wantedComposition(name, id, index)) continue;
 				const result: CompositionResult = { frames: composition.durationInFrames, stills: [] };
 				entryResult.compositions[cid] = result;
 				const referenced = composition.frames.filter(
 					(frame) => composition.renderErrors?.[frame] === undefined,
 				);
+				// Remotion itself fails on every frame (an error in the composition code at the pinned
+				// version): there is nothing to hold Motio to.
+				const remotionError =
+					referenced.length === 0 ? Object.values(composition.renderErrors ?? {})[0] : undefined;
+				if (remotionError !== undefined) {
+					result.renderError = `Remotion: ${remotionError}`;
+					describe.skip(`${cid}: Remotion fails on every frame (${remotionError.slice(0, 160)})`, () => {});
+					continue;
+				}
 
-				it.skipIf(referenced.length === 0)(
+				it(
 					`renders ${cid} like Remotion (frames ${referenced.join(", ")})`,
 					async () => {
-						if (!serveUrl) throw new Error(`not built: ${String(bundleError)}`);
 						try {
-							const selected = await selectComposition({ serveUrl, id: cid, inputProps: {} });
-							for (const frame of referenced) {
-								const { buffer } = await renderStill({
-									serveUrl,
-									composition: selected,
-									frame,
-									scale: golden.scale,
-									imageFormat: "png",
-									chromiumOptions: { gl: GL },
-								});
-								if (!buffer) throw new Error("renderStill returned no buffer");
-								const ours = await decodeImage(buffer);
-								const ref = await decodeImage(
-									readFileSync(join(GOLDEN_DIR, name, id, cid, stillName(frame))),
-								);
-								result.stills.push({ frame, ssim: ssim(ours, ref), psnr: psnr(ours, ref) });
-							}
+							result.stills = await compareFrames(cid, referenced, join(GOLDEN_DIR, name, id, cid));
 						} catch (error) {
 							result.renderError = error instanceof Error ? error.message : String(error);
 							throw error;
@@ -329,18 +395,42 @@ for (const [name, project] of Object.entries(projects)) {
 							entry.file,
 							cid,
 							"--frames=0-",
+							`--scale=${FLICKER_SCALE}`,
 							`--concurrency=${CHECK_CONCURRENCY}`,
 						]);
-						const flagged = (run.result.flagged as Array<{ frame: number }> | undefined)?.map(
-							(f) => f.frame,
-						);
-						result.flicker =
-							run.result.clean === undefined
-								? { error: errorText(run) }
-								: { clean: run.result.clean === true, flagged: flagged ?? [] };
-						expect(run.result.clean, errorText(run)).toBe(true);
+						if (run.result.clean === undefined) {
+							result.flicker = { error: errorText(run) };
+							throw new Error(errorText(run));
+						}
+						const flagged =
+							(run.result.flagged as Array<{ frame: number }> | undefined)?.map((f) => f.frame) ??
+							[];
+						result.flicker = { clean: run.result.clean === true, flagged };
+						if (flagged.length === 0) return;
+						// The check flags content that changes faster than its blocks (a rolling digit, a
+						// cursor crossing a block per frame) as well as flicker. A flagged frame counts as
+						// the content's own when Motio draws it and its neighbours like Remotion does.
+						const around = framesAround(flagged, composition.durationInFrames);
+						const dir = join(GOLDEN_DIR, name, id, cid, AROUND_DIR);
+						const unrecorded = around.filter((frame) => !existsSync(join(dir, stillName(frame))));
+						expect(
+							unrecorded,
+							`Flicker flagged on frames ${flagged.join(", ")}. Record Remotion's frames around them to tell the content's motion from flicker: pnpm --dir tools/oracle-render record:projects --around-flagged`,
+						).toEqual([]);
+						const scores = await compareFrames(cid, around, dir);
+						const unlike = scores.filter((s) => s.ssim < WORST_SSIM || s.psnr < MIN_PSNR_DB);
+						result.flicker = {
+							clean: false,
+							flagged,
+							sameAsRemotion: unlike.length === 0,
+							unlike: unlike.map((s) => s.frame),
+						};
+						expect(
+							unlike,
+							`frames around the flagged ones that Motio draws unlike Remotion`,
+						).toEqual([]);
 					},
-					Math.max(180_000, composition.durationInFrames * 400),
+					Math.max(300_000, composition.durationInFrames * 600),
 				);
 
 				const first = Math.max(

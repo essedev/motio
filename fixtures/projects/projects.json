@@ -1,5 +1,5 @@
 {
-	"$comment": "Third-party MIT projects built on Remotion, the M4 proof. Each is fetched at the pinned commit into .cache/<name> by projects.ts (never vendored). entries: id to the bundle entry (a file that calls registerRoot) and the project script that bundles it, which the oracle mirrors: tailwind is set when that script wraps its webpack config in enableTailwind(). Every composition of every entry is compared on the frames sampleFrames() picks. excluded: registerRoot files that are not measured, with the reason. Both renderers use gl swangle (software WebGL, Motio's default): GPU WebGL differs per machine (D-046).",
+	"$comment": "Third-party MIT projects built on Remotion, the M4 proof. Each is fetched at the pinned commit into .cache/<name> by projects.ts (never vendored). entries: id to the bundle entry (a file that calls registerRoot) and the project script that bundles it, which the oracle mirrors: tailwind is set when that script wraps its webpack config in enableTailwind(), ignoreRegisterRootWarning when it passes that option to bundle() (Remotion looks for the text registerRoot in the entry file; Motio does not need it). Every composition of every entry is compared on the frames sampleFrames() picks. excluded: registerRoot files that are not measured, with the reason. Both renderers use gl swangle (software WebGL, Motio's default): GPU WebGL differs per machine (D-046).",
 	"projects": {
 		"remocn": {
 			"repository": "https://github.com/Remocn/remocn",
@@ -111,18 +111,21 @@
 				},
 				"split": {
 					"file": "src/remotion/split-entry.ts",
-					"script": "none (imports app/globals.css like the entries the scripts bundle with Tailwind)",
-					"tailwind": true
+					"script": "none (bundled like x-brandwheel-entry.ts, which it mirrors)",
+					"tailwind": true,
+					"ignoreRegisterRootWarning": true
 				},
 				"x-brandwheel": {
 					"file": "src/remotion/x-brandwheel-entry.ts",
 					"script": "scripts/render-x-brandwheel.mts",
-					"tailwind": true
+					"tailwind": true,
+					"ignoreRegisterRootWarning": true
 				},
 				"x-btngroup": {
 					"file": "src/remotion/x-btngroup-entry.ts",
-					"script": "none (imports app/globals.css like the entries the scripts bundle with Tailwind)",
-					"tailwind": true
+					"script": "none (bundled like x-brandwheel-entry.ts, which it mirrors)",
+					"tailwind": true,
+					"ignoreRegisterRootWarning": true
 				}
 			},
 			"excluded": {
