@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { isIP } from "node:net";
-import { dirname, extname, isAbsolute, join, resolve, sep } from "node:path";
+import { dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { stripVTControlCharacters } from "node:util";
 import { type MotioCompatOptions, MotioError, motioCompat } from "@motiojs/compat";
 import { analyzeWebpackOverrides, type ConfigValues } from "@motiojs/compat/config";
@@ -75,7 +75,10 @@ export interface DevServerOptions {
 	rootDir?: string;
 	/** Values from `remotion.config.ts` (see `loadRemotionConfig`). */
 	config?: Readonly<Partial<ConfigValues>>;
-	/** Variables exposed as `process.env`; by default the `.env` file and `REMOTION_` variables. */
+	/**
+	 * Variables exposed as `process.env`; by default the `.env` file and the shell variables
+	 * starting with `MOTIO_` or `REMOTION_`.
+	 */
 	envVariables?: Record<string, string>;
 	/** Dotenv file to read instead of `.env`. */
 	envFile?: string;
@@ -128,6 +131,7 @@ const ENTRY_ID = "virtual:motio/preview-entry";
 const RESOLVED_ENTRY = `\0${ENTRY_ID}`;
 const STILL_ENDPOINT = `${DEV_API_PREFIX}/still`;
 const STILLS_PREFIX = `${DEV_API_PREFIX}/stills/`;
+const SAVE_SUFFIX = "/save";
 /** Largest render-still request body: props are JSON, a megabyte is generous. */
 const MAX_BODY_BYTES = 1 << 20;
 /** The public directory is served from the server root, so `staticFile()` URLs start here. */
@@ -277,7 +281,54 @@ function errorPayload(error: unknown): { code: string; message: string } {
 	};
 }
 
+/** Name of a saved still in `out/`: `<composition>-<frame>.png`, safe as a file name. */
+export function savedStillName(compositionId: string, frame: number, extension: string): string {
+	const id = compositionId.replace(/[^A-Za-z0-9._-]/g, "-").replace(/^\.+/, "") || "still";
+	return `${id}-${frame}${extension}`;
+}
+
+/**
+ * Vite's message for a failed transform, trimmed for the terminal: without its "Internal server
+ * error" prefix, the plugin line and the server-side stack, which point into Vite. The message,
+ * the file with its line and the code frame stay; the page shows the same error.
+ */
+export function tidyServerError(message: string): string {
+	const lines = stripVTControlCharacters(message).split("\n");
+	const kept = lines
+		.filter((line) => !/^\s+at\s/.test(line) && !/^\s*Plugin: /.test(line))
+		.map((line, i) =>
+			i === 0 ? line.replace(/^(\[vite\]\s*)?Internal server error:\s*/, "") : line,
+		);
+	return kept.join("\n").trim();
+}
+
+/**
+ * The page module. The preview mounts first and listens for build errors (Vite's overlay is off:
+ * the preview shows them in Motio's words), then the user's entry loads through a dynamic import,
+ * so a syntax error in it, which would stop a static import graph before any module ran, reaches
+ * the page as an error instead of a blank page.
+ */
+export function previewEntryModule(options: {
+	entryPoint: string;
+	previewModule: string;
+	mountOptions: unknown;
+}): string {
+	return [
+		`import { mountPreview } from ${JSON.stringify(options.previewModule)};`,
+		`const report = (type, detail) => window.dispatchEvent(new CustomEvent(type, { detail }));`,
+		"if (import.meta.hot) {",
+		`\timport.meta.hot.on("vite:error", (payload) => report("motio:build-error", payload.err));`,
+		`\timport.meta.hot.on("vite:afterUpdate", () => report("motio:build-ok"));`,
+		"}",
+		`mountPreview(${JSON.stringify(options.mountOptions)});`,
+		`import(${JSON.stringify(options.entryPoint)}).catch((error) =>`,
+		`\treport("motio:build-error", { message: String(error?.message ?? error), stack: error?.stack }),`,
+		");",
+	].join("\n");
+}
+
 interface DevPagePluginOptions {
+	rootDir: string;
 	entryPoint: string;
 	previewModule: string;
 	publicDir: string | null;
@@ -293,7 +344,7 @@ interface DevPagePluginOptions {
 
 /** The page, its virtual modules and the render-still endpoints. */
 function devPagePlugin(options: DevPagePluginOptions): Plugin {
-	const stills = new Map<string, string>();
+	const stills = new Map<string, { file: string; compositionId: string; frame: number }>();
 	let stillCount = 0;
 
 	const handleStill = async (req: IncomingMessage, res: ServerResponse) => {
@@ -322,8 +373,17 @@ function devPagePlugin(options: DevPagePluginOptions): Plugin {
 			const request = parseStillRequest(await readJsonBody(req));
 			const result = await handler(request, controller.signal);
 			const name = `${++stillCount}-${encodeURIComponent(request.compositionId)}-${result.frame}${extname(result.file)}`;
-			stills.set(name, result.file);
-			sendJson(res, 200, { ok: true, url: `${STILLS_PREFIX}${name}`, ...result });
+			stills.set(name, {
+				file: result.file,
+				compositionId: request.compositionId,
+				frame: result.frame,
+			});
+			sendJson(res, 200, {
+				ok: true,
+				url: `${STILLS_PREFIX}${name}`,
+				saveUrl: `${STILLS_PREFIX}${name}${SAVE_SUFFIX}`,
+				...result,
+			});
 		} catch (error) {
 			const payload = errorPayload(error);
 			sendJson(res, payload.code === "E_INVALID_ARGUMENT" ? 400 : 500, {
@@ -333,8 +393,43 @@ function devPagePlugin(options: DevPagePluginOptions): Plugin {
 		}
 	};
 
+	// Copies a rendered still into the project's out/, where motio still writes by default.
+	const saveStill = async (name: string, req: IncomingMessage, res: ServerResponse) => {
+		const refusal = stillRequestRefusal(req);
+		if (refusal) {
+			sendJson(res, refusal.status, {
+				ok: false,
+				error: { code: "E_INVALID_ARGUMENT", message: refusal.message },
+			});
+			return;
+		}
+		const still = stills.get(name);
+		if (!still) {
+			sendJson(res, 404, {
+				ok: false,
+				error: {
+					code: "E_NOT_FOUND",
+					message: "This still is no longer available: render it again.",
+				},
+			});
+			return;
+		}
+		try {
+			const outDir = join(options.rootDir, "out");
+			const file = join(
+				outDir,
+				savedStillName(still.compositionId, still.frame, extname(still.file) || ".png"),
+			);
+			await mkdir(outDir, { recursive: true });
+			await copyFile(still.file, file);
+			sendJson(res, 200, { ok: true, file, relativePath: relative(options.rootDir, file) });
+		} catch (error) {
+			sendJson(res, 500, { ok: false, error: errorPayload(error) });
+		}
+	};
+
 	const serveStill = async (name: string, res: ServerResponse) => {
-		const file = stills.get(name);
+		const file = stills.get(name)?.file;
 		if (!file) {
 			res.writeHead(404).end();
 			return;
@@ -357,13 +452,7 @@ function devPagePlugin(options: DevPagePluginOptions): Plugin {
 			return id === ENTRY_ID ? RESOLVED_ENTRY : null;
 		},
 		load(id) {
-			if (id === RESOLVED_ENTRY) {
-				return [
-					`import ${JSON.stringify(options.entryPoint)};`,
-					`import { mountPreview } from ${JSON.stringify(options.previewModule)};`,
-					`mountPreview(${JSON.stringify(options.mountOptions)});`,
-				].join("\n");
-			}
+			if (id === RESOLVED_ENTRY) return previewEntryModule(options);
 			return null;
 		},
 		configureServer(server) {
@@ -408,6 +497,10 @@ function devPagePlugin(options: DevPagePluginOptions): Plugin {
 					void handleStill(req, res);
 					return;
 				}
+				if (path.startsWith(STILLS_PREFIX) && path.endsWith(SAVE_SUFFIX) && req.method === "POST") {
+					void saveStill(path.slice(STILLS_PREFIX.length, -SAVE_SUFFIX.length), req, res);
+					return;
+				}
 				if (path.startsWith(STILLS_PREFIX) && req.method === "GET") {
 					void serveStill(path.slice(STILLS_PREFIX.length), res);
 					return;
@@ -434,7 +527,7 @@ function forwardingLogger(onLog: DevServerOptions["onLog"]): Logger {
 		},
 		error: (message, options) => {
 			if (options?.error) loggedErrors.add(options.error as Error);
-			log("error", message);
+			log("error", tidyServerError(message));
 		},
 		clearScreen: () => {},
 		hasErrorLogged: (error) => loggedErrors.has(error as Error),
@@ -511,6 +604,7 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
 		motioCompat({ ...options.compat, aliases: { ...compatAliases(), ...options.compat?.aliases } }),
 		react({ include: projectFiles }),
 		devPagePlugin({
+			rootDir,
 			entryPoint: entry.path,
 			previewModule,
 			publicDir,
@@ -571,6 +665,11 @@ export async function startDevServer(options: DevServerOptions): Promise<DevServ
 			strictPort: options.strictPort ?? false,
 			host: options.host ?? "localhost",
 			fs: { allow: [searchForWorkspaceRoot(rootDir), previewPackageDir] },
+			// The preview shows build errors itself (see previewEntryModule).
+			hmr: { overlay: false },
+			// Errors the page does not catch reach the terminal (useful to agents, which cannot see
+			// the page); the console lines of Vite's client would repeat what the logger printed.
+			forwardConsole: { unhandledErrors: true, logLevels: [] },
 		},
 	};
 	if (options.viteOverride) viteConfig = await options.viteOverride(viteConfig);

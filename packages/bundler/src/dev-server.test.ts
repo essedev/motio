@@ -9,8 +9,10 @@ import {
 	type DevServer,
 	type DevServerOptions,
 	parseStillRequest,
+	savedStillName,
 	startDevServer,
 	stillRequestRefusal,
+	tidyServerError,
 } from "./dev-server.js";
 import { listStaticFiles } from "./static-files.js";
 
@@ -109,18 +111,21 @@ describe("startDevServer", () => {
 		expect((await fetch(new URL("/..%2Fsrc%2Findex.ts", server.url))).status).toBe(404);
 	});
 
-	it("generates the page module: user entry first, then the preview with its options", async () => {
+	it("generates the page module: the preview with its options, then the entry, dynamically", async () => {
 		const server = await start({ initialProps: { title: "cli" }, keyboardShortcuts: false });
 		const response = await fetch(new URL("/@id/__x00__virtual:motio/preview-entry", server.url));
 		expect(response.status).toBe(200);
 		const code = await response.text();
-		const entryAt = code.indexOf("/src/index.ts");
-		const previewAt = code.indexOf("mountPreview");
-		expect(entryAt).toBeGreaterThan(-1);
-		expect(previewAt).toBeGreaterThan(entryAt);
-		expect(code).toContain(
+		const mountAt = code.indexOf(
 			'mountPreview({"stillEndpoint":null,"initialProps":{"title":"cli"},"keyboardShortcuts":false})',
 		);
+		// A static import of a file with a syntax error would stop the page before the preview ran.
+		const entryAt = code.search(/import\("[^"]*\/src\/index\.ts"\)/);
+		expect(mountAt).toBeGreaterThan(-1);
+		expect(entryAt).toBeGreaterThan(mountAt);
+		expect(code).toContain('"vite:error"');
+		expect(code).toContain("motio:build-error");
+		expect(server.vite.config.server.hmr).toMatchObject({ overlay: false });
 	});
 
 	it("renders stills through the handler and serves the image", async () => {
@@ -176,6 +181,52 @@ describe("startDevServer", () => {
 		});
 
 		expect((await fetch(new URL("/__motio/stills/unknown.png", server.url))).status).toBe(404);
+	});
+
+	it("saves a rendered still into the project's out/", async () => {
+		const image = join(project, "render.png");
+		await writeFile(image, Buffer.from([0x89, 0x50, 0x4e, 0x47, 1]));
+		const server = await start({
+			onRenderStill: async () => ({ file: image, frame: 40, width: 2, height: 2, durationMs: 1 }),
+		});
+		const json = { "content-type": "application/json" };
+		const rendered = (await (
+			await fetch(new URL("/__motio/still", server.url), {
+				method: "POST",
+				headers: json,
+				body: JSON.stringify({ compositionId: "Intro", frame: 40, inputProps: {} }),
+			})
+		).json()) as { saveUrl: string };
+		expect(rendered.saveUrl).toMatch(/^\/__motio\/stills\/.+\/save$/);
+
+		const crossSite = await fetch(new URL(rendered.saveUrl, server.url), {
+			method: "POST",
+			headers: { ...json, origin: "https://evil.example" },
+			body: "{}",
+		});
+		expect(crossSite.status).toBe(403);
+
+		const saved = await fetch(new URL(rendered.saveUrl, server.url), {
+			method: "POST",
+			headers: json,
+			body: "{}",
+		});
+		expect(saved.status).toBe(200);
+		expect(await saved.json()).toEqual({
+			ok: true,
+			file: join(project, "out", "Intro-40.png"),
+			relativePath: join("out", "Intro-40.png"),
+		});
+		expect(await readFile(join(project, "out", "Intro-40.png"))).toEqual(await readFile(image));
+
+		const gone = await fetch(new URL("/__motio/stills/9-x-1.png/save", server.url), {
+			method: "POST",
+			headers: json,
+			body: "{}",
+		});
+		expect(gone.status).toBe(404);
+		expect(await gone.json()).toMatchObject({ error: { code: "E_NOT_FOUND" } });
+		await rm(join(project, "out"), { recursive: true, force: true });
 	});
 
 	it("refuses render requests from other sites and bodies that are not JSON", async () => {
@@ -444,5 +495,39 @@ describe("files outside the project", () => {
 		} finally {
 			await rm(base, { recursive: true, force: true });
 		}
+	});
+});
+
+describe("savedStillName", () => {
+	it("names the file after the composition and frame, safe for any id", () => {
+		expect(savedStillName("Intro", 40, ".png")).toBe("Intro-40.png");
+		expect(savedStillName("../a b", 0, ".png")).toBe("-a-b-0.png");
+		expect(savedStillName("...", 3, ".png")).toBe("still-3.png");
+	});
+});
+
+describe("tidyServerError", () => {
+	it("drops Vite's prefix, plugin line and stack, keeping the file and the code frame", () => {
+		const message = [
+			"\u001b[31m[vite] Internal server error: /p/src/Root.tsx: Unexpected token (12:4)\u001b[39m",
+			"  Plugin: vite:oxc",
+			"  File: /p/src/Root.tsx:12:4",
+			"  10 |  return (",
+			"  11 |    <div>",
+			"  12 |    <<",
+			"     |     ^",
+			"      at transformWithOxc (file:///node_modules/vite/dist/node/chunks/node.js:123:4)",
+			"      at async TransformPluginContext.transform (file:///node_modules/vite/x.js:1:2)",
+		].join("\n");
+		expect(tidyServerError(message)).toBe(
+			[
+				"/p/src/Root.tsx: Unexpected token (12:4)",
+				"  File: /p/src/Root.tsx:12:4",
+				"  10 |  return (",
+				"  11 |    <div>",
+				"  12 |    <<",
+				"     |     ^",
+			].join("\n"),
+		);
 	});
 });
