@@ -41,6 +41,10 @@
 			"types": "./dist/remotion/no-react.d.ts",
 			"default": "./dist/remotion/no-react.js"
 		},
+		"./config": {
+			"types": "./dist/project-config.d.ts",
+			"default": "./dist/project-config.js"
+		},
 		"./client": {
 			"types": "./client.d.ts"
 		}

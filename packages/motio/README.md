@@ -53,6 +53,7 @@ Frames are rendered in any order, in several browser tabs at once, and a failed 
 - `@motiojs/motio/no-react`: `interpolate()` and `random()` without loading React.
 - `@motiojs/motio/version`: `VERSION`, and the Remotion API version Motio implements.
 - `@motiojs/motio/client`: types for the files a project imports through the bundler (images, fonts, `?raw`, CSS modules), listed in `tsconfig.json` under `"types"`.
+- `@motiojs/motio/config`: `defineConfig()` and the types of `motio.config.ts` (see [Configuration](../../docs/guide/configuration.md)).
 - `@motiojs/motio/remotion`: the target of the compatibility alias for `remotion`.
 
 ## Documentation
