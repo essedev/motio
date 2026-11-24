@@ -45,6 +45,7 @@ import {
 	resolveFrames,
 	resolveJpegQuality,
 	resolveScale,
+	resolveTimeModel,
 	scaledSize,
 	X264_PRESETS,
 	type X264Preset,
@@ -52,7 +53,7 @@ import {
 import { checkOverwrite, prepareOutput } from "./output.js";
 import { resolveOutputContainer } from "./output-container.js";
 import { compositionPageFactory } from "./page-factory.js";
-import { DEFAULT_RECYCLE_EVERY_N_FRAMES, type SlowFrame } from "./pool.js";
+import { defaultRecycleEveryNFrames, type SlowFrame } from "./pool.js";
 import type { OnStartData } from "./render-frames.js";
 import {
 	type BrowserSessionOptions,
@@ -311,6 +312,7 @@ export async function renderMediaInternal(
 		resolveJpegQuality(options.imageFormat, options.jpegQuality);
 	}
 	const concurrency = resolveConcurrency(options.concurrency);
+	const timeModel = resolveTimeModel(options.timeModel, composition);
 	const everyNthFrame = options.everyNthFrame ?? 1;
 	const frames = audioOnly
 		? []
@@ -387,8 +389,10 @@ export async function renderMediaInternal(
 			scale: video?.scale ?? 1,
 			transparent: video?.captureFormat === "png",
 			concurrency,
+			timeModel,
 		});
-		const recycleEveryNFrames = options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES;
+		const recycleEveryNFrames =
+			options.recycleEveryNFrames ?? defaultRecycleEveryNFrames(timeModel);
 		const intents = new Map<number, AudioIntent[]>();
 		options.onStart?.({
 			frameCount: audioOnly ? audioFrames.length : total,

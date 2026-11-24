@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { CLOCK_SHIM_SCRIPT } from "@motiojs/core/clock-shim";
 import {
 	type CompositionInfo,
 	type FrameReport,
@@ -10,6 +11,7 @@ import {
 	RUN_CONTEXT_GLOBAL,
 	type RunContext,
 	type SetCompositionOptions,
+	type TimeModel,
 } from "@motiojs/core/protocol";
 import type { Browser, CDPSession, Page } from "puppeteer-core";
 import { type BrowserLease, type BrowserPool, killBrowser } from "./browser/browser-pool.js";
@@ -39,6 +41,8 @@ export interface PageConfig {
 	mediaBaseUrl?: string;
 	/** Capture path (D-013). Default `screenshot`. */
 	captureMethod?: CaptureMethod;
+	/** Time model of the page (ARCHITECTURE, "Time"). Default `frame`. */
+	timeModel?: TimeModel;
 	/**
 	 * Browsers shared with other pages of the session (D-042). Without it the page launches its own
 	 * browser and kills it on close.
@@ -53,6 +57,12 @@ export interface PageConfig {
 	/** Interval of `onDelayRenderPending`. Default `PENDING_REPORT_MS`. */
 	pendingReportMs?: number;
 }
+
+/**
+ * Most frames the page steps through in one call while warming up in the virtual time model
+ * (ARCHITECTURE, "Time"): each call stays well within the watchdog, whatever the frame.
+ */
+export const VIRTUAL_STEPS_PER_CALL = 30;
 
 /** How often the open `delayRender()` handles of a slow page call are reported. */
 export const PENDING_REPORT_MS = 5_000;
@@ -269,6 +279,8 @@ export class RenderPage {
 	private readonly loadingWaiters = new Set<() => void>();
 	/** Execution context of the isolated world that resets the raster state before each capture. */
 	private isolatedWorld: number | undefined;
+	/** The last frame the page rendered or stepped through in the virtual time model; -1 before. */
+	private virtualFrame = -1;
 
 	private readonly onDisconnected = () => {
 		if (!this.closed) {
@@ -364,6 +376,19 @@ export class RenderPage {
 	/** The capture path of this page. */
 	get captureMethod(): CaptureMethod {
 		return this.config.captureMethod ?? "screenshot";
+	}
+
+	/** The time model of this page. */
+	get timeModel(): TimeModel {
+		return this.config.timeModel ?? "frame";
+	}
+
+	/**
+	 * Whether `frame` needs a new page: in the virtual time model a page renders ascending frames
+	 * only, because its clock cannot go back (ARCHITECTURE, "Time").
+	 */
+	needsNewPageFor(frame: number): boolean {
+		return this.timeModel === "virtual" && frame <= this.virtualFrame;
 	}
 
 	/** Process id of the browser, for diagnostics. */
@@ -590,7 +615,7 @@ export class RenderPage {
 			protocol: PROTOCOL_VERSION,
 			inputProps: c.inputProps,
 			env: c.envVariables,
-			timeModel: "frame",
+			timeModel: this.timeModel,
 			readinessTimeoutMs: c.timeoutInMilliseconds,
 			isRendering: true,
 		};
@@ -600,6 +625,11 @@ export class RenderPage {
 		await this.page.evaluateOnNewDocument(
 			`Object.defineProperty(window, ${JSON.stringify(RUN_CONTEXT_GLOBAL)}, { value: Object.freeze(${JSON.stringify(context)}), writable: false, configurable: false });`,
 		);
+		if (this.timeModel === "virtual") {
+			// After the run context, which the shim reads for the random seed. Only in the top frame:
+			// nothing advances the clock of an iframe, whose timers would never fire.
+			await this.page.evaluateOnNewDocument(`if (window === window.top) ${CLOCK_SHIM_SCRIPT}`);
+		}
 		// Set on the session that captures: emulation overrides are per CDP session, and a
 		// device scale factor set elsewhere would not reach Page.captureScreenshot.
 		await this.cdp.send("Emulation.setDeviceMetricsOverride", {
@@ -656,6 +686,18 @@ export class RenderPage {
 				`The bundle speaks frame protocol ${JSON.stringify(protocol)}, but this renderer speaks protocol ${PROTOCOL_VERSION}. Rebuild the bundle with the @motiojs/core version that matches @motiojs/renderer.`,
 				{ details: { bundleProtocol: protocol, rendererProtocol: PROTOCOL_VERSION } },
 			);
+		}
+		if (this.timeModel === "virtual") {
+			const models = await this.page.evaluate(
+				`(() => { const m = window[${JSON.stringify(PAGE_API_GLOBAL)}].timeModels; return Array.isArray(m) ? m : null; })()`,
+			);
+			if (!(models as string[] | null)?.includes("virtual")) {
+				throw new MotioError(
+					"E_PROTOCOL_MISMATCH",
+					"The bundle was built with a @motiojs/core that does not implement the virtual time model. Rebuild the bundle with the @motiojs/core version that matches @motiojs/renderer.",
+					{ details: { option: "timeModel" } },
+				);
+			}
 		}
 		const { frameTree } = await this.cdp.send("Page.getFrameTree");
 		const world = await this.cdp.send("Page.createIsolatedWorld", {
@@ -820,6 +862,36 @@ export class RenderPage {
 		const timeout = this.config.timeoutInMilliseconds + WATCHDOG_GRACE_MS;
 		const ctx: Record<string, unknown> = { frame };
 		if (this.composition !== undefined) ctx.composition = this.composition;
+		if (this.timeModel === "virtual") {
+			if (this.needsNewPageFor(frame)) {
+				throw new MotioError(
+					"E_RENDER_ERROR",
+					`In the virtual time model a page renders ascending frames, but frame ${frame} was asked after frame ${this.virtualFrame}. This is a bug in the renderer; please report it.`,
+					ctx,
+				);
+			}
+			// The page steps through every frame before this one (ARCHITECTURE, "Time"), a bounded
+			// number per call, so the watchdog of each call measures a few frames, not the history.
+			while (frame - 1 - this.virtualFrame > VIRTUAL_STEPS_PER_CALL) {
+				const to = this.virtualFrame + VIRTUAL_STEPS_PER_CALL;
+				await this.call<void>(
+					"advance",
+					[to],
+					timeout,
+					() =>
+						new MotioError(
+							"E_SEEK_TIMEOUT",
+							`Stepping the virtual clock to frame ${to}, before frame ${frame}, took longer than ${timeout} ms and the page stopped responding. Look for a long-running loop in the composition, or raise the timeout (timeoutInMilliseconds in the Node API, --timeout on the command line).`,
+							{ ...ctx, details: { option: "timeoutInMilliseconds", timeoutMs: timeout } },
+						),
+					to,
+				);
+				this.virtualFrame = to;
+			}
+			// Set before the call: a failed seek leaves the clock somewhere up to the frame, and the
+			// pool replaces the page anyway.
+			this.virtualFrame = frame;
+		}
 		const report = await this.call<FrameReport>(
 			"seek",
 			[frame],

@@ -15,10 +15,16 @@ import { captureVideo, mixTimelineAudio } from "./capture-video.js";
 import { MotioError } from "./errors.js";
 import { assertFfmpegSupports, chooseVideoEncoder, probeFfmpeg, videoArgs } from "./ffmpeg.js";
 import { resolveRenderFfmpeg } from "./ffmpeg-resolve.js";
-import { type Codec, type FrameRange, resolveConcurrency, resolveFrames } from "./options.js";
+import {
+	type Codec,
+	type FrameRange,
+	resolveConcurrency,
+	resolveFrames,
+	resolveTimeModel,
+} from "./options.js";
 import { resolveOutputContainer } from "./output-container.js";
 import { compositionPageFactory } from "./page-factory.js";
-import { DEFAULT_RECYCLE_EVERY_N_FRAMES, type SlowFrame } from "./pool.js";
+import { defaultRecycleEveryNFrames, type SlowFrame } from "./pool.js";
 import { planVideo, type VideoPlanOptions, videoCodecNeeds } from "./render-media.js";
 import {
 	type BrowserSessionOptions,
@@ -178,6 +184,7 @@ export async function renderChunk(options: RenderChunkOptions): Promise<RenderCh
 	const video = planVideo(options);
 	const frames = resolveFrames(options.frameRange, 1, composition.durationInFrames);
 	const concurrency = resolveConcurrency(options.concurrency ?? 1);
+	const timeModel = resolveTimeModel(options.timeModel, composition);
 	const resolved = await resolveRenderFfmpeg(options);
 	const ffmpeg = resolved.ffmpeg;
 	const ffmpegInfo = await probeFfmpeg(ffmpeg);
@@ -213,11 +220,12 @@ export async function renderChunk(options: RenderChunkOptions): Promise<RenderCh
 				scale: video.scale,
 				transparent: video.captureFormat === "png",
 				concurrency,
+				timeModel,
 			}),
 			format: video.captureFormat,
 			quality: video.quality,
 			concurrency,
-			recycleEveryNFrames: options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES,
+			recycleEveryNFrames: options.recycleEveryNFrames ?? defaultRecycleEveryNFrames(timeModel),
 			signal: controller.signal,
 			onProgress: (renderedFrames, encodedFrames) =>
 				options.onProgress?.({ renderedFrames, encodedFrames }),
@@ -270,6 +278,7 @@ export async function renderAudio(options: RenderAudioOptions): Promise<RenderAu
 	const audioFrames = resolveFrames(options.frameRange, 1, composition.durationInFrames);
 	const sampleRate = resolveSampleRate(options.sampleRate ?? composition.defaultSampleRate);
 	const concurrency = resolveConcurrency(options.concurrency);
+	const timeModel = resolveTimeModel(options.timeModel, composition);
 	const controller = toAbortController(options.cancelSignal, "renderAudio");
 	const output = resolvePath(options.outputLocation);
 	const session = await openSession(options);
@@ -280,6 +289,7 @@ export async function renderAudio(options: RenderAudioOptions): Promise<RenderAu
 			scale: 1,
 			transparent: false,
 			concurrency,
+			timeModel,
 		});
 		let mixed = await mixTimelineAudio({
 			session,
@@ -288,7 +298,7 @@ export async function renderAudio(options: RenderAudioOptions): Promise<RenderAu
 			intents: new Map<number, AudioIntent[]>(),
 			openPage,
 			concurrency,
-			recycleEveryNFrames: options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES,
+			recycleEveryNFrames: options.recycleEveryNFrames ?? defaultRecycleEveryNFrames(timeModel),
 			sampleRate,
 			signal: controller.signal,
 		});

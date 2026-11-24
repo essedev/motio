@@ -7,6 +7,7 @@ import {
 	resolveFrames,
 	resolveInputProps,
 	resolveJpegQuality,
+	resolveTimeModel,
 	scaledSize,
 } from "./options.js";
 
@@ -132,5 +133,20 @@ describe("encoding options", () => {
 		const cyclic: Record<string, unknown> = {};
 		cyclic.self = cyclic;
 		expect(() => resolveInputProps(cyclic)).toThrow(/serialisable/);
+	});
+});
+
+describe("time model", () => {
+	it("takes the option, else the composition's, else the frame model", () => {
+		expect(resolveTimeModel(undefined, {})).toBe("frame");
+		expect(resolveTimeModel(null, { timeModel: "virtual" })).toBe("virtual");
+		expect(resolveTimeModel("frame", { timeModel: "virtual" })).toBe("frame");
+		expect(resolveTimeModel("virtual", {})).toBe("virtual");
+	});
+
+	it("rejects other values", () => {
+		expect(() => resolveTimeModel("real", {})).toThrow(
+			expect.objectContaining({ code: "E_INVALID_OPTION" }),
+		);
 	});
 });

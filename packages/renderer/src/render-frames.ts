@@ -11,9 +11,10 @@ import {
 	resolveFrames,
 	resolveJpegQuality,
 	resolveScale,
+	resolveTimeModel,
 } from "./options.js";
 import { compositionPageFactory } from "./page-factory.js";
-import { DEFAULT_CRASH_RETRIES, DEFAULT_RECYCLE_EVERY_N_FRAMES, runPool } from "./pool.js";
+import { DEFAULT_CRASH_RETRIES, defaultRecycleEveryNFrames, runPool } from "./pool.js";
 import {
 	type BrowserSessionOptions,
 	openSession,
@@ -162,6 +163,7 @@ export async function renderFrames(options: RenderFramesOptions): Promise<Render
 	const scale = resolveScale(options.scale);
 	const concurrency = resolveConcurrency(options.concurrency);
 	const frames = framesToRender(options);
+	const timeModel = resolveTimeModel(options.timeModel, composition);
 	if (options.outputDir === null && !options.onFrameBuffer) {
 		throw new MotioError(
 			"E_INVALID_OPTION",
@@ -193,8 +195,10 @@ export async function renderFrames(options: RenderFramesOptions): Promise<Render
 			scale,
 			transparent: imageFormat === "png",
 			concurrency,
+			timeModel,
 		});
-		const recycleEveryNFrames = options.recycleEveryNFrames ?? DEFAULT_RECYCLE_EVERY_N_FRAMES;
+		const recycleEveryNFrames =
+			options.recycleEveryNFrames ?? defaultRecycleEveryNFrames(timeModel);
 		await runPool({
 			frames: orderFrames(frames, options.frameOrder),
 			concurrency,

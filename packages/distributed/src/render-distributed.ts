@@ -223,6 +223,7 @@ export async function renderDistributed(
 			"ffprobeExecutable",
 			"captureMethod",
 			"pagesPerBrowser",
+			"timeModel",
 			"crf",
 			"imageFormat",
 			"jpegQuality",
@@ -306,6 +307,7 @@ export async function renderDistributed(
 						"ffmpegExecutable",
 						"ffprobeExecutable",
 						"captureMethod",
+						"timeModel",
 					]),
 					// separateAudioTo writes a file even when nothing is audible, as renderMedia() does.
 					enforceAudioTrack: options.enforceAudioTrack === true || separateAudioTo !== null,

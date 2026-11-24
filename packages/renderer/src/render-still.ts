@@ -1,7 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { type CancelSignal, toAbortController } from "./cancel.js";
 import { MotioError } from "./errors.js";
-import { oneOf, resolveScale } from "./options.js";
+import { oneOf, resolveScale, resolveTimeModel } from "./options.js";
 import { checkOverwrite, prepareOutput } from "./output.js";
 import { compositionPageFactory } from "./page-factory.js";
 import { DEFAULT_CRASH_RETRIES, runPool } from "./pool.js";
@@ -89,6 +89,7 @@ export async function renderStill(options: RenderStillOptions): Promise<RenderSt
 	}
 	if (options.output) await checkOverwrite(options.output, options.overwrite ?? true);
 
+	const timeModel = resolveTimeModel(options.timeModel, composition);
 	const controller = toAbortController(options.cancelSignal, "renderStill");
 	const session = await openSession(options);
 	try {
@@ -99,6 +100,7 @@ export async function renderStill(options: RenderStillOptions): Promise<RenderSt
 			scale,
 			transparent: imageFormat !== "jpeg",
 			concurrency: 1,
+			timeModel,
 		});
 		await runPool({
 			frames: [frame],

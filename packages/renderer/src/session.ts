@@ -1,4 +1,4 @@
-import type { CompositionInfo, ResolvedComposition } from "@motiojs/core/protocol";
+import type { CompositionInfo, ResolvedComposition, TimeModel } from "@motiojs/core/protocol";
 import { BrowserPool, defaultPagesPerBrowser } from "./browser/browser-pool.js";
 import { ensureBrowser } from "./browser/ensure.js";
 import type { ChromiumOptions } from "./browser/flags.js";
@@ -76,6 +76,15 @@ export interface BrowserSessionOptions {
 	 * waiting on, until it is released or times out, so a long wait is not silent.
 	 */
 	onDelayRenderPending?: (pending: PendingDelayRender) => void;
+	/**
+	 * Motio extension: the time model of the render pages (ARCHITECTURE, "Time"). `frame`: only
+	 * the frame drives the composition, any frame renders in any order on any page. `virtual`:
+	 * `Date`, `performance.now`, timers, `requestAnimationFrame` and `Math.random` follow the
+	 * frame, so third-party code that reads the clock renders deterministically; each page steps
+	 * through every frame from frame 0. Default: the composition's `timeModel`, else `frame`.
+	 * Listing compositions (`getCompositions`, `selectComposition`) always uses the frame model.
+	 */
+	timeModel?: TimeModel | null;
 }
 
 /** A Remotion-shaped composition description returned by `getCompositions` and `selectComposition`. */
@@ -94,6 +103,12 @@ export interface VideoConfig {
 	defaultPixelFormat: string | null;
 	defaultProResProfile: string | null;
 	defaultSampleRate: number | null;
+	/**
+	 * Motio extension: the time model the composition declares (`<Composition timeModel>`),
+	 * which renders use unless their `timeModel` option says otherwise. Absent when the
+	 * composition declares none (the frame model).
+	 */
+	timeModel?: TimeModel;
 }
 
 /** Resolved common options plus the bundle server. */
@@ -118,6 +133,8 @@ export interface BrowserSession {
 	browsers: BrowserPool;
 	/** Warnings the session's pages reported, for the render result. */
 	warnings: WarningCollector;
+	/** The `timeModel` option, unresolved: the composition's applies when it is absent. */
+	timeModelOption: string | null | undefined;
 	/**
 	 * The configuration of a page; `concurrency` (default 1) is the number of pages the render
 	 * opens at once, which sets how many share a browser unless `pagesPerBrowser` was given.
@@ -128,6 +145,7 @@ export interface BrowserSession {
 		scale: number;
 		transparent: boolean;
 		concurrency?: number;
+		timeModel?: TimeModel;
 	}): PageConfig;
 	close(): Promise<void>;
 }
@@ -197,6 +215,7 @@ export async function openSession(
 		onBrowserLog,
 		browsers,
 		warnings,
+		timeModelOption: options.timeModel,
 		pageConfig: ({ concurrency = 1, ...size }) => ({
 			executablePath,
 			serveUrl: server.url,
@@ -269,6 +288,7 @@ export function toVideoConfig(
 		defaultPixelFormat: c.defaultPixelFormat,
 		defaultProResProfile: extra.defaultProResProfile ?? null,
 		defaultSampleRate: extra.defaultSampleRate ?? null,
+		...(c.timeModel ? { timeModel: c.timeModel } : {}),
 	};
 }
 

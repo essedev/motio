@@ -1,4 +1,4 @@
-import type { FrameReport } from "@motiojs/core/protocol";
+import type { FrameReport, TimeModel } from "@motiojs/core/protocol";
 import { isMotioError, MotioError } from "./errors.js";
 import type { RenderPage } from "./render-page.js";
 
@@ -42,6 +42,14 @@ export interface PoolJob {
 
 /** Default number of frames after which a page is replaced. */
 export const DEFAULT_RECYCLE_EVERY_N_FRAMES = 500;
+
+/**
+ * The default of `recycleEveryNFrames` in a time model: in the virtual model a new page steps
+ * through every frame from frame 0 before its first one, so pages are not replaced by default.
+ */
+export function defaultRecycleEveryNFrames(timeModel: TimeModel): number {
+	return timeModel === "virtual" ? 0 : DEFAULT_RECYCLE_EVERY_N_FRAMES;
+}
 /** Default retries of a frame whose browser crashed or stopped responding. */
 export const DEFAULT_CRASH_RETRIES = 2;
 
@@ -104,6 +112,9 @@ export async function runPool(job: PoolJob): Promise<SlowFrame[]> {
 			while (stopReason === undefined) {
 				const frame = queue.shift();
 				if (frame === undefined) break;
+				// In the virtual time model a page's clock cannot go back: a frame before the page's
+				// last one gets a new page, which steps up to it from frame 0.
+				if (page?.needsNewPageFor(frame)) await close();
 				let captured: CapturedFrame | undefined;
 				for (let attempt = 0; captured === undefined; attempt++) {
 					try {

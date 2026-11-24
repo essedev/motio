@@ -1,3 +1,4 @@
+export type { TimeModel } from "@motiojs/core/protocol";
 export {
 	defaultBrowserCacheDir,
 	type EnsureBrowserOptions,

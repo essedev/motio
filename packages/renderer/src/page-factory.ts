@@ -1,3 +1,4 @@
+import type { TimeModel } from "@motiojs/core/protocol";
 import { MotioError } from "./errors.js";
 import { RenderPage } from "./render-page.js";
 import type { BrowserSession, VideoConfig } from "./session.js";
@@ -12,7 +13,15 @@ import type { BrowserSession, VideoConfig } from "./session.js";
 export function compositionPageFactory(
 	session: BrowserSession,
 	composition: VideoConfig,
-	size: { width: number; height: number; scale: number; transparent: boolean; concurrency: number },
+	size: {
+		width: number;
+		height: number;
+		scale: number;
+		transparent: boolean;
+		concurrency: number;
+		/** Resolved with `resolveTimeModel`. Default `frame`. */
+		timeModel?: TimeModel;
+	},
 ): () => Promise<RenderPage> {
 	if (session.captureMethod === "begin-frame" && size.concurrency > 1) {
 		throw new MotioError(

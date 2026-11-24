@@ -1,4 +1,5 @@
 import { availableParallelism } from "node:os";
+import { TIME_MODELS, type TimeModel } from "@motiojs/core/protocol";
 import { MotioError } from "./errors.js";
 
 /** Image format of captured video frames. */
@@ -268,6 +269,17 @@ export function oneOf<T extends string>(
 		);
 	}
 	return value as T;
+}
+
+/**
+ * The time model of a render (ARCHITECTURE, "Time"): the `timeModel` option, else the
+ * composition's, else `frame`.
+ */
+export function resolveTimeModel(
+	option: string | null | undefined,
+	composition: { timeModel?: TimeModel },
+): TimeModel {
+	return oneOf("timeModel", option ?? undefined, TIME_MODELS, composition.timeModel ?? "frame");
 }
 
 /** Output size of a frame for a composition size and `scale`. */
