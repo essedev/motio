@@ -106,6 +106,37 @@ describe("createCompatibilityReport", () => {
 	});
 	afterAll(() => rm(root, { recursive: true, force: true }));
 
+	it("accepts a type-only import of a type Motio declares that the manifest does not list", async () => {
+		const typed = await mkdtemp(join(tmpdir(), "motio-report-types-"));
+		try {
+			const motio = join(typed, "node_modules", "@motiojs", "motio");
+			await mkdir(join(typed, "src"));
+			await mkdir(motio, { recursive: true });
+			await writeFile(
+				join(motio, "package.json"),
+				JSON.stringify({ name: "@motiojs/motio", exports: { "./remotion": "./remotion.js" } }),
+			);
+			await writeFile(join(motio, "remotion.js"), "export {};\n");
+			await writeFile(
+				join(motio, "remotion.d.ts"),
+				"export type EasingFunction = (t: number) => number;\n",
+			);
+			await writeFile(
+				join(typed, "src", "index.ts"),
+				'import { type EasingFunction, type Missing, Unknown } from "remotion";\n',
+			);
+			const report = await createCompatibilityReport(typed, { manifest });
+			const status = Object.fromEntries(report.entries.map((e) => [e.symbol, e.status]));
+			expect(status).toEqual({
+				EasingFunction: "supported",
+				Missing: "unknown-symbol",
+				Unknown: "unknown-symbol",
+			});
+		} finally {
+			await rm(typed, { recursive: true, force: true });
+		}
+	});
+
 	it("scans the project and skips node_modules", async () => {
 		const report = await createCompatibilityReport(root, { manifest });
 		expect(report.filesScanned).toBe(2);

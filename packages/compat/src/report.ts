@@ -1,4 +1,8 @@
+import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
+import { join } from "node:path";
 import { loadManifest, lookupSymbol, type Manifest, type SymbolStatus } from "./manifest.js";
+import { declarationExports } from "./manifest-status.js";
 import { describeUnavailable, mapSpecifier, splitSpecifier, type Tier } from "./mapping.js";
 import { type FileUsage, type ScanOptions, scanProject } from "./scan.js";
 
@@ -51,10 +55,41 @@ const BLOCKING: ReadonlySet<ReportStatus> = new Set([
 	"unknown-package",
 ]);
 
+/**
+ * The names (types and values) a Motio module declares in its `.d.ts`, or null when the module
+ * cannot be found. The manifest lists Remotion's documented exports; a type-only import of a name
+ * it does not list is still fine when Motio declares that type.
+ */
+export type DeclaredExports = (target: string) => ReadonlySet<string> | null;
+
+/** Reads the declarations of the Motio packages installed where `root` resolves them. */
+export function projectDeclaredExports(root: string): DeclaredExports {
+	const require = createRequire(join(root, "package.json"));
+	const cache = new Map<string, ReadonlySet<string> | null>();
+	return (target) => {
+		if (cache.has(target)) return cache.get(target) ?? null;
+		let names: ReadonlySet<string> | null = null;
+		let resolved: string | null = null;
+		try {
+			resolved = require.resolve(target);
+		} catch (error) {
+			// Not installed (a Remotion project before it adds Motio): nothing is declared.
+			const code = (error as { code?: string }).code ?? "";
+			if (code !== "MODULE_NOT_FOUND" && code !== "ERR_PACKAGE_PATH_NOT_EXPORTED") throw error;
+		}
+		const declarations = resolved?.replace(/\.[cm]?js$/, ".d.ts");
+		if (declarations && existsSync(declarations)) names = declarationExports(declarations);
+		cache.set(target, names);
+		return names;
+	};
+}
+
 function classify(
 	manifest: Manifest,
 	specifier: string,
 	symbol: string,
+	isType = false,
+	declared?: DeclaredExports,
 ): Pick<ReportEntry, "status" | "tier" | "target" | "note"> {
 	const resolution = mapSpecifier(specifier);
 	if (resolution.kind === "unknown") {
@@ -82,6 +117,14 @@ function classify(
 		};
 	}
 	const entry = lookupSymbol(manifest, specifier, symbol);
+	if (!entry && isType && declared?.(resolution.target)?.has(symbol)) {
+		return {
+			status: "supported",
+			tier: resolution.mapping.tier,
+			target: resolution.target,
+			note: `A type ${resolution.target} declares; the manifest does not list it.`,
+		};
+	}
 	if (!entry) {
 		return {
 			status: "unknown-symbol",
@@ -103,6 +146,7 @@ export function buildReport(
 	files: readonly FileUsage[],
 	filesScanned: number,
 	manifest: Manifest = loadManifest(),
+	declared?: DeclaredExports,
 ): CompatibilityReport {
 	const byKey = new Map<string, ReportEntry>();
 	for (const file of files) {
@@ -118,7 +162,7 @@ export function buildReport(
 					const classified =
 						name === "(side effect)"
 							? sideEffectStatus(manifest, usage.specifier)
-							: classify(manifest, usage.specifier, name);
+							: classify(manifest, usage.specifier, name, symbol.isType, declared);
 					entry = {
 						specifier: usage.specifier,
 						symbol: name,
@@ -179,8 +223,13 @@ function sideEffectStatus(
  */
 export async function createCompatibilityReport(
 	root: string,
-	options: ScanOptions & { manifest?: Manifest } = {},
+	options: ScanOptions & { manifest?: Manifest; declared?: DeclaredExports } = {},
 ): Promise<CompatibilityReport> {
 	const scan = await scanProject(root, options);
-	return buildReport(scan.usages, scan.filesScanned, options.manifest ?? loadManifest());
+	return buildReport(
+		scan.usages,
+		scan.filesScanned,
+		options.manifest ?? loadManifest(),
+		options.declared ?? projectDeclaredExports(root),
+	);
 }
