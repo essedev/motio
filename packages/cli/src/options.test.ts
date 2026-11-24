@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -12,7 +12,7 @@ import {
 	parseFrameRange,
 	parseProps,
 } from "./options.js";
-import { splitPositionals } from "./project.js";
+import { findProjectRoot, splitPositionals } from "./project.js";
 
 let cwd: string;
 beforeAll(async () => {
@@ -142,6 +142,24 @@ describe("assertFrameRangeWithin", () => {
 		expect(() => assertFrameRangeWithin([100, null], "100-", composition)).not.toThrow();
 		expect(() => assertFrameRangeWithin(149, "149", composition)).not.toThrow();
 	});
+
+describe("findProjectRoot", () => {
+	it("walks up from the entry to the package.json, else stops at a working directory with public/", async () => {
+		const root = await mkdtemp(join(tmpdir(), "motio-root-"));
+		const project = join(root, "app");
+		await mkdir(join(project, "src", "lab"), { recursive: true });
+		await writeFile(join(project, "package.json"), "{}");
+		await writeFile(join(project, "src", "lab", "Root.tsx"), "");
+		expect(findProjectRoot(root, "app/src/lab/Root.tsx")).toBe(project);
+		expect(findProjectRoot(join(project, "src"), undefined)).toBe(project);
+		expect(findProjectRoot(root, "https://example.com/bundle/")).not.toBe(project);
+		const loose = join(root, "loose");
+		await mkdir(join(loose, "public"), { recursive: true });
+		await writeFile(join(loose, "index.ts"), "");
+		expect(findProjectRoot(loose, "index.ts")).toBe(loose);
+		await rm(root, { recursive: true, force: true });
+	});
+});
 });
 });
 });

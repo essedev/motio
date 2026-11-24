@@ -88,6 +88,7 @@ async function runInit(
 		io,
 		reporter: new Reporter(io, options.json ?? false),
 		cleanup: [],
+		projectHints: [],
 	};
 	const result = await createInitCommand(deps)(ctx, argv);
 	return { io, result, installs, asked };

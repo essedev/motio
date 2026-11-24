@@ -150,7 +150,7 @@ describe("motio dev", () => {
 			"--open",
 		]);
 		expect(lastServer()).toMatchObject({
-			entryPoint: "src/main.tsx",
+			entryPoint: join(cwd, "src/main.tsx"),
 			rootDir: cwd,
 			initialProps: { title: "from file" },
 			publicDir: join(cwd, "assets"),

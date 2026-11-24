@@ -298,7 +298,7 @@ export async function runCli(argv: readonly string[], io: CliIo, deps: CliDeps):
 		io.stdout(commandHelp(definition));
 		return EXIT.ok;
 	}
-	const ctx: CommandContext = { ...deps, io, reporter, cleanup: [] };
+	const ctx: CommandContext = { ...deps, io, reporter, cleanup: [], projectHints: [] };
 	try {
 		const result = await definition.run(ctx, rest);
 		if (json) {
@@ -318,7 +318,7 @@ export async function runCli(argv: readonly string[], io: CliIo, deps: CliDeps):
 			reporter.resultJson({ ok: false, command: name, error: payload });
 		} else {
 			reporter.finish();
-			io.stderr(`${formatErrorLines(payload, io.cwd).join("\n")}\n`);
+			io.stderr(`${formatErrorLines(payload, io.cwd, ctx.projectHints).join("\n")}\n`);
 			if (logLevel === "verbose" || logLevel === "trace") {
 				io.stderr(`${JSON.stringify(payload.context, null, 2)}\n`);
 			}

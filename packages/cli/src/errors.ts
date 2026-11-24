@@ -105,10 +105,14 @@ const record = (value: unknown): Record<string, unknown> =>
 /**
  * The lines printed on stderr for a failed command in human mode: the message with renderer
  * option names replaced by their flags, where it happened (frame, composition, source file),
- * and a hint. Every field is read defensively: renderers that do not set them print the
+ * and hints (`projectHints` apply to missing files). Every field is read defensively: renderers that do not set them print the
  * message alone.
  */
-export function formatErrorLines(error: ErrorJson, cwd: string): string[] {
+export function formatErrorLines(
+	error: ErrorJson,
+	cwd: string,
+	projectHints: readonly string[] = [],
+): string[] {
 	const context = error.context;
 	const details = record(context.details);
 	const option = typeof details.option === "string" ? details.option : undefined;
@@ -149,6 +153,9 @@ export function formatErrorLines(error: ErrorJson, cwd: string): string[] {
 			`Raise the limit with --timeout=<ms>${typeof timeout === "number" ? ` (now ${timeout} ms)` : ""}, or call continueRender() once the work is done.`,
 		);
 	}
+	// A missing file is often a project opened from the wrong folder.
+	if (error.code === "E_ASSET_NOT_FOUND" || error.code === "E_FONT_LOAD")
+		hints.push(...projectHints);
 	for (const hint of hints) lines.push(`  hint: ${hint}`);
 	return lines;
 }

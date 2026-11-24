@@ -1,6 +1,6 @@
 import { existsSync, statSync } from "node:fs";
 import { rm } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { BundleResult } from "@motiojs/bundler";
 import { MotioError } from "@motiojs/compat";
 import { type ConfigValues, GL_RENDERERS, LOG_LEVELS, type LogLevel } from "@motiojs/compat/config";
@@ -28,6 +28,47 @@ export function looksLikeEntryPoint(value: string, cwd: string): boolean {
 	return existsSync(resolvePath(cwd, value));
 }
 
+/**
+ * The project root: the nearest folder with a package.json above the entry file (or above the
+ * working directory without one), else the working directory. The walk also stops at the working
+ * directory when it holds a public/ folder. Running from a parent folder or
+ * from src/ then finds the same public/, config and .env as running from the root.
+ */
+export function findProjectRoot(cwd: string, entryArgument: string | undefined): string {
+	let start = cwd;
+	if (entryArgument && !/^https?:\/\//.test(entryArgument)) {
+		const entry = resolvePath(cwd, entryArgument);
+		if (existsSync(entry)) start = statSync(entry).isDirectory() ? entry : dirname(entry);
+	}
+	let dir = resolve(start);
+	for (;;) {
+		if (existsSync(join(dir, "package.json"))) return dir;
+		// A folder without package.json that has its own public/, run from that folder.
+		if (dir === resolve(cwd) && existsSync(join(dir, "public"))) return cwd;
+		const parent = dirname(dir);
+		if (parent === dir) return cwd;
+		dir = parent;
+	}
+}
+
+/**
+ * Where static files come from: `--public-dir` (relative to the working directory), else the
+ * config's, else public/ in the project root. `missing` is set when that folder does not exist.
+ */
+export function publicDirOf(
+	ctx: CommandContext,
+	rootDir: string,
+	flag: string | undefined,
+	config: Readonly<Partial<ConfigValues>>,
+): { path: string; missing: boolean } {
+	const path = flag
+		? resolvePath(ctx.io.cwd, flag)
+		: config.publicDir
+			? resolvePath(rootDir, config.publicDir)
+			: join(rootDir, "public");
+	return { path, missing: !existsSync(path) };
+}
+
 /** Reads `--log` (or `Config.setLogLevel`) before anything is printed. */
 export function logLevelFrom(flags: Flags): LogLevel | undefined {
 	return flags.oneOf("log", LOG_LEVELS);
@@ -42,25 +83,28 @@ export async function openProject(
 	flags: Flags,
 	entryArgument: string | undefined,
 ): Promise<Project> {
-	const rootDir = ctx.io.cwd;
+	const rootDir = findProjectRoot(ctx.io.cwd, entryArgument);
+	if (rootDir !== ctx.io.cwd) ctx.reporter.verbose(`Project root ${rootDir}`);
+	const configFlag = flags.string("config");
 	const loaded = await ctx.bundler.loadRemotionConfig({
 		rootDir,
-		configFile: flags.string("config"),
+		configFile: configFlag ? resolvePath(ctx.io.cwd, configFlag) : undefined,
 	});
 	if (loaded.file) ctx.reporter.verbose(`Loaded config from ${loaded.file}`);
 	for (const warning of loaded.warnings) ctx.reporter.warn(warning.message);
 	const config = loaded.values;
 
+	const envFlag = flags.string("env-file");
 	const env = ctx.bundler.loadEnvVariables({
 		rootDir,
-		envFile: flags.string("env-file") ?? config.dotEnvLocation,
+		envFile: envFlag ? resolvePath(ctx.io.cwd, envFlag) : config.dotEnvLocation,
 		processEnv: ctx.io.env,
 	});
 	if (env.file) ctx.reporter.verbose(`Loaded env file from ${env.file}`);
 
 	let serveUrl: string;
 	let bundle: BundleResult | null = null;
-	const entryPath = entryArgument ? resolvePath(rootDir, entryArgument) : undefined;
+	const entryPath = entryArgument ? resolvePath(ctx.io.cwd, entryArgument) : undefined;
 	if (entryArgument && /^https?:\/\//.test(entryArgument)) {
 		serveUrl = entryArgument;
 	} else if (entryPath && existsSync(entryPath) && statSync(entryPath).isDirectory()) {
@@ -74,13 +118,19 @@ export async function openProject(
 		}
 		serveUrl = entryPath;
 	} else {
-		const publicDir = flags.string("public-dir");
+		const publicDirFlag = flags.string("public-dir");
+		const publicDir = publicDirOf(ctx, rootDir, publicDirFlag, config);
+		if (publicDir.missing && !publicDirFlag) {
+			ctx.projectHints.push(
+				`No public/ in ${rootDir}: run from the project root or pass --public-dir.`,
+			);
+		}
 		bundle = await ctx.bundler.createBundle({
-			entryPoint: entryArgument ?? "",
+			entryPoint: entryPath ?? "",
 			rootDir,
 			config,
 			envVariables: env.variables,
-			...(publicDir ? { publicDir: resolvePath(rootDir, publicDir) } : {}),
+			...(publicDirFlag ? { publicDir: publicDir.path } : {}),
 			onProgress: (progress) => ctx.reporter.progress("Bundling", progress / 100),
 			onWarning: (message) => ctx.reporter.warn(message),
 		});

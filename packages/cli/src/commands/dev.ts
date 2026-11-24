@@ -7,7 +7,7 @@ import type { CommandContext, CommandResult } from "../context.js";
 import { usageError } from "../errors.js";
 import { BASE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import { parseProps, resolvePath } from "../options.js";
-import { buildSessionOptions } from "../project.js";
+import { buildSessionOptions, findProjectRoot } from "../project.js";
 import { DevStillRenderer } from "./dev-still.js";
 
 export const DEV_FLAGS = {
@@ -79,25 +79,29 @@ export async function devCommand(
 	const host = flags.string("host");
 	const propsFlag = flags.string("props");
 	const initialProps = propsFlag ? parseProps(propsFlag, ctx.io.cwd) : {};
-	const rootDir = ctx.io.cwd;
+	const rootDir = findProjectRoot(ctx.io.cwd, entryArgument);
+	if (rootDir !== ctx.io.cwd) ctx.reporter.verbose(`Project root ${rootDir}`);
+	const entryPoint = entryArgument ? resolvePath(ctx.io.cwd, entryArgument) : "";
+	const configFlag = flags.string("config");
 
 	const loaded = await ctx.bundler.loadRemotionConfig({
 		rootDir,
-		configFile: flags.string("config"),
+		configFile: configFlag ? resolvePath(ctx.io.cwd, configFlag) : undefined,
 	});
 	if (loaded.file) ctx.reporter.verbose(`Loaded config from ${loaded.file}`);
 	for (const warning of loaded.warnings) {
 		if (!DEV_HONOURED_SETTERS.has(warning.setter)) ctx.reporter.warn(warning.message);
 	}
 	const config = loaded.values;
+	const envFlag = flags.string("env-file");
 	const env = ctx.bundler.loadEnvVariables({
 		rootDir,
-		envFile: flags.string("env-file") ?? config.dotEnvLocation,
+		envFile: envFlag ? resolvePath(ctx.io.cwd, envFlag) : config.dotEnvLocation,
 		processEnv: ctx.io.env,
 	});
 	if (env.file) ctx.reporter.verbose(`Loaded env file from ${env.file}`);
 	const publicDirFlag = flags.string("public-dir");
-	const publicDir = publicDirFlag ? resolvePath(rootDir, publicDirFlag) : undefined;
+	const publicDir = publicDirFlag ? resolvePath(ctx.io.cwd, publicDirFlag) : undefined;
 
 	const workDir = await mkdtemp(join(tmpdir(), "motio-dev-"));
 	ctx.cleanup.push(() => rm(workDir, { recursive: true, force: true }));
@@ -117,7 +121,7 @@ export async function devCommand(
 		workDir,
 		session,
 		bundleOptions: {
-			entryPoint: entryArgument ?? "",
+			entryPoint,
 			rootDir,
 			config,
 			envVariables: env.variables,
@@ -133,7 +137,7 @@ export async function devCommand(
 		else ctx.io.stderr(`error: ${message}\n`);
 	};
 	const server = await ctx.bundler.startDevServer({
-		entryPoint: entryArgument ?? "",
+		entryPoint,
 		rootDir,
 		config,
 		envVariables: env.variables,

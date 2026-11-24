@@ -51,6 +51,11 @@ export interface CommandContext extends CliDeps {
 	reporter: Reporter;
 	/** Removes temporary files when the command ends. */
 	cleanup: Array<() => Promise<void>>;
+	/**
+	 * Hints about how the project was opened (no public/ folder, ...), printed under an error
+	 * about a missing file.
+	 */
+	projectHints: string[];
 }
 
 /** What a command returns: the JSON result (without `ok`/`command`) and human lines. */

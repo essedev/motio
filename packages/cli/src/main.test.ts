@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./main.js";
 import type { VideoConfig } from "./renderer-api.js";
 import {
@@ -229,6 +229,57 @@ describe("render", () => {
 			ok: false,
 			error: { code: "E_COMPOSITION_NOT_FOUND", context: { composition: "Nope" } },
 		});
+	});
+
+	it("opens the project at the package.json above the entry point, from any folder", async () => {
+		const project = join(cwd, "p-basic");
+		await mkdir(join(project, "src"), { recursive: true });
+		await mkdir(join(project, "public"));
+		await writeFile(join(project, "package.json"), "{}");
+		await writeFile(join(project, "src", "index.ts"), "");
+		const seen: Array<Record<string, unknown>> = [];
+		const { bundler } = fakeBundler();
+		const createBundle = bundler.createBundle;
+		bundler.createBundle = (options) => {
+			seen.push(options as unknown as Record<string, unknown>);
+			return createBundle(options);
+		};
+		const loadConfig = vi.fn(bundler.loadRemotionConfig);
+		bundler.loadRemotionConfig = loadConfig;
+		const { renderer } = fakeRenderer();
+		// From the parent folder, then from src/ with a path relative to it.
+		for (const [dir, entry] of [
+			[cwd, "p-basic/src/index.ts"],
+			[join(project, "src"), "index.ts"],
+		] as const) {
+			const code = await runCli(
+				["still", entry, "Main", "--json"],
+				testIo(dir),
+				testDeps(renderer, bundler),
+			);
+			expect(code).toBe(0);
+		}
+		for (const options of seen) {
+			expect(options.rootDir).toBe(project);
+			expect(options.entryPoint).toBe(join(project, "src", "index.ts"));
+		}
+		expect(loadConfig.mock.calls.map(([o]) => o.rootDir)).toEqual([project, project]);
+	});
+
+	it("hints at the project root when a file is missing and there is no public/", async () => {
+		const { renderer } = fakeRenderer();
+		renderer.renderStill = async () => {
+			throw Object.assign(new Error('Could not load "/public/fonts/inter-400.woff2" (404).'), {
+				code: "E_FONT_LOAD",
+				details: { path: "fonts/inter-400.woff2" },
+			});
+		};
+		const io = testIo(cwd);
+		const code = await runCli(["still", "Main"], io, testDeps(renderer, fakeBundler().bundler));
+		expect(code).toBe(1);
+		expect(io.err.join("")).toContain(
+			`  hint: No public/ in ${cwd}: run from the project root or pass --public-dir.`,
+		);
 	});
 
 	it("rejects invalid flags with exit code 2", async () => {
