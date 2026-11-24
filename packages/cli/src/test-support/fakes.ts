@@ -224,6 +224,7 @@ const emptyReport: CompatibilityReport = {
 		missing: 0,
 		"unknown-symbol": 0,
 		"unsupported-package": 0,
+		"not-planned": 0,
 		"unknown-package": 0,
 		opaque: 0,
 	},

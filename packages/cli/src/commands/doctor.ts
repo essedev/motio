@@ -306,23 +306,31 @@ function nodeCheck(): DoctorCheck {
 	};
 }
 
-function compatibilityCheck(report: CompatibilityReport): DoctorCheck {
+/** The compatibility check: failure for symbols Motio lacks, warning for those it skips by design. */
+export function compatibilityCheck(report: CompatibilityReport): DoctorCheck {
 	const blocking =
 		report.summary.missing +
 		report.summary["unknown-symbol"] +
 		report.summary["unsupported-package"] +
 		report.summary["unknown-package"];
 	const used = report.entries.length;
+	const notPlanned = report.summary["not-planned"];
 	return {
 		name: "compatibility",
 		status:
-			blocking > 0 ? "fail" : report.summary.stubbed + report.summary.opaque > 0 ? "warn" : "pass",
+			blocking > 0
+				? "fail"
+				: report.summary.stubbed + report.summary.opaque + notPlanned > 0
+					? "warn"
+					: "pass",
 		message:
 			used === 0
 				? "No imports from remotion or @remotion/* found."
 				: blocking > 0
 					? `${blocking} of ${used} Remotion symbols used are not available in Motio (target ${report.target}).`
-					: `All ${used} Remotion symbols used are available (target ${report.target}).`,
+					: notPlanned > 0
+						? `Every Remotion symbol used is available, except ${notPlanned} that Motio does not support by design (target ${report.target}).`
+						: `All ${used} Remotion symbols used are available (target ${report.target}).`,
 		details: { summary: report.summary, filesScanned: report.filesScanned },
 	};
 }
@@ -429,6 +437,18 @@ export async function doctorCommand(
 				`  ${entry.symbol} from ${entry.specifier} (${entry.status}${entry.tier ? `, Tier ${entry.tier}` : ""})${where ? ` ${where.file}:${where.line}` : ""}`,
 			);
 		}
+	}
+	const byDesign = new Map<string, string[]>();
+	for (const entry of report.entries) {
+		if (entry.status !== "not-planned") continue;
+		const where = entry.locations[0];
+		const line = `  ${entry.symbol} from ${entry.specifier}${where ? ` ${where.file}:${where.line}` : ""}`;
+		const reason = entry.note ?? "";
+		byDesign.set(reason, [...(byDesign.get(reason) ?? []), line]);
+	}
+	if (byDesign.size > 0) {
+		human.push("", "Not supported by design (warnings):");
+		for (const [reason, lines] of byDesign) human.push(...lines, `    ${reason}`);
 	}
 	return {
 		json: { healthy: !failed, checks, compatibility: report },

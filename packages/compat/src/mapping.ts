@@ -19,6 +19,11 @@ export interface PackageMapping {
 	milestone: string;
 	/** What to use instead when there is no target, or while the target is not available. */
 	alternative?: string;
+	/**
+	 * Why Motio deliberately does not support the package: it serves something other than
+	 * rendering videos (Remotion Studio's tooling). Reported as a warning, not as a failure.
+	 */
+	notPlanned?: string;
 }
 
 const featurePackage = (name: string, tier: Tier, milestone: string): PackageMapping => ({
@@ -109,6 +114,13 @@ export const PACKAGE_MAPPINGS: readonly PackageMapping[] = [
 		alternative: "`motio dev` gives a preview page built on the Player",
 	},
 	{
+		source: "@remotion/studio-protocol",
+		tier: 3,
+		milestone: "not planned",
+		notPlanned:
+			"it carries elements between a website and Remotion Studio (drag and drop, install buttons), which Motio has no counterpart for; it is not used to render videos",
+	},
+	{
 		source: "@remotion/enable-scss",
 		tier: 2,
 		milestone: "M2",
@@ -163,6 +175,8 @@ export function describeUnavailable(
 	symbols: readonly string[] = [],
 ): string {
 	const what = symbols.length > 0 ? `${symbols.join(", ")} from "${specifier}"` : `"${specifier}"`;
+	if (mapping?.notPlanned)
+		return `Motio does not support ${what}, by design: ${mapping.notPlanned}.`;
 	if (!mapping) {
 		return `Motio has no equivalent for ${what}: the package is not in Motio's compatibility table. Remove the import or open an issue.`;
 	}
@@ -171,4 +185,14 @@ export function describeUnavailable(
 		return `Motio does not support ${what} (${plan}): ${mapping.alternative}.`;
 	}
 	return `Motio does not provide ${what} yet: ${mapping.target ?? "a replacement"} is ${plan}.`;
+}
+
+/**
+ * Why a symbol of a mapped module is deliberately not provided, or null. Names ending in
+ * `Internals` are Remotion's private implementation, not public API (the manifest excludes them).
+ */
+export function notPlannedSymbol(symbol: string): string | null {
+	return symbol.endsWith("Internals")
+		? "it is Remotion's private implementation, not public API, and Motio does not reproduce it; code that needs it has to use a public API instead"
+		: null;
 }

@@ -87,6 +87,7 @@
 											"unknown-symbol",
 											"unsupported-package",
 											"unknown-package",
+											"not-planned",
 											"opaque"
 										]
 									},
@@ -135,6 +136,7 @@
 								"unknown-symbol",
 								"unsupported-package",
 								"unknown-package",
+								"not-planned",
 								"opaque"
 							],
 							"additionalProperties": false,
@@ -164,6 +166,10 @@
 									"minimum": 0
 								},
 								"unknown-package": {
+									"type": "integer",
+									"minimum": 0
+								},
+								"not-planned": {
 									"type": "integer",
 									"minimum": 0
 								},

@@ -94,6 +94,42 @@ describe("buildReport", () => {
 	});
 });
 
+describe("deliberately unsupported packages and symbols", () => {
+	it("are warnings with the reason, and leave the report ok", () => {
+		const report = buildReport(
+			[
+				{
+					file: "site.tsx",
+					errors: [],
+					imports: [
+						{
+							specifier: "@remotion/studio-protocol",
+							kind: "static",
+							line: 1,
+							symbols: [{ name: "installInStudio", isType: false, line: 1 }],
+						},
+						{
+							specifier: "remotion",
+							kind: "static",
+							line: 2,
+							symbols: [{ name: "Internals", isType: false, line: 2 }],
+						},
+					],
+				},
+			],
+			1,
+			manifest,
+		);
+		expect(report.entries.map((e) => [e.symbol, e.status])).toEqual([
+			["installInStudio", "not-planned"],
+			["Internals", "not-planned"],
+		]);
+		expect(report.entries.every((e) => e.note?.includes("by design"))).toBe(true);
+		expect(report.summary["not-planned"]).toBe(2);
+		expect(report.ok).toBe(true);
+	});
+});
+
 describe("createCompatibilityReport", () => {
 	let root: string;
 	beforeAll(async () => {

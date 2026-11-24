@@ -3,7 +3,13 @@ import { createRequire } from "node:module";
 import { join } from "node:path";
 import { loadManifest, lookupSymbol, type Manifest, type SymbolStatus } from "./manifest.js";
 import { declarationExports } from "./manifest-status.js";
-import { describeUnavailable, mapSpecifier, splitSpecifier, type Tier } from "./mapping.js";
+import {
+	describeUnavailable,
+	mapSpecifier,
+	notPlannedSymbol,
+	splitSpecifier,
+	type Tier,
+} from "./mapping.js";
 import { type FileUsage, type ScanOptions, scanProject } from "./scan.js";
 
 /** Status of one used symbol, extending the manifest statuses with resolution failures. */
@@ -15,6 +21,8 @@ export type ReportStatus =
 	| "unsupported-package"
 	/** The package is not in the mapping table at all. */
 	| "unknown-package"
+	/** Deliberately not supported, with the reason in `note`: a warning, not a failure. */
+	| "not-planned"
 	/** A namespace import used as a value: symbols cannot be listed statically. */
 	| "opaque";
 
@@ -100,6 +108,14 @@ function classify(
 			note: describeUnavailable(specifier, undefined),
 		};
 	}
+	if (resolution.kind === "unsupported" && resolution.mapping.notPlanned) {
+		return {
+			status: "not-planned",
+			tier: resolution.mapping.tier,
+			target: null,
+			note: describeUnavailable(specifier, resolution.mapping),
+		};
+	}
 	if (resolution.kind === "unsupported") {
 		return {
 			status: "unsupported-package",
@@ -123,6 +139,15 @@ function classify(
 			tier: resolution.mapping.tier,
 			target: resolution.target,
 			note: `A type ${resolution.target} declares; the manifest does not list it.`,
+		};
+	}
+	const notPlanned = entry ? null : notPlannedSymbol(symbol);
+	if (notPlanned) {
+		return {
+			status: "not-planned",
+			tier: resolution.mapping.tier,
+			target: resolution.target,
+			note: `Motio does not provide "${symbol}", by design: ${notPlanned}.`,
 		};
 	}
 	if (!entry) {
@@ -191,6 +216,7 @@ export function buildReport(
 		"unknown-symbol": 0,
 		"unsupported-package": 0,
 		"unknown-package": 0,
+		"not-planned": 0,
 		opaque: 0,
 	};
 	for (const entry of entries) summary[entry.status]++;
