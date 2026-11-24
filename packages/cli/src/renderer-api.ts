@@ -100,8 +100,13 @@ export interface ResolveFfmpegOptions {
 	onDownloadProgress?: (progress: { downloadedBytes: number; totalBytes: number }) => void;
 }
 
-/** The part of `@motiojs/ffmpeg` that `motio ffmpeg ensure` calls. */
+/** The part of `@motiojs/ffmpeg` that `motio ffmpeg ensure` and `doctor` call. */
 export interface FfmpegPackageApi {
+	/** False while the archives of the pinned build cannot be downloaded (not published yet). */
+	archivesPublished?(): boolean;
+	/** The pinned FFmpeg release and build. */
+	FFMPEG_VERSION?: string;
+	FFMPEG_BUILD?: number;
 	ensureFfmpeg(options?: {
 		onProgress?: (progress: { downloadedBytes: number; totalBytes: number }) => void;
 	}): Promise<{

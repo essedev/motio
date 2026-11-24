@@ -761,6 +761,46 @@ describe("FFmpeg resolution (D-065)", () => {
 		});
 	});
 
+	it("doctor fails, with the fix, when the pinned archives are not published", async () => {
+		const { io, code } = await runWith(
+			["doctor", "--json"],
+			{ resolveFfmpeg: async () => null },
+			{
+				loadFfmpegPackage: async () => ({
+					archivesPublished: () => false,
+					FFMPEG_VERSION: "8.1.3",
+					FFMPEG_BUILD: 1,
+					ensureFfmpeg: async () => {
+						throw new Error("must not download");
+					},
+				}),
+			},
+		);
+		expect(code).toBe(3);
+		const result = parseJson(io);
+		expect(validate("doctor", result)).toBeNull();
+		const ffmpeg = (result.checks as Array<{ name: string; status: string; message: string }>)[1];
+		expect(ffmpeg).toMatchObject({ name: "ffmpeg", status: "fail" });
+		expect(ffmpeg?.message).toContain(
+			"the archives of its pinned FFmpeg 8.1.3-1 are not published yet",
+		);
+		expect(ffmpeg?.message).toContain(
+			"Fix: remove @motiojs/ffmpeg from the project's dependencies",
+		);
+		// The same check after the renderer fell back to PATH.
+		const fallback = await runWith(["doctor", "--json"], {
+			resolveFfmpeg: async () => ({
+				ffmpeg: process.env.MOTIO_FFMPEG ?? "ffmpeg",
+				ffprobe: "ffprobe",
+				source: "path",
+				fallback: { reason: "unpublished", message: "not published" },
+			}),
+		});
+		const check = (parseJson(fallback.io).checks as Array<{ status: string; message: string }>)[1];
+		expect(check?.status).toBe("fail");
+		expect(check?.message).toMatch(/Renders use FFmpeg \S+ from PATH meanwhile/);
+	});
+
 	it("doctor reports a pinned build that is not downloaded yet, without downloading", async () => {
 		const asked: unknown[] = [];
 		const { io } = await runWith(["doctor", "--json"], {
@@ -783,7 +823,12 @@ describe("doctor", () => {
 		const { io } = await run(["doctor", "--json"]);
 		const result = parseJson(io);
 		expect(validate("doctor", result)).toBeNull();
-		const names = (result.checks as Array<{ name: string }>).map((c) => c.name);
+		const checks = result.checks as Array<{ name: string; message: string }>;
+		const names = checks.map((c) => c.name);
+		// A project without a config file is told so in Motio's words.
+		expect(checks.find((c) => c.name === "config")?.message).toBe(
+			"No config file; defaults apply.",
+		);
 		expect(names).toEqual([
 			"node",
 			"ffmpeg",
@@ -793,6 +838,28 @@ describe("doctor", () => {
 			"entry-point",
 			"compatibility",
 		]);
+	});
+
+	it("explains what ffprobe is for when it is missing", async () => {
+		const io = testIo(cwd);
+		const { renderer } = fakeRenderer();
+		await runCli(
+			["doctor", "--json"],
+			io,
+			testDeps(renderer, fakeBundler().bundler, {
+				resolveFfmpeg: async () => ({
+					ffmpeg: process.env.MOTIO_FFMPEG ?? "ffmpeg",
+					ffprobe: join(cwd, "no-ffprobe"),
+					source: "path",
+				}),
+			}),
+		);
+		const checks = parseJson(io).checks as Array<{ name: string; message: string }>;
+		const ffprobe = checks.find((c) => c.name === "ffprobe")?.message;
+		expect(ffprobe).toContain(
+			"it reads media files (durations, audio tracks) and comes with FFmpeg",
+		);
+		expect(ffprobe).not.toContain("M3");
 	});
 });
 

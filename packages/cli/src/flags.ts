@@ -11,7 +11,10 @@ export const BASE_FLAGS = {
 export const PROJECT_FLAGS = {
 	...BASE_FLAGS,
 	props: { type: "string", description: "Input props: a JSON object or the path to a JSON file." },
-	config: { type: "string", description: "Path to the config file (default remotion.config.ts)." },
+	config: {
+		type: "string",
+		description: "Path to the config file (default: the one in the project root, if any).",
+	},
 	"env-file": { type: "string", description: "Dotenv file to read instead of .env." },
 	"public-dir": { type: "string", description: "Public directory (default public/)." },
 	"browser-executable": { type: "string", description: "Chrome to use instead of the pinned one." },

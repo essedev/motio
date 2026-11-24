@@ -7,12 +7,13 @@ import { Flags, parseCommandArgs } from "../args.js";
 import type { CommandContext, CommandResult } from "../context.js";
 import { EXIT, toErrorJson, usageError } from "../errors.js";
 import { FFMPEG_SOURCE_LABELS } from "../ffmpeg.js";
-import { BASE_FLAGS } from "../flags.js";
+import { BASE_FLAGS, PROJECT_FLAGS } from "../flags.js";
 import { resolvePath } from "../options.js";
+import type { ResolvedFfmpeg } from "../renderer-api.js";
 
 export const DOCTOR_FLAGS = {
 	...BASE_FLAGS,
-	config: { type: "string", description: "Path to the config file (default remotion.config.ts)." },
+	config: PROJECT_FLAGS.config,
 	"browser-executable": {
 		type: "string",
 		description: "Check this Chrome instead of the pinned one.",
@@ -91,6 +92,48 @@ export function parseFfmpegRelease(text: string): {
 	return { version, release: match ? [Number(match[1]), Number(match[2])] : null };
 }
 
+/**
+ * A failed check when `@motiojs/ffmpeg` is installed but the archives of its pinned build are
+ * not published, so it cannot be downloaded: the package is then a trap (every
+ * `motio ffmpeg ensure` fails), and the fix is to remove it. Null when that is not the case.
+ */
+async function unpublishedPinnedBuild(
+	ctx: CommandContext,
+	resolved: ResolvedFfmpeg | null,
+): Promise<DoctorCheck[] | null> {
+	const renderer = await ctx.renderer().catch(() => undefined);
+	const pkg = await renderer?.loadFfmpegPackage?.().catch(() => null);
+	const unpublished =
+		resolved?.fallback?.reason === "unpublished" ||
+		(pkg?.archivesPublished !== undefined && !pkg.archivesPublished());
+	if (!unpublished) return null;
+	const build =
+		pkg?.FFMPEG_VERSION !== undefined
+			? ` ${pkg.FFMPEG_VERSION}${pkg.FFMPEG_BUILD !== undefined ? `-${pkg.FFMPEG_BUILD}` : ""}`
+			: "";
+	// What renders use meanwhile: the renderer falls back to the FFmpeg on PATH.
+	const onPath = await run(resolved?.ffmpeg ?? "ffmpeg", ["-hide_banner", "-version"]);
+	const fallback =
+		onPath.code === 0
+			? ` Renders use FFmpeg ${parseFfmpegRelease(onPath.output).version} from PATH meanwhile.`
+			: " No FFmpeg on PATH either, so renders fail.";
+	const message = `@motiojs/ffmpeg is installed, but the archives of its pinned FFmpeg${build} are not published yet, so it cannot be downloaded.${fallback} Fix: remove @motiojs/ffmpeg from the project's dependencies to use the system FFmpeg (brew install ffmpeg, apt install ffmpeg), or set MOTIO_FFMPEG to an FFmpeg executable.`;
+	return [
+		{
+			name: "ffmpeg",
+			status: "fail",
+			message,
+			details: { source: "package", reason: "unpublished", pathFfmpeg: onPath.code === 0 },
+		},
+		{
+			name: "ffprobe",
+			status: "warn",
+			message: "Not checked: the pinned FFmpeg cannot be downloaded.",
+			details: {},
+		},
+	];
+}
+
 async function checkFfmpeg(ctx: CommandContext): Promise<DoctorCheck[]> {
 	const checks: DoctorCheck[] = [];
 	// Never downloads: doctor reports a pinned build that is not downloaded yet instead.
@@ -109,6 +152,10 @@ async function checkFfmpeg(ctx: CommandContext): Promise<DoctorCheck[]> {
 				details: {},
 			},
 		];
+	}
+	if (resolved === null || resolved.fallback) {
+		const unpublished = await unpublishedPinnedBuild(ctx, resolved);
+		if (unpublished) return unpublished;
 	}
 	if (resolved === null) {
 		const message =
@@ -174,7 +221,7 @@ async function checkFfmpeg(ctx: CommandContext): Promise<DoctorCheck[]> {
 		message:
 			ffprobe.code === 0
 				? `ffprobe ${parseFfmpegRelease(ffprobe.output).version}.`
-				: `ffprobe was not found at "${ffprobePath}"; it is needed for media probing (M3).`,
+				: `ffprobe was not found at "${ffprobePath}"; it reads media files (durations, audio tracks) and comes with FFmpeg.`,
 		details: { path: ffprobePath },
 	});
 	return checks;
@@ -301,7 +348,7 @@ export async function doctorCommand(
 			name: "config",
 			status: loaded.warnings.length > 0 ? "warn" : "pass",
 			message: !loaded.file
-				? "No remotion.config.ts; defaults apply."
+				? "No config file; defaults apply."
 				: loaded.warnings.length > 0
 					? `${loaded.file}: ${loaded.warnings.length} setting(s) without full effect in Motio${webpack.length > 0 ? ", including a webpack override (D-003)" : ""}.`
 					: `${loaded.file} loaded.`,
