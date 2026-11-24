@@ -1,4 +1,6 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
+import { createReadStream } from "node:fs";
+import { stat } from "node:fs/promises";
 import { proResProfileNumber, type ResolvedVideoEncoding } from "./codecs.js";
 import { MotioError } from "./errors.js";
 import type { ColorSpace, PixelFormat, X264Preset } from "./options.js";
@@ -505,18 +507,20 @@ export function videoArgs(s: VideoEncodeSettings): string[] {
 	];
 }
 
-/** Second GIF pass: the palette of the whole clip (D-020). */
-export function gifPaletteArgs(
-	intermediate: string,
-	imageFormat: "jpeg" | "png",
-	palette: string,
-): string[] {
+/**
+ * Second GIF pass: the palette of the whole clip (D-020), from the intermediate file fed on stdin
+ * (`runFfmpeg` with `stdinFile`). The palette is one image written at the end and FFmpeg reports
+ * no progress before it, so the share of the file read is the progress of the pass.
+ */
+export function gifPaletteArgs(imageFormat: "jpeg" | "png", palette: string): string[] {
 	return [
 		"-hide_banner",
 		"-loglevel",
 		"error",
+		"-f",
+		"nut",
 		"-i",
-		intermediate,
+		"pipe:0",
 		"-vf",
 		`${gifRgbFilter(imageFormat)},palettegen=max_colors=256:stats_mode=full`,
 		"-frames:v",
@@ -562,13 +566,81 @@ export function gifEncodeArgs(options: {
  * Runs FFmpeg to completion; throws `E_FFMPEG_FAILED` with its stderr. Aborting `signal` kills
  * FFmpeg and rejects with the signal's reason.
  */
-export function runFfmpeg(ffmpeg: string, args: string[], signal?: AbortSignal): Promise<void> {
+/**
+ * Calls `onFrames` with the `frame=` count of FFmpeg's `-progress` output on `stream`, each time it
+ * grows. The count is that of the first video output.
+ */
+function readProgressFrames(
+	stream: NodeJS.ReadableStream,
+	onFrames: (frames: number) => void,
+): void {
+	let pending = "";
+	let last = 0;
+	stream.on("data", (c: Buffer) => {
+		pending += c.toString();
+		const lines = pending.split("\n");
+		pending = lines.pop() ?? "";
+		for (const line of lines) {
+			const m = /^frame=(\d+)/.exec(line);
+			const n = m ? Number(m[1]) : 0;
+			if (n > last) {
+				last = n;
+				onFrames(n);
+			}
+		}
+	});
+}
+
+/** Seconds between two progress reports of a pass run with `onFrames`. */
+const PROGRESS_PERIOD = "0.1";
+
+/** How `runFfmpeg` reports the progress of a pass. */
+export interface FfmpegProgress {
+	/** Receives the growing count of frames of the first video output, every 0.1 s. */
+	onFrames?: (frames: number) => void;
+	/**
+	 * A file streamed to FFmpeg's stdin (the arguments read `pipe:0`); `onRead` receives the share of
+	 * it FFmpeg has taken, from 0 to 1. The pipe applies backpressure, so the share follows FFmpeg's
+	 * reading within the size of the pipe's buffers.
+	 */
+	stdinFile?: { path: string; onRead?: (fraction: number) => void };
+}
+
+/** Runs FFmpeg to completion, optionally reporting its progress. */
+export async function runFfmpeg(
+	ffmpeg: string,
+	args: string[],
+	signal?: AbortSignal,
+	progress: FfmpegProgress = {},
+): Promise<void> {
+	const { onFrames, stdinFile } = progress;
+	const inputSize = stdinFile ? (await stat(stdinFile.path)).size : 0;
 	return new Promise((resolve, reject) => {
 		if (signal?.aborted) {
 			reject(signal.reason);
 			return;
 		}
-		const child = spawn(ffmpeg, args, { stdio: ["ignore", "ignore", "pipe"] });
+		const progressArgs = onFrames
+			? ["-progress", "pipe:1", "-nostats", "-stats_period", PROGRESS_PERIOD]
+			: [];
+		const child = spawn(ffmpeg, [...progressArgs, ...args], {
+			stdio: [stdinFile ? "pipe" : "ignore", onFrames ? "pipe" : "ignore", "pipe"],
+		});
+		if (onFrames && child.stdout) readProgressFrames(child.stdout, onFrames);
+		if (stdinFile && child.stdin) {
+			const input = createReadStream(stdinFile.path);
+			let read = 0;
+			input.on("data", (chunk) => {
+				read += chunk.length;
+				stdinFile.onRead?.(inputSize > 0 ? read / inputSize : 1);
+			});
+			// A failed read ends the input early; FFmpeg then fails on the truncated file and its
+			// exit code rejects below.
+			input.on("error", () => child.stdin?.end());
+			// FFmpeg closing stdin early (it failed) is reported by its exit code below.
+			child.stdin.on("error", () => input.destroy());
+			input.pipe(child.stdin);
+		}
 		const onAbort = () => {
 			child.kill("SIGKILL");
 			reject(signal?.reason);
@@ -576,7 +648,8 @@ export function runFfmpeg(ffmpeg: string, args: string[], signal?: AbortSignal):
 		signal?.addEventListener("abort", onAbort, { once: true });
 		child.on("close", () => signal?.removeEventListener("abort", onAbort));
 		let stderr = "";
-		child.stderr.on("data", (c: Buffer) => {
+		// Piped above, so never null.
+		child.stderr?.on("data", (c: Buffer) => {
 			stderr = (stderr + c.toString()).slice(-8_000);
 		});
 		child.on("error", (err) =>
@@ -618,21 +691,9 @@ export class Encoder {
 		child.stderr.on("data", (c: Buffer) => {
 			this.stderr = (this.stderr + c.toString()).slice(-8_000);
 		});
-		let progress = "";
-		child.stdout.on("data", (c: Buffer) => {
-			progress += c.toString();
-			const lines = progress.split("\n");
-			progress = lines.pop() ?? "";
-			for (const line of lines) {
-				const m = /^frame=(\d+)/.exec(line);
-				if (m) {
-					const n = Number(m[1]);
-					if (n > this.encoded) {
-						this.encoded = n;
-						this.onEncoded(n);
-					}
-				}
-			}
+		readProgressFrames(child.stdout, (n) => {
+			this.encoded = n;
+			this.onEncoded(n);
 		});
 		child.stdin.on("error", (err) => {
 			this.failure ??= this.ffmpegError("FFmpeg stopped reading frames", err);

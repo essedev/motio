@@ -302,11 +302,9 @@ export async function stitchFramesToVideo(
 			await enc.kill();
 		}
 		if (isGif) {
-			await runFfmpeg(
-				ffmpeg,
-				gifPaletteArgs(videoTemp, images.imageFormat, paletteTemp),
-				controller.signal,
-			);
+			await runFfmpeg(ffmpeg, gifPaletteArgs(images.imageFormat, paletteTemp), controller.signal, {
+				stdinFile: { path: videoTemp },
+			});
 			await runFfmpeg(
 				ffmpeg,
 				gifEncodeArgs({

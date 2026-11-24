@@ -287,7 +287,7 @@ describe("encoder arguments", () => {
 
 	it("encodes GIFs in three passes with the D-020 palette recipe and loop values", () => {
 		expect(encode("gif")).toMatch(/-c:v png -i pipe:0 -c:v copy -frames:v 10 -an -f nut/);
-		expect(gifPaletteArgs("/tmp/f.nut", "jpeg", "/tmp/p.png").join(" ")).toContain(
+		expect(gifPaletteArgs("jpeg", "/tmp/p.png").join(" ")).toContain(
 			"scale=in_color_matrix=bt601:in_range=pc:flags=accurate_rnd+full_chroma_int,format=rgb24,palettegen=max_colors=256:stats_mode=full",
 		);
 		const gif = gifEncodeArgs({

@@ -352,8 +352,13 @@ export async function renderMediaInternal(
 		let renderedDoneIn: number | null = null;
 		let encodedDoneIn: number | null = null;
 		const total = frames.length;
-		const units = Math.max(1, 2 * total + (muted ? 0 : 1));
+		// One unit per rendered frame, per encoded frame and for the audio. A GIF is encoded in two
+		// passes after the capture (palette, then the GIF), each counted per frame; the copy to the
+		// intermediate file runs alongside the capture and is not counted.
+		const units = Math.max(1, (isGif ? 3 : 2) * total + (muted ? 0 : 1));
 		let audioDone = false;
+		// Frames through the GIF palette and encode passes, 0 to 2 * total.
+		let gifFrames = 0;
 		const report = (encodedFrames: number, stage: "encoding" | "muxing" = "encoding") =>
 			options.onProgress?.({
 				renderedFrames: rendered,
@@ -361,7 +366,10 @@ export async function renderMediaInternal(
 				renderedDoneIn,
 				encodedDoneIn,
 				stitchStage: stage,
-				progress: Math.min(1, (rendered + encodedFrames + (audioDone ? 1 : 0)) / units),
+				progress: Math.min(
+					1,
+					(rendered + (isGif ? gifFrames : encodedFrames) + (audioDone ? 1 : 0)) / units,
+				),
 			});
 		const openPage = compositionPageFactory(session, composition, {
 			width: composition.width,
@@ -407,18 +415,32 @@ export async function renderMediaInternal(
 				},
 				onProgress: (r, encoded) => {
 					rendered = r;
-					report(encoded);
+					// The GIF's frames are encoded by the passes below, not by this copy.
+					report(isGif ? 0 : encoded);
 				},
 			});
 			slowestFrames = captured.slowestFrames;
 			renderedDoneIn = captured.renderedDoneIn;
 			if (isGif) {
-				report(total, "muxing");
+				report(0);
 				await runFfmpeg(
 					ffmpeg,
-					gifPaletteArgs(videoTemp, video.captureFormat, paletteTemp),
+					gifPaletteArgs(video.captureFormat, paletteTemp),
 					controller.signal,
+					{
+						stdinFile: {
+							path: videoTemp,
+							onRead: (fraction) => {
+								const seen = Math.min(total, Math.floor(fraction * total));
+								if (seen <= gifFrames) return;
+								gifFrames = seen;
+								report(0);
+							},
+						},
+					},
 				);
+				gifFrames = total;
+				report(0);
 				await runFfmpeg(
 					ffmpeg,
 					gifEncodeArgs({
@@ -430,7 +452,15 @@ export async function renderMediaInternal(
 						output: output.temp,
 					}),
 					controller.signal,
+					{
+						onFrames: (n) => {
+							const encoded = Math.min(n, total);
+							gifFrames = total + encoded;
+							report(encoded);
+						},
+					},
 				);
+				gifFrames = 2 * total;
 				if (controller.signal.aborted) throw controller.signal.reason;
 			}
 			encodedDoneIn = performance.now() - start;

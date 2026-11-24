@@ -303,6 +303,49 @@ describe("GIF", () => {
 		expect(gifLoopCount(readFileSync(output))).toBe(0);
 	});
 
+	it("reports progress through the capture, the palette pass and the encode pass", async () => {
+		const composition = await selectComposition({
+			serveUrl,
+			id: "stamp",
+			inputProps: { durationInFrames: 300 },
+		});
+		const reports: { rendered: number; encoded: number; progress: number }[] = [];
+		await renderMedia({
+			serveUrl,
+			composition,
+			codec: "gif",
+			concurrency: 4,
+			outputLocation: join(dir, "progress.gif"),
+			onProgress: (p) =>
+				reports.push({
+					rendered: p.renderedFrames,
+					encoded: p.encodedFrames,
+					progress: p.progress,
+				}),
+		});
+		const progress = reports.map((r) => r.progress);
+		for (let i = 1; i < reports.length; i++) {
+			const [before, after] = [reports[i - 1], reports[i]] as [
+				(typeof reports)[0],
+				(typeof reports)[0],
+			];
+			expect(after.progress).toBeGreaterThanOrEqual(before.progress);
+			expect(after.rendered).toBeGreaterThanOrEqual(before.rendered);
+			expect(after.encoded).toBeGreaterThanOrEqual(before.encoded);
+		}
+		// Capture: one third, rendered frames only (the GIF is not encoded yet).
+		expect(progress.some((p) => p > 0 && p < 1 / 3)).toBe(true);
+		expect(reports.filter((r) => r.progress <= 1 / 3).every((r) => r.encoded === 0)).toBe(true);
+		// Palette pass: the second third moves while FFmpeg reads the clip, before any GIF frame.
+		const palette = reports.filter((r) => r.progress > 1 / 3 + 1e-9 && r.progress < 2 / 3 - 1e-9);
+		expect(palette.length).toBeGreaterThan(2);
+		expect(palette.every((r) => r.rendered === 300 && r.encoded === 0)).toBe(true);
+		expect(progress.some((p) => Math.abs(p - 2 / 3) < 1e-9)).toBe(true);
+		// Encode pass: the last third counts GIF frames, to 1.
+		expect(reports.at(-1)).toEqual({ rendered: 300, encoded: 300, progress: 1 });
+		expect(reports.filter((r) => r.progress < 1).every((r) => r.encoded < 300)).toBe(true);
+	}, 60_000);
+
 	it("writes numberOfGifLoops into the NETSCAPE extension (D-020)", async () => {
 		for (const [loops, expected] of [
 			[0, null],
