@@ -1,4 +1,4 @@
-import { AbsoluteFill, Img, staticFile } from "motio";
+import { AbsoluteFill, Img, staticFile } from "@motiojs/motio";
 import { fontFamily } from "./fonts";
 import type { IntroProps } from "./Intro";
 

@@ -1,4 +1,4 @@
-import { AbsoluteFill } from "motio";
+import { AbsoluteFill } from "@motiojs/motio";
 import { Lockup } from "../brand/Lockup";
 import { useLayout } from "../brand/layout";
 import { PALETTE } from "../brand/tokens";

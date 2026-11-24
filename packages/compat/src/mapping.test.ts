@@ -7,13 +7,18 @@ import {
 } from "./mapping.js";
 
 describe("mapSpecifier", () => {
-	it("maps remotion and its subpaths to motio", () => {
-		expect(mapSpecifier("remotion")).toMatchObject({ kind: "mapped", target: "motio/remotion" });
+	it("maps remotion and its subpaths to @motiojs/motio", () => {
+		expect(mapSpecifier("remotion")).toMatchObject({
+			kind: "mapped",
+			target: "@motiojs/motio/remotion",
+		});
 		expect(mapSpecifier("remotion/version")).toMatchObject({
 			kind: "mapped",
-			target: "motio/remotion/version",
+			target: "@motiojs/motio/remotion/version",
 		});
-		expect(mapSpecifier("remotion/no-react")).toMatchObject({ target: "motio/remotion/no-react" });
+		expect(mapSpecifier("remotion/no-react")).toMatchObject({
+			target: "@motiojs/motio/remotion/no-react",
+		});
 	});
 
 	it("carries subpaths of scoped packages over", () => {

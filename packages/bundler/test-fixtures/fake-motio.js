@@ -1,4 +1,4 @@
-// Stand-in for the `motio` package while @motiojs/core is being written: just enough for
+// Stand-in for the `@motiojs/motio` package while @motiojs/core is being written: just enough for
 // the bundler tests (registerRoot, staticFile with Remotion's encoding).
 let registeredRoot = null;
 

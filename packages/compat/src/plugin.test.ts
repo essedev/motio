@@ -35,7 +35,7 @@ async function bundle(
 		configFile: false,
 		logLevel: "silent",
 		plugins: [motioCompat(options)],
-		resolve: { alias: { "motio/remotion": join(root, "fake", "motio.js"), ...alias } },
+		resolve: { alias: { "@motiojs/motio/remotion": join(root, "fake", "motio.js"), ...alias } },
 		build: {
 			write: false,
 			minify: false,
@@ -63,7 +63,7 @@ const manifest: Manifest = {
 };
 
 describe("motioCompat", () => {
-	it("resolves remotion to motio", async () => {
+	it("resolves remotion to @motiojs/motio/remotion", async () => {
 		const { code } = await bundle(
 			'import { interpolate } from "remotion";\nexport default interpolate();\n',
 		);
@@ -125,9 +125,9 @@ describe("motioCompat", () => {
 	it("warns, or fails in strict mode, on symbols the manifest lists as missing", async () => {
 		const source =
 			'import { interpolate, Video } from "remotion";\nexport default [interpolate, Video];\n';
-		const alias = { "motio/remotion": join(root, "fake", "motio-with-video.js") };
+		const alias = { "@motiojs/motio/remotion": join(root, "fake", "motio-with-video.js") };
 		await writeFile(
-			alias["motio/remotion"],
+			alias["@motiojs/motio/remotion"],
 			"export const interpolate = 1; export const Video = 2;\n",
 		);
 		const { warnings } = await bundle(source, { manifest }, alias);

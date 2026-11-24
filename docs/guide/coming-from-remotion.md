@@ -7,7 +7,7 @@ Motio's API is compatible with the documented API of Remotion 4.0.545: the same 
 1. Install Motio next to the project's dependencies:
 
    ```bash
-   pnpm add motio
+   pnpm add @motiojs/motio
    pnpm add -D @motiojs/cli
    ```
 
@@ -15,9 +15,9 @@ Motio's API is compatible with the documented API of Remotion 4.0.545: the same 
 
 2. Run the `motio` command instead of `remotion`: `motio render`, `motio still`, `motio compositions` and `motio dev` (in place of the Studio) take the same positional arguments and flags.
 
-The bundler resolves `remotion` to `motio` and every `@remotion/<name>` to its Motio package while it builds, so imports can stay as they are. `remotion.config.ts` is read by every command, with the `Config` setters of `@remotion/cli/config`; `.env` files and `REMOTION_`-prefixed variables reach `process.env` as in Remotion.
+The bundler resolves `remotion` to `@motiojs/motio` and every `@remotion/<name>` to its Motio package while it builds, so imports can stay as they are. `remotion.config.ts` is read by every command, with the `Config` setters of `@remotion/cli/config`; `.env` files and `REMOTION_`-prefixed variables reach `process.env` as in Remotion.
 
-To drop the Remotion packages altogether, replace the imports (`from "remotion"` becomes `from "motio"`, `from "@remotion/transitions"` becomes `from "@motiojs/transitions"`); TypeScript then checks the project against Motio's own types.
+To drop the Remotion packages altogether, replace the imports (`from "remotion"` becomes `from "@motiojs/motio"`, `from "@remotion/transitions"` becomes `from "@motiojs/transitions"`); TypeScript then checks the project against Motio's own types.
 
 ## Checking a project with doctor
 

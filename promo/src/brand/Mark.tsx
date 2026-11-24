@@ -1,4 +1,4 @@
-import { spring, useCurrentFrame, useVideoConfig } from "motio";
+import { spring, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
 import { useId } from "react";
 import { BRAND_SPRING, CALM_SPRING, LOGO_GEOMETRY, type Tone, toneColors } from "./tokens";
 

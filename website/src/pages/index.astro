@@ -18,7 +18,7 @@ const heroStyle = `--ease-brand:${brand.easing};--dur-brand:${sec(brand.frames)}
 const badgeSource = await example("examples/src/animation.tsx", "spring");
 const compatSource = [
 	"# Add Motio next to the project's dependencies",
-	"pnpm add motio",
+	"pnpm add @motiojs/motio",
 	"pnpm add -D @motiojs/cli @motiojs/transitions",
 	"",
 	"# Imports stay as they are: check them, then render",
@@ -299,9 +299,10 @@ const github = REPO_URL;
 			<div class="grid compat">
 				<div class="compat-text">
 					<p>
-						While it builds, the bundler resolves <code>remotion</code> to <code>motio</code> and
-						every <code>@remotion/&lt;name&gt;</code> to its Motio package, so imports can stay as
-						they are. The <code>motio</code> command takes the same arguments and flags.
+						While it builds, the bundler resolves <code>remotion</code> to
+						<code>@motiojs/motio</code> and every <code>@remotion/&lt;name&gt;</code> to its Motio
+						package, so imports can stay as they are. The <code>motio</code> command takes the same
+						arguments and flags.
 					</p>
 					<p>
 						Compatibility is pinned to the {baseline} API and checked against recordings of that

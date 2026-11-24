@@ -2,8 +2,8 @@ import { resolveOwnDependency } from "./resolve.js";
 
 /**
  * Remotion specifiers that map into `@motiojs/compat`, pinned to this bundler's own copy:
- * user projects depend on `motio`, not on `@motiojs/compat`, so a strict package manager would
- * not let the project resolve it.
+ * user projects depend on `@motiojs/motio`, not on `@motiojs/compat`, so a strict package manager
+ * would not let the project resolve it.
  */
 export function compatAliases(): Record<string, string> {
 	const aliases: Record<string, string> = {};

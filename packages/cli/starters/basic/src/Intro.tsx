@@ -1,4 +1,4 @@
-import { AbsoluteFill, Series } from "motio";
+import { AbsoluteFill, Series } from "@motiojs/motio";
 import { Logo } from "./Logo";
 import { Title } from "./Title";
 

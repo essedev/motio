@@ -1,4 +1,4 @@
-import { Composition, Folder, Sequence, Still } from "motio";
+import { Composition, Folder, Sequence, Still } from "@motiojs/motio";
 import "./brand/fonts";
 import { REST_FRAME } from "./brand/motion";
 import { MARK_LOOP_FRAMES, MarkLoop } from "./stills/MarkLoop";

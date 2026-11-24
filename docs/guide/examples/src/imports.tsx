@@ -1,5 +1,5 @@
 import { loadFont } from "@motiojs/fonts";
-import { AbsoluteFill, Img } from "motio";
+import { AbsoluteFill, Img } from "@motiojs/motio";
 // region: imports
 import font from "./brand.woff2"; // a URL
 import styles from "./card.module.css"; // the class names: { card: "..." }

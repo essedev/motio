@@ -1,4 +1,4 @@
-import { AbsoluteFill, Freeze, Loop, Sequence, Series, useCurrentFrame } from "motio";
+import { AbsoluteFill, Freeze, Loop, Sequence, Series, useCurrentFrame } from "@motiojs/motio";
 
 const Scene = ({ label }: { label: string }) => {
 	const frame = useCurrentFrame();

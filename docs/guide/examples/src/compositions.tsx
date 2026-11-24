@@ -1,4 +1,10 @@
-import { type CalculateMetadataFunction, Composition, Folder, getInputProps, Still } from "motio";
+import {
+	type CalculateMetadataFunction,
+	Composition,
+	Folder,
+	getInputProps,
+	Still,
+} from "@motiojs/motio";
 
 const Clip = ({ title }: { title: string }) => <h1>{title}</h1>;
 const Poster = ({ title }: { title: string }) => <h1>{title}</h1>;

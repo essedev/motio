@@ -18,7 +18,12 @@ async function writeJson(path: string, value: unknown) {
 describe("motioOptimizeDeps", () => {
 	it("excludes the Motio packages and pre-bundles the dependencies of the React ones", async () => {
 		await writeJson(join(root, "package.json"), {
-			dependencies: { motio: "^1", "@motiojs/lottie": "^1", "lottie-web": "^5", react: "^19" },
+			dependencies: {
+				"@motiojs/motio": "^1",
+				"@motiojs/lottie": "^1",
+				"lottie-web": "^5",
+				react: "^19",
+			},
 			devDependencies: { "@motiojs/cli": "^1" },
 		});
 		await writeJson(join(root, "node_modules/@motiojs/lottie/package.json"), {
@@ -34,8 +39,8 @@ describe("motioOptimizeDeps", () => {
 				"@motiojs/core",
 				"@motiojs/lottie",
 				"@motiojs/media",
+				"@motiojs/motio",
 				"@motiojs/player",
-				"motio",
 			],
 			include: ["@motiojs/lottie > lottie-web"],
 		});
@@ -43,7 +48,7 @@ describe("motioOptimizeDeps", () => {
 
 	it("excludes the packages every page loads when the project has no package.json", () => {
 		expect(motioOptimizeDeps(root)).toEqual({
-			exclude: ["@motiojs/core", "@motiojs/media", "@motiojs/player", "motio"],
+			exclude: ["@motiojs/core", "@motiojs/media", "@motiojs/motio", "@motiojs/player"],
 			include: [],
 		});
 	});

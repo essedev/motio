@@ -13,7 +13,7 @@ export interface Starter {
 	name: string;
 	/** One line, shown in the prompt and in `--help`. */
 	description: string;
-	/** Motio packages the project depends on besides `motio` and `@motiojs/cli`. */
+	/** Motio packages the project depends on besides `@motiojs/motio` and `@motiojs/cli`. */
 	packages: readonly string[];
 	render: StarterOutput;
 	still: StarterOutput;

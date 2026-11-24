@@ -1,4 +1,4 @@
-import { AbsoluteFill, Sequence } from "motio";
+import { AbsoluteFill, Sequence } from "@motiojs/motio";
 import { DISPLAY } from "../brand/fonts";
 import { Lockup } from "../brand/Lockup";
 import { Mark } from "../brand/Mark";

@@ -1,4 +1,4 @@
-import { useVideoConfig } from "motio";
+import { useVideoConfig } from "@motiojs/motio";
 
 /** The frame's shape: scenes recompose for vertical video instead of being cropped. */
 export const useLayout = () => {

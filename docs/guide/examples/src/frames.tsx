@@ -1,4 +1,4 @@
-import { AbsoluteFill, random, useCurrentFrame, useVideoConfig } from "motio";
+import { AbsoluteFill, random, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
 
 // region: clock
 export const Clock = () => {

@@ -1,5 +1,5 @@
 import { type Caption, createTikTokStyleCaptions, type TikTokPage } from "@motiojs/captions";
-import { AbsoluteFill, Sequence, spring, useCurrentFrame, useVideoConfig } from "motio";
+import { AbsoluteFill, Sequence, spring, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
 
 export interface CaptionsProps {
 	/** File in public/ with the words, read by calculateMetadata() in Root.tsx. */

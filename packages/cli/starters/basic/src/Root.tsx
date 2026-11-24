@@ -1,4 +1,4 @@
-import { Composition, Still } from "motio";
+import { Composition, Still } from "@motiojs/motio";
 import "./fonts";
 import { INTRO_DURATION, Intro, type IntroProps } from "./Intro";
 import { Thumbnail } from "./Thumbnail";

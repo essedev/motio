@@ -4,7 +4,7 @@ import {
 	OffthreadVideo,
 	Series,
 	staticFile,
-} from "motio";
+} from "@motiojs/motio";
 
 // region: jump-cut
 /** A stretch of the recording to keep, in seconds: what getSilentParts() returns. */

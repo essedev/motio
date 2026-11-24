@@ -4,7 +4,7 @@ import {
 	spring,
 	useCurrentFrame,
 	useVideoConfig,
-} from "motio";
+} from "@motiojs/motio";
 import { field, word } from "./styles";
 
 export const Hello = () => {

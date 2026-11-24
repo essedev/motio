@@ -31,7 +31,7 @@ const packageDir = (name: string) => dirname(require.resolve(`${name}/package.js
 
 // The fixture declares no dependencies, so every module it imports is aliased from here.
 const aliases: Record<string, string> = {
-	remotion: require.resolve("motio"),
+	remotion: require.resolve("@motiojs/motio"),
 	"@remotion/gif": resolve(here, "../dist/index.js"),
 };
 

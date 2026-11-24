@@ -1,6 +1,6 @@
 /**
- * `motio/no-react`, the equivalent of `remotion/no-react`: `interpolate()`, `random()` and the
- * option checks of `interpolate()`, importable without loading React.
+ * `@motiojs/motio/no-react`, the equivalent of `remotion/no-react`: `interpolate()`, `random()` and
+ * the option checks of `interpolate()`, importable without loading React.
  */
 export {
 	assertValidInterpolateEasingOption,

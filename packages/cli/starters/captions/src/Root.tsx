@@ -1,5 +1,5 @@
 import type { Caption } from "@motiojs/captions";
-import { type CalculateMetadataFunction, Composition, staticFile } from "motio";
+import { type CalculateMetadataFunction, Composition, staticFile } from "@motiojs/motio";
 import { Captions, type CaptionsProps } from "./Captions";
 
 const FPS = 30;

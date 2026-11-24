@@ -1,5 +1,5 @@
 import { loadFont } from "@motiojs/fonts";
-import { staticFile } from "motio";
+import { staticFile } from "@motiojs/motio";
 
 // public/fonts/brand.woff2. The render waits until the file has loaded; a missing file fails it.
 loadFont({ family: "Brand", url: staticFile("fonts/brand.woff2"), weight: 700 });

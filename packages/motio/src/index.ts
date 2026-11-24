@@ -1,6 +1,6 @@
 /**
- * The Motio entry package: the equivalent of `remotion`. `import { ... } from "motio"` exposes
- * the same names as `import { ... } from "remotion"` for every supported symbol.
+ * The Motio entry package: the equivalent of `remotion`. `import { ... } from "@motiojs/motio"`
+ * exposes the same names as `import { ... } from "remotion"` for every supported symbol.
  */
 export {
 	AbsoluteFill,

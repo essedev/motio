@@ -1,4 +1,4 @@
-import { AbsoluteFill, interpolate, useCurrentFrame } from "motio";
+import { AbsoluteFill, interpolate, useCurrentFrame } from "@motiojs/motio";
 
 export const Main = ({ text }: { text: string }) => {
 	const frame = useCurrentFrame();

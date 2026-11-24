@@ -1,6 +1,6 @@
 /**
  * `@motiojs/core/no-react`: the animation helpers that do not import React, for code that runs
- * outside a React tree (Node scripts, workers). `motio/no-react` re-exports it in place of
+ * outside a React tree (Node scripts, workers). `@motiojs/motio/no-react` re-exports it in place of
  * `remotion/no-react`.
  */
 export {

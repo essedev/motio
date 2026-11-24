@@ -1,4 +1,4 @@
-import { AbsoluteFill, interpolate } from "motio";
+import { AbsoluteFill, interpolate } from "@motiojs/motio";
 import { DISPLAY, SANS } from "../brand/fonts";
 import { Lockup } from "../brand/Lockup";
 import { useCalmSpring } from "../brand/motion";

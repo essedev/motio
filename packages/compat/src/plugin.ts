@@ -50,8 +50,8 @@ function isDelivered(manifest: Manifest, specifier: string): boolean {
 }
 
 /**
- * Vite plugin resolving `remotion` to `motio` and `@remotion/<pkg>` (with subpaths) to the
- * Motio package that replaces it, including `@remotion/cli/config` to
+ * Vite plugin resolving `remotion` to `@motiojs/motio/remotion` and `@remotion/<pkg>` (with
+ * subpaths) to the Motio package that replaces it, including `@remotion/cli/config` to
  * `@motiojs/compat/config`. Importing a package Motio does not provide fails the build with
  * the package, the imported symbols and the alternative or roadmap tier.
  */

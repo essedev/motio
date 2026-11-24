@@ -130,7 +130,7 @@ describe("motio init", () => {
 			expect(pkg.scripts.render).toBe(
 				`motio render src/index.ts ${starter.render.composition} ${starter.render.output}`,
 			);
-			expect(pkg.dependencies.motio).toBe("^0.0.0");
+			expect(pkg.dependencies["@motiojs/motio"]).toBe("^0.0.0");
 			expect(pkg.devDependencies["@motiojs/cli"]).toBe("^0.0.0");
 			for (const name of starter.packages) expect(pkg.dependencies[name]).toBe("^0.0.0");
 

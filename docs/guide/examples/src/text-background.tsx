@@ -1,6 +1,6 @@
 import { measureText } from "@motiojs/layout-utils";
+import { AbsoluteFill, interpolate, useCurrentFrame } from "@motiojs/motio";
 import { makeTextBackground, TextBackground } from "@motiojs/text";
-import { AbsoluteFill, interpolate, useCurrentFrame } from "motio";
 
 // region: component
 export const Caption = ({ text }: { text: string }) => {

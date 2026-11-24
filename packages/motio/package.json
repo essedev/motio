@@ -1,5 +1,5 @@
 {
-	"name": "motio",
+	"name": "@motiojs/motio",
 	"version": "0.0.0",
 	"description": "Make videos with React. Remotion-compatible API, Apache-2.0",
 	"license": "Apache-2.0",

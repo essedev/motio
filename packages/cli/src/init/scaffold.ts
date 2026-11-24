@@ -74,7 +74,7 @@ export function packageJson(options: ScaffoldOptions): Record<string, unknown> {
 			...(output.frame !== undefined ? [`--frame=${output.frame}`] : []),
 		].join(" ");
 	const motioPackages = Object.fromEntries(
-		["motio", ...starter.packages].sort().map((name) => [name, version]),
+		["@motiojs/motio", ...starter.packages].sort().map((name) => [name, version]),
 	);
 	return {
 		name: options.name,

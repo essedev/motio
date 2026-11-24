@@ -6,7 +6,7 @@
 	"license": "Apache-2.0",
 	"description": "Compositions written against the Remotion API, rendered by Remotion (oracle) and by Motio for golden comparison",
 	"dependencies": {
-		"motio": "workspace:*",
+		"@motiojs/motio": "workspace:*",
 		"react": "19.3.1",
 		"react-dom": "19.3.1"
 	},

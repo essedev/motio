@@ -4,7 +4,7 @@
 		"module": "esnext",
 		"moduleResolution": "bundler",
 		"lib": ["es2022", "dom", "dom.iterable"],
-		"types": ["motio/client"],
+		"types": ["@motiojs/motio/client"],
 		"jsx": "react-jsx",
 		"strict": true,
 		"noUncheckedIndexedAccess": true,

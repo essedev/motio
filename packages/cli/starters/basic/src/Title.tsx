@@ -1,4 +1,11 @@
-import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "motio";
+import {
+	AbsoluteFill,
+	Easing,
+	interpolate,
+	spring,
+	useCurrentFrame,
+	useVideoConfig,
+} from "@motiojs/motio";
 import { fontFamily } from "./fonts";
 
 export const Title = ({ title, subtitle }: { title: string; subtitle: string }) => {

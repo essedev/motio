@@ -5,7 +5,7 @@ import {
 	spring,
 	useCurrentFrame,
 	useVideoConfig,
-} from "motio";
+} from "@motiojs/motio";
 import { DISPLAY, MONO, SANS } from "../brand/fonts";
 import { useLayout } from "../brand/layout";
 import { useCalmSpring } from "../brand/motion";

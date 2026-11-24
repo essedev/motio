@@ -1,4 +1,4 @@
-import { spring, useCurrentFrame, useVideoConfig } from "motio";
+import { spring, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
 import { BRAND_SPRING, CALM_SPRING } from "./tokens";
 
 /** The brand spring (overshoot) at the current frame, starting after `delay` frames. */

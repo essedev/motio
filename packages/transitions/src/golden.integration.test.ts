@@ -33,7 +33,7 @@ const STUB = join(here, "testing/unrelated-features-stub.ts");
 
 // The fixture declares no dependencies, so every module it imports is aliased from here.
 const aliases: Record<string, string> = {
-	remotion: require.resolve("motio"),
+	remotion: require.resolve("@motiojs/motio"),
 	"@remotion/transitions": resolve(here, "../dist/index.js"),
 	...Object.fromEntries(SUBPATHS.map((s) => [`@remotion/transitions/${s}`, join(DIST, `${s}.js`)])),
 	"@remotion/shapes": STUB,

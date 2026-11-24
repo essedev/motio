@@ -1,7 +1,7 @@
 // End-to-end proof of M1: fixtures/compositions, written against the Remotion API, bundled with
-// @motiojs/bundler (remotion aliased to motio) and rendered with @motiojs/renderer, match the
-// stills and metadata recorded from Remotion 4.0.545 (fixtures/compositions/__golden__/remotion).
-// The default video path (JPEG capture, software compositing, D-041) is compared too, with
+// @motiojs/bundler (remotion aliased to @motiojs/motio) and rendered with @motiojs/renderer, match
+// the stills and metadata recorded from Remotion 4.0.545
+// (fixtures/compositions/__golden__/remotion). The default video path (JPEG capture, software compositing, D-041) is compared too, with
 // JPEG stills from the same Remotion (__golden__/remotion-jpeg, D-050).
 import { readFileSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";

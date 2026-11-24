@@ -7,7 +7,7 @@ Text helpers for [Motio](../../README.md) videos.
 `<TextBackground>` draws a background shape that follows the lines of a block of text: one box per line, merged into a single outline. Where a line sticks out the corner is convex; where a line is shorter than its neighbour the outline turns inward with a concave corner. CSS backgrounds cannot draw this shape (a `background` on an inline element gives separate boxes per line, with no inner corners).
 
 ```tsx
-import { AbsoluteFill } from "motio";
+import { AbsoluteFill } from "@motiojs/motio";
 import { TextBackground } from "@motiojs/text";
 
 export const Caption = () => (

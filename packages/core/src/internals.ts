@@ -1,6 +1,6 @@
 /**
  * Building blocks for other Motio packages (the Player, media components, feature packages).
- * Not part of the Remotion-compatible API and not re-exported by `motio`.
+ * Not part of the Remotion-compatible API and not re-exported by `@motiojs/motio`.
  */
 export {
 	CompositionFrame,

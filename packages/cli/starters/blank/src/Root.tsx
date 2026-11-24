@@ -1,4 +1,4 @@
-import { Composition } from "motio";
+import { Composition } from "@motiojs/motio";
 import { Main } from "./Main";
 
 export const Root = () => (

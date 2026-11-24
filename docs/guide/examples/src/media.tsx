@@ -9,7 +9,7 @@ import {
 	Sequence,
 	staticFile,
 	Video,
-} from "motio";
+} from "@motiojs/motio";
 
 // region: img
 export const Cover = () => (

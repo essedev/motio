@@ -32,7 +32,7 @@ const packageDir = (name: string) => dirname(require.resolve(`${name}/package.js
 // The fixture declares no dependencies, so every module it imports is aliased from here; three
 // and React Three Fiber resolve to this package's copies, the ones @motiojs/three imports.
 const aliases: Record<string, string> = {
-	remotion: require.resolve("motio"),
+	remotion: require.resolve("@motiojs/motio"),
 	"@remotion/three": resolve(here, "../dist/index.js"),
 };
 

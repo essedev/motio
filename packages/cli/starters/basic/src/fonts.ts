@@ -1,5 +1,5 @@
 import { loadFont } from "@motiojs/fonts";
-import { staticFile } from "motio";
+import { staticFile } from "@motiojs/motio";
 
 // Imported once by Root.tsx. Each loadFont() call holds the render until its file is loaded, so
 // no frame is ever captured with a fallback font. A missing file fails the render.

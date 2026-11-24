@@ -1,6 +1,6 @@
 # Architecture
 
-Status: accepted for implementation, 2026-11-22. Revised after an adversarial review and the time-model spike (see `DECISIONS.md`). The project is called Motio: the unscoped `motio` package is the entry point (the equivalent of `remotion`), the other packages live under `@motiojs/*` because the `@motio` scope is taken on npm.
+Status: accepted for implementation, 2026-11-22. Revised after an adversarial review and the time-model spike (see `DECISIONS.md`). The project is called Motio: the `@motiojs/motio` package is the entry point (the equivalent of `remotion`, D-081, since npm refused the unscoped name), and the other packages live under `@motiojs/*` too because the `@motio` scope is taken on npm.
 
 ## What this is
 
@@ -50,9 +50,9 @@ A pnpm monorepo, ESM-only, TypeScript strict throughout, Node 22 or later for No
 
 | Package | Runs in | Responsibility |
 |---|---|---|
-| `motio` | browser | The entry package, the equivalent of `remotion`: re-exports `@motiojs/core` and the media components. |
+| `@motiojs/motio` | browser | The entry package, the equivalent of `remotion`: re-exports `@motiojs/core` and the media components. |
 | `@motiojs/core` | browser | Timeline context and hooks (`useCurrentFrame`, `useVideoConfig`, `useCurrentScale`, `useBufferState`), `Sequence` (full prop set of the target), `Series`, `Loop`, `Freeze`, `AbsoluteFill`, `Composition`, `Still`, `Folder`, `registerRoot`, `getInputProps`, `calculateMetadata`, `interpolate`, `interpolateColors`, `spring`, `measureSpring`, `Easing`, `random`, `staticFile`, `getStaticFiles`, `prefetch`, readiness (`delayRender`, `continueRender`, `cancelRender`, `useDelayRender`), environment (`getRemotionEnvironment`), and the media elements that need no media service: `Img`, `IFrame` and `AnimatedImage` (GIF, APNG, WebP and AVIF decoded with `ImageDecoder`, D-071). The clock shim of the virtual time model lives here too, unused by the renderer (see "Time"). Pure and identical in the Player and in the renderer. No Node APIs. |
-| `@motiojs/media` | browser | `Html5Video`, `OffthreadVideo` and `Html5Audio` (re-exported by `motio` with `Video` and `Audio` as their former names) and the `@remotion/media` `Video` and `Audio` at the package root (D-029). In preview they play native elements; when rendering they take frames from the host's media service and report their audio per frame (see "Media"). `Img`, `IFrame` and `AnimatedImage` are in core. |
+| `@motiojs/media` | browser | `Html5Video`, `OffthreadVideo` and `Html5Audio` (re-exported by `@motiojs/motio` with `Video` and `Audio` as their former names) and the `@remotion/media` `Video` and `Audio` at the package root (D-029). In preview they play native elements; when rendering they take frames from the host's media service and report their audio per frame (see "Media"). `Img`, `IFrame` and `AnimatedImage` are in core. |
 | `@motiojs/player` | browser | `Player` and `Thumbnail`, with the documented ref API and events. Drives core with a real clock; `delayRender` is a no-op there, as in Remotion. |
 | `@motiojs/bundler` | Node | Vite configuration for user projects: entry discovery, `public/` and `staticFile`, `remotion.config.ts` loading, env vars, the compat alias, React deduplication. `bundle()` for renders, `startDevServer()` for `motio dev`. |
 | `@motiojs/preview` | browser | The `motio dev` page: the root's compositions, a `<Player>` with transport controls and a loop range, the props editor, the render check. React only, no UI framework. |

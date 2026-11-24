@@ -1,4 +1,4 @@
-import { AbsoluteFill, interpolate } from "motio";
+import { AbsoluteFill, interpolate } from "@motiojs/motio";
 import { DISPLAY } from "../brand/fonts";
 import { useLayout } from "../brand/layout";
 import { useBrandSpring } from "../brand/motion";

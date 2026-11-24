@@ -1,7 +1,7 @@
 /**
  * Media components. The root mirrors `@remotion/media` (`Video`, `Audio`); the components of
  * the `remotion` package (`Html5Video`, `OffthreadVideo`, `Html5Audio`) are exported here too and
- * re-exported by `motio` under Remotion's names.
+ * re-exported by `@motiojs/motio` under Remotion's names.
  */
 export type {
 	DeprecatedAmplification,

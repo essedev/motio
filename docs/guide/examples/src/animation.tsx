@@ -7,7 +7,7 @@ import {
 	spring,
 	useCurrentFrame,
 	useVideoConfig,
-} from "motio";
+} from "@motiojs/motio";
 
 // region: interpolate
 export const LowerThird = ({ name }: { name: string }) => {

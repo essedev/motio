@@ -135,7 +135,7 @@ beforeAll(async () => {
 	root = await mkdtemp(join(tmpdir(), "motio-init-"));
 	const tarballs = join(root, "tarballs");
 	const packages = workspacePackages();
-	const names = closure(["motio", "@motiojs/cli", ...STARTERS.flatMap((s) => s.packages)]);
+	const names = closure(["@motiojs/motio", "@motiojs/cli", ...STARTERS.flatMap((s) => s.packages)]);
 	overrides = {};
 	await Promise.all(
 		names.map(async (name) => {
@@ -193,8 +193,8 @@ describe.each(STARTERS.map((starter) => [starter.name, starter] as const))(
 			expect(code, `${stdout}\n${stderr}`).toBe(0);
 		});
 
-		it("type-checks imports of assets through motio/client", async () => {
-			// What the bundle accepts, typed by the published `motio/client` the starter references.
+		it("type-checks imports of assets through @motiojs/motio/client", async () => {
+			// What the bundle accepts, typed by the published `@motiojs/motio/client` the starter references.
 			const file = join(dir, "src/assets-check.ts");
 			await writeFile(
 				file,

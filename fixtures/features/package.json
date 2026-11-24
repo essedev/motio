@@ -6,7 +6,7 @@
 	"license": "Apache-2.0",
 	"description": "Feature-package fixtures (transitions, shapes, paths, noise) written against the Remotion API, for M2 golden comparison",
 	"dependencies": {
-		"motio": "workspace:*",
+		"@motiojs/motio": "workspace:*",
 		"@motiojs/transitions": "workspace:*",
 		"@motiojs/shapes": "workspace:*",
 		"@motiojs/paths": "workspace:*",

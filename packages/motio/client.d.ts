@@ -1,6 +1,7 @@
 // Types for the files a Motio project imports through its bundler (Vite): assets become URLs,
 // `?raw` gives a file's text, CSS modules give their class names. Reference them with
-// `"types": ["motio/client"]` in tsconfig.json, or `/// <reference types="motio/client" />`.
+// `"types": ["@motiojs/motio/client"]` in tsconfig.json, or
+// `/// <reference types="@motiojs/motio/client" />`.
 
 // Images.
 declare module "*.apng" {

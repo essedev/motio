@@ -2,9 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /** Motio packages every preview page loads, whether or not the project lists them. */
-const ALWAYS_EXCLUDED = ["motio", "@motiojs/core", "@motiojs/media", "@motiojs/player"];
+const ALWAYS_EXCLUDED = ["@motiojs/motio", "@motiojs/core", "@motiojs/media", "@motiojs/player"];
 
-const isMotioPackage = (name: string) => name === "motio" || name.startsWith("@motiojs/");
+const isMotioPackage = (name: string) => name.startsWith("@motiojs/");
 
 /** Packages Vite pre-bundles itself and that must stay single copies. */
 const REACT = new Set(["react", "react-dom"]);
@@ -24,12 +24,13 @@ function readManifest(path: string): Manifest | null {
  *
  * Motio's browser packages are ES modules that share state through `@motiojs/core` (the
  * composition registry, the timeline contexts). Vite's dependency optimizer would copy core into
- * every package it pre-bundles (`motio`, `@motiojs/fonts`...), while the preview page, imported by
- * path, loads the original: two registries, and the page lists no composition. So the Motio
- * packages are excluded and served as they are, the way a workspace serves linked packages. The
- * third-party dependencies of the React packages among them (`lottie-web`, `three`...), which may
- * be CommonJS, are pre-bundled through Vite's nested `parent > dependency` syntax; Node packages
- * such as `@motiojs/cli` get no such entry, their dependencies never load in the page.
+ * every package it pre-bundles (`@motiojs/motio`, `@motiojs/fonts`...), while the preview page,
+ * imported by path, loads the original: two registries, and the page lists no composition. So
+ * the Motio packages are excluded and served as they are, the way a workspace serves linked
+ * packages. The third-party dependencies of the React packages among them (`lottie-web`,
+ * `three`...), which may be CommonJS, are pre-bundled through Vite's nested `parent > dependency`
+ * syntax; Node packages such as `@motiojs/cli` get no such entry, their dependencies never load
+ * in the page.
  */
 export function motioOptimizeDeps(rootDir: string): { exclude: string[]; include: string[] } {
 	const project = readManifest(join(rootDir, "package.json"));

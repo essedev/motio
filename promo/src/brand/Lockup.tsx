@@ -1,4 +1,4 @@
-import { spring, useCurrentFrame, useVideoConfig } from "motio";
+import { spring, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
 import { DISPLAY } from "./fonts";
 import { Mark } from "./Mark";
 import { BRAND_SPRING, LOGO_GEOMETRY, type Tone } from "./tokens";

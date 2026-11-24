@@ -6,7 +6,7 @@ import {
 	staticFile,
 	useCurrentFrame,
 	useVideoConfig,
-} from "motio";
+} from "@motiojs/motio";
 import { fontFamily } from "./fonts";
 
 export const Logo = () => {

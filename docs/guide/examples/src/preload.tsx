@@ -1,6 +1,6 @@
+import { AbsoluteFill, Audio, OffthreadVideo, Sequence } from "@motiojs/motio";
 import { Player } from "@motiojs/player";
 import { preloadAudio, preloadVideo } from "@motiojs/preload";
-import { AbsoluteFill, Audio, OffthreadVideo, Sequence } from "motio";
 import { useEffect, useState } from "react";
 
 // region: preload

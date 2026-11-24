@@ -1,4 +1,10 @@
-import { cancelRender, continueRender, delayRender, staticFile, useDelayRender } from "motio";
+import {
+	cancelRender,
+	continueRender,
+	delayRender,
+	staticFile,
+	useDelayRender,
+} from "@motiojs/motio";
 import { useEffect, useRef } from "react";
 
 // region: delay-render

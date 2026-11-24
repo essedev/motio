@@ -34,7 +34,7 @@ const manifest: Manifest = {
 describe("updateManifestStatuses", () => {
 	it("promotes exported symbols, demotes removed ones and keeps manual statuses", async () => {
 		const exports: Record<string, string[]> = {
-			"motio/remotion": ["interpolate", "watchStaticFile"],
+			"@motiojs/motio/remotion": ["interpolate", "watchStaticFile"],
 			"@motiojs/google-fonts/Roboto": ["loadFont", "getInfo"],
 		};
 		const result = await updateManifestStatuses(manifest, async (s) =>

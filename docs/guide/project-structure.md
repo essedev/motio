@@ -26,7 +26,7 @@ my-video/
 
 <!-- example: ../../packages/cli/starters/basic/src/index.ts -->
 ```ts
-import { registerRoot } from "motio";
+import { registerRoot } from "@motiojs/motio";
 import { Root } from "./Root";
 
 registerRoot(Root);
@@ -36,7 +36,7 @@ The root renders one `<Composition>` per video and one `<Still>` per image (see 
 
 <!-- example: ../../packages/cli/starters/basic/src/Root.tsx -->
 ```tsx
-import { Composition, Still } from "motio";
+import { Composition, Still } from "@motiojs/motio";
 import "./fonts";
 import { INTRO_DURATION, Intro, type IntroProps } from "./Intro";
 import { Thumbnail } from "./Thumbnail";
@@ -105,7 +105,7 @@ import notes from "./notes.md?raw"; // the text of the file
 
 Imported files are part of the bundle: small ones are inlined, others copied next to it. Use this for files that belong to the code (a logo, a font, a data file); keep large media in `public/`.
 
-TypeScript knows these imports through the types of `motio/client`, which every starter's `tsconfig.json` lists in `"types": ["motio/client"]`. In a project created otherwise, add it there, or put `/// <reference types="motio/client" />` in a `.d.ts` file under `src/`.
+TypeScript knows these imports through the types of `@motiojs/motio/client`, which every starter's `tsconfig.json` lists in `"types": ["@motiojs/motio/client"]`. In a project created otherwise, add it there, or put `/// <reference types="@motiojs/motio/client" />` in a `.d.ts` file under `src/`.
 
 A file outside the project directory (`import changelog from "../../CHANGELOG.md?raw"`) is bundled for renders like any other, and `motio dev` serves every file the project's code references, through an import, a CSS `url()` or `new URL(..., import.meta.url)`. Other files outside the project, or outside its workspace in a monorepo, are refused, and the dev server prints a warning that names the file.
 
@@ -118,7 +118,7 @@ A file outside the project directory (`import changelog from "../../CHANGELOG.md
 | `still` | `motio still src/index.ts <composition> out/<name>.png` |
 | `typecheck` | `tsc` |
 
-Dependencies: `motio` (components and hooks), React, and the feature packages a starter uses (`@motiojs/fonts`, `@motiojs/captions`). Development dependencies: `@motiojs/cli` (the `motio` command), TypeScript and `@types/react`. Every Motio package has the same version; upgrade them together.
+Dependencies: `@motiojs/motio` (components and hooks), React, and the feature packages a starter uses (`@motiojs/fonts`, `@motiojs/captions`). Development dependencies: `@motiojs/cli` (the `motio` command), TypeScript and `@types/react`. Every Motio package has the same version; upgrade them together.
 
 ## Environment variables
 

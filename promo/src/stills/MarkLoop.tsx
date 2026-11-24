@@ -1,4 +1,4 @@
-import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "motio";
+import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "@motiojs/motio";
 import { Mark, markPose } from "../brand/Mark";
 import { CALM_SPRING, markBounds, PALETTE } from "../brand/tokens";
 

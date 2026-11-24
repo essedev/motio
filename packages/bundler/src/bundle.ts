@@ -135,7 +135,7 @@ function assertSafeOutDir(outDir: string, rootDir: string, entryPoint: string): 
 async function assertRegistersRoot(entryPoint: string): Promise<void> {
 	const source = await readFile(entryPoint, "utf8");
 	const { imports } = scanSource(entryPoint, source, {
-		filter: (s) => s === "remotion" || s === "motio" || s === "@motiojs/core",
+		filter: (s) => s === "remotion" || s === "@motiojs/motio" || s === "@motiojs/core",
 	});
 	const found = imports.some((usage) =>
 		usage.symbols.some((s) => s.name === "registerRoot" || s.name === "*"),
@@ -143,7 +143,7 @@ async function assertRegistersRoot(entryPoint: string): Promise<void> {
 	if (!found) {
 		throw new MotioError(
 			"E_NO_REGISTER_ROOT",
-			`The entry point ${entryPoint} does not call registerRoot(). Import it from "remotion" or "motio" and register the root component, or pass ignoreRegisterRootWarning.`,
+			`The entry point ${entryPoint} does not call registerRoot(). Import it from "remotion" or "@motiojs/motio" and register the root component, or pass ignoreRegisterRootWarning.`,
 			{ entryPoint },
 		);
 	}
@@ -284,7 +284,9 @@ function collectingLogger(warnings: string[]): Logger {
 	};
 }
 
-/** Resolves the page runtime the user's own `motio` would load, so core is not duplicated. */
+/**
+ * Resolves the page runtime the user's own `@motiojs/motio` would load, so core is not duplicated.
+ */
 function resolveRuntime(rootDir: string, requested: string | undefined): string {
 	if (requested) {
 		if (isAbsolute(requested)) return requested;
@@ -300,7 +302,7 @@ function resolveRuntime(rootDir: string, requested: string | undefined): string 
 		}
 		return path;
 	}
-	const motioEntry = resolveModule("motio", rootDir);
+	const motioEntry = resolveModule("@motiojs/motio", rootDir);
 	const candidates = [
 		motioEntry
 			? resolveModule(DEFAULT_RUNTIME_MODULE, motioEntry.replace(/[/\\]dist[/\\].*$/, ""))
@@ -312,7 +314,7 @@ function resolveRuntime(rootDir: string, requested: string | undefined): string 
 	if (!path) {
 		throw new MotioError(
 			"E_RUNTIME_NOT_FOUND",
-			`Cannot resolve "${DEFAULT_RUNTIME_MODULE}" (the page runtime). Install "motio" in the project.`,
+			`Cannot resolve "${DEFAULT_RUNTIME_MODULE}" (the page runtime). Install "@motiojs/motio" in the project.`,
 			{ rootDir },
 		);
 	}

@@ -15,7 +15,7 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 
 ## Layout
 
-- `packages/*`: workspace packages (`motio` entry, `@motiojs/core`, `renderer`, `cli`, `compat`, `bundler`, `testing`, ...).
+- `packages/*`: workspace packages (`@motiojs/motio` entry, `@motiojs/core`, `renderer`, `cli`, `compat`, `bundler`, `testing`, ...).
 - `tools/oracle/`: standalone project that installs the pinned Remotion and records reference values. Outside the workspace.
 - `fixtures/*`: compositions used by integration and golden tests.
 - `website/`: landing and docs (Astro, Starlight). Pages are read from `docs/guide/`, the CLI's `COMMANDS` and schemas, and package READMEs at build time (`website/src/lib/docs-loader.ts`); never copy them into the site. `brand/`: generated brand kit. `promo/`: the promotional material, made with Motio.

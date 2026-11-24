@@ -1,4 +1,4 @@
-import { AbsoluteFill } from "motio";
+import { AbsoluteFill } from "@motiojs/motio";
 import { DISPLAY, MONO, SANS } from "../brand/fonts";
 import { useLayout } from "../brand/layout";
 import { useCalmSpring } from "../brand/motion";

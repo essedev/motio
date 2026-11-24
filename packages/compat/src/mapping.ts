@@ -30,8 +30,9 @@ const featurePackage = (name: string, tier: Tier, milestone: string): PackageMap
 
 /** Every known Remotion package. Anything not listed is reported as unknown. */
 export const PACKAGE_MAPPINGS: readonly PackageMapping[] = [
-	// `motio/remotion` is Motio's API with `VERSION` set to the Remotion API version it implements.
-	{ source: "remotion", target: "motio/remotion", tier: 1, milestone: "M1" },
+	// `@motiojs/motio/remotion` is Motio's API with `VERSION` set to the Remotion API version it
+	// implements.
+	{ source: "remotion", target: "@motiojs/motio/remotion", tier: 1, milestone: "M1" },
 	{ source: "@remotion/bundler", target: "@motiojs/bundler", tier: 1, milestone: "M1" },
 	{ source: "@remotion/renderer", target: "@motiojs/renderer", tier: 1, milestone: "M1" },
 	{
