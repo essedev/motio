@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chromeArgs } from "./browser/flags.js";
+import { chromeArgs, resolveRasterMode } from "./browser/flags.js";
 import { makeCancelSignal, toAbortController } from "./cancel.js";
 import { MotioError } from "./errors.js";
 import { shouldRetry } from "./pool.js";
@@ -36,6 +36,75 @@ describe("chrome flags", () => {
 		expect(gpuFlags(chromeArgs({ gl: "angle" }, { transparent: true }))).toEqual([]);
 		// chromiumOptions.flags can still undo it.
 		expect(gpuFlags(chromeArgs({ flags: { "disable-gpu-compositing": false } }))).toEqual([]);
+	});
+
+	describe("raster and canvas", () => {
+		const graphics = (args: string[]) =>
+			args.filter((a) =>
+				[
+					"--disable-gpu-compositing",
+					"--disable-gpu-rasterization",
+					"--disable-accelerated-2d-canvas",
+				].includes(a),
+			);
+
+		it("draws canvases in software where Chrome composites on the GPU", () => {
+			// Opaque, CPU raster: software compositing, where both canvas modes draw the same pixels.
+			expect(graphics(chromeArgs())).toEqual(["--disable-gpu-compositing"]);
+			expect(graphics(chromeArgs({}, { canvas: "gpu" }))).toEqual(["--disable-gpu-compositing"]);
+			expect(graphics(chromeArgs({}, { transparent: true }))).toEqual([
+				"--disable-gpu-rasterization",
+				"--disable-accelerated-2d-canvas",
+			]);
+			expect(graphics(chromeArgs({}, { transparent: true, canvas: "gpu" }))).toEqual([
+				"--disable-gpu-rasterization",
+			]);
+		});
+
+		it("rasterises on the GPU, compositing on SwiftShader for every capture", () => {
+			expect(graphics(chromeArgs({}, { raster: "gpu" }))).toEqual([
+				"--disable-accelerated-2d-canvas",
+			]);
+			expect(graphics(chromeArgs({}, { raster: "gpu", transparent: true, canvas: "gpu" }))).toEqual(
+				[],
+			);
+		});
+
+		it("rasterises on the GPU when the project asks for gl swangle, unless raster says otherwise", () => {
+			expect(graphics(chromeArgs({ gl: "swangle" }, { transparent: true }))).toEqual([
+				"--disable-accelerated-2d-canvas",
+			]);
+			expect(graphics(chromeArgs({ gl: "swangle" }, { raster: "cpu", transparent: true }))).toEqual(
+				["--disable-gpu-rasterization", "--disable-accelerated-2d-canvas"],
+			);
+			// Motio's default backend is SwiftShader too, and swiftshader maps to the same flags: only
+			// an explicit swangle switches the raster.
+			expect(graphics(chromeArgs({ gl: null }, { transparent: true }))).toContain(
+				"--disable-gpu-rasterization",
+			);
+			expect(graphics(chromeArgs({ gl: "swiftshader" }, { transparent: true }))).toContain(
+				"--disable-gpu-rasterization",
+			);
+			expect(resolveRasterMode(undefined, "swangle")).toBe("gpu");
+			expect(resolveRasterMode("cpu", "swangle")).toBe("cpu");
+			expect(resolveRasterMode(null, undefined)).toBe("cpu");
+		});
+
+		it("leaves hardware GL to Chrome unless the render asks", () => {
+			expect(graphics(chromeArgs({ gl: "angle" }, { transparent: true }))).toEqual([]);
+			expect(graphics(chromeArgs({ gl: "angle" }, { raster: "cpu", canvas: "software" }))).toEqual([
+				"--disable-gpu-rasterization",
+				"--disable-accelerated-2d-canvas",
+			]);
+		});
+
+		it("lets chromiumOptions.flags undo the canvas flag", () => {
+			const args = chromeArgs(
+				{ flags: { "disable-accelerated-2d-canvas": false } },
+				{ transparent: true },
+			);
+			expect(graphics(args)).toEqual(["--disable-gpu-rasterization"]);
+		});
 	});
 
 	it("maps chromiumOptions to flags", () => {

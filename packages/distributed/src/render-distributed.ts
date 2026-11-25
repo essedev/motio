@@ -224,6 +224,8 @@ export async function renderDistributed(
 			"captureMethod",
 			"pagesPerBrowser",
 			"timeModel",
+			"raster",
+			"canvas",
 			"crf",
 			"imageFormat",
 			"jpegQuality",

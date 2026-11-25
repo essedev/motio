@@ -7,10 +7,15 @@ export {
 } from "./browser/ensure.js";
 export {
 	BEGIN_FRAME_FLAGS,
+	CANVAS_MODES,
+	type CanvasMode,
 	type ChromiumOptions,
 	chromeArgs,
 	DETERMINISM_FLAGS,
 	type OpenGlRenderer,
+	RASTER_MODES,
+	type RasterMode,
+	resolveRasterMode,
 } from "./browser/flags.js";
 export { CHROME_ARCHIVE_SHA256, CHROME_VERSION, type ChromePlatform } from "./browser/pinned.js";
 export type { BrowserLog, BrowserLogLocation, BrowserLogType } from "./browser-log.js";

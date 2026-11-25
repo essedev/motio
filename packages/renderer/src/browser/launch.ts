@@ -1,7 +1,13 @@
 import type { ChildProcess } from "node:child_process";
 import puppeteer, { type Browser } from "puppeteer-core";
 import { MotioError } from "../errors.js";
-import { BEGIN_FRAME_FLAGS, type ChromiumOptions, chromeArgs } from "./flags.js";
+import {
+	BEGIN_FRAME_FLAGS,
+	type CanvasMode,
+	type ChromiumOptions,
+	chromeArgs,
+	type RasterMode,
+} from "./flags.js";
 
 /** Options for launching one browser process. */
 export interface LaunchOptions {
@@ -17,11 +23,19 @@ export interface LaunchOptions {
 	beginFrame?: { scale: number };
 	/** The pages capture with a transparent background, which selects the compositing (D-041). */
 	transparent?: boolean;
+	/** The render's `raster` option; unset, `resolveRasterMode` decides from the GL backend. */
+	raster?: RasterMode | null;
+	/** The render's `canvas` option; unset, canvases are drawn in software with software GL. */
+	canvas?: CanvasMode | null;
 }
 
 /** Chrome's command line for a launch. */
 export function launchArgs(options: LaunchOptions): string[] {
-	const base = chromeArgs(options.chromiumOptions, { transparent: options.transparent === true });
+	const base = chromeArgs(options.chromiumOptions, {
+		transparent: options.transparent === true,
+		raster: options.raster ?? null,
+		canvas: options.canvas ?? null,
+	});
 	if (!options.beginFrame) return [...base, `--window-size=${options.width},${options.height}`];
 	const scale = `--force-device-scale-factor=${options.beginFrame.scale}`;
 	const args = base.map((a) => (a.startsWith("--force-device-scale-factor=") ? scale : a));

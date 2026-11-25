@@ -53,22 +53,71 @@ export const DETERMINISM_FLAGS: readonly string[] = [
 ];
 
 /**
- * How a software-GL browser rasterises and composites (D-041). Opaque captures composite in
- * software: compositing on the GPU process makes SwiftShader draw every frame on the CPU, and
- * pages competing for it slow every capture down, while Chrome's software compositor draws the
- * same layers far cheaper (WebGL still runs on SwiftShader). Transparent captures rasterise on the
- * CPU and composite on SwiftShader: only that keeps the faint alpha of antialiased edges of scaled
- * and 3D-transformed layers that Remotion's renders carry (D-031), which a transparent output
- * shows. Both draw opaque content to identical pixels.
+ * How Chrome rasterises the page: on the CPU (`cpu`, the default) or on the GPU (`gpu`, which with
+ * software GL means SwiftShader). Remotion's pixels depend on its `gl` option: its default (Chrome
+ * decides) gives the CPU raster's pixels, `gl: "swangle"` (its Lambda and Cloud Run default) the
+ * GPU raster's.
  */
-export function softwareCompositingFlags(transparent: boolean): readonly string[] {
-	return transparent ? ["--disable-gpu-rasterization"] : ["--disable-gpu-compositing"];
+export type RasterMode = "cpu" | "gpu";
+
+/**
+ * How Chrome draws a 2D `<canvas>`: in software (`software`, the default) or GPU-accelerated
+ * (`gpu`), as Remotion's renders do. Software is deterministic under load and far faster on
+ * heavy canvases with software GL; the GPU canvas gives Remotion's canvas pixels.
+ */
+export type CanvasMode = "software" | "gpu";
+
+/** Values of `raster`. */
+export const RASTER_MODES: readonly RasterMode[] = ["cpu", "gpu"];
+
+/** Values of `canvas`. */
+export const CANVAS_MODES: readonly CanvasMode[] = ["software", "gpu"];
+
+/**
+ * The raster mode a render uses: the explicit option, else `gpu` when the project asked for
+ * `gl: "swangle"` itself (so it gets the pixels Remotion gives with that setting), else `cpu`.
+ * Motio's default backend is SwiftShader too, but only an explicit `swangle` switches the raster.
+ */
+export function resolveRasterMode(
+	raster: RasterMode | null | undefined,
+	gl: OpenGlRenderer | null | undefined,
+): RasterMode {
+	return raster ?? (gl === "swangle" ? "gpu" : "cpu");
+}
+
+/**
+ * How a software-GL browser rasterises, composites and draws canvases (D-041). With the CPU
+ * raster, opaque captures composite in software: compositing on the GPU process makes SwiftShader
+ * draw every frame on the CPU, and pages competing for it slow every capture down, while Chrome's
+ * software compositor draws the same layers far cheaper (WebGL still runs on SwiftShader).
+ * Transparent captures rasterise on the CPU and composite on SwiftShader: only that keeps the
+ * faint alpha of antialiased edges of scaled and 3D-transformed layers that Remotion's renders
+ * carry (D-031), which a transparent output shows. The GPU raster composites on SwiftShader
+ * whatever the capture. The canvas flag only matters where Chrome composites on the GPU: under
+ * software compositing both canvas modes draw identical pixels (measured), so it is left out there.
+ */
+export function softwareCompositingFlags(
+	transparent: boolean,
+	raster: RasterMode = "cpu",
+	canvas: CanvasMode = "software",
+): readonly string[] {
+	if (raster === "cpu" && !transparent) return ["--disable-gpu-compositing"];
+	const flags = raster === "cpu" ? ["--disable-gpu-rasterization"] : [];
+	if (canvas === "software") flags.push("--disable-accelerated-2d-canvas");
+	return flags;
 }
 
 /** Options of `chromeArgs()` that come from the render rather than from `chromiumOptions`. */
 export interface ChromeArgsContext {
 	/** The page captures with a transparent background (PNG with alpha). Default false. */
 	transparent?: boolean;
+	/** The `raster` option; unset, `resolveRasterMode` decides. */
+	raster?: RasterMode | null;
+	/**
+	 * The `canvas` option. Unset, canvases are drawn in software with software GL, and hardware GL
+	 * keeps Chrome's own choice.
+	 */
+	canvas?: CanvasMode | null;
 }
 
 /**
@@ -118,7 +167,13 @@ export function chromeArgs(
 	for (const f of DETERMINISM_FLAGS) put(f);
 	for (const f of glFlags) put(f);
 	if (gl === "swangle" || gl === "swiftshader") {
-		for (const f of softwareCompositingFlags(context.transparent === true)) put(f);
+		const raster = resolveRasterMode(context.raster, options.gl);
+		const canvas = context.canvas ?? "software";
+		for (const f of softwareCompositingFlags(context.transparent === true, raster, canvas)) put(f);
+	} else {
+		// Hardware GL keeps Chrome's own choice unless the render asked for one.
+		if (context.raster === "cpu") put("--disable-gpu-rasterization");
+		if (context.canvas === "software") put("--disable-accelerated-2d-canvas");
 	}
 	if (options.ignoreCertificateErrors) put("--ignore-certificate-errors");
 	if (options.disableWebSecurity) put("--disable-web-security");

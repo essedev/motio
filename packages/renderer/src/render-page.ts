@@ -15,7 +15,7 @@ import {
 } from "@motiojs/core/protocol";
 import type { Browser, CDPSession, Page } from "puppeteer-core";
 import { type BrowserLease, type BrowserPool, killBrowser } from "./browser/browser-pool.js";
-import type { ChromiumOptions } from "./browser/flags.js";
+import type { CanvasMode, ChromiumOptions, RasterMode } from "./browser/flags.js";
 import { type LaunchOptions, launchArgs, launchBrowser } from "./browser/launch.js";
 import type { BrowserLog, BrowserLogType } from "./browser-log.js";
 import { BEGIN_FRAME_ATTEMPTS, type CaptureMethod } from "./capture-method.js";
@@ -36,6 +36,10 @@ export interface PageConfig {
 	scale: number;
 	/** Transparent default background, for PNG capture with alpha. */
 	transparent: boolean;
+	/** The `raster` option of the render (see `ChromeArgsContext`). */
+	raster?: RasterMode | null;
+	/** The `canvas` option of the render (see `ChromeArgsContext`). */
+	canvas?: CanvasMode | null;
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
 	/** Base URL of the renderer's media service, passed to the page in the run context. */
 	mediaBaseUrl?: string;
@@ -356,6 +360,8 @@ export class RenderPage {
 			width: Math.round(config.width * config.scale),
 			height: Math.round(config.height * config.scale),
 			transparent: config.transparent,
+			raster: config.raster ?? null,
+			canvas: config.canvas ?? null,
 			...(config.captureMethod === "begin-frame" ? { beginFrame: { scale: config.scale } } : {}),
 		};
 		const shared = config.browsers;

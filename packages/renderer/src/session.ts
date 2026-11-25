@@ -1,7 +1,7 @@
 import type { CompositionInfo, ResolvedComposition, TimeModel } from "@motiojs/core/protocol";
 import { BrowserPool, defaultPagesPerBrowser } from "./browser/browser-pool.js";
 import { ensureBrowser } from "./browser/ensure.js";
-import type { ChromiumOptions } from "./browser/flags.js";
+import type { CanvasMode, ChromiumOptions, RasterMode } from "./browser/flags.js";
 import type { BrowserLog } from "./browser-log.js";
 import {
 	type CaptureMethod,
@@ -14,9 +14,11 @@ import { type MediaServer, startMediaServer } from "./media-server.js";
 import { type HeadlessBrowser, sharedBrowsers } from "./open-browser.js";
 import {
 	type LogLevel,
+	resolveCanvasOption,
 	resolveEnvVariables,
 	resolveInputProps,
 	resolvePagesPerBrowser,
+	resolveRasterOption,
 	resolveTimeout,
 } from "./options.js";
 import { type PageConfig, RenderPage } from "./render-page.js";
@@ -85,6 +87,21 @@ export interface BrowserSessionOptions {
 	 * Listing compositions (`getCompositions`, `selectComposition`) always uses the frame model.
 	 */
 	timeModel?: TimeModel | null;
+	/**
+	 * Motio extension: how Chrome rasterises the page. `cpu` (the default) gives the pixels of
+	 * Remotion's default setting; `gpu` (SwiftShader with software GL) gives the pixels Remotion
+	 * renders with `gl: "swangle"`, its Lambda and Cloud Run default, and is what Motio uses when
+	 * `chromiumOptions.gl` is `"swangle"` and this option is unset. With opaque captures the GPU
+	 * raster also composites on SwiftShader, which takes about 2.5 times as long.
+	 */
+	raster?: RasterMode | null;
+	/**
+	 * Motio extension: how Chrome draws a 2D `<canvas>` when it composites on the GPU (transparent
+	 * captures, or the GPU raster). `software` (the default) is deterministic under load and far
+	 * faster on heavy canvases; `gpu` draws canvases as Remotion does. Opaque captures with the CPU
+	 * raster draw identical pixels either way. Hardware GL keeps Chrome's choice unless set.
+	 */
+	canvas?: CanvasMode | null;
 }
 
 /** A Remotion-shaped composition description returned by `getCompositions` and `selectComposition`. */
@@ -125,6 +142,10 @@ export interface BrowserSession {
 	envVariables: Record<string, string>;
 	timeoutInMilliseconds: number;
 	chromiumOptions: ChromiumOptions;
+	/** The `raster` option as given (null: decided from the GL backend). */
+	raster: RasterMode | null;
+	/** The `canvas` option as given (null: the default). */
+	canvas: CanvasMode | null;
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
 	/**
 	 * Browsers shared by the session's pages (D-042), killed by `close()` unless they belong to a
@@ -162,6 +183,8 @@ export async function openSession(
 	const envVariables = resolveEnvVariables(options.envVariables);
 	const timeoutInMilliseconds = resolveTimeout(options.timeoutInMilliseconds);
 	const pagesPerBrowser = resolvePagesPerBrowser(options.pagesPerBrowser);
+	const raster = resolveRasterOption(options.raster);
+	const canvas = resolveCanvasOption(options.canvas);
 	const shared = options.puppeteerInstance ? sharedBrowsers(options.puppeteerInstance) : null;
 	const chromiumOptions = shared ? shared.chromiumOptions : (options.chromiumOptions ?? {});
 	const executablePath =
@@ -212,6 +235,8 @@ export async function openSession(
 		envVariables,
 		timeoutInMilliseconds,
 		chromiumOptions,
+		raster,
+		canvas,
 		onBrowserLog,
 		browsers,
 		warnings,
@@ -220,6 +245,8 @@ export async function openSession(
 			executablePath,
 			serveUrl: server.url,
 			chromiumOptions,
+			raster,
+			canvas,
 			inputProps,
 			envVariables,
 			timeoutInMilliseconds,

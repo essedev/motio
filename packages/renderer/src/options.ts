@@ -1,5 +1,6 @@
 import { availableParallelism } from "node:os";
 import { TIME_MODELS, type TimeModel } from "@motiojs/core/protocol";
+import { CANVAS_MODES, type CanvasMode, RASTER_MODES, type RasterMode } from "./browser/flags.js";
 import { MotioError } from "./errors.js";
 
 /** Image format of captured video frames. */
@@ -372,4 +373,28 @@ export function resolvePagesPerBrowser(value: number | null | undefined): number
 		);
 	}
 	return value;
+}
+
+/** Resolves the `raster` option: `cpu`, `gpu`, or null for the default (see `resolveRasterMode`). */
+export function resolveRasterOption(value: unknown): RasterMode | null {
+	if (value === null || value === undefined) return null;
+	if (!RASTER_MODES.includes(value as RasterMode)) {
+		throw invalid(`raster must be "cpu" or "gpu", got ${JSON.stringify(value)}`, "raster", {
+			value,
+			allowed: RASTER_MODES,
+		});
+	}
+	return value as RasterMode;
+}
+
+/** Resolves the `canvas` option: `software`, `gpu`, or null for the default. */
+export function resolveCanvasOption(value: unknown): CanvasMode | null {
+	if (value === null || value === undefined) return null;
+	if (!CANVAS_MODES.includes(value as CanvasMode)) {
+		throw invalid(`canvas must be "software" or "gpu", got ${JSON.stringify(value)}`, "canvas", {
+			value,
+			allowed: CANVAS_MODES,
+		});
+	}
+	return value as CanvasMode;
 }
