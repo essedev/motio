@@ -47,11 +47,11 @@ Dopo un pull, `make try-update DIR=../my-video` aggiorna i pacchetti del progett
 - FFmpeg 5.1 o successivo con libx264 nel `PATH` (lo controlla `motio doctor`).
 - Il `chrome-headless-shell` a versione fissa viene scaricato al primo uso (`motio browser ensure`).
 
-## FFmpeg a versione fissa (in arrivo)
+## FFmpeg a versione fissa
 
-`@motiojs/ffmpeg` darà a ogni render la stessa build di FFmpeg 8.1.3, con tutti gli encoder che servono a Motio (H.264, H.265, AV1, VP8, VP9, ProRes, AAC, MP3, Opus), scaricata al primo uso e verificata con uno SHA-256 scritto nel pacchetto. I suoi archivi non sono ancora pubblicati, quindi per ora non installarlo: Motio usa l'FFmpeg nel `PATH`, e `MOTIO_FFMPEG` gliene indica un altro.
+`@motiojs/ffmpeg` dà a ogni render la stessa build di FFmpeg 8.1.3, con tutti gli encoder che servono a Motio (H.264, H.265, AV1, VP8, VP9, ProRes, AAC, MP3, Opus), scaricata al primo uso e verificata con uno SHA-256 scritto nel pacchetto. Senza il pacchetto, Motio usa l'FFmpeg nel `PATH`, e `MOTIO_FFMPEG` gliene indica un altro.
 
-I binari saranno build di FFmpeg con licenza GPL (GPL-3.0 o successiva), pubblicate con i sorgenti esatti, gli script di build ([`tools/ffmpeg-build/`](tools/ffmpeg-build/)) e i testi delle licenze. Motio esegue FFmpeg come programma separato, quindi usarli non cambia la licenza di Motio, del tuo progetto o dei tuoi video. I dettagli sono nel [README del pacchetto](packages/ffmpeg/README.md) e in D-065.
+I binari sono build di FFmpeg con licenza GPL (GPL-3.0 o successiva), pubblicate in [una release su GitHub](https://github.com/essedev/motio/releases/tag/ffmpeg-8.1.3-1) con i sorgenti esatti, gli script di build ([`tools/ffmpeg-build/`](tools/ffmpeg-build/)) e i testi delle licenze. Motio esegue FFmpeg come programma separato, quindi usarli non cambia la licenza di Motio, del tuo progetto o dei tuoi video. I dettagli sono nel [README del pacchetto](packages/ffmpeg/README.md) e in D-065.
 
 ## Documentazione
 

@@ -9,12 +9,12 @@ In this order:
 1. `ffmpegExecutable` (and `ffprobeExecutable`) passed to a [Node API](rendering-node.md) call;
 2. the `MOTIO_FFMPEG` (and `MOTIO_FFPROBE`) environment variables;
 3. `ffmpeg.executable` (and `ffmpeg.ffprobeExecutable`) in [`motio.config.ts`](configuration.md), read by every `motio` command and returned by `loadConfig()` for Node scripts;
-4. `@motiojs/ffmpeg`, when the project installs it (coming soon, see below);
+4. `@motiojs/ffmpeg`, when the project installs it (see below);
 5. `ffmpeg` and `ffprobe` on `PATH`.
 
 The variables sit above the file so a machine can point at its own FFmpeg (a CI image, a render server) without editing the project.
 
-When `@motiojs/ffmpeg` is installed but cannot download its build (its archives are not published, the platform has none, or the network fails), a render falls back to the FFmpeg on `PATH`, if one runs, and warns with `W_FFMPEG_FALLBACK`; the `--json` result of `motio render` then has `ffmpeg.source: "path"` and a `fallback` with the reason. A downloaded archive whose digest differs from the pinned one, or a build that fails its checks, still stops the render: those are never replaced silently.
+When `@motiojs/ffmpeg` is installed but cannot download its build (the platform has none, or the network fails), a render falls back to the FFmpeg on `PATH`, if one runs, and warns with `W_FFMPEG_FALLBACK`; the `--json` result of `motio render` then has `ffmpeg.source: "path"` and a `fallback` with the reason. A downloaded archive whose digest differs from the pinned one, or a build that fails its checks, still stops the render: those are never replaced silently.
 
 `motio doctor` reports which one it found, its version and, for each codec, the encoder it would use. A render checks the version and the encoders it needs before opening any browser tab, so a missing encoder fails at once with `E_FFMPEG_ENCODER_MISSING` and the encoder's name. The `--json` result of `motio render` records the path, version and source of the FFmpeg that encoded the video.
 
@@ -27,13 +27,16 @@ sudo apt install ffmpeg      # Debian, Ubuntu
 
 Both builds have every encoder in the table below. Distributions differ in versions and options, so two machines with different FFmpeg builds can produce slightly different files.
 
-## The pinned FFmpeg (coming soon)
+## The pinned FFmpeg
 
-`@motiojs/ffmpeg` will make every render use the same FFmpeg 8.1.3 build on every machine of a platform (macOS and Linux, arm64 and x64; not Windows yet), with every encoder Motio uses: downloaded on first use into `~/.cache/motio/ffmpeg`, checked against a SHA-256 written in the package, and never downloaded again. It is meant for CI and render servers, where the system FFmpeg is old, missing or different from your machine's.
+`@motiojs/ffmpeg` makes every render use the same FFmpeg 8.1.3 build on every machine of a platform (macOS and Linux, arm64 and x64; not Windows yet), with every encoder Motio uses: downloaded on first use into `~/.cache/motio/ffmpeg`, checked against a SHA-256 written in the package, and never downloaded again. It is meant for CI and render servers, where the system FFmpeg is old, missing or different from your machine's.
 
-The package is in the repository, but the archives it downloads are not published yet, so do not install it for now: use the system FFmpeg above, or point `MOTIO_FFMPEG` at the build you want. This page will say when it can be installed. A project that installs it anyway keeps rendering with the FFmpeg on `PATH` and the `W_FFMPEG_FALLBACK` warning, while `motio doctor` reports the unpublished archives as a failure (exit code 3) and `motio ffmpeg ensure` fails with `E_FFMPEG_DOWNLOAD`; removing the package from the dependencies clears both.
+```bash
+pnpm add -D @motiojs/ffmpeg
+motio ffmpeg ensure        # optional: download now instead of on the first render
+```
 
-The binaries will be GPL-licensed builds of FFmpeg. Motio runs them as a separate program, so they do not change the licence of your project or of your videos; if you redistribute the binaries yourself (inside a container image, for example), the GPL's conditions for distributing them apply. The [package README](../../packages/ffmpeg/README.md) has the details and the source of every library.
+The binaries are GPL-licensed builds of FFmpeg, published with their exact sources and build scripts in [a GitHub release](https://github.com/essedev/motio/releases/tag/ffmpeg-8.1.3-1). Motio runs them as a separate program, so they do not change the licence of your project or of your videos; if you redistribute the binaries yourself (inside a container image, for example), the GPL's conditions for distributing them apply. The [package README](../../packages/ffmpeg/README.md) has the details and the source of every library.
 
 ## Codecs
 
