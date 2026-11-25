@@ -1,11 +1,8 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-/**
- * GitHub owner of the repository. A placeholder until the public repository exists, like
- * `RELEASE_OWNER` in `@motiojs/ffmpeg`: replace both when it is published.
- */
-export const REPO_OWNER = "OWNER_PLACEHOLDER";
+/** GitHub owner of the repository, the same as `RELEASE_OWNER` in `@motiojs/ffmpeg`. */
+export const REPO_OWNER = "essedev";
 export const REPO_URL = `https://github.com/${REPO_OWNER}/motio`;
 export const REPO_BRANCH = "main";
 
@@ -38,7 +35,7 @@ export const repoBlobUrl = (relPath: string, kind: "blob" | "tree" | "edit" = "b
 	`${REPO_URL}/${kind}/${REPO_BRANCH}/${relPath.replace(/^\/+/, "")}`;
 
 /**
- * Public URL of the site, for canonical links and Open Graph images. A placeholder (the reserved
- * `.example` domain) until the site has a host; set `MOTIO_SITE_URL` to build for one.
+ * Public URL of the site, for canonical links and Open Graph images; `MOTIO_SITE_URL` builds for
+ * another host (a preview deploy, for example).
  */
-export const SITE_URL = (process.env.MOTIO_SITE_URL ?? "https://motio.example").replace(/\/$/, "");
+export const SITE_URL = (process.env.MOTIO_SITE_URL ?? "https://motio.esse.dev").replace(/\/$/, "");

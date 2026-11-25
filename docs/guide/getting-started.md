@@ -13,7 +13,7 @@
 Until the packages are on npm, the repository builds a project that installs them from local tarballs. It needs pnpm, and Node 22.18 or later to run the script:
 
 ```bash
-git clone https://github.com/OWNER_PLACEHOLDER/motio.git
+git clone https://github.com/essedev/motio.git
 cd motio
 pnpm install
 make try DIR=../my-video                     # or TEMPLATE=blank, TEMPLATE=captions

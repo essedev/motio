@@ -1,6 +1,6 @@
 # Motio website
 
-The landing page and the documentation, built with Astro and Starlight. Nothing is deployed yet.
+The landing page and the documentation, built with Astro and Starlight, to be served at https://motio.esse.dev. Nothing is deployed yet.
 
 ```bash
 make site          # dev server: http://localhost:4321
@@ -25,8 +25,9 @@ Nothing is copied into the site: `src/lib/docs-loader.ts` reads the repository a
 
 Both run in `make check`.
 
-## Placeholders
+## Repository and host
 
-- `REPO_OWNER` in `src/lib/repo.ts` (`OWNER_PLACEHOLDER`), like `RELEASE_OWNER` in `@motiojs/ffmpeg`: GitHub and edit links point to it until the repository is public.
-- `SITE_URL` (`https://motio.example`, or `MOTIO_SITE_URL` at build time): canonical and Open Graph URLs.
+- `REPO_OWNER` in `src/lib/repo.ts` (`essedev`, like `RELEASE_OWNER` in `@motiojs/ffmpeg`): GitHub and edit links.
+- `SITE_URL` (`https://motio.esse.dev`, or `MOTIO_SITE_URL` at build time): canonical and Open Graph URLs.
+- `NPM_PUBLISHED` in `src/lib/repo.ts`: false until the packages are on npm; while false the landing shows `pnpm create motio` without a copy button and links to the guide's way of trying Motio from a clone.
 - `public/og/motio-card.png`: one 1200x630 card shared by every page, rendered by Motio from `promo/` (`make promo`, composition `og-card`). Cards per page would point `og:image` in `src/layouts/Landing.astro` and `astro.config.mjs` at new images.
