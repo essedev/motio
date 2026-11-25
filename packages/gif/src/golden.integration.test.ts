@@ -82,7 +82,15 @@ describe("Gif matches Remotion's reference stills", () => {
 		for (const [id, list] of Object.entries(frames)) {
 			const composition = await selectComposition({ serveUrl, id, inputProps: {} });
 			for (const frame of list) {
-				const { buffer } = await renderStill({ serveUrl, composition, frame, imageFormat: "png" });
+				// Remotion draws canvases on the GPU, and so must the parity check (Motio's default draws
+				// transparent canvases in software).
+				const { buffer } = await renderStill({
+					serveUrl,
+					composition,
+					frame,
+					imageFormat: "png",
+					canvas: "gpu",
+				});
 				if (!buffer) throw new Error("renderStill returned no buffer");
 				const ours = await decodeImage(buffer);
 				const ref = await decodeImage(

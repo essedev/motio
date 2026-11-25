@@ -83,7 +83,14 @@ describe("Starburst matches Remotion's reference stills", () => {
 		for (const [id, list] of Object.entries(frames)) {
 			const composition = await selectComposition({ serveUrl, id, inputProps: {} });
 			for (const frame of list) {
-				const { buffer } = await renderStill({ serveUrl, composition, frame, imageFormat: "png" });
+				// Remotion's setting when recording: gl swangle, hence the GPU raster.
+				const { buffer } = await renderStill({
+					serveUrl,
+					composition,
+					frame,
+					imageFormat: "png",
+					chromiumOptions: { gl: "swangle" },
+				});
 				if (!buffer) throw new Error("renderStill returned no buffer");
 				const ours = await decodeImage(buffer);
 				const ref = await decodeImage(

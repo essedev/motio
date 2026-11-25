@@ -101,7 +101,15 @@ describe("HTML-in-canvas presentations match Remotion's reference stills", () =>
 		for (const [id, list] of Object.entries(frames)) {
 			const composition = await selectComposition({ serveUrl, id, inputProps: {} });
 			for (const frame of list) {
-				const { buffer } = await renderStill({ serveUrl, composition, frame, imageFormat: "png" });
+				// Remotion's setting when recording (gl swangle, hence the GPU raster) and its GPU canvas.
+				const { buffer } = await renderStill({
+					serveUrl,
+					composition,
+					frame,
+					imageFormat: "png",
+					chromiumOptions: { gl: "swangle" },
+					canvas: "gpu",
+				});
 				if (!buffer) throw new Error("renderStill returned no buffer");
 				const ours = await decodeImage(buffer);
 				const ref = await decodeImage(

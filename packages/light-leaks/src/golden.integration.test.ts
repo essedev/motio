@@ -115,7 +115,14 @@ const hueDistance = (a: number, b: number) => Math.min(Math.abs(a - b), 360 - Ma
 
 async function still(id: string, frame: number) {
 	const composition = await selectComposition({ serveUrl, id, inputProps: {} });
-	const { buffer } = await renderStill({ serveUrl, composition, frame, imageFormat: "png" });
+	// Remotion's setting when recording: gl swangle, hence the GPU raster.
+	const { buffer } = await renderStill({
+		serveUrl,
+		composition,
+		frame,
+		imageFormat: "png",
+		chromiumOptions: { gl: "swangle" },
+	});
 	if (!buffer) throw new Error("renderStill returned no buffer");
 	const ours = await decodeImage(buffer);
 	const ref = await decodeImage(
