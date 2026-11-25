@@ -36,7 +36,10 @@ export interface Project {
 	excluded: Record<string, string>;
 }
 
-/** `chromiumOptions.gl` both renderers use: software WebGL, Motio's default (D-046). */
+/**
+ * `chromiumOptions.gl` both renderers use: software WebGL, Motio's default backend (D-046). Set
+ * explicitly, it also makes Motio rasterise on the GPU, as Remotion does with it (`raster`).
+ */
 export const GL = "swangle";
 
 /** Scale of every reference still: below 1 the renderers rasterise differently (D-025). */

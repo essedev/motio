@@ -20,17 +20,11 @@
 						"chat-flow": "the contact avatar comes from unavatar.io, an external service that rate-limits repeated renders",
 						"telegram-chat-flow": "the contact avatar comes from unavatar.io, an external service that rate-limits repeated renders",
 						"imessage-chat-flow": "the contact avatar comes from unavatar.io, an external service that rate-limits repeated renders"
-					},
-					"knownFlickerMismatch": {
-						"signup-flow": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
 					}
 				},
 				"brand-guidelines": {
 					"file": "src/remotion/brand-guidelines-root.tsx",
-					"script": "scripts/review-brand-guidelines.mts",
-					"knownFlickerMismatch": {
-						"BrandGuidelines": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					}
+					"script": "scripts/review-brand-guidelines.mts"
 				},
 				"canvas-spike": {
 					"file": "src/remotion/canvas-spike-root.tsx",
@@ -42,19 +36,11 @@
 				},
 				"design-audit": {
 					"file": "src/remotion/design-audit-root.tsx",
-					"script": "remotion.config.ts",
-					"knownMismatch": {
-						"design-audit": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"audit-boxes": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"scan-fix": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					}
+					"script": "remotion.config.ts"
 				},
 				"fomo": {
 					"file": "src/remotion/fomo-root.tsx",
-					"script": "scripts/review-fomo.mts",
-					"knownFlickerMismatch": {
-						"FomoLimitOrders": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					}
+					"script": "scripts/review-fomo.mts"
 				},
 				"hero-bg": {
 					"file": "src/remotion/hero-bg-root.tsx",
@@ -62,13 +48,7 @@
 				},
 				"independent-templates": {
 					"file": "src/remotion/independent-templates-root.tsx",
-					"script": "scripts/review-independent-templates.mts",
-					"knownMismatch": {
-						"ProductShowcase": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					},
-					"knownFlickerMismatch": {
-						"OrderFlow": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					}
+					"script": "scripts/review-independent-templates.mts"
 				},
 				"jitter-lab-angle": {
 					"file": "src/remotion/jitter-lab/angle.tsx",
@@ -88,24 +68,11 @@
 				},
 				"launch-anything": {
 					"file": "src/remotion/launch-anything-root.tsx",
-					"script": "scripts/review-launch-anything.mts",
-					"knownMismatch": {
-						"LaunchAnything": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					}
+					"script": "scripts/review-launch-anything.mts"
 				},
 				"motion-pack": {
 					"file": "src/remotion/motion-pack-root.tsx",
-					"script": "remotion.config.ts",
-					"knownMismatch": {
-						"string-art": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"comic-panels": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"life-grid": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"flow-field": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"phyllotaxis": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"brick-mosaic": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"topo-lines": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"duotone-beat": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					}
+					"script": "remotion.config.ts"
 				},
 				"not-found": {
 					"file": "src/remotion/not-found-root.tsx",
@@ -158,30 +125,13 @@
 				"previews": {
 					"file": "src/remotion/previews-entry.ts",
 					"script": "scripts/render-previews.mts",
-					"tailwind": true,
-					"knownMismatch": {
-						"punch-lines": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"count-grid": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"reel-collage": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"moodboard-reveal": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"logo-assemble": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"follower-rush": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"orbit-gallery": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"bloom-lockup": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					},
-					"knownFlickerMismatch": {
-						"text-reveal": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work",
-						"type-morph": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					}
+					"tailwind": true
 				},
 				"split": {
 					"file": "src/remotion/split-entry.ts",
 					"script": "none (bundled like x-brandwheel-entry.ts, which it mirrors)",
 					"tailwind": true,
-					"ignoreRegisterRootWarning": true,
-					"knownMismatch": {
-						"OpusSplit": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
-					}
+					"ignoreRegisterRootWarning": true
 				},
 				"x-brandwheel": {
 					"file": "src/remotion/x-brandwheel-entry.ts",
