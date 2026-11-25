@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/rive",
 	"version": "0.1.0",
-	"description": "Rive animations driven by Motio's timeline, mirroring @remotion/rive",
+	"description": "Rive animations driven by Motio's timeline. Compatible with the @remotion/rive API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

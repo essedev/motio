@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/google-fonts",
 	"version": "0.1.0",
-	"description": "Type-safe Google Fonts loading for Motio, mirroring @remotion/google-fonts",
+	"description": "Type-safe Google Fonts loading for Motio. Compatible with the @remotion/google-fonts API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

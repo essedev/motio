@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/shapes",
 	"version": "0.1.0",
-	"description": "SVG shape generators and components (browser), compatible with @remotion/shapes",
+	"description": "SVG shape generators and components (browser). Compatible with the @remotion/shapes API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

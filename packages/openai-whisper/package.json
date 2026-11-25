@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/openai-whisper",
 	"version": "0.1.0",
-	"description": "OpenAI Whisper API transcriptions to captions, mirroring @remotion/openai-whisper",
+	"description": "OpenAI Whisper API transcriptions to captions. Compatible with the @remotion/openai-whisper API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

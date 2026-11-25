@@ -19,7 +19,7 @@ const ARROW = " --> ";
 
 const isIndexLine = (line: string): boolean => INDEX.test(line.trim());
 
-// Tolerant parsing (the default) mirrors the observable behaviour of
+// Tolerant parsing (the default) matches the observable behaviour of
 // Remotion's parser: each component is read with parseInt, so short or
 // malformed fields degrade instead of failing, and the milliseconds field is
 // added as an integer count ("1,5" is 1005 ms).

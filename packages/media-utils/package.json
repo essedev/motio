@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/media-utils",
 	"version": "0.1.0",
-	"description": "Audio data, waveform and spectrum visualization, media metadata (browser), mirroring @remotion/media-utils",
+	"description": "Audio data, waveform and spectrum visualization, media metadata (browser). Compatible with the @remotion/media-utils API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

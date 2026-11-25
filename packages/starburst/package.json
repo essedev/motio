@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/starburst",
 	"version": "0.1.0",
-	"description": "Starburst rays drawn with WebGL for Motio, mirroring @remotion/starburst",
+	"description": "Starburst rays drawn with WebGL for Motio. Compatible with the @remotion/starburst API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

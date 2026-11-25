@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/fonts",
 	"version": "0.1.0",
-	"description": "Load local or remote font files and block the render until they are ready (browser), mirroring @remotion/fonts",
+	"description": "Load local or remote font files and block the render until they are ready (browser). Compatible with the @remotion/fonts API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

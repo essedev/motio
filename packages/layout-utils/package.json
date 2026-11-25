@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/layout-utils",
 	"version": "0.1.0",
-	"description": "Text measurement and fitting in the browser, mirroring @remotion/layout-utils",
+	"description": "Text measurement and fitting in the browser. Compatible with the @remotion/layout-utils API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

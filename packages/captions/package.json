@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/captions",
 	"version": "0.1.0",
-	"description": "Caption parsing, serialization and paging (browser), compatible with @remotion/captions",
+	"description": "Caption parsing, serialization and paging (browser). Compatible with the @remotion/captions API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

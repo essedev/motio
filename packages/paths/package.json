@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/paths",
 	"version": "0.1.0",
-	"description": "SVG path utilities (browser), compatible with @remotion/paths",
+	"description": "SVG path utilities (browser). Compatible with the @remotion/paths API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

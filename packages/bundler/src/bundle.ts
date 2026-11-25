@@ -28,7 +28,7 @@ export const DEFAULT_RUNTIME_MODULE = "@motiojs/core/runtime";
 /** Rewrites the Vite configuration, Motio's counterpart of Remotion's `webpackOverride`. */
 export type ViteOverrideFn = (config: InlineConfig) => InlineConfig | Promise<InlineConfig>;
 
-/** Options of {@link bundle}, mirroring Remotion's `bundle()` where it applies to Vite. */
+/** Options of {@link bundle}, compatible with Remotion's documented `bundle()` where it applies to Vite. */
 export interface BundleOptions {
 	/** Path to the file that calls `registerRoot()`, absolute or relative to `rootDir`. */
 	entryPoint: string;

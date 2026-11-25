@@ -3,7 +3,7 @@ import { MotioError } from "../errors.js";
 /** OpenGL backend, as Remotion's `chromiumOptions.gl`. */
 export type OpenGlRenderer = "angle" | "egl" | "swiftshader" | "swangle" | "vulkan" | "angle-egl";
 
-/** Browser options, mirroring Remotion's documented `chromiumOptions`. */
+/** Browser options, compatible with Remotion's documented `chromiumOptions`. */
 export interface ChromiumOptions {
 	/** OpenGL backend. Motio defaults to `swangle` (software, identical pixels across runs). */
 	gl?: OpenGlRenderer | null;

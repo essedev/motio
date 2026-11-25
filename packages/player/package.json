@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/player",
 	"version": "0.1.0",
-	"description": "Embed Motio compositions in React apps: Player and Thumbnail, mirroring @remotion/player",
+	"description": "Embed Motio compositions in React apps: Player and Thumbnail. Compatible with the @remotion/player API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

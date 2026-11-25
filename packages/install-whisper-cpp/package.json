@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/install-whisper-cpp",
 	"version": "0.1.0",
-	"description": "Installs whisper.cpp and its models, transcribes and converts to captions, mirroring @remotion/install-whisper-cpp",
+	"description": "Installs whisper.cpp and its models, transcribes and converts to captions. Compatible with the @remotion/install-whisper-cpp API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

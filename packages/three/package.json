@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/three",
 	"version": "0.1.0",
-	"description": "React Three Fiber scenes driven by Motio's timeline, mirroring @remotion/three",
+	"description": "React Three Fiber scenes driven by Motio's timeline. Compatible with the @remotion/three API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

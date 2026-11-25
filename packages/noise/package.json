@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/noise",
 	"version": "0.1.0",
-	"description": "Seeded simplex noise (browser), compatible with @remotion/noise",
+	"description": "Seeded simplex noise (browser). Compatible with the @remotion/noise API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",

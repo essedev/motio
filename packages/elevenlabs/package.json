@@ -1,7 +1,7 @@
 {
 	"name": "@motiojs/elevenlabs",
 	"version": "0.1.0",
-	"description": "ElevenLabs Speech to Text transcripts to captions, mirroring @remotion/elevenlabs",
+	"description": "ElevenLabs Speech to Text transcripts to captions. Compatible with the @remotion/elevenlabs API",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
