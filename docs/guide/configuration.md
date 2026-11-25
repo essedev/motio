@@ -111,12 +111,33 @@ The headless Chrome every command renders in.
 | `timeoutMs` | 30000: how long a frame may wait on `delayRender()` | `--timeout` |
 | `captureMethod` | `auto` | `--capture-method` |
 | `pagesPerBrowser` | the pages spread over two browsers | `--pages-per-browser` |
-| `chromiumOptions.gl` | Chrome's choice; `swiftshader` renders WebGL without a GPU | `--gl` |
+| `raster` | `cpu`; `gpu` when `chromiumOptions.gl` is `swangle` (see [Raster and canvas](#raster-and-canvas)) | `--raster` |
+| `canvas` | `software` (see [Raster and canvas](#raster-and-canvas)) | `--canvas` |
+| `chromiumOptions.gl` | SwiftShader, software rendering that draws the same pixels on every machine; `angle`, `egl` or `vulkan` use the GPU | `--gl` |
 | `chromiumOptions.userAgent` | Chrome's | `--user-agent` |
 | `chromiumOptions.ignoreCertificateErrors` | `false` | `--ignore-certificate-errors` |
 | `chromiumOptions.disableWebSecurity` | `false` | `--disable-web-security` |
 | `chromiumOptions.darkMode` | `false` | `--dark-mode` |
 | `chromiumOptions.headless` | `true` | none |
+
+### Raster and canvas
+
+Two settings choose how Chrome draws, and with them whose pixels a render reproduces. Both are project choices: they have no `MOTIO_*` variable, and a flag wins over the file.
+
+**`raster`** says where Chrome rasterises the page. Remotion's own pixels depend on its `gl` setting, and Motio follows: `cpu` gives the pixels Remotion renders with its default setting, `gpu` (SwiftShader, still software) those it renders with `gl: "swangle"`, its default on Lambda and Cloud Run. On Motio's reference stills each pairing is identical, 29 of 29, and the other one is not; on two production projects whose references were recorded with `swangle`, 184 of 186 compositions are within Remotion's thresholds with `gpu` against 161 with `cpu`, the difference being the antialiased edges of thin strokes, text and borders. So a project that sets `gl: "swangle"` (in `chromiumOptions`, `--gl`, `MOTIO_GL` or `remotion.config.ts`) gets `gpu` unless `raster` is set; an explicit `raster` always wins. The cost is speed on videos: their opaque frames then composite on SwiftShader too, and the benchmark takes about 2.5 times as long (transparent captures, already composited that way, take up to 2 times as long).
+
+**`canvas`** says how a 2D `<canvas>` is drawn where Chrome composites on the GPU: transparent captures (PNG with alpha, ProRes 4444, VP9 with alpha, PNG image sequences, `motio check determinism`) and the GPU raster. Opaque videos with the CPU raster draw the same pixels either way.
+
+- `software` (the default) is deterministic under load: 0 of 1,140 frames differed at a load average of 34 to 90, against 2 of 1,080 with `gpu`. It is also much faster on heavy canvases: 60 transparent frames of 4,000 particles took 7 to 13 s against 102 to 133 s, and under load a single GPU canvas frame could exceed the 35 s watchdog.
+- `gpu` draws canvases as Remotion does. In software, canvas content stays close but not identical to Remotion's: Rive animations measured 37 dB from Remotion's stills and the HTML-in-canvas transitions 34 dB at worst, below the 40 dB Motio's parity tests require; on the GPU they are identical or above 50 dB.
+
+When to pick what:
+
+- Leave both alone for new work, and for projects rendered with Remotion's default setting.
+- `raster: "gpu"`, or `gl: "swangle"`, to reproduce renders made with Remotion on Lambda, Cloud Run or with `gl: "swangle"`, accepting slower videos.
+- `canvas: "gpu"` to match Remotion pixel for pixel on transparent output with canvases (Rive, HTML-in-canvas transitions, GIFs), accepting rare differences between runs under load. `motio check determinism` suggests `--canvas=software` when its differences all lie inside canvases drawn on the GPU.
+
+Hardware GL (`angle`, `egl`, `vulkan`) keeps Chrome's own choices unless `raster` or `canvas` is set.
 
 ### `ffmpeg`
 

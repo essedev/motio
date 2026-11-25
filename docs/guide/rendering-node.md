@@ -74,6 +74,7 @@ await renderStill({
 - `onBrowserLog`: the page's console output, with its location.
 - `outputLocation` (`output` for `renderStill()`): leave it out to get the file as a `Buffer` in the result.
 - `browserExecutable`, `ffmpegExecutable`: use another Chrome or FFmpeg.
+- `raster` (`"cpu"` or `"gpu"`) and `canvas` (`"software"` or `"gpu"`): how Chrome rasterises and draws canvases, Motio extensions explained in [Raster and canvas](configuration.md#raster-and-canvas). `raster` defaults to `"gpu"` when `chromiumOptions.gl` is `"swangle"`, else `"cpu"`; `canvas` to `"software"`. `loadConfig()` returns the config's `browser.raster` and `browser.canvas` in `sessionOptions`.
 - `onDelayRenderPending`: called every 5 seconds for each `delayRender()` handle the render is waiting on, with its `label`, `frame` (null while compositions are listed or metadata resolves), `compositionId`, `elapsedMs` and `timeoutMs`, until the handle is released or times out.
 
 ## Warnings and errors

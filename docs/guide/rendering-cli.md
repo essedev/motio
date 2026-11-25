@@ -33,6 +33,8 @@ Without an output, the video goes to `out/<composition-id>` with the codec's ext
 | `--prores-profile` | `4444-xq`, `4444`, `hq` (default), `standard`, `light`, `proxy`. |
 | `--audio-codec`, `--audio-bitrate` | Override the codec's default audio (AAC at 320k for MP4). |
 | `--timeout` | How long a `delayRender()` handle may hold a frame, in milliseconds (default 30000). |
+| `--raster` | `cpu` (default) or `gpu`: whose pixels a render reproduces, Remotion's default setting or Remotion with `gl: "swangle"`, which selects `gpu` by itself. `gpu` makes videos about 2.5 times slower. See [Raster and canvas](configuration.md#raster-and-canvas). |
+| `--canvas` | `software` (default) or `gpu`: how transparent captures draw 2D canvases, deterministic and faster, or as Remotion does. See [Raster and canvas](configuration.md#raster-and-canvas). |
 | `--width`, `--height`, `--fps`, `--duration` | Override the composition's metadata for this render. |
 | `--sequence` | Write an image sequence into the output directory instead of a video: PNG files named after the pattern `frame-[frame].[ext]`, the frame zero-padded to the digits of the last one (`frame-00.png` to `frame-89.png` for 90 frames). `--image-format=jpeg`, `--image-sequence-pattern` and the config file's settings change them. `--frames=0,30,60`, a list of single frames, also writes a sequence. |
 | `--chunks`, `--frames-per-chunk` | Render in chunks in parallel processes and join them without re-encoding. |

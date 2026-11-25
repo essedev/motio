@@ -131,7 +131,7 @@ What to know before choosing it:
 - `motio dev` and the Player run the real clock: clock-driven code plays in real time there and does not follow the timeline. Check it with `motio still` or a render.
 - Timers do not run while a frame waits on `delayRender()`: code that waits on a timer before calling `continueRender()` never finishes, so keep the frame model for it. A real network request still needs `delayRender()`.
 - Web Workers, iframes and their timers keep the real clock, and state stored outside the page (`localStorage`, IndexedDB) carries over from one tab to the next.
-- A 2D canvas that accumulates semi-transparent drawing (trails, fades) can come out slightly different under heavy machine load, because Chrome draws canvases on its GPU process; this is not about the clock and happens in the frame model too. `chromiumOptions: { flags: { "disable-accelerated-2d-canvas": true } }` in the Node API draws them in software, which removed the differences in our measurements.
+- A 2D canvas that accumulates semi-transparent drawing (trails, fades) can come out slightly different under heavy machine load when Chrome draws it on its GPU process (`canvas: "gpu"`); this is not about the clock and happens in the frame model too. Motio's default, `canvas: "software"`, draws canvases in software, which removed the differences in our measurements (see [Raster and canvas](configuration.md#raster-and-canvas)).
 
 ## Your product's UI in a video
 
