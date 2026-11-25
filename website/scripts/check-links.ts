@@ -1,13 +1,24 @@
 /**
  * Fails when a built page links to something the build does not contain: every internal `href`
  * and `src` in `dist/**.html` must resolve to a file, and its `#fragment` to an element id in the
- * target page. Links that leave the site are not fetched. Run after `astro build` (`pnpm build`).
+ * target page. Absolute links to the site's own host (package READMEs use them, so they work on
+ * npm too) count as internal. Links that leave the site are not fetched. Run after `astro build`
+ * (`pnpm build`).
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DEFAULT_SITE_URL, SITE_URL } from "../src/lib/repo.ts";
 
 const dist = resolve(dirname(fileURLToPath(import.meta.url)), "..", "dist");
+
+/** Hosts whose absolute links are checked like relative ones. */
+const ownOrigins = new Set([new URL(DEFAULT_SITE_URL).origin, new URL(SITE_URL).origin]);
+const ownUrl = (raw: string) => {
+	if (!/^https?:\/\//i.test(raw)) return undefined;
+	const url = new URL(raw);
+	return ownOrigins.has(url.origin) ? url : undefined;
+};
 
 const htmlFiles = (dir: string): string[] =>
 	readdirSync(dir).flatMap((name) => {
@@ -33,7 +44,7 @@ const idsOf = (file: string) => {
 const resolveTarget = (path: string) => {
 	const decoded = decodeURIComponent(path);
 	const candidates = decoded.endsWith("/")
-		? [join(dist, decoded, "index.html")]
+		? [join(dist, decoded, "index.html"), join(dist, `${decoded.slice(0, -1)}.html`)]
 		: [join(dist, decoded), join(dist, decoded, "index.html"), join(dist, `${decoded}.html`)];
 	return candidates.find((c) => existsSync(c) && statSync(c).isFile());
 };
@@ -46,9 +57,10 @@ for (const page of pages) {
 	const pagePath = `/${relative(dist, page).replace(/index\.html$/, "")}`;
 	for (const m of html.matchAll(/\s(href|src)=(?:"([^"]*)"|'([^']*)')/g)) {
 		const raw = (m[2] ?? m[3] ?? "").replaceAll("&amp;", "&");
-		if (!raw || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(raw)) continue;
+		const own = ownUrl(raw);
+		if (!raw || (!own && /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(raw))) continue;
 		checked++;
-		const url = new URL(raw, `https://site${pagePath}`);
+		const url = own ?? new URL(raw, `https://site${pagePath}`);
 		const target =
 			url.pathname === pagePath && raw.startsWith("#") ? page : resolveTarget(url.pathname);
 		if (!target) {
