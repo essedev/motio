@@ -1,6 +1,6 @@
 # Motio website
 
-The landing page and the documentation, built with Astro and Starlight, to be served at https://motio.esse.dev. Nothing is deployed yet.
+The landing page and the documentation, built with Astro and Starlight, served at https://motio.esse.dev as static assets on Cloudflare Workers (`wrangler.jsonc`). To deploy: `make site-build`, then `pnpm dlx wrangler deploy` from `website/` (needs `wrangler login` on the author's Cloudflare account). No analytics.
 
 ```bash
 make site          # dev server: http://localhost:4321
