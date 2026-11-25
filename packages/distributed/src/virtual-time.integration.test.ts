@@ -45,9 +45,6 @@ describe("virtual time model in chunks", () => {
 			imageFormat: "png",
 			muted: true,
 			timeModel: "virtual",
-			// Software 2D canvas: on the GPU process the fixture's canvas can differ under heavy load,
-			// whatever the time model (see packages/cli/src/virtual-time.integration.test.ts).
-			chromiumOptions: { flags: { "disable-accelerated-2d-canvas": true } },
 		} as const;
 		await renderMedia({
 			serveUrl,

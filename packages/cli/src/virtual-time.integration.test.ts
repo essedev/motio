@@ -19,11 +19,6 @@ import { testIo } from "./test-support/fakes.js";
 
 const project = fileURLToPath(new URL("../test-fixtures/virtual-time/", import.meta.url));
 const ID = "clock-driven";
-// Chrome draws a 2D canvas on the GPU process by default, and under heavy load (make check runs
-// next to other work) the accumulated drawing of the canvas panel came out different in 7 of 360
-// frames, in the frame model's capture path as much as in the virtual model; drawn in software,
-// 0 of 360. The time model is what these tests check, so the canvas is drawn in software.
-const SOFTWARE_CANVAS = { flags: { "disable-accelerated-2d-canvas": true } };
 let out: string;
 let serveUrl: string;
 
@@ -67,7 +62,6 @@ async function render(
 		composition,
 		outputDir: null,
 		imageFormat: "png",
-		chromiumOptions: SOFTWARE_CANVAS,
 		onFrameBuffer: (buffer, frame) => void images.set(frame, buffer),
 		...options,
 	});
@@ -119,16 +113,7 @@ describe("virtual time model", () => {
 	it("motio check determinism --reference fresh passes", async () => {
 		const io = testIo(project);
 		const code = await runCli(
-			// Without the canvas panel: the command has no switch for Chrome flags (see SOFTWARE_CANVAS).
-			[
-				"check",
-				"determinism",
-				ID,
-				"--frames=0-29",
-				"--reference=fresh",
-				'--props={"canvas":false}',
-				"--json",
-			],
+			["check", "determinism", ID, "--frames=0-29", "--reference=fresh", "--json"],
 			io,
 			defaultDeps(process.env),
 		);

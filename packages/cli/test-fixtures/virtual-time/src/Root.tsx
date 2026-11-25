@@ -151,10 +151,11 @@ function RandomPanel() {
 }
 
 /**
- * `canvas: false` leaves the canvas panel out: Chrome draws a 2D canvas on the GPU process by
- * default, and under heavy load its accumulated semi-transparent drawing can come out different
- * (measured at load 30 to 43: 7 of 360 frames, all inside the canvas; 0 with the canvas drawn in
- * software), in either time model.
+ * `canvas: false` leaves the canvas panel out. Drawn on the GPU (`canvas: "gpu"`), its
+ * accumulated semi-transparent drawing can come out different under heavy load (measured at load
+ * 30 to 43: 7 of 360 frames, all inside the canvas), in either time model; Motio's default draws
+ * transparent captures' canvases in software, where it does not (0 of 1,140 frames at load 34 to
+ * 90).
  */
 function ClockDriven({ canvas }: { canvas: boolean }) {
 	return (
