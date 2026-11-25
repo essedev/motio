@@ -75,6 +75,7 @@ await renderStill({
 - `outputLocation` (`output` for `renderStill()`): leave it out to get the file as a `Buffer` in the result.
 - `browserExecutable`, `ffmpegExecutable`: use another Chrome or FFmpeg.
 - `raster` (`"cpu"` or `"gpu"`) and `canvas` (`"software"` or `"gpu"`): how Chrome rasterises and draws canvases, Motio extensions explained in [Raster and canvas](configuration.md#raster-and-canvas). `raster` defaults to `"gpu"` when `chromiumOptions.gl` is `"swangle"`, else `"cpu"`; `canvas` to `"software"`. `loadConfig()` returns the config's `browser.raster` and `browser.canvas` in `sessionOptions`.
+- `timeZone`: the time zone of the page's `Date` and `Intl`, an IANA name such as `"Europe/Rome"`; `"UTC"` by default on every machine (see [Dates and the time zone](frames-and-time.md#dates-and-the-time-zone)). `loadConfig()` returns the config's `browser.timeZone` in `sessionOptions`.
 - `onDelayRenderPending`: called every 5 seconds for each `delayRender()` handle the render is waiting on, with its `label`, `frame` (null while compositions are listed or metadata resolves), `compositionId`, `elapsedMs` and `timeoutMs`, until the handle is released or times out.
 
 ## Warnings and errors
@@ -116,7 +117,7 @@ try {
 }
 ```
 
-`renderMedia()`, `renderStill()` and `renderFrames()` return `warnings`: what the page reported while rendering, as `{ code, message, frame }`, each code and message once with the first frame it was seen on. The codes are `W_FONT_FALLBACK`, `W_MATH_RANDOM`, `W_STATIC_FILE_CASE`, `W_TIMELINE_SHORT`, `W_SLOW_READINESS`, `W_ANIMATION_UNSEEKABLE` and `W_FFMPEG_FALLBACK` (the pinned FFmpeg could not be downloaded, see [FFmpeg](ffmpeg.md)); [Rendering from the CLI](rendering-cli.md#what-a-render-tells-you-on-the-way) says what each means.
+`renderMedia()`, `renderStill()` and `renderFrames()` return `warnings`: what the page reported while rendering, as `{ code, message, frame }`, each code and message once with the first frame it was seen on. The codes are `W_FONT_FALLBACK`, `W_MATH_RANDOM`, `W_STATIC_FILE_CASE`, `W_TIMELINE_SHORT`, `W_SLOW_READINESS`, `W_ANIMATION_UNSEEKABLE`, `W_CSS_TRANSITION`, `W_ANIMATION_FRAME_LOOP` and `W_FFMPEG_FALLBACK` (the pinned FFmpeg could not be downloaded, see [FFmpeg](ffmpeg.md)); [Rendering from the CLI](rendering-cli.md#what-a-render-tells-you-on-the-way) says what each means.
 
 Errors are `MotioError` instances with a stable `code` (`isMotioError(error, code)` tells them apart), `frame`, `composition` and `details`. Besides what the code itself carries (FFmpeg's output, a path, the available composition ids), `details` repeats `frame` and `compositionId` when they are known and may hold:
 

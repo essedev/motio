@@ -113,6 +113,7 @@ The headless Chrome every command renders in.
 | `pagesPerBrowser` | the pages spread over two browsers | `--pages-per-browser` |
 | `raster` | `cpu`; `gpu` when `chromiumOptions.gl` is `swangle` (see [Raster and canvas](#raster-and-canvas)) | `--raster` |
 | `canvas` | `software` (see [Raster and canvas](#raster-and-canvas)) | `--canvas` |
+| `timeZone` | `UTC` on every machine: the zone of the page's `Date` and `Intl`, an IANA name such as `Europe/Rome` (see [Dates and the time zone](frames-and-time.md#dates-and-the-time-zone)) | `--time-zone` |
 | `chromiumOptions.gl` | SwiftShader, software rendering that draws the same pixels on every machine; `angle`, `egl` or `vulkan` use the GPU | `--gl` |
 | `chromiumOptions.userAgent` | Chrome's | `--user-agent` |
 | `chromiumOptions.ignoreCertificateErrors` | `false` | `--ignore-certificate-errors` |
