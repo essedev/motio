@@ -26,6 +26,8 @@ export interface VideoConfig {
 	defaultOutName: string | null;
 	defaultVideoImageFormat?: string | null;
 	defaultPixelFormat?: string | null;
+	/** Motio: the time model the composition declares (`<Composition timeModel>`). */
+	timeModel?: "frame" | "virtual";
 }
 
 export interface ChromiumOptions {

@@ -235,6 +235,41 @@ export interface DeterminismDiagnosis {
 	message: string;
 	/** What the disagreeing runs point to, when `cause` is `raster` or `canvas`. */
 	pattern?: DeterminismPattern;
+	/**
+	 * Set when the runs used the frame model and the pages reported code running on the real
+	 * clock: the virtual time model replays that code on the video's time.
+	 */
+	timeModel?: { suggested: "virtual"; evidence: string[] };
+}
+
+/**
+ * Page warnings that show code running on the real clock, whose pixels the virtual time model
+ * makes deterministic, with how the hint names them.
+ */
+export const CLOCK_EVIDENCE: Readonly<Record<string, string>> = {
+	W_ANIMATION_FRAME_LOOP: "a requestAnimationFrame loop",
+	W_MATH_RANDOM: "Math.random()",
+};
+
+/**
+ * Adds the virtual time model to a diagnosis when the runs used the frame model and the pages
+ * reported code running on the real clock (`CLOCK_EVIDENCE`); returns the diagnosis unchanged
+ * otherwise. The cause stays the one the run pattern gives: the hint names a remedy, not a cause.
+ */
+export function withTimeModelHint(
+	diagnosis: DeterminismDiagnosis,
+	timeModel: "frame" | "virtual",
+	warningCodes: ReadonlySet<string>,
+): DeterminismDiagnosis {
+	if (timeModel !== "frame") return diagnosis;
+	const evidence = Object.keys(CLOCK_EVIDENCE).filter((code) => warningCodes.has(code));
+	if (evidence.length === 0) return diagnosis;
+	const named = evidence.map((code) => CLOCK_EVIDENCE[code]).join(" and ");
+	return {
+		...diagnosis,
+		timeModel: { suggested: "virtual", evidence },
+		message: `${diagnosis.message} The pages ran code on the real clock (${named}). Code you cannot drive from useCurrentFrame(), such as a library with its own timeline, renders the same on every run in the virtual time model: --time-model=virtual, or timeModel="virtual" on the <Composition>; check it with --time-model=virtual --reference=fresh.`,
+	};
 }
 
 /**

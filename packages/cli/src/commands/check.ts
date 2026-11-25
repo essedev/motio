@@ -23,6 +23,7 @@ import {
 	pngSize,
 	type Rect,
 	unionRegion,
+	withTimeModelHint,
 } from "../frames/compare.js";
 import { decodePngs } from "../frames/ffmpeg.js";
 import { framesInRange, renderToFiles } from "../frames/render-to-files.js";
@@ -207,6 +208,8 @@ export async function checkDeterminismCommand(
 			gl !== "swangle" &&
 			gl !== "swiftshader");
 	const canvasRegions = new Map<number, Rect[]>();
+	const warningCodes = new Set<string>();
+	const timeModel = session.timeModel ?? composition.timeModel ?? "frame";
 	const hashes: Array<Map<number, string>> = [];
 	const runFiles: Array<Map<number, string>> = [];
 	const { ffmpeg } = await commandFfmpeg(ctx, project.settings);
@@ -221,6 +224,9 @@ export async function checkDeterminismCommand(
 			...(canvasOnGpu && index === 0
 				? { onCanvasRegions: (regions: Rect[], frame: number) => canvasRegions.set(frame, regions) }
 				: {}),
+			onWarnings: (warnings) => {
+				for (const w of warnings) warningCodes.add(w.code);
+			},
 			label: run.freshPage
 				? `Run ${index + 1}/${runs.length} (a new page per frame)`
 				: `Run ${index + 1}/${runs.length} (${run.order}, concurrency ${run.concurrency})`,
@@ -239,11 +245,15 @@ export async function checkDeterminismCommand(
 	const size = deterministic ? undefined : await measureMismatches(ffmpeg, mismatches, runFiles);
 	const diagnosis = deterministic
 		? null
-		: diagnoseMismatches(
-				mismatches,
-				runs,
-				size,
-				canvasOnGpu ? { regions: canvasRegions } : undefined,
+		: withTimeModelHint(
+				diagnoseMismatches(
+					mismatches,
+					runs,
+					size,
+					canvasOnGpu ? { regions: canvasRegions } : undefined,
+				),
+				timeModel,
+				warningCodes,
 			);
 	return {
 		json: {

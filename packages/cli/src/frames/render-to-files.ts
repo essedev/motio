@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Concurrency } from "@motiojs/compat/config";
 import type { CommandContext } from "../context.js";
+import { type RenderWarning, renderWarningsOf } from "../io.js";
 import type { Project } from "../project.js";
 import type { CanvasRegion, VideoConfig } from "../renderer-api.js";
 
@@ -17,6 +18,8 @@ export interface RenderToFilesOptions {
 	recycleEveryNFrames?: number;
 	/** Receives where each frame's canvases are (Motio renderer extension). */
 	onCanvasRegions?: (regions: CanvasRegion[], frame: number) => void;
+	/** Receives the warnings of the render, each once. */
+	onWarnings?: (warnings: RenderWarning[]) => void;
 	label: string;
 }
 
@@ -59,6 +62,7 @@ export async function renderToFiles(
 			},
 		});
 		ctx.reporter.renderResult(result);
+		options.onWarnings?.(renderWarningsOf(result));
 	} finally {
 		stopListening();
 	}

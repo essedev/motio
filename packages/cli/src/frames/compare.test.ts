@@ -13,6 +13,7 @@ import {
 	pixelDifference,
 	pngSize,
 	unionRegion,
+	withTimeModelHint,
 } from "./compare.js";
 
 const solid = (value: number, alpha = 255) =>
@@ -132,6 +133,21 @@ describe("determinism report", () => {
 			"race",
 		);
 		expect(diagnoseMismatches([inside], runs, size).cause).toBe("race");
+	});
+
+	it("suggests the virtual time model when frame-model pages ran code on the real clock", () => {
+		const random = diagnoseMismatches([{ frame: 0, hashes: ["a", "b", "c", "d"] }], runs);
+		const codes = new Set(["W_ANIMATION_FRAME_LOOP", "W_FONT_FALLBACK"]);
+		const hinted = withTimeModelHint(random, "frame", codes);
+		expect(hinted).toMatchObject({
+			cause: "random",
+			timeModel: { suggested: "virtual", evidence: ["W_ANIMATION_FRAME_LOOP"] },
+		});
+		expect(hinted.message).toContain(random.message);
+		expect(hinted.message).toMatch(/requestAnimationFrame loop\).*--time-model=virtual/);
+		// No evidence, or runs already in the virtual model: nothing to suggest.
+		expect(withTimeModelHint(random, "frame", new Set(["W_FONT_FALLBACK"]))).toBe(random);
+		expect(withTimeModelHint(random, "virtual", codes)).toBe(random);
 	});
 });
 
