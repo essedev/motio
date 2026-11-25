@@ -8,7 +8,7 @@
 		"url": "git+https://github.com/essedev/motio.git",
 		"directory": "packages/compat"
 	},
-	"homepage": "https://motio.esse.dev",
+	"homepage": "https://motio.esse.dev/reference/packages/compat/",
 	"bugs": {
 		"url": "https://github.com/essedev/motio/issues"
 	},

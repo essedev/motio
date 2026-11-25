@@ -212,12 +212,27 @@ importers:
 
   docs/guide/examples:
     dependencies:
+      '@motiojs/animation-utils':
+        specifier: workspace:*
+        version: link:../../../packages/animation-utils
       '@motiojs/bundler':
         specifier: workspace:*
         version: link:../../../packages/bundler
       '@motiojs/captions':
         specifier: workspace:*
         version: link:../../../packages/captions
+      '@motiojs/compat':
+        specifier: workspace:*
+        version: link:../../../packages/compat
+      '@motiojs/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@motiojs/distributed':
+        specifier: workspace:*
+        version: link:../../../packages/distributed
+      '@motiojs/elevenlabs':
+        specifier: workspace:*
+        version: link:../../../packages/elevenlabs
       '@motiojs/ffmpeg':
         specifier: workspace:*
         version: link:../../../packages/ffmpeg
@@ -230,15 +245,39 @@ importers:
       '@motiojs/google-fonts':
         specifier: workspace:*
         version: link:../../../packages/google-fonts
+      '@motiojs/install-whisper-cpp':
+        specifier: workspace:*
+        version: link:../../../packages/install-whisper-cpp
       '@motiojs/layout-utils':
         specifier: workspace:*
         version: link:../../../packages/layout-utils
+      '@motiojs/light-leaks':
+        specifier: workspace:*
+        version: link:../../../packages/light-leaks
+      '@motiojs/lottie':
+        specifier: workspace:*
+        version: link:../../../packages/lottie
       '@motiojs/media':
         specifier: workspace:*
         version: link:../../../packages/media
+      '@motiojs/media-utils':
+        specifier: workspace:*
+        version: link:../../../packages/media-utils
       '@motiojs/motio':
         specifier: workspace:*
         version: link:../../../packages/motio
+      '@motiojs/motion-blur':
+        specifier: workspace:*
+        version: link:../../../packages/motion-blur
+      '@motiojs/noise':
+        specifier: workspace:*
+        version: link:../../../packages/noise
+      '@motiojs/openai-whisper':
+        specifier: workspace:*
+        version: link:../../../packages/openai-whisper
+      '@motiojs/paths':
+        specifier: workspace:*
+        version: link:../../../packages/paths
       '@motiojs/player':
         specifier: workspace:*
         version: link:../../../packages/player
@@ -248,21 +287,42 @@ importers:
       '@motiojs/renderer':
         specifier: workspace:*
         version: link:../../../packages/renderer
+      '@motiojs/rive':
+        specifier: workspace:*
+        version: link:../../../packages/rive
+      '@motiojs/shapes':
+        specifier: workspace:*
+        version: link:../../../packages/shapes
+      '@motiojs/starburst':
+        specifier: workspace:*
+        version: link:../../../packages/starburst
       '@motiojs/text':
         specifier: workspace:*
         version: link:../../../packages/text
+      '@motiojs/three':
+        specifier: workspace:*
+        version: link:../../../packages/three
       '@motiojs/transitions':
         specifier: workspace:*
         version: link:../../../packages/transitions
       '@motiojs/zod-types':
         specifier: workspace:*
         version: link:../../../packages/zod-types
+      '@react-three/fiber':
+        specifier: 9.2.0
+        version: 9.2.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.178.0)
+      lottie-web:
+        specifier: 5.13.0
+        version: 5.13.0
       react:
         specifier: 19.3.1
         version: 19.3.1
       react-dom:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
+      three:
+        specifier: 0.178.0
+        version: 0.178.0
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -273,6 +333,9 @@ importers:
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
+      '@types/three':
+        specifier: 0.178.1
+        version: 0.178.1
       vitest:
         specifier: ^5.1.1
         version: 5.1.1(@types/node@26.6.6)(jsdom@31.0.1)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.1))

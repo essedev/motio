@@ -8,7 +8,7 @@
 		"url": "git+https://github.com/essedev/motio.git",
 		"directory": "packages/media-utils"
 	},
-	"homepage": "https://motio.esse.dev",
+	"homepage": "https://motio.esse.dev/reference/packages/media-utils/",
 	"bugs": {
 		"url": "https://github.com/essedev/motio/issues"
 	},

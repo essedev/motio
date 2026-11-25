@@ -8,7 +8,7 @@
 		"url": "git+https://github.com/essedev/motio.git",
 		"directory": "packages/video-frames"
 	},
-	"homepage": "https://motio.esse.dev",
+	"homepage": "https://motio.esse.dev/reference/packages/video-frames/",
 	"bugs": {
 		"url": "https://github.com/essedev/motio/issues"
 	},

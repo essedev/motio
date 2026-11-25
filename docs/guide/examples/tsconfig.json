@@ -54,6 +54,57 @@
 		},
 		{
 			"path": "../../../packages/zod-types"
+		},
+		{
+			"path": "../../../packages/animation-utils"
+		},
+		{
+			"path": "../../../packages/compat"
+		},
+		{
+			"path": "../../../packages/core"
+		},
+		{
+			"path": "../../../packages/distributed"
+		},
+		{
+			"path": "../../../packages/elevenlabs"
+		},
+		{
+			"path": "../../../packages/install-whisper-cpp"
+		},
+		{
+			"path": "../../../packages/light-leaks"
+		},
+		{
+			"path": "../../../packages/lottie"
+		},
+		{
+			"path": "../../../packages/media-utils"
+		},
+		{
+			"path": "../../../packages/motion-blur"
+		},
+		{
+			"path": "../../../packages/noise"
+		},
+		{
+			"path": "../../../packages/openai-whisper"
+		},
+		{
+			"path": "../../../packages/paths"
+		},
+		{
+			"path": "../../../packages/rive"
+		},
+		{
+			"path": "../../../packages/shapes"
+		},
+		{
+			"path": "../../../packages/starburst"
+		},
+		{
+			"path": "../../../packages/three"
 		}
 	]
 }

@@ -8,7 +8,7 @@
 		"url": "git+https://github.com/essedev/motio.git",
 		"directory": "packages/rive"
 	},
-	"homepage": "https://motio.esse.dev",
+	"homepage": "https://motio.esse.dev/reference/packages/rive/",
 	"bugs": {
 		"url": "https://github.com/essedev/motio/issues"
 	},
