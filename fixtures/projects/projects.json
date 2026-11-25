@@ -20,6 +20,9 @@
 						"chat-flow": "the contact avatar comes from unavatar.io, an external service that rate-limits repeated renders",
 						"telegram-chat-flow": "the contact avatar comes from unavatar.io, an external service that rate-limits repeated renders",
 						"imessage-chat-flow": "the contact avatar comes from unavatar.io, an external service that rate-limits repeated renders"
+					},
+					"knownFlickerMismatch": {
+						"signup-flow": "Motio rasterises PNG captures on the CPU (D-041), Remotion on the GPU (SwiftShader): antialiased edges of thin strokes, text and borders differ (measured identical or above 48 dB with GPU rasterisation); under measurement by the raster and canvas work"
 					}
 				},
 				"brand-guidelines": {

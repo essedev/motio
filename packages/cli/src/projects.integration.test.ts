@@ -473,6 +473,9 @@ for (const [name, project] of Object.entries(projects)) {
 						// The check flags content that changes faster than its blocks (a rolling digit, a
 						// cursor crossing a block per frame) as well as flicker. A flagged frame counts as
 						// the content's own when Motio draws it and its neighbours like Remotion does.
+						// A known mismatch draws these frames unlike Remotion for its known cause: there is
+						// nothing to compare them with.
+						if (knownAround !== undefined) return;
 						const around = framesAround(flagged, composition.durationInFrames);
 						const dir = join(GOLDEN_DIR, name, id, cid, AROUND_DIR);
 						const unrecorded = around.filter((frame) => !existsSync(join(dir, stillName(frame))));
@@ -491,14 +494,13 @@ for (const [name, project] of Object.entries(projects)) {
 							sameAsRemotion: unlike.length === 0,
 							unlike: unlike.map((s) => s.frame),
 						};
-						// A known mismatch draws these frames unlike Remotion for its known cause.
-						if (knownAround !== undefined) return;
 						expect(
 							unlike,
 							`frames around the flagged ones that Motio draws unlike Remotion`,
 						).toEqual([]);
 					},
-					Math.max(600_000, composition.durationInFrames * 600),
+					// Software WebGL shaders take about 3 s a frame at 1080p (Remocn's shader presets).
+					Math.max(600_000, composition.durationInFrames * 4_000),
 				);
 
 				const first = Math.max(
