@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Text helpers for Motio videos: a background shape that follows the lines of a text block (TextBackground), with @remotion/rounded-text-box as a preset",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/text"
+	},
+	"homepage": "https://motio.esse.dev/reference/packages/text/",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -15,7 +24,8 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},
@@ -35,5 +45,8 @@
 	"peerDependencies": {
 		"react": "^18.0.0 || ^19.0.0",
 		"react-dom": "^18.0.0 || ^19.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

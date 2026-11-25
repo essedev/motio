@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "GIFs shown frame by frame in sync with Motio's timeline, mirroring @remotion/gif",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/gif"
+	},
+	"homepage": "https://motio.esse.dev/reference/packages/gif/",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -11,7 +20,8 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},
@@ -32,5 +42,8 @@
 	"peerDependencies": {
 		"react": "^18.0.0 || ^19.0.0",
 		"react-dom": "^18.0.0 || ^19.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

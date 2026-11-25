@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Load local or remote font files and block the render until they are ready (browser), mirroring @remotion/fonts",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/fonts"
+	},
+	"homepage": "https://motio.esse.dev",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -11,7 +20,8 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},
@@ -25,5 +35,8 @@
 		"puppeteer-core": "25.18.1",
 		"react": "19.3.1",
 		"react-dom": "19.3.1"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

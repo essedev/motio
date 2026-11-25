@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Type-safe Google Fonts loading for Motio, mirroring @remotion/google-fonts",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/google-fonts"
+	},
+	"homepage": "https://motio.esse.dev",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -15,7 +24,8 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {
@@ -23,5 +33,8 @@
 	},
 	"dependencies": {
 		"@motiojs/core": "workspace:*"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

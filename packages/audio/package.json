@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Audio mixer: decodes sources with FFmpeg, mixes with sample-accurate offsets and volume envelopes, encodes once",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/audio"
+	},
+	"homepage": "https://motio.esse.dev",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -11,11 +20,18 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},
 	"devDependencies": {
 		"@types/node": "^26.6.6"
+	},
+	"engines": {
+		"node": ">=22"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

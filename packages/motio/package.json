@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Make videos with React. Remotion-compatible API, Apache-2.0",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/motio"
+	},
+	"homepage": "https://motio.esse.dev/reference/packages/motio/",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"keywords": [
 		"video",
 		"react",
@@ -51,7 +60,8 @@
 	},
 	"files": [
 		"dist",
-		"client.d.ts"
+		"client.d.ts",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},
@@ -71,5 +81,8 @@
 	"peerDependencies": {
 		"react": "^18.0.0 || ^19.0.0",
 		"react-dom": "^18.0.0 || ^19.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

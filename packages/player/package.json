@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Embed Motio compositions in React apps: Player and Thumbnail, mirroring @remotion/player",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/player"
+	},
+	"homepage": "https://motio.esse.dev/reference/packages/player/",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -11,7 +20,8 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},
@@ -33,5 +43,8 @@
 	"peerDependencies": {
 		"react": "^18.0.0 || ^19.0.0",
 		"react-dom": "^18.0.0 || ^19.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

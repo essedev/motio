@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Transitions between scenes for Motio, mirroring @remotion/transitions",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/transitions"
+	},
+	"homepage": "https://motio.esse.dev/reference/packages/transitions/",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -116,5 +125,8 @@
 	},
 	"peerDependencies": {
 		"react": "^18.0.0 || ^19.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

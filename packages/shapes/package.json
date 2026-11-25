@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "SVG shape generators and components (browser), compatible with @remotion/shapes",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/shapes"
+	},
+	"homepage": "https://motio.esse.dev",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -11,7 +20,8 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},
@@ -28,5 +38,8 @@
 		"@types/react-dom": "19.3.0",
 		"react": "19.3.1",
 		"react-dom": "19.3.1"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

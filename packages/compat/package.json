@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Bundler plugin mapping remotion and @remotion/* imports to Motio",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/compat"
+	},
+	"homepage": "https://motio.esse.dev",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -26,7 +35,8 @@
 	"files": [
 		"dist",
 		"manifest.json",
-		"manifest.schema.json"
+		"manifest.schema.json",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {
@@ -45,5 +55,8 @@
 	},
 	"engines": {
 		"node": ">=22"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

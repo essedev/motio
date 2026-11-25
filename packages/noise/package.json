@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Seeded simplex noise (browser), compatible with @remotion/noise",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/noise"
+	},
+	"homepage": "https://motio.esse.dev",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -11,12 +20,16 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},
 	"dependencies": {
 		"@motiojs/core": "workspace:*",
 		"simplex-noise": "4.0.1"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

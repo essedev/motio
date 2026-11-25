@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Caption parsing, serialization and paging (browser), compatible with @remotion/captions",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/captions"
+	},
+	"homepage": "https://motio.esse.dev/reference/packages/captions/",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -11,11 +20,15 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"NOTICE"
 	],
 	"sideEffects": false,
 	"scripts": {},
 	"devDependencies": {
 		"@motiojs/testing": "workspace:*"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

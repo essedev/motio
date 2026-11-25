@@ -3,6 +3,15 @@
 	"version": "0.0.0",
 	"description": "Optional pinned FFmpeg and ffprobe for Motio: downloaded on first use, verified by SHA-256",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/essedev/motio.git",
+		"directory": "packages/ffmpeg"
+	},
+	"homepage": "https://motio.esse.dev/reference/packages/ffmpeg/",
+	"bugs": {
+		"url": "https://github.com/essedev/motio/issues"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -23,5 +32,8 @@
 	},
 	"engines": {
 		"node": ">=22"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

@@ -1,0 +1,11 @@
+@motiojs/cli
+Copyright 2026 The Motio authors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The basic starter includes the Inter typeface, Copyright 2016 The Inter Project Authors
+(https://github.com/rsms/inter), licensed under the SIL Open Font License, Version 1.1; the
+licence text is in starters/basic/public/fonts/inter-LICENSE.txt.
+
+Remotion is a trademark of its respective owner. Motio is an independent project, not
+affiliated with or endorsed by Remotion; the name is used only to describe API compatibility.
