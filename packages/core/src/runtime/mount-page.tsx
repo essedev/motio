@@ -78,6 +78,13 @@ const FRAME_LOOP_WARNING: FrameWarning = {
 		'A requestAnimationFrame loop runs on the page. In the frame model it runs on the real clock, and Motio pauses it while a frame is captured, so what it draws or moves differs between renders unless it reads the frame. Drive it from useCurrentFrame(), or render in the virtual time model (timeModel "virtual"), where animation frames follow the video\'s time.',
 };
 
+const TIMER_LOOP_WARNING: FrameWarning = {
+	code: "W_TIMER_LOOP",
+	key: "timer-loop",
+	message:
+		'A timer loop (a setTimeout chain or a setInterval) runs on the page. In the frame model it runs on the real clock, and Motio holds it while a frame is captured, so what it draws or moves differs between renders unless it reads the frame. Drive it from useCurrentFrame(), or render in the virtual time model (timeModel "virtual"), where timers follow the video\'s time.',
+};
+
 /**
  * Base styles of the canvas. `border-box` sizing matches the reference renders (a padded box
  * keeps its declared width); `:where()` keeps the specificity at zero so user styles win.
@@ -460,7 +467,9 @@ class PageRuntime {
 		for (const w of late) {
 			if (!warnings.some((x) => x.message === w.message)) warnings.push(w);
 		}
-		if (getFrameGate()?.loop) pageWarnings.report(FRAME_LOOP_WARNING);
+		const gate = getFrameGate();
+		if (gate?.loop) pageWarnings.report(FRAME_LOOP_WARNING);
+		if (gate?.timerLoop) pageWarnings.report(TIMER_LOOP_WARNING);
 		warnings.push(...settled.warnings, ...this.fonts.scan(this.canvas), ...pageWarnings.take());
 		const readBack = Number(document.documentElement.getAttribute(FRAME_ATTRIBUTE));
 		if (readBack !== frame) {

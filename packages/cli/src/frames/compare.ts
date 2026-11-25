@@ -293,6 +293,7 @@ export interface DeterminismDiagnosis {
  */
 export const CLOCK_EVIDENCE: Readonly<Record<string, string>> = {
 	W_ANIMATION_FRAME_LOOP: "a requestAnimationFrame loop",
+	W_TIMER_LOOP: "a timer loop",
 	W_MATH_RANDOM: "Math.random()",
 };
 

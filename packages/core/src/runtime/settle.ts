@@ -1,3 +1,4 @@
+import { getFrameGate } from "../frame-gate.js";
 import type { FrameWarning, PageError } from "../protocol.js";
 import type { ReadinessRegistry } from "../readiness/registry.js";
 import { realMacrotask, realTimers } from "../real-time.js";
@@ -5,6 +6,14 @@ import { toPageError } from "./page-error.js";
 
 /** Consecutive quiet yields (no handle, no mutation) required to call a frame settled. */
 export const QUIET_YIELDS = 2;
+
+/**
+ * Frame model: consecutive yields with DOM changes, and no readiness handle open, after which a
+ * page running a detected animation-frame or timer loop is no longer waited on for a quiet DOM.
+ * The loop's own changes are dropped already; this bounds what they cause later, such as React
+ * committing state an interval set.
+ */
+export const LOOP_BUSY_YIELDS = 8;
 
 /** How long one wait on fonts or images lasts before the loop checks timeouts again. */
 const POLL_MS = 50;
@@ -133,12 +142,25 @@ export async function settle(options: SettleOptions): Promise<SettleResult> {
 		attributes: true,
 		characterData: true,
 	});
+	// Frame model: an animation-frame or timer loop on the real clock may change the DOM on every
+	// call, and the DOM would never be quiet. The changes an iteration of a detected loop makes
+	// are dropped (see frame-gate.ts); the others count as before.
+	const gate = observer ? getFrameGate() : null;
+	gate?.observe({
+		before: () => {
+			mutations += observer?.takeRecords().length ?? 0;
+		},
+		after: (loop) => {
+			if (loop) observer?.takeRecords();
+		},
+	});
 	const fail = (error: PageError): never => {
 		throw error;
 	};
 	const extra = frame === undefined ? {} : { frame };
 	try {
 		let quiet = 0;
+		let busy = 0;
 		for (;;) {
 			await realMacrotask();
 			if (observer) mutations += observer.takeRecords().length;
@@ -164,9 +186,13 @@ export async function settle(options: SettleOptions): Promise<SettleResult> {
 				);
 			}
 			if (registry.size > 0 || mutations > 0) {
-				quiet = 0;
+				const loopBusy = registry.size === 0 && gate !== null && (gate.loop || gate.timerLoop);
+				busy = loopBusy ? busy + 1 : 0;
 				mutations = 0;
-				continue;
+				if (!loopBusy || busy < LOOP_BUSY_YIELDS) {
+					quiet = 0;
+					continue;
+				}
 			}
 			if (typeof document !== "undefined" && document.fonts && document.fonts.status !== "loaded") {
 				quiet = 0;
@@ -194,6 +220,7 @@ export async function settle(options: SettleOptions): Promise<SettleResult> {
 			if (quiet >= QUIET_YIELDS) break;
 		}
 	} finally {
+		gate?.observe(null);
 		observer?.disconnect();
 	}
 	const warnings: FrameWarning[] = [];

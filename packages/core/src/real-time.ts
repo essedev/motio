@@ -4,6 +4,8 @@
  * always run on real time, so they go through this module.
  */
 
+import { getFrameGate } from "./frame-gate.js";
+
 /** Global installed by the clock shim (see `clock-shim.ts`). */
 export const CLOCK_GLOBAL = "__motioClock";
 
@@ -38,6 +40,9 @@ export function getVirtualClock(): VirtualClock | null {
 function captureReal(): RealTimers {
 	const shim = getVirtualClock();
 	if (shim) return shim.real;
+	// The frame gate holds page timers between seeks; the runtime's own must never wait.
+	const gate = getFrameGate();
+	if (gate) return gate.real;
 	const g = globalThis;
 	const perf = typeof performance !== "undefined" ? performance : null;
 	return {

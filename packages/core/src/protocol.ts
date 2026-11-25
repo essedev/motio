@@ -141,7 +141,12 @@ export type FrameWarningCode =
 	 * Frame model: a `requestAnimationFrame` loop runs on the page, on the real clock. Motio
 	 * pauses it while a frame is captured; what it draws differs between renders.
 	 */
-	| "W_ANIMATION_FRAME_LOOP";
+	| "W_ANIMATION_FRAME_LOOP"
+	/**
+	 * Frame model: a timer loop (a `setTimeout` chain, an interval) runs on the page, on the real
+	 * clock; what it draws differs between renders.
+	 */
+	| "W_TIMER_LOOP";
 
 export interface FrameWarning {
 	code: FrameWarningCode;
