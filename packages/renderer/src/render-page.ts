@@ -51,6 +51,8 @@ export interface PageConfig {
 	canvas?: CanvasMode | null;
 	/** IANA time zone of the page. Default: the machine's. */
 	timeZone?: string;
+	/** BCP 47 locale of the page. Default: the machine's. */
+	locale?: string;
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
 	/** Base URL of the renderer's media service, passed to the page in the run context. */
 	mediaBaseUrl?: string;
@@ -373,6 +375,7 @@ export class RenderPage {
 			transparent: config.transparent,
 			raster: config.raster ?? null,
 			canvas: config.canvas ?? null,
+			...(config.locale !== undefined ? { locale: config.locale } : {}),
 			...(config.captureMethod === "begin-frame" ? { beginFrame: { scale: config.scale } } : {}),
 		};
 		const shared = config.browsers;
@@ -693,8 +696,18 @@ export class RenderPage {
 		if (c.chromiumOptions.darkMode) {
 			await this.page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]);
 		}
-		if (c.chromiumOptions.userAgent)
+		if (c.locale !== undefined) {
+			// Intl's default locale and navigator.language; then navigator.languages and the
+			// Accept-Language header, which come with the user agent override (one override, on the
+			// same session, so it does not compete with another).
+			await this.cdp.send("Emulation.setLocaleOverride", { locale: c.locale });
+			await this.cdp.send("Emulation.setUserAgentOverride", {
+				userAgent: c.chromiumOptions.userAgent ?? (await this.browser.userAgent()),
+				acceptLanguage: c.locale,
+			});
+		} else if (c.chromiumOptions.userAgent) {
 			await this.page.setUserAgent({ userAgent: c.chromiumOptions.userAgent });
+		}
 		const timeout = c.timeoutInMilliseconds + WATCHDOG_GRACE_MS;
 		await this.guard(
 			this.page.goto(c.serveUrl, { waitUntil: "load", timeout: 0 }).then((res) => {

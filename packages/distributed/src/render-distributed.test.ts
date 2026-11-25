@@ -92,6 +92,32 @@ describe("renderDistributed", () => {
 		expect(await readdir(temp)).toEqual([]);
 	});
 
+	it("passes the page environment (time zone, locale, time model) to every chunk", async () => {
+		const settings: ChunkJob["settings"][] = [];
+		const worker: ChunkWorker = {
+			renderChunk(job) {
+				settings.push(job.settings);
+				return Promise.reject(new Error("recorded"));
+			},
+		};
+		await expect(
+			renderDistributed({
+				...base(),
+				chunks: 2,
+				concurrency: 1,
+				worker,
+				timeZone: "Asia/Tokyo",
+				locale: "it-IT",
+				timeModel: "virtual",
+			}),
+		).rejects.toThrow(/recorded/);
+		expect(settings[0]).toMatchObject({
+			timeZone: "Asia/Tokyo",
+			locale: "it-IT",
+			timeModel: "virtual",
+		});
+	});
+
 	it("validates before starting any chunk", async () => {
 		const { worker, started } = fakeWorker([]);
 		await expect(renderDistributed({ ...base(), chunks: 2, worker, codec: "gif" })).rejects.toThrow(

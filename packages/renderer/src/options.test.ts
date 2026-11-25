@@ -7,6 +7,7 @@ import {
 	resolveFrames,
 	resolveInputProps,
 	resolveJpegQuality,
+	resolveLocaleOption,
 	resolveTimeModel,
 	resolveTimeZoneOption,
 	scaledSize,
@@ -162,6 +163,20 @@ describe("time zone", () => {
 	it("rejects a name that is not a time zone", () => {
 		for (const value of ["", "Mars/Base", 2]) {
 			expect(() => resolveTimeZoneOption(value)).toThrow(code("E_INVALID_OPTION"));
+		}
+	});
+});
+
+describe("locale", () => {
+	it("is en-US unless the option names another language tag, canonicalised", () => {
+		expect(resolveLocaleOption(undefined)).toBe("en-US");
+		expect(resolveLocaleOption("it-IT")).toBe("it-IT");
+		expect(resolveLocaleOption("de-ch")).toBe("de-CH");
+	});
+
+	it("rejects what is not a language tag", () => {
+		for (const value of ["", "not a locale", 7]) {
+			expect(() => resolveLocaleOption(value)).toThrow(code("E_INVALID_OPTION"));
 		}
 	});
 });

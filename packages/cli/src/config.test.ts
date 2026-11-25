@@ -174,6 +174,20 @@ describe("motio.config.ts in the CLI", () => {
 		expect(invalid.io.err.join("\n")).toMatch(/--time-zone.*IANA/s);
 	});
 
+	it("passes browser.locale, and --locale wins; an invalid tag exits with 2", async () => {
+		await writeConfig("motio.config.mjs", "export default { browser: { locale: 'it-IT' } };\n");
+		const fromFile = await run(["render", "Main"]);
+		expect(fromFile.code).toBe(0);
+		expect(fromFile.calls.renderMedia?.[0]).toMatchObject({ locale: "it-IT" });
+		const fromFlag = await run(["render", "Main", "--locale=de-CH"]);
+		expect(fromFlag.calls.renderMedia?.[0]).toMatchObject({ locale: "de-CH" });
+		const env = await run(["render", "Main"], { MOTIO_LOCALE: "fr-FR" });
+		expect(env.calls.renderMedia?.[0]).toMatchObject({ locale: "it-IT" });
+		const invalid = await run(["render", "Main", "--locale=not a locale"]);
+		expect(invalid.code).toBe(2);
+		expect(invalid.io.err.join("\n")).toMatch(/--locale.*language tag/s);
+	});
+
 	it("leaves raster and canvas to the renderer when nothing sets them", async () => {
 		const { calls, code } = await run(["render", "Main", "--gl=swangle"]);
 		expect(code).toBe(0);

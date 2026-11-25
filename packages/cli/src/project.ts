@@ -209,6 +209,25 @@ export async function ensureBrowserWithProgress(
 /** Values of `--capture-method` (D-013). */
 const CAPTURE_METHODS = ["auto", "begin-frame", "screenshot"] as const;
 
+/** `--locale`, checked against the locales this Node.js formats with. */
+function localeFlag(flags: Flags): string | undefined {
+	const value = flags.string("locale");
+	if (value === undefined) return undefined;
+	let supported = false;
+	try {
+		supported = Intl.DateTimeFormat.supportedLocalesOf(Intl.getCanonicalLocales(value)).length > 0;
+	} catch {
+		supported = false;
+	}
+	if (!supported) {
+		throw usageError(`--locale must be a language tag such as en-US or it-IT; got "${value}".`, {
+			flag: "locale",
+			value,
+		});
+	}
+	return value;
+}
+
 /** `--time-zone`, checked against the IANA names this Node.js knows. */
 function timeZoneFlag(flags: Flags): string | undefined {
 	const value = flags.string("time-zone");
@@ -261,6 +280,7 @@ export function buildSessionOptions(
 	const raster = flags.oneOf("raster", ["cpu", "gpu"] as const) ?? browser.raster;
 	const canvas = flags.oneOf("canvas", ["software", "gpu"] as const) ?? browser.canvas;
 	const timeZone = timeZoneFlag(flags) ?? browser.timeZone;
+	const locale = localeFlag(flags) ?? browser.locale;
 
 	return {
 		serveUrl,
@@ -276,6 +296,7 @@ export function buildSessionOptions(
 		...(raster ? { raster } : {}),
 		...(canvas ? { canvas } : {}),
 		...(timeZone ? { timeZone } : {}),
+		...(locale ? { locale } : {}),
 		chromiumOptions: {
 			...(gl ? { gl } : {}),
 			...(userAgent ? { userAgent } : {}),

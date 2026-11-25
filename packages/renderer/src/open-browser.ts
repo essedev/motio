@@ -5,6 +5,7 @@ import { type LaunchOptions, launchBrowser } from "./browser/launch.js";
 import { MotioError } from "./errors.js";
 import { checkLogLevel } from "./media-file.js";
 import type { LogLevel } from "./options.js";
+import { DEFAULT_LOCALE } from "./options.js";
 import { browserPoolKey } from "./render-page.js";
 
 /** Which Chrome build to run, as Remotion's `chromeMode`. */
@@ -152,6 +153,8 @@ export async function openBrowser(
 		chromiumOptions,
 		...INITIAL_WINDOW,
 		transparent: false,
+		// Renders that leave the locale unset launch with this one, so they use this browser.
+		locale: DEFAULT_LOCALE,
 	};
 	const lease = await pool.lease(browserPoolKey(launch), 1, () => launchBrowser(launch));
 	lease.release();

@@ -86,6 +86,7 @@ export interface SessionOptions {
 	raster?: "cpu" | "gpu" | null;
 	canvas?: "software" | "gpu" | null;
 	timeZone?: string | null;
+	locale?: string | null;
 	ffmpegExecutable?: string | null;
 	ffprobeExecutable?: string | null;
 }

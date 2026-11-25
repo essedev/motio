@@ -178,6 +178,12 @@ export interface BrowserConfig {
 	 * zone: `Intl.DateTimeFormat().resolvedOptions().timeZone`.
 	 */
 	timeZone?: string;
+	/**
+	 * The page's language, a BCP 47 tag such as `"it-IT"`: `navigator.language` and
+	 * `navigator.languages` (in workers too), `Intl`'s default locale and the `Accept-Language`
+	 * header. Default `"en-US"`, so a render gives the same pixels on every machine.
+	 */
+	locale?: string;
 	/** Chrome switches. */
 	chromiumOptions?: ChromiumConfig;
 }

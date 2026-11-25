@@ -422,3 +422,30 @@ export function resolveTimeZoneOption(value: unknown): string {
 		{ value },
 	);
 }
+
+/** The locale of render pages when the `locale` option is unset. */
+export const DEFAULT_LOCALE = "en-US";
+
+/**
+ * Resolves the `locale` option: a BCP 47 language tag (`"it-IT"`), `"en-US"` when unset. The
+ * page's `navigator.language`, `navigator.languages`, `Intl`'s default locale and the
+ * `Accept-Language` header use it on every machine, so a render does not depend on where it runs.
+ */
+export function resolveLocaleOption(value: unknown): string {
+	if (value === null || value === undefined) return DEFAULT_LOCALE;
+	if (typeof value === "string" && value !== "") {
+		try {
+			const [canonical] = Intl.getCanonicalLocales(value);
+			if (canonical && Intl.DateTimeFormat.supportedLocalesOf([canonical]).length > 0) {
+				return canonical;
+			}
+		} catch {
+			// Reported below with the option's name.
+		}
+	}
+	throw invalid(
+		`locale must be a language tag such as "en-US" or "it-IT", got ${JSON.stringify(value)}`,
+		"locale",
+		{ value },
+	);
+}

@@ -55,6 +55,11 @@ export const PROJECT_FLAGS = {
 		description:
 			"Motio: the time zone of the page's Date and Intl, an IANA name such as Europe/Rome (default: UTC on every machine).",
 	},
+	locale: {
+		type: "string",
+		description:
+			"Motio: the page's language (navigator.language, Intl's default, Accept-Language), a tag such as it-IT (default: en-US on every machine).",
+	},
 	"time-model": {
 		type: "string",
 		description:

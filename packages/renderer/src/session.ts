@@ -17,6 +17,7 @@ import {
 	resolveCanvasOption,
 	resolveEnvVariables,
 	resolveInputProps,
+	resolveLocaleOption,
 	resolvePagesPerBrowser,
 	resolveRasterOption,
 	resolveTimeout,
@@ -109,6 +110,12 @@ export interface BrowserSessionOptions {
 	 * machine and in every chunk of a distributed render.
 	 */
 	timeZone?: string | null;
+	/**
+	 * Motio extension: the language of the page, a BCP 47 tag such as `"it-IT"`: its
+	 * `navigator.language` and `navigator.languages`, `Intl`'s default locale and the
+	 * `Accept-Language` header. Default `"en-US"`, whatever the machine's language.
+	 */
+	locale?: string | null;
 }
 
 /** A Remotion-shaped composition description returned by `getCompositions` and `selectComposition`. */
@@ -155,6 +162,8 @@ export interface BrowserSession {
 	canvas: CanvasMode | null;
 	/** The time zone of the pages (`"UTC"` unless the `timeZone` option names another). */
 	timeZone: string;
+	/** The locale of the pages (`"en-US"` unless the `locale` option names another). */
+	locale: string;
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
 	/**
 	 * Browsers shared by the session's pages (D-042), killed by `close()` unless they belong to a
@@ -195,6 +204,7 @@ export async function openSession(
 	const raster = resolveRasterOption(options.raster);
 	const canvas = resolveCanvasOption(options.canvas);
 	const timeZone = resolveTimeZoneOption(options.timeZone);
+	const locale = resolveLocaleOption(options.locale);
 	const shared = options.puppeteerInstance ? sharedBrowsers(options.puppeteerInstance) : null;
 	const chromiumOptions = shared ? shared.chromiumOptions : (options.chromiumOptions ?? {});
 	const executablePath =
@@ -248,6 +258,7 @@ export async function openSession(
 		raster,
 		canvas,
 		timeZone,
+		locale,
 		onBrowserLog,
 		browsers,
 		warnings,
@@ -259,6 +270,7 @@ export async function openSession(
 			raster,
 			canvas,
 			timeZone,
+			locale,
 			inputProps,
 			envVariables,
 			timeoutInMilliseconds,

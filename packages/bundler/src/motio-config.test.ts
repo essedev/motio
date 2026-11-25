@@ -82,6 +82,10 @@ describe("validateConfig", () => {
 			'browser.timeZone must be an IANA time zone name such as "UTC" or "Europe/Rome"; got "Europe/Milano".',
 		);
 		expect(() => validateConfig({ browser: { timeZone: "Asia/Tokyo" } })).not.toThrow();
+		expect(thrown(() => validateConfig({ browser: { locale: "italian" } })).message).toContain(
+			'browser.locale must be a language tag such as "en-US" or "it-IT"; got "italian".',
+		);
+		expect(() => validateConfig({ browser: { locale: "it-IT" } })).not.toThrow();
 	});
 
 	it("reports every problem at once", () => {

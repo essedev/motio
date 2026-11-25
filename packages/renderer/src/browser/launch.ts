@@ -27,6 +27,12 @@ export interface LaunchOptions {
 	raster?: RasterMode | null;
 	/** The render's `canvas` option; unset, canvases are drawn in software with software GL. */
 	canvas?: CanvasMode | null;
+	/**
+	 * The render's locale, as `--accept-lang`: the language dedicated workers report in
+	 * `navigator.language`, which the page's own overrides do not reach (`--lang` and `LANG` do
+	 * not either, on macOS).
+	 */
+	locale?: string;
 }
 
 /** Chrome's command line for a launch. */
@@ -36,6 +42,7 @@ export function launchArgs(options: LaunchOptions): string[] {
 		raster: options.raster ?? null,
 		canvas: options.canvas ?? null,
 	});
+	if (options.locale !== undefined) base.push(`--accept-lang=${options.locale}`);
 	if (!options.beginFrame) return [...base, `--window-size=${options.width},${options.height}`];
 	const scale = `--force-device-scale-factor=${options.beginFrame.scale}`;
 	const args = base.map((a) => (a.startsWith("--force-device-scale-factor=") ? scale : a));
