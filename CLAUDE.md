@@ -25,6 +25,7 @@ Read first: `docs/ARCHITECTURE.md` (design and frame protocol), `docs/ROADMAP.md
 ## Hard rules
 
 - Clean room: never read Remotion's source, its `.d.ts` files or source maps, including under `tools/oracle/node_modules` and `github.com/remotion-dev` (any file other than the docs site). Behaviour comes from remotion.dev/docs and oracle outputs. Every brief given to a subagent or web fetcher repeats this rule and limits it to remotion.dev/docs pages (D-067).
+- Remotion is named only to state compatibility ("compatible with the `@remotion/x` API"), never as something Motio mirrors, clones or replaces: `docs/CONVENTIONS.md` "Naming Remotion".
 - No code from Kinetograph (D-010). Code ported from Apache-2.0 projects keeps its header and gets a `NOTICE` entry.
 - Goldens and oracle fixtures change only through their record command, never to make a test pass.
 - Determinism is checked on decoded frame hashes, not on encoded bytes.

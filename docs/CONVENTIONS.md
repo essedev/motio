@@ -14,6 +14,14 @@ Project-specific rules. Prose in English everywhere (public repository).
 - Only someone entitled to run Remotion records the oracle: an individual or an organization of up to 3 people under Remotion's free licence, otherwise a company licence holder (D-066). Documentation and examples are written from Motio's code, never copied or closely paraphrased from remotion.dev.
 - Ported code keeps its original copyright header and licence and gets a `NOTICE` entry.
 
+## Naming Remotion
+
+Remotion is a trademark of its owner, and Motio is an independent project. Every text a user can read (package descriptions and READMEs, the guide, the site, CLI messages, release notes) names Remotion only to state a fact about compatibility or behaviour:
+
+- Say "compatible with the `@remotion/x` API", "behaves like Remotion's `bundle()`", "matches Remotion's output within the thresholds". A package description ends with "Compatible with the `@remotion/x` API".
+- Never present Motio or a package as a mirror, clone, copy, port, fork or replacement of Remotion, and never imply an affiliation or endorsement.
+- Use the name in plain text: no Remotion logo, colours or visual identity.
+
 ## Tests
 
 - Vitest. Unit tests in Node; component tests in jsdom; integration tests run serially against the pinned Chrome and the system FFmpeg and are tagged so they can run alone (`pnpm test:integration`).
