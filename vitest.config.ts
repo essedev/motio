@@ -9,6 +9,7 @@ export default defineConfig({
 					include: [
 						"packages/*/src/**/*.test.{ts,tsx}",
 						"tools/benchmark/**/*.test.ts",
+						"tools/release/*.test.ts",
 						"docs/guide/examples/*.test.ts",
 					],
 					exclude: [

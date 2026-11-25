@@ -1,0 +1,64 @@
+# Publishes every public package to npm when a version tag is pushed (v0.1.0, v0.2.0-rc.1, ...),
+# with npm's trusted publishing: no token, an OIDC identity for this workflow, provenance attached
+# by npm. Each package on npm must trust this file (tools/release/trust.ts, once, after the first
+# publish). tools/release/publish.ts publishes in dependency order and skips versions npm already
+# has, so a failed run can be run again. Run by hand (Actions > release > Run workflow) for a dry
+# run, or to finish a release whose tag run failed.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Pack and check everything, run npm publish --dry-run, publish nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1 or later; the script checks it again.
+      - name: Update npm
+        run: npm install -g npm@11 && npm --version
+
+      # The version the repository declares in devEngines.packageManager.
+      - name: Install pnpm
+        run: |
+          PNPM_RANGE=$(node -p "require('./package.json').devEngines.packageManager.version")
+          npm install -g "pnpm@${PNPM_RANGE}"
+          pnpm --version
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint, build, unit tests
+        run: |
+          pnpm lint
+          pnpm build
+          pnpm exec vitest run --project unit --project core-dom
+
+      - name: Publish
+        env:
+          # Fail instead of publishing without provenance.
+          NPM_CONFIG_PROVENANCE: "true"
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run && '--dry-run' || '' }}
+          # On a tag, the packages must carry the tag's version.
+          EXPECT_VERSION: ${{ github.ref_type == 'tag' && format('--expect-version={0}', github.ref_name) || '' }}
+        run: node tools/release/publish.ts --no-build $DRY_RUN $EXPECT_VERSION
