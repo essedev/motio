@@ -23,7 +23,10 @@ const SEQUENCE_PROP_NAMES = [
 export type ShapeSequenceProps = Pick<SequenceProps, (typeof SEQUENCE_PROP_NAMES)[number]>;
 
 /** Props shared by every shape component, compatible with Remotion's shape components. */
-export type AllShapesProps = Omit<SVGProps<SVGPathElement>, "width" | "height" | "d" | "ref"> &
+export type AllShapesProps = Omit<
+	SVGProps<SVGPathElement>,
+	"width" | "height" | "d" | "ref" | "points"
+> &
 	ShapeSequenceProps & {
 		/** Draws the Bézier control points, for debugging. */
 		debug?: boolean;
