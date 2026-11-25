@@ -79,6 +79,8 @@ await renderStill({
 - `locale`: the page's language, a tag such as `"it-IT"`: `navigator.language` and `navigator.languages` (in workers too), `Intl`'s default locale and the `Accept-Language` header; `"en-US"` by default on every machine. `loadConfig()` returns the config's `browser.locale`.
 - `onDelayRenderPending`: called every 5 seconds for each `delayRender()` handle the render is waiting on, with its `label`, `frame` (null while compositions are listed or metadata resolves), `compositionId`, `elapsedMs` and `timeoutMs`, until the handle is released or times out.
 
+`bundle()` and the render functions read no config file, unlike the CLI. To render with the project's `motio.config.ts`, call `loadConfig()` from `@motiojs/bundler`: it returns the config with the `MOTIO_*` variables over it, `bundleOptions` for `bundle()` and `sessionOptions` for the render functions, as shown in [Configuration](configuration.md#from-node). A `remotion.config.ts` is read by the CLI only: from Node, pass its values as options.
+
 ## Warnings and errors
 
 <!-- example: examples/src/render-node.ts#diagnostics -->
@@ -128,8 +130,6 @@ Errors are `MotioError` instances with a stable `code` (`isMotioError(error, cod
 - `option`: the option an invalid value was given to (`frameRange`, `codec`, ...).
 
 A file missing from `public/` fails at once, without waiting for a timeout: `E_ASSET_NOT_FOUND` for an `<Img>`, `E_FONT_LOAD` for `loadFont()` from `@motiojs/fonts`, with `details.path` (the path in `public/`) and `details.suggestion` (the closest file name, when one is close). `E_FONT_LOAD` also reports a font file the browser cannot decode and a Google Font that cannot be downloaded.
-
-`bundle()` does not read a `remotion.config.ts` file, unlike the CLI: pass the values as options.
 
 ## Media functions
 

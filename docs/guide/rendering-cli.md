@@ -41,6 +41,8 @@ Without an output, the video goes to `out/<composition-id>` with the codec's ext
 | `--sequence` | Write an image sequence into the output directory instead of a video: PNG files named after the pattern `frame-[frame].[ext]`, the frame zero-padded to the digits of the last one (`frame-00.png` to `frame-89.png` for 90 frames). `--image-format=jpeg`, `--image-sequence-pattern` and the config file's settings change them. `--frames=0,30,60`, a list of single frames, also writes a sequence. |
 | `--chunks`, `--frames-per-chunk` | Render in chunks in parallel processes and join them without re-encoding. |
 
+The flags that describe the project rather than one run (the codec, the quality, the image format, the raster, the time zone and language, the timeout) can be set once in `motio.config.ts` at the project root, which every command reads, and machine settings such as the concurrency also from `MOTIO_*` variables (`MOTIO_CONCURRENCY`, `MOTIO_TIMEOUT`). A flag wins over both. The composition, the output, `--frames` and `--props` stay flags. See [Configuration](configuration.md) for every key.
+
 A render prints its progress on stderr and, with `--json`, one JSON object on stdout with the output path, codec, rendered frames, time taken and the FFmpeg used.
 
 ### What a render tells you on the way

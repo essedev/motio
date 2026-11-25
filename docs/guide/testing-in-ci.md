@@ -62,4 +62,6 @@ jq -e '.renderWarnings == null' render.json   # optional: fail on any page warni
 
 `renderWarnings` is left out when the render had none, so the last line fails the job as soon as the page reported one.
 
+The commands read the project's `motio.config.ts` in CI as they do locally, so the job renders with the codec, quality and other settings committed with the code. What differs on the runner goes in `MOTIO_*` variables, which win over the file without editing it: `MOTIO_CONCURRENCY` for its cores, `MOTIO_TIMEOUT` for a slower machine, `MOTIO_FFMPEG` and `MOTIO_BROWSER_EXECUTABLE` for binaries in other places (see [Configuration](configuration.md#environment-variables)).
+
 Pixels are only expected to match on the same operating system, CPU architecture and Chrome build: compare renders made in CI with other renders made in CI, not with ones made on a laptop.

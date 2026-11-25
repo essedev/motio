@@ -83,6 +83,8 @@ pnpm still    # motio still src/index.ts Thumbnail out/thumbnail.png
 
 The scripts are plain CLI calls, and flags after them are passed on: `pnpm render --frames=0-29` renders the first second, `pnpm still --props='{"title":"Launch day"}'` changes the title (with npm, put `--` before the flags: `npm run render -- --frames=0-29`). For another output file or codec, call the CLI directly, as in [Rendering from the CLI](rendering-cli.md).
 
+Settings that every render of the project should use, such as the codec, the quality or the format of stills, go in `motio.config.ts` at the project root, which the starter writes with the common keys commented out; every command reads it, and a flag still wins for one run. See [Configuration](configuration.md).
+
 To see the whole video without watching it, render a contact sheet, a grid of evenly spaced frames:
 
 ```bash

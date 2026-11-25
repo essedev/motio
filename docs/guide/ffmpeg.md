@@ -8,8 +8,11 @@ In this order:
 
 1. `ffmpegExecutable` (and `ffprobeExecutable`) passed to a [Node API](rendering-node.md) call;
 2. the `MOTIO_FFMPEG` (and `MOTIO_FFPROBE`) environment variables;
-3. `@motiojs/ffmpeg`, when the project installs it (coming soon, see below);
-4. `ffmpeg` and `ffprobe` on `PATH`.
+3. `ffmpeg.executable` (and `ffmpeg.ffprobeExecutable`) in [`motio.config.ts`](configuration.md), read by every `motio` command and returned by `loadConfig()` for Node scripts;
+4. `@motiojs/ffmpeg`, when the project installs it (coming soon, see below);
+5. `ffmpeg` and `ffprobe` on `PATH`.
+
+The variables sit above the file so a machine can point at its own FFmpeg (a CI image, a render server) without editing the project.
 
 When `@motiojs/ffmpeg` is installed but cannot download its build (its archives are not published, the platform has none, or the network fails), a render falls back to the FFmpeg on `PATH`, if one runs, and warns with `W_FFMPEG_FALLBACK`; the `--json` result of `motio render` then has `ffmpeg.source: "path"` and a `fallback` with the reason. A downloaded archive whose digest differs from the pinned one, or a build that fails its checks, still stops the render: those are never replaced silently.
 

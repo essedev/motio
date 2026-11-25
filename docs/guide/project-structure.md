@@ -5,6 +5,7 @@ The `basic` starter, after `motio init`:
 ```text
 my-video/
   package.json        scripts and dependencies
+  motio.config.ts     settings of the motio commands
   tsconfig.json       TypeScript, strict
   README.md
   AGENTS.md           notes for coding agents (CLAUDE.md imports it)
@@ -71,7 +72,7 @@ export const Root = () => (
 
 The root is not a video itself: Motio renders it to collect the compositions, then renders the one you asked for. Keep it free of side effects other than imports such as `./fonts`.
 
-Every command takes the entry point as its first argument (`motio render src/index.ts Intro`). When it is left out, Motio tries `src/index.ts`, `src/index.tsx`, `src/index.js` and `src/index.mjs`, then the same names under `remotion/` and `src/remotion/`.
+Every command takes the entry point as its first argument (`motio render src/index.ts Intro`). When it is left out, Motio uses `entryPoint` from `motio.config.ts` (the starters set it to `src/index.ts`); without one, it tries `src/index.ts`, `src/index.tsx`, `src/index.js` and `src/index.mjs`, then the same names under `remotion/` and `src/remotion/`.
 
 ## public/
 
@@ -129,4 +130,6 @@ Dependencies: `@motiojs/motio` (components and hooks), React, and the feature pa
 
 ## Configuration
 
-Motio has no configuration file of its own yet: use the CLI flags, or the options of the [Node API](rendering-node.md). A `remotion.config.ts` file, written for Remotion, is read by every command (see [Coming from Remotion](coming-from-remotion.md)).
+`motio.config.ts` holds the settings every `motio` command reads: the entry point, the codec and quality of renders, the format of stills, which Chrome and FFmpeg run, the preview's port. The starters write one with the common keys commented out. A flag wins over the file for one run, and `MOTIO_*` variables such as `MOTIO_CONCURRENCY` adapt it to a machine; [Configuration](configuration.md) lists every key. The [Node API](rendering-node.md) reads no file by itself: `loadConfig()` returns the same settings as options.
+
+A `remotion.config.ts` file, written for Remotion, is read when the project has no `motio.config.ts` (see [Coming from Remotion](coming-from-remotion.md)).

@@ -2,6 +2,16 @@
 
 Progress log, newest first. One entry per unit of work: what changed, what was measured, what is next.
 
+## 2026-11-24/25: brand, site and promo; `motio.config.ts`; virtual time; M4 on Remocn and snapcn
+
+- Brand and outward material: Kinetic with the Flipbook mark (D-077); the site in Astro and Starlight reads every page from the repository, with `llms.txt` built from the docs (D-079); the promotional material is a Motio project in `promo/` (D-080), the issues it found are fixed (D-082), and its teaser has a filter house soundtrack synthesised in code (D-084). The entry package is `@motiojs/motio`, since npm refused `motio` (D-081). BeginFrame capture is deprecated (D-078).
+- A newcomer followed the guide outside the repository; every friction point was fixed with a test (D-083): `make try` from a clone, the FFmpeg on `PATH` when the pinned build cannot be downloaded, errors with the frame and the mapped source location, page warnings returned and printed, the nearest flag or command and exit code 2 for invalid input, the preview's timeline and Problems panel, a Player clock that waits for its media, browsers killed when the process stops. New projects get `AGENTS.md` and a `CLAUDE.md` importing it.
+- `motio.config.ts` (D-085): typed, read by every command, `MOTIO_*` variables over it and flags over both, `loadConfig()` for Node scripts; every starter writes one.
+- Time: the virtual time model (D-086), its open points closed by D-090: CSS transitions play from the style change, renders pin the time zone to UTC and the language to `en-US` (`--time-zone`, `--locale`), the frame model holds animation-frame and timer loops between seeks, `check determinism` suggests the virtual model when the pages reported clock-driven code.
+- Pixels: transparent captures clear the tiles under sliding scenes (D-087). `raster` and `canvas` (D-089): Remotion's pixels depend on its `gl`, so Motio uses the CPU raster and software canvases by default and the GPU raster when a project sets `gl: "swangle"`; `make bench --assert` passes with the defaults. Where Chrome composites on SwiftShader, tiles are rasterised with one copy and reuse textures only at their size; `check determinism` names Chrome's image decode cache as the cause `image` (D-091).
+- M4 (D-088): Remocn and snapcn build unmodified through the alias and `doctor` passes; every comparison with Remotion adds a 32 px block check. With the GPU raster 184 of 186 compositions are within the thresholds (148 identical) and no known mismatch is left; of the 10 determinism failures measured, 6 pass, 2 are named `image`, and `paper-tear` and `orbit-gallery` still differ by one level on a few pixels in ascending runs.
+- Next: repeat the D-089 to D-091 measurements and the M4 suite in the pinned Linux image (everything was measured on macOS); then what needs the author (the publishing steps in the backlog, cloud spending for M5).
+
 ## 2026-11-24: M6, a standalone tool; deterministic pixels for real
 
 - Direction (D-066): Motio stops chasing parity with Remotion; compatibility is pinned at 4.0.545, guarded by the existing tests and updated on a schedule, and only people entitled to run Remotion record the oracle.
