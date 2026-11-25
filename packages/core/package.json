@@ -25,6 +25,10 @@
 			"types": "./dist/clock-shim.d.ts",
 			"default": "./dist/clock-shim.js"
 		},
+		"./frame-gate": {
+			"types": "./dist/frame-gate.d.ts",
+			"default": "./dist/frame-gate.js"
+		},
 		"./internals": {
 			"types": "./dist/internals.d.ts",
 			"default": "./dist/internals.js"

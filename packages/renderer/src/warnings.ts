@@ -5,6 +5,8 @@ import type { FrameWarning } from "@motiojs/core/protocol";
  * `renderFrames()`. Codes: `W_FONT_FALLBACK` (text fell back to another font),
  * `W_SLOW_READINESS` (a `delayRender()` handle stayed open more than half its timeout),
  * `W_ANIMATION_UNSEEKABLE`, `W_MATH_RANDOM` (frames call `Math.random()`),
+ * `W_CSS_TRANSITION` (frame model: a CSS transition is shown at its end),
+ * `W_ANIMATION_FRAME_LOOP` (frame model: a `requestAnimationFrame` loop runs on the real clock),
  * `W_STATIC_FILE_CASE` (a `staticFile()` name differs in case from the file),
  * `W_TIMELINE_SHORT` (a `<TransitionSeries>` ends before the composition) and
  * `W_FFMPEG_FALLBACK` (the pinned FFmpeg could not be downloaded; the one on PATH was used).

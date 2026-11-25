@@ -136,7 +136,12 @@ export type FrameWarningCode =
 	/** A timeline (`<TransitionSeries>`) ends before the composition: the last frames are empty. */
 	| "W_TIMELINE_SHORT"
 	/** Frame model: a CSS transition started while a frame rendered; it is shown at its end. */
-	| "W_CSS_TRANSITION";
+	| "W_CSS_TRANSITION"
+	/**
+	 * Frame model: a `requestAnimationFrame` loop runs on the page, on the real clock. Motio
+	 * pauses it while a frame is captured; what it draws differs between renders.
+	 */
+	| "W_ANIMATION_FRAME_LOOP";
 
 export interface FrameWarning {
 	code: FrameWarningCode;

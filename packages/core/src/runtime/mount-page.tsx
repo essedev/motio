@@ -16,6 +16,7 @@ import {
 	toCompositionInfo,
 } from "../composition/resolve.js";
 import { getRunContext } from "../environment.js";
+import { getFrameGate } from "../frame-gate.js";
 import { audioIntents } from "../media/audio-intents.js";
 import { pageWarnings } from "../page-warnings.js";
 import {
@@ -69,6 +70,13 @@ class RuntimeBoundary extends Component<BoundaryProps, { failed: boolean }> {
 }
 
 const CANVAS_ID = "motio-canvas";
+
+const FRAME_LOOP_WARNING: FrameWarning = {
+	code: "W_ANIMATION_FRAME_LOOP",
+	key: "requestAnimationFrame",
+	message:
+		'A requestAnimationFrame loop runs on the page. In the frame model it runs on the real clock, and Motio pauses it while a frame is captured, so what it draws or moves differs between renders unless it reads the frame. Drive it from useCurrentFrame(), or render in the virtual time model (timeModel "virtual"), where animation frames follow the video\'s time.',
+};
 
 /**
  * Base styles of the canvas. `border-box` sizing matches the reference renders (a padded box
@@ -340,7 +348,17 @@ class PageRuntime {
 			);
 		}
 		const clock = getVirtualClock();
-		if (!clock) return this.step(frame, null, false);
+		if (!clock) {
+			// Frame model: the page's animation-frame callbacks run while the frame renders and
+			// settles, and wait for the next seek while the renderer captures (see frame-gate.ts).
+			const gate = getFrameGate();
+			gate?.open();
+			try {
+				return await this.step(frame, null, false);
+			} finally {
+				await gate?.close();
+			}
+		}
 		// Virtual time model (ARCHITECTURE, "Time"): virtual time only moves forward, one frame at a
 		// time from frame 0, so the state timers and animation frames accumulate on this page is the
 		// state of one ascending render, whatever frame the page started at.
@@ -442,6 +460,7 @@ class PageRuntime {
 		for (const w of late) {
 			if (!warnings.some((x) => x.message === w.message)) warnings.push(w);
 		}
+		if (getFrameGate()?.loop) pageWarnings.report(FRAME_LOOP_WARNING);
 		warnings.push(...settled.warnings, ...this.fonts.scan(this.canvas), ...pageWarnings.take());
 		const readBack = Number(document.documentElement.getAttribute(FRAME_ATTRIBUTE));
 		if (readBack !== frame) {

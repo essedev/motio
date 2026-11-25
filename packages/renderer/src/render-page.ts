@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { CLOCK_SHIM_SCRIPT } from "@motiojs/core/clock-shim";
+import { FRAME_GATE_SCRIPT } from "@motiojs/core/frame-gate";
 import {
 	type CompositionInfo,
 	type FrameReport,
@@ -666,6 +667,9 @@ export class RenderPage {
 			// After the run context, which the shim reads for the random seed. Only in the top frame:
 			// nothing advances the clock of an iframe, whose timers would never fire.
 			await this.page.evaluateOnNewDocument(`if (window === window.top) ${CLOCK_SHIM_SCRIPT}`);
+		} else {
+			// Holds the page's animation-frame callbacks between seeks (frame-gate.ts in core).
+			await this.page.evaluateOnNewDocument(`if (window === window.top) ${FRAME_GATE_SCRIPT}`);
 		}
 		// Set on the session that captures: emulation overrides are per CDP session, and a
 		// device scale factor set elsewhere would not reach Page.captureScreenshot.
