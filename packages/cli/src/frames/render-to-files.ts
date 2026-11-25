@@ -18,6 +18,8 @@ export interface RenderToFilesOptions {
 	recycleEveryNFrames?: number;
 	/** Receives where each frame's canvases are (Motio renderer extension). */
 	onCanvasRegions?: (regions: CanvasRegion[], frame: number) => void;
+	/** Receives where each frame's downscaled images are (Motio renderer extension). */
+	onImageRegions?: (regions: CanvasRegion[], frame: number) => void;
 	/** Receives the warnings of the render, each once. */
 	onWarnings?: (warnings: RenderWarning[]) => void;
 	label: string;
@@ -54,6 +56,7 @@ export async function renderToFiles(
 				? { recycleEveryNFrames: options.recycleEveryNFrames }
 				: {}),
 			...(options.onCanvasRegions ? { onCanvasRegions: options.onCanvasRegions } : {}),
+			...(options.onImageRegions ? { onImageRegions: options.onImageRegions } : {}),
 			onFrameBuffer: async (buffer, frame) => {
 				const file = join(directory, `${frame}.${options.imageFormat}`);
 				await writeFile(file, buffer);

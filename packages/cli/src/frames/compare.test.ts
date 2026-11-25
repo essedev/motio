@@ -135,6 +135,31 @@ describe("determinism report", () => {
 		expect(diagnoseMismatches([inside], runs, size).cause).toBe("race");
 	});
 
+	it("names Chrome's image decode cache for faint differences inside downscaled images", () => {
+		const size = { width: 1280, height: 720 };
+		// The M4 moodboard: a photo off by one level over most of its area, in descending runs.
+		const photo = {
+			frame: 74,
+			hashes: ["a", "a", "b", "a"],
+			differingPixels: 24110,
+			faintPixels: 23648,
+			imagePixels: 24110,
+		};
+		const result = diagnoseMismatches([photo], runs, size);
+		expect(result).toMatchObject({ cause: "image", pattern: "race" });
+		expect(result.message).toMatch(/image cache/);
+		// Large differences in the image are content: a different photo.
+		expect(diagnoseMismatches([{ ...photo, faintPixels: 9000 }], runs, size).cause).toBe("race");
+		// Differences outside the images are not the cache's.
+		expect(diagnoseMismatches([{ ...photo, imagePixels: 12000 }], runs, size).cause).toBe("race");
+		// Unlocated images never point to it.
+		const { imagePixels: _, ...unlocated } = photo;
+		expect(diagnoseMismatches([unlocated], runs, size).cause).toBe("race");
+		// A few faint pixels inside an image are the cache's too, rather than rasterisation.
+		const few = { ...photo, differingPixels: 26, faintPixels: 26, imagePixels: 26 };
+		expect(diagnoseMismatches([few], runs, size).cause).toBe("image");
+	});
+
 	it("suggests the virtual time model when frame-model pages ran code on the real clock", () => {
 		const random = diagnoseMismatches([{ frame: 0, hashes: ["a", "b", "c", "d"] }], runs);
 		const codes = new Set(["W_ANIMATION_FRAME_LOOP", "W_FONT_FALLBACK"]);
@@ -161,8 +186,22 @@ describe("pixel difference", () => {
 		expect(pixelDifference(a, b, 8)).toEqual({
 			pixels: 2,
 			region: { x: 2, y: 1, width: 4, height: 3 },
+			faint: 0,
+			inside: 0,
 		});
 		expect(() => pixelDifference(a, b.subarray(4), 8)).toThrow(/different sizes/);
+	});
+
+	it("counts faint pixels and the pixels inside given rectangles", () => {
+		const a = new Uint8Array(8 * 4 * 4).fill(10);
+		const b = Uint8Array.from(a);
+		b[(0 * 8 + 1) * 4 + 1] = 12; // two levels of green, at x 1, y 0
+		b[(2 * 8 + 7) * 4] = 9; // one level of red, at x 7, y 2
+		b[(3 * 8 + 0) * 4] = 13; // three levels, at x 0, y 3
+		const difference = pixelDifference(a, b, 8, [{ x: 2, y: 0, width: 4, height: 4 }]);
+		expect(difference).toMatchObject({ pixels: 3, faint: 2 });
+		// x 1 lies in the one pixel of margin around x 2 to 5; x 7 and x 0 lie outside it.
+		expect(difference?.inside).toBe(1);
 	});
 
 	it("unites regions", () => {

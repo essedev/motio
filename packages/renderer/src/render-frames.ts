@@ -106,6 +106,12 @@ export interface RenderFramesOptions extends BrowserSessionOptions {
 	 * confined to canvases). Unset, nothing is read.
 	 */
 	onCanvasRegions?: (regions: CanvasRegion[], frame: number) => void;
+	/**
+	 * Motio extension: receives, after each frame is captured, where the page's `<img>` elements
+	 * drawn smaller than their natural size are, in captured pixels (`motio check determinism`
+	 * uses it to tell differences confined to downscaled images). Unset, nothing is read.
+	 */
+	onImageRegions?: (regions: CanvasRegion[], frame: number) => void;
 }
 
 /** Result of `renderFrames()`. */
@@ -216,9 +222,11 @@ export async function renderFrames(options: RenderFramesOptions): Promise<Render
 			crashRetries: DEFAULT_CRASH_RETRIES,
 			signal: controller.signal,
 			...(options.onCanvasRegions ? { canvasRegions: true } : {}),
-			onFrame: async ({ frame, image, report, timeMs, canvases }) => {
+			...(options.onImageRegions ? { imageRegions: true } : {}),
+			onFrame: async ({ frame, image, report, timeMs, canvases, images }) => {
 				if (!muted) intents.set(frame, report.audio);
 				if (canvases) options.onCanvasRegions?.(canvases, frame);
+				if (images) options.onImageRegions?.(images, frame);
 				if (outputDir) {
 					const name = pattern
 						.replaceAll("[frame]", String(frame).padStart(padding, "0"))

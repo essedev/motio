@@ -14,6 +14,8 @@ export interface CapturedFrame {
 	timeMs: number;
 	/** Where the frame's canvases are, when the job asked for `canvasRegions`. */
 	canvases?: CanvasRegion[];
+	/** Where the frame's downscaled images are, when the job asked for `imageRegions`. */
+	images?: CanvasRegion[];
 }
 
 /** One of the slowest frames of a render. */
@@ -35,6 +37,8 @@ export interface PoolJob {
 	capture?: boolean;
 	/** Also reads where each captured frame's canvases are (`CapturedFrame.canvases`). */
 	canvasRegions?: boolean;
+	/** Also reads where each captured frame's downscaled images are (`CapturedFrame.images`). */
+	imageRegions?: boolean;
 	/** Replace a page with a fresh one after this many frames; 0 never. */
 	recycleEveryNFrames: number;
 	/** Times a frame is retried after a browser crash or a watchdog timeout. */
@@ -139,7 +143,16 @@ export async function runPool(job: PoolJob): Promise<SlowFrame[]> {
 						const timeMs = performance.now() - t0;
 						const canvases =
 							job.canvasRegions && job.capture !== false ? await page.canvasRegions() : undefined;
-						captured = { frame, image, report, timeMs, ...(canvases ? { canvases } : {}) };
+						const images =
+							job.imageRegions && job.capture !== false ? await page.imageRegions() : undefined;
+						captured = {
+							frame,
+							image,
+							report,
+							timeMs,
+							...(canvases ? { canvases } : {}),
+							...(images ? { images } : {}),
+						};
 					} catch (err) {
 						await close();
 						if (stopReason !== undefined) break;

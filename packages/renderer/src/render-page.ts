@@ -967,9 +967,29 @@ export class RenderPage {
 	 * differences confined to canvases. Canvases inside iframes are not seen.
 	 */
 	async canvasRegions(): Promise<CanvasRegion[]> {
+		return this.regions(`[...document.querySelectorAll("canvas")]
+			.map((c) => c.getBoundingClientRect())`);
+	}
+
+	/**
+	 * Where the page's `<img>` elements drawn smaller than their natural size are, in captured
+	 * pixels (bounding boxes, transforms included, clipped to the viewport): `check determinism`
+	 * reads them to tell differences confined to downscaled images, which Chrome's CPU raster draws
+	 * from whichever decoded copy its image cache holds (D-091). Images inside iframes are not seen.
+	 */
+	async imageRegions(): Promise<CanvasRegion[]> {
 		const scale = this.config.scale;
-		const rects = (await this.evaluateIsolated(`[...document.querySelectorAll("canvas")]
-			.map((c) => c.getBoundingClientRect())
+		return this.regions(`[...document.images]
+			.filter((i) => i.complete && i.naturalWidth > 0 && i.naturalHeight > 0)
+			.map((i) => [i, i.getBoundingClientRect()])
+			.filter(([i, r]) => Math.max((r.width * ${scale}) / i.naturalWidth, (r.height * ${scale}) / i.naturalHeight) < 1)
+			.map(([, r]) => r)`);
+	}
+
+	/** Viewport rectangles an isolated-world expression returns, clipped and in captured pixels. */
+	private async regions(expression: string): Promise<CanvasRegion[]> {
+		const scale = this.config.scale;
+		const rects = (await this.evaluateIsolated(`${expression}
 			.map((r) => ({
 				left: Math.max(0, r.left),
 				top: Math.max(0, r.top),

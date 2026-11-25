@@ -19,6 +19,7 @@ import {
 	hashPixels,
 	isFlicker,
 	meanAbsoluteDifference,
+	type PixelDifference,
 	pixelDifference,
 	pngSize,
 	type Rect,
@@ -146,6 +147,7 @@ async function measureMismatches(
 	ffmpeg: string,
 	mismatches: DeterminismMismatch[],
 	runFiles: ReadonlyArray<ReadonlyMap<number, string>>,
+	imageRegions: ReadonlyMap<number, readonly Rect[]>,
 ): Promise<FrameSize | undefined> {
 	let size: FrameSize | undefined;
 	for (const mismatch of mismatches) {
@@ -156,20 +158,25 @@ async function measureMismatches(
 		size ??= pngSize(await readFile(files[0] as string));
 		const width = size.width;
 		let first: Uint8Array | undefined;
-		let most = 0;
+		let most: PixelDifference | undefined;
 		let region: Rect | undefined;
+		const images = imageRegions.get(mismatch.frame);
 		await decodePngs(ffmpeg, files, (i, rgba) => {
 			if (i === 0) {
 				first = Uint8Array.from(rgba);
 				return;
 			}
-			const difference = pixelDifference(first as Uint8Array, rgba, width);
+			const difference = pixelDifference(first as Uint8Array, rgba, width, images ?? []);
 			if (!difference) return;
-			most = Math.max(most, difference.pixels);
+			if (!most || difference.pixels > most.pixels) most = difference;
 			region = unionRegion(region, difference.region);
 		});
-		mismatch.differingPixels = most;
+		mismatch.differingPixels = most?.pixels ?? 0;
 		if (region) mismatch.region = region;
+		if (most) {
+			mismatch.faintPixels = most.faint;
+			if (images) mismatch.imagePixels = most.inside;
+		}
 	}
 	return size;
 }
@@ -208,6 +215,9 @@ export async function checkDeterminismCommand(
 			gl !== "swangle" &&
 			gl !== "swiftshader");
 	const canvasRegions = new Map<number, Rect[]>();
+	// Where the first run's downscaled images are: differences confined to them, by a level or two,
+	// come from Chrome's image decode cache (D-091).
+	const imageRegions = new Map<number, Rect[]>();
 	const warningCodes = new Set<string>();
 	const timeModel = session.timeModel ?? composition.timeModel ?? "frame";
 	const hashes: Array<Map<number, string>> = [];
@@ -223,6 +233,9 @@ export async function checkDeterminismCommand(
 			...(run.freshPage ? { recycleEveryNFrames: 1 } : {}),
 			...(canvasOnGpu && index === 0
 				? { onCanvasRegions: (regions: Rect[], frame: number) => canvasRegions.set(frame, regions) }
+				: {}),
+			...(index === 0
+				? { onImageRegions: (regions: Rect[], frame: number) => imageRegions.set(frame, regions) }
 				: {}),
 			onWarnings: (warnings) => {
 				for (const w of warnings) warningCodes.add(w.code);
@@ -242,7 +255,9 @@ export async function checkDeterminismCommand(
 	}
 	const mismatches = compareRuns(hashes);
 	const deterministic = mismatches.length === 0;
-	const size = deterministic ? undefined : await measureMismatches(ffmpeg, mismatches, runFiles);
+	const size = deterministic
+		? undefined
+		: await measureMismatches(ffmpeg, mismatches, runFiles, imageRegions);
 	const diagnosis = deterministic
 		? null
 		: withTimeModelHint(

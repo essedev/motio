@@ -33,7 +33,20 @@ export interface DeterminismMismatch {
 	differingPixels?: number;
 	/** Bounding box of the pixels that differ in any run, in captured pixels. */
 	region?: Rect;
+	/**
+	 * Of the `differingPixels` of the run that changed most, those whose every channel differs by
+	 * at most `FAINT_LEVELS`.
+	 */
+	faintPixels?: number;
+	/**
+	 * Of the `differingPixels` of the run that changed most, those inside an `<img>` drawn smaller
+	 * than its natural size, when the images were located.
+	 */
+	imagePixels?: number;
 }
+
+/** Largest channel difference, in levels of 255, of a pixel that counts as faint. */
+export const FAINT_LEVELS = 2;
 
 /** Where two decoded RGBA frames of the same size differ. */
 export interface PixelDifference {
@@ -41,6 +54,10 @@ export interface PixelDifference {
 	pixels: number;
 	/** Bounding box of those pixels. */
 	region: Rect;
+	/** Of those pixels, the ones whose every channel differs by at most `FAINT_LEVELS`. */
+	faint: number;
+	/** Of those pixels, the ones inside any of the `inside` rectangles (one pixel of margin). */
+	inside: number;
 }
 
 /** The pixels where two decoded RGBA frames differ, or null when they are identical. */
@@ -48,6 +65,7 @@ export function pixelDifference(
 	a: Uint8Array,
 	b: Uint8Array,
 	width: number,
+	inside: readonly Rect[] = [],
 ): PixelDifference | null {
 	if (a.length !== b.length || a.length % 4 !== 0) {
 		throw new Error(
@@ -55,6 +73,8 @@ export function pixelDifference(
 		);
 	}
 	let pixels = 0;
+	let faint = 0;
+	let within = 0;
 	let x0 = Number.POSITIVE_INFINITY;
 	let y0 = Number.POSITIVE_INFINITY;
 	let x1 = -1;
@@ -70,9 +90,22 @@ export function pixelDifference(
 		if (x > x1) x1 = x;
 		if (y < y0) y0 = y;
 		if (y > y1) y1 = y;
+		let most = 0;
+		for (let c = i; c < i + 4; c++)
+			most = Math.max(most, Math.abs((a[c] as number) - (b[c] as number)));
+		if (most <= FAINT_LEVELS) faint++;
+		if (
+			inside.some((r) => x >= r.x - 1 && x <= r.x + r.width && y >= r.y - 1 && y <= r.y + r.height)
+		)
+			within++;
 	}
 	if (pixels === 0) return null;
-	return { pixels, region: { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 } };
+	return {
+		pixels,
+		region: { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 },
+		faint,
+		inside: within,
+	};
 }
 
 /** Bounding box of two regions. */
@@ -179,10 +212,19 @@ export type DeterminismCause =
 	| "history"
 	| "mixed"
 	| "raster"
-	| "canvas";
+	| "canvas"
+	| "image";
 
 /** What the pattern of disagreeing runs points to, whatever the size of the differences. */
-export type DeterminismPattern = Exclude<DeterminismCause, "raster" | "canvas">;
+export type DeterminismPattern = Exclude<DeterminismCause, "raster" | "canvas" | "image">;
+
+/**
+ * Share of a frame's differing pixels that must lie inside downscaled images, and share that must
+ * be faint (`FAINT_LEVELS`), for the differences to read as Chrome's image decode cache (D-091):
+ * measured at 0.84 to 0.98 faint on the M4 photos, the rest at the photos' edges.
+ */
+export const IMAGE_INSIDE_SHARE = 0.9;
+export const IMAGE_FAINT_SHARE = 0.75;
 
 /**
  * Most differing pixels a frame may have, in lines of the longer side, for the differences to
@@ -229,11 +271,14 @@ export interface FrameSize {
 	height: number;
 }
 
-/** The likely cause of the mismatches, with the run pattern when the cause is `raster` or `canvas`. */
+/**
+ * The likely cause of the mismatches, with the run pattern when the cause is `raster`, `canvas`
+ * or `image`.
+ */
 export interface DeterminismDiagnosis {
 	cause: DeterminismCause;
 	message: string;
-	/** What the disagreeing runs point to, when `cause` is `raster` or `canvas`. */
+	/** What the disagreeing runs point to, when `cause` is `raster`, `canvas` or `image`. */
 	pattern?: DeterminismPattern;
 	/**
 	 * Set when the runs used the frame model and the pages reported code running on the real
@@ -322,6 +367,24 @@ export function diagnoseMismatches(
 			cause: "canvas",
 			pattern,
 			message: `Every difference lies inside a <canvas>, and canvases were drawn on the GPU (canvas "gpu"): Chrome's GPU-accelerated 2D canvas can draw differently when the machine is loaded. Render with --canvas=software (browser.canvas in motio.config.ts), Motio's default, which measured deterministic under load; only transparent captures change. If the canvas content itself changes between runs, the pattern points to this: ${CAUSE_MESSAGES[pattern]}`,
+		};
+	}
+	const inImages =
+		mismatches.length > 0 &&
+		mismatches.every(
+			(m) =>
+				m.differingPixels !== undefined &&
+				m.differingPixels > 0 &&
+				m.imagePixels !== undefined &&
+				m.faintPixels !== undefined &&
+				m.imagePixels >= IMAGE_INSIDE_SHARE * m.differingPixels &&
+				m.faintPixels >= IMAGE_FAINT_SHARE * m.differingPixels,
+		);
+	if (inImages) {
+		return {
+			cause: "image",
+			pattern,
+			message: `The differences lie inside images drawn smaller than their natural size, and almost every differing pixel changes by at most ${FAINT_LEVELS} levels: Chrome draws a downscaled image from whichever decoded copy of it its image cache holds (one decoded at another size in an earlier frame, or a new one), and the copies differ by a level here and there, so a page that drew the image at other sizes before can differ from a new page. The cache lives inside Chrome's compositor and nothing outside the page can clear it between frames; the composition is not at fault and a video shows no visible change. If an image itself changes between runs (a different photo, a fade that depends on time), the pattern points to this: ${CAUSE_MESSAGES[pattern]}`,
 		};
 	}
 	const limit = size ? RASTER_LINES * Math.max(size.width, size.height) : 0;

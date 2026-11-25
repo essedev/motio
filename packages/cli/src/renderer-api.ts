@@ -212,6 +212,8 @@ export interface RenderFramesOptions extends SessionOptions {
 	recycleEveryNFrames?: number;
 	/** Motio extension: where each frame's canvases are, in captured pixels. */
 	onCanvasRegions?: (regions: CanvasRegion[], frame: number) => void;
+	/** Motio extension: where each frame's downscaled `<img>` elements are, in captured pixels. */
+	onImageRegions?: (regions: CanvasRegion[], frame: number) => void;
 }
 
 export interface EnsuredBrowser {

@@ -82,6 +82,14 @@
 								"type": "integer",
 								"description": "Most pixels any run changed against the first run."
 							},
+							"faintPixels": {
+								"type": "integer",
+								"description": "Of the differingPixels of the run that changed most, those whose every channel differs by at most 2 levels."
+							},
+							"imagePixels": {
+								"type": "integer",
+								"description": "Of the differingPixels of the run that changed most, those inside an <img> drawn smaller than its natural size."
+							},
 							"region": {
 								"type": "object",
 								"description": "Bounding box of the pixels that differ in any run, in captured pixels.",
@@ -104,12 +112,12 @@
 					"additionalProperties": false,
 					"properties": {
 						"cause": {
-							"enum": ["random", "order", "race", "history", "mixed", "raster", "canvas"],
-							"description": "random: every run differs (Math.random(), a clock); order: ascending and descending differ (a frame depends on the previous one); race: one tab and several tabs differ; history: the runs agree but not with a new page per frame; mixed: more than one; raster: every frame differs in no more than a few lines of pixels, as when Chrome rasterises the same content differently; canvas: every difference lies inside a canvas drawn on the GPU (canvas gpu), where --canvas=software helps (pattern has what the runs point to otherwise, for raster and canvas)."
+							"enum": ["random", "order", "race", "history", "mixed", "raster", "canvas", "image"],
+							"description": "random: every run differs (Math.random(), a clock); order: ascending and descending differ (a frame depends on the previous one); race: one tab and several tabs differ; history: the runs agree but not with a new page per frame; mixed: more than one; raster: every frame differs in no more than a few lines of pixels, as when Chrome rasterises the same content differently; canvas: every difference lies inside a canvas drawn on the GPU (canvas gpu), where --canvas=software helps; image: the differences lie inside images drawn smaller than their natural size and change by a level or two, as when Chrome draws them from a decoded copy of another size held in its image cache (pattern has what the runs point to otherwise, for raster, canvas and image)."
 						},
 						"pattern": {
 							"enum": ["random", "order", "race", "history", "mixed"],
-							"description": "With the raster or canvas cause: what the disagreeing runs point to if the composition is the cause."
+							"description": "With the raster, canvas or image cause: what the disagreeing runs point to if the composition is the cause."
 						},
 						"message": {
 							"type": "string"
