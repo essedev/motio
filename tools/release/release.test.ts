@@ -8,7 +8,7 @@ import {
 	publishOrder,
 	REPO,
 } from "./packages.ts";
-import { atLeast, tarballProblems } from "./publish.ts";
+import { atLeast, ffmpegReleaseProblem, tarballProblems } from "./publish.ts";
 
 const packages = publicPackages();
 const names = new Set(packages.map((pkg) => pkg.manifest.name));
@@ -140,4 +140,13 @@ it("compares npm versions", () => {
 	expect(atLeast("11.4.9", [11, 5, 1])).toBe(false);
 	expect(atLeast("10.99.0", [11, 0, 0])).toBe(false);
 	expect(atLeast("12.0.0-pre.1", [11, 15, 0])).toBe(true);
+});
+
+it("publishes @motiojs/ffmpeg only once its FFmpeg release is published", () => {
+	expect(
+		ffmpegReleaseProblem({ RELEASE_PUBLISHED: true, RELEASE_TAG: "ffmpeg-8.1.3-1" }),
+	).toBeNull();
+	expect(ffmpegReleaseProblem({ RELEASE_PUBLISHED: false, RELEASE_TAG: "ffmpeg-8.1.3-1" })).toMatch(
+		/publish the GitHub release ffmpeg-8\.1\.3-1.*update-manifest/,
+	);
 });

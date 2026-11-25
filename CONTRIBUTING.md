@@ -21,7 +21,7 @@ A dry run packs and checks everything and runs `npm publish --dry-run`: Actions 
 
 ### The first publish
 
-npm accepts a trusted publisher only for a package that already exists, so the first version is published once from a machine:
+npm accepts a trusted publisher only for a package that already exists, so the first version is published once from a machine. Before it, the pinned FFmpeg release is published and its manifest committed (D-065: the `ffmpeg-build` workflow, the GitHub release, `tools/ffmpeg-build/update-manifest.mjs` on its archives, `RELEASE_PUBLISHED` set to true), so `@motiojs/ffmpeg` works from its first version; `publish.ts` refuses to publish it before that.
 
 1. Clone the commit to release into a new folder (so no stale `dist/` is packed) and run `pnpm install --frozen-lockfile`.
 2. Create a short-lived granular npm token that can publish to the `@motiojs` scope and `create-motio`. Put it in the environment without writing it to the shell history: `read -rs NPM_TOKEN && export NPM_TOKEN`.

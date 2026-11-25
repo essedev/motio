@@ -16,7 +16,7 @@ import { spawn } from "node:child_process";
 import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { lockstepVersion, type Manifest, publicPackages, publishOrder, REPO } from "./packages.ts";
 
@@ -133,6 +133,16 @@ export function tarballProblems(
 	return problems;
 }
 
+/** Why `@motiojs/ffmpeg` cannot be published from this manifest, or null. */
+export function ffmpegReleaseProblem(manifest: {
+	RELEASE_PUBLISHED: boolean;
+	RELEASE_TAG: string;
+}): string | null {
+	return manifest.RELEASE_PUBLISHED
+		? null
+		: `@motiojs/ffmpeg has RELEASE_PUBLISHED = false: publish the GitHub release ${manifest.RELEASE_TAG}, run tools/ffmpeg-build/update-manifest.mjs on its archives and set RELEASE_PUBLISHED to true in packages/ffmpeg/src/manifest.ts first (D-065).`;
+}
+
 /** The npm configuration of this run: a token from NPM_TOKEN, or whatever npm finds itself. */
 async function authEnvironment(): Promise<{
 	env: NodeJS.ProcessEnv;
@@ -208,6 +218,17 @@ async function main() {
 		if (pending.length === 0) {
 			console.log(`Every package is already published at ${version}.`);
 			return;
+		}
+
+		// @motiojs/ffmpeg reaches npm only once its FFmpeg release is published and its manifest
+		// carries that release's digests (D-065), so it works from its first version.
+		if (pending.some((pkg) => pkg.manifest.name === "@motiojs/ffmpeg")) {
+			const manifest = (await import(
+				pathToFileURL(join(REPO, "packages", "ffmpeg", "dist", "manifest.js")).href
+			)) as { RELEASE_PUBLISHED: boolean; RELEASE_TAG: string };
+			const problem = ffmpegReleaseProblem(manifest);
+			if (problem && !dryRun) throw new Error(`${problem} Nothing was published.`);
+			if (problem) console.log(`warning: ${problem} A real run would stop here.`);
 		}
 
 		// Pack and check every tarball before the first publish.
