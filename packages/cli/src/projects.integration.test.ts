@@ -508,8 +508,12 @@ for (const [name, project] of Object.entries(projects)) {
 					Math.floor(composition.durationInFrames / 2) - DETERMINISM_FRAMES / 2,
 				);
 				const last = Math.min(composition.durationInFrames - 1, first + DETERMINISM_FRAMES - 1);
-				it.skipIf(!checks.has("determinism"))(
-					`${cid} renders frames ${first}-${last} like a new page per frame, in any order`,
+				// A known non-determinism is expected to fail; the test flips once it is fixed.
+				const knownNondeterminism = entry.knownNondeterminism?.[cid];
+				(knownNondeterminism === undefined ? it : it.fails).skipIf(!checks.has("determinism"))(
+					knownNondeterminism === undefined
+						? `${cid} renders frames ${first}-${last} like a new page per frame, in any order`
+						: `${cid} renders frames ${first}-${last} non-deterministically until fixed: ${knownNondeterminism}`,
 					async () => {
 						const run = await motioJson(rootDir, [
 							"check",

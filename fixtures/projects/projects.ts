@@ -26,6 +26,8 @@ export interface ProjectEntry {
 	knownMismatch?: Record<string, string>;
 	/** Compositions whose frames around flagged flicker differ from Remotion's for a known cause. */
 	knownFlickerMismatch?: Record<string, string>;
+	/** Compositions that `check determinism` finds non-deterministic for a known cause. */
+	knownNondeterminism?: Record<string, string>;
 }
 
 export interface Project {

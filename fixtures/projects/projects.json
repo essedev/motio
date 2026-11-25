@@ -72,7 +72,10 @@
 				},
 				"motion-pack": {
 					"file": "src/remotion/motion-pack-root.tsx",
-					"script": "remotion.config.ts"
+					"script": "remotion.config.ts",
+					"knownNondeterminism": {
+						"paper-tear": "frames 54-56 differ by one level on 13-32 pixels with GPU compositing, and frames 59-60 on the edge of a fragment in flight, also in JPEG; reported as raster, cause inside Chrome not found (D-091)"
+					}
 				},
 				"not-found": {
 					"file": "src/remotion/not-found-root.tsx",
