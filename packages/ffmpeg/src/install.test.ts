@@ -162,7 +162,7 @@ describe("install", () => {
 		expect(err.message).toBe("stop");
 	});
 
-	it("refuses to download from the placeholder release before it is published", async () => {
+	it("refuses to download from the default release before it is published", async () => {
 		const err = await rejection(
 			install(cache(), source("good.tar.gz", good.archive, { defaultBaseUrl: true })),
 		);
@@ -177,7 +177,7 @@ describe("install", () => {
 		const previous = process.env.MOTIO_FFMPEG_BASE_URL;
 		try {
 			delete process.env.MOTIO_FFMPEG_BASE_URL;
-			// The release owner is still the placeholder in this version of the package.
+			// The release is not published yet in this version of the package.
 			expect(archivesPublished()).toBe(false);
 			process.env.MOTIO_FFMPEG_BASE_URL = "https://mirror.example.com";
 			expect(archivesPublished()).toBe(true);

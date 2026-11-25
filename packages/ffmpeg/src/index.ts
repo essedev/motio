@@ -15,6 +15,7 @@ export {
 	type FfmpegArchive,
 	type FfmpegPlatform,
 	RELEASE_OWNER,
+	RELEASE_PUBLISHED,
 	RELEASE_TAG,
 	REQUIRED_ENCODERS,
 } from "./manifest.js";

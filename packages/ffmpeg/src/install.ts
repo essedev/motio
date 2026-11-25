@@ -16,7 +16,7 @@ import {
 	FFMPEG_VERSION,
 	type FfmpegArchive,
 	type FfmpegPlatform,
-	RELEASE_OWNER,
+	RELEASE_PUBLISHED,
 	REQUIRED_ENCODERS,
 } from "./manifest.js";
 import { executableNames, ffmpegPlatform } from "./platform.js";
@@ -348,7 +348,7 @@ export async function install(
  * time, so it follows the environment. Never makes a request.
  */
 export function archivesPublished(): boolean {
-	return RELEASE_OWNER !== "OWNER_PLACEHOLDER" || process.env.MOTIO_FFMPEG_BASE_URL !== undefined;
+	return RELEASE_PUBLISHED || process.env.MOTIO_FFMPEG_BASE_URL !== undefined;
 }
 
 const pending = new Map<string, Promise<InstalledFfmpeg>>();

@@ -10,12 +10,16 @@ export const FFMPEG_VERSION = "8.1.3";
 /** Build number of this set of archives; a rebuild of the same FFmpeg increments it. */
 export const FFMPEG_BUILD = 1;
 
+/** Owner of the GitHub repository that publishes the archives. */
+export const RELEASE_OWNER = "essedev";
+
 /**
- * Owner of the GitHub repository that publishes the archives. Still a placeholder: the archives
- * are not published yet, so downloads need `MOTIO_FFMPEG_BASE_URL` (or `baseUrl`) until the
- * author creates the release and replaces this value (D-065).
+ * Whether the release `RELEASE_TAG` is published with the archives whose digests are below.
+ * Until it is, the default URL is refused before any request and downloads need
+ * `MOTIO_FFMPEG_BASE_URL` (or `baseUrl`); it turns true together with the digests of the
+ * published archives (D-065).
  */
-export const RELEASE_OWNER = "OWNER_PLACEHOLDER";
+export const RELEASE_PUBLISHED: boolean = false;
 
 /** Tag of the GitHub Release that holds the archives. */
 export const RELEASE_TAG = `ffmpeg-${FFMPEG_VERSION}-${FFMPEG_BUILD}`;
