@@ -49,8 +49,15 @@ export function installClockShim(win: Window & typeof globalThis): void {
 		cb: (...args: unknown[]) => void;
 		args: unknown[];
 		interval: number | null;
+		/** The HTML timer nesting level of the task, for the 4 ms clamp. */
+		nesting: number;
 	};
 	const timers = new Map<number, Timer>();
+	/** Nesting level of the timer callback running, 0 outside one. */
+	let nesting = 0;
+	// As in browsers (HTML timers): past five nested levels, a delay under 4 ms becomes 4 ms, so a
+	// setTimeout(0) chain advances virtual time instead of running forever at one instant.
+	const clamp = (ms: number, level: number) => (level > 5 && ms < 4 ? 4 : ms);
 	let rafQueue = new Map<number, (t: number) => void>();
 
 	let rng = 1;
@@ -103,7 +110,7 @@ export function installClockShim(win: Window & typeof globalThis): void {
 	};
 	const schedule = (cb: unknown, delay: unknown, args: unknown[], repeat: boolean): number => {
 		const id = nextId++;
-		const ms = Math.max(0, Number(delay) || 0);
+		const ms = clamp(Math.max(0, Number(delay) || 0), nesting);
 		const interval = repeat ? Math.max(1, ms) : null;
 		timers.set(id, {
 			due: now + (repeat ? (interval as number) : ms),
@@ -111,6 +118,7 @@ export function installClockShim(win: Window & typeof globalThis): void {
 			cb: toCallback(cb),
 			args,
 			interval,
+			nesting: nesting + 1,
 		});
 		return id;
 	};
@@ -162,14 +170,23 @@ export function installClockShim(win: Window & typeof globalThis): void {
 				if (next === null) break;
 				if (next.interval === null) timers.delete(nextKey);
 				else {
+					next.nesting++;
+					next.interval = clamp(next.interval, next.nesting);
 					next.due += next.interval;
 					next.seq = seq++;
 				}
 				const t = next;
-				wrap(() => t.cb(...t.args));
+				wrap(() => {
+					nesting = t.nesting;
+					try {
+						t.cb(...t.args);
+					} finally {
+						nesting = 0;
+					}
+				});
 				if (++runs > MAX_RUNS) {
 					throw new Error(
-						`Clock shim: more than ${MAX_RUNS} timers ran for one frame; a timer keeps rescheduling itself at the same time.`,
+						`Clock shim: more than ${MAX_RUNS} timers ran for one frame; a timer or an interval keeps rescheduling itself faster than the frames advance.`,
 					);
 				}
 			}

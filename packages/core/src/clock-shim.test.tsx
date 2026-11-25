@@ -91,11 +91,29 @@ describe("clock shim", () => {
 		expect(fired).toBe(false);
 	});
 
+	it("clamps nested timeouts to 4 ms past five levels, as browsers do", () => {
+		const { win, clock } = shimmedWindow();
+		let calls = 0;
+		const again = () => {
+			calls++;
+			win.setTimeout(again, 0);
+		};
+		win.setTimeout(again, 0);
+		clock.runDue((fn) => fn());
+		// Levels 1 to 6 run at 0 ms; the next one is due 4 ms later, so it waits for the next frame
+		// instead of running forever at one instant.
+		expect(calls).toBe(6);
+		clock.setFrame(1, 30);
+		clock.runDue((fn) => fn());
+		expect(calls).toBe(7);
+	});
+
 	it("reports runaway timers instead of hanging", () => {
 		const { win, clock } = shimmedWindow();
-		const again = () => win.setTimeout(again, 0);
-		again();
-		expect(() => clock.runDue((fn) => fn())).toThrow(/keeps rescheduling itself/);
+		// An interval left behind by a long jump of the clock: 4 ms periods over 500 s.
+		win.setInterval(() => undefined, 0);
+		clock.setTime(500_000);
+		expect(() => clock.runDue((fn) => fn())).toThrow(/more than 100000 timers/);
 	});
 
 	it("leaves MessageChannel, queueMicrotask, Promise and crypto alone and keeps real timers", async () => {
