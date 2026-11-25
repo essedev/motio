@@ -7,6 +7,8 @@
 // so these renders also check that the composition's default applies without the option.
 
 import { mkdtemp, rm } from "node:fs/promises";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { availableParallelism, tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -257,9 +259,87 @@ describe("a requestAnimationFrame loop in the frame model", () => {
 		expect(result).toMatchObject({
 			deterministic: false,
 			diagnosis: {
-				timeModel: { suggested: "virtual", evidence: ["W_ANIMATION_FRAME_LOOP", "W_MATH_RANDOM"] },
+				timeModel: {
+					suggested: "virtual",
+					evidence: expect.arrayContaining(["W_ANIMATION_FRAME_LOOP", "W_MATH_RANDOM"]),
+				},
 			},
 		});
 		expect(code).toBe(3);
 	}, 300_000);
+});
+
+describe("a timer loop", () => {
+	// A setTimeout(0) chain moves a box and redraws a canvas, an interval updates React state.
+	// Before the frame gate observed timers, the box's DOM changes kept every frame from
+	// settling in the frame model (E_SEEK_TIMEOUT after 35 s); a 0 ms chain also ran forever at
+	// one instant in the virtual model.
+	it("settles and is reported in the frame model", async () => {
+		const { frames, warnings } = await renderDecoded("timer-loop", {
+			timeModel: "frame",
+			concurrency: 1,
+			frameRange: [0, 9],
+		});
+		expect(frames.size).toBe(10);
+		expect(warnings).toContain("W_TIMER_LOOP");
+	}, 60_000);
+
+	it("advances 4 ms per nested call in the virtual model, the same on every page", async () => {
+		const hashes = async (options: Parameters<typeof renderDecoded>[1]) => {
+			const { frames } = await renderDecoded("timer-loop", {
+				timeModel: "virtual",
+				frameRange: [0, 19],
+				...options,
+			});
+			return [...frames]
+				.map(([frame, image]) => [frame, hashFrame(image.data)] as const)
+				.sort((a, b) => a[0] - b[0]);
+		};
+		const ascending = await hashes({ concurrency: 1 });
+		expect(new Set(ascending.map(([, hash]) => hash)).size).toBeGreaterThan(10);
+		expect(await hashes({ concurrency: 1, recycleEveryNFrames: 1 })).toEqual(ascending);
+	}, 120_000);
+});
+
+describe("locale", () => {
+	it("is en-US in the page, its workers and its requests unless the locale option names another", async () => {
+		const server = createServer((req, res) => {
+			res.setHeader("access-control-allow-origin", "*");
+			res.end(req.headers["accept-language"] ?? "");
+		});
+		await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+		const echoUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
+		try {
+			const read = async (locale?: string) => {
+				const { props } = await selectComposition({
+					serveUrl,
+					id: "locale",
+					inputProps: { echoUrl },
+					...(locale ? { locale } : {}),
+				});
+				const { echoUrl: _, ...rest } = props;
+				return rest;
+			};
+			expect(await read()).toEqual({
+				language: "en-US",
+				languages: ["en-US"],
+				intl: "en-US",
+				number: "1,234.5",
+				workerLanguage: "en-US",
+				workerIntl: "en-US",
+				acceptLanguage: "en-US",
+			});
+			expect(await read("de-CH")).toEqual({
+				language: "de-CH",
+				languages: ["de-CH"],
+				intl: "de-CH",
+				number: "1'234.5",
+				workerLanguage: "de-CH",
+				workerIntl: "de-CH",
+				acceptLanguage: "de-CH",
+			});
+		} finally {
+			server.close();
+		}
+	}, 120_000);
 });

@@ -1,7 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AbsoluteFill, Composition, useCurrentFrame } from "remotion";
 import { CssTransition } from "./css-transition";
+import { Locale, localeMetadata } from "./locale";
 import { TimeZone, timeZoneMetadata } from "./time-zone";
+import { TimerLoop } from "./timer-loop";
 import { Timeline } from "./tiny-timeline";
 
 // Third-party-style code that reads the clock instead of the frame: deterministic only in the
@@ -191,6 +193,34 @@ export function Root() {
 				height={180}
 				fps={30}
 				durationInFrames={60}
+			/>
+			<Composition
+				id="timer-loop"
+				component={TimerLoop}
+				width={320}
+				height={180}
+				fps={30}
+				durationInFrames={60}
+				defaultProps={{ canvas: true, box: true, interval: true }}
+			/>
+			<Composition
+				id="locale"
+				component={Locale}
+				width={320}
+				height={40}
+				fps={30}
+				durationInFrames={1}
+				defaultProps={{
+					echoUrl: "",
+					language: "",
+					languages: [],
+					intl: "",
+					number: "",
+					workerLanguage: "",
+					workerIntl: "",
+					acceptLanguage: "",
+				}}
+				calculateMetadata={localeMetadata}
 			/>
 			<Composition
 				id="time-zone"
