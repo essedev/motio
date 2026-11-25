@@ -19,7 +19,7 @@ The suite renders hundreds of compositions and takes hours, so it runs only with
 
 ## What a video is here
 
-Both repositories are documentation sites. Their videos are the compositions registered by the files under `src/remotion/` that call `registerRoot`, each bundled by one of the project's scripts (`scripts/render-*.mts`, `scripts/review-*.mts`) or by Remotion Studio with `remotion.config.ts`. `projects.json` lists every such entry with the script that bundles it; every composition of every entry is measured. Entries that are not measured are listed under `excluded` with the reason: in snapcn, eleven import `registry/snap-cn-pro`, the paid tier, which the public repository does not contain.
+Both repositories are documentation sites. Their videos are the compositions registered by the files under `src/remotion/` that call `registerRoot`, each bundled by one of the project's scripts (`scripts/render-*.mts`, `scripts/review-*.mts`) or by Remotion Studio with `remotion.config.ts`. `projects.json` lists every such entry with the script that bundles it; every composition of every entry is measured. Entries that are not measured are listed under `excluded` with the reason: in snapcn, eleven import `registry/snap-cn-pro`, the paid tier, which the public repository does not contain; in Remocn, a Player page, a code generator and `jitter-audit`, an audit tool that uses Remotion's private `Internals` and registers no composition.
 
 ## How a project runs on Motio unmodified
 
@@ -31,7 +31,18 @@ The project directory gets no install and no edit. Its bare imports resolve, by 
 
 ## What the test checks
 
-For each project, `doctor` in the project directory. For each entry: it builds through the alias with no `remotion` or `@remotion/*` module and one React; the compositions and their resolved metadata equal Remotion's. For each composition: the sampled stills against Remotion's (mean SSIM at least 0.99, PSNR at least 40 dB, worst frame SSIM at least 0.97), `motio check flicker` over every frame (at scale 0.5: it compares Motio's consecutive frames with each other, and half the size finds the same jumps in a quarter of the pixels), and `motio check determinism --reference fresh` on 10 frames around the middle.
+For each project, `doctor` in the project directory: it must report no missing symbol; what Motio skips by design (`@remotion/studio-protocol`, which the sites use to talk to Remotion Studio, and Remotion's private `Internals`) is a warning. For each entry: it builds through the alias with no `remotion` or `@remotion/*` module and one React; the compositions and their resolved metadata equal Remotion's. For each composition:
+
+- the sampled stills against Remotion's: mean SSIM at least 0.99, PSNR at least 40 dB, worst frame SSIM at least 0.97, and no 32x32 block whose mean absolute difference exceeds 8 code values (`MAX_BLOCK_DIFFERENCE` in `@motiojs/testing`, shared by every comparison with Remotion);
+- `motio check flicker` over every frame, at scale 0.5 (it compares Motio's consecutive frames with each other, and half the size finds the same jumps in a quarter of the pixels). The check also flags content that changes faster than its 16 px blocks, a rolling digit or a shake; a flagged frame counts as the content's own when Motio draws it and both its neighbours like Remotion does, which needs Remotion's frames around it (`record:projects --around-flagged`, after a run has written the flagged frames to the results);
+- `motio check determinism --reference fresh` on 10 frames around the middle.
+
+## What is left out, and known differences
+
+`projects.json` records, per entry, compositions left out (`skip`) and differences with a known cause (`knownMismatch` for stills, `knownFlickerMismatch` for the frames around flagged flicker). A known mismatch runs as an expected failure, so it fails once the cause is fixed and the marker has to come out.
+
+- Left out: content that is external and random or rate-limited (Remocn's `backdrop-image` loads a random picsum.photos photo; `github-stars` and the three chat flows load avatars from unavatar.io, which answers repeated renders with HTTP 429) and files the repository does not contain (`release-demo` plays `public/clips/*.mp4`). Remotion itself fails on 31 Remocn compositions (30 call `captureElementImage` in a way Chrome 158 refuses, one uses a missing file in `public/`); the test skips them with Remotion's error.
+- Known mismatch: Motio rasterises PNG captures on the CPU (D-041), Remotion's browser on the GPU through SwiftShader. Thin strokes, text and borders are antialiased differently: eight generative pieces of Remocn's motion pack (down to 31.5 dB), `design-audit`, the launch templates and eleven snapcn compositions. Rendering the same frames with GPU rasterisation makes them identical or brings them above 48 dB; the same change breaks two template stills (D-031), so the choice is measured separately.
 
 ## Licences
 
