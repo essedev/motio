@@ -83,6 +83,7 @@ export interface SessionOptions {
 	timeModel?: "frame" | "virtual" | null;
 	raster?: "cpu" | "gpu" | null;
 	canvas?: "software" | "gpu" | null;
+	timeZone?: string | null;
 	ffmpegExecutable?: string | null;
 	ffprobeExecutable?: string | null;
 }

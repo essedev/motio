@@ -209,6 +209,21 @@ export async function ensureBrowserWithProgress(
 /** Values of `--capture-method` (D-013). */
 const CAPTURE_METHODS = ["auto", "begin-frame", "screenshot"] as const;
 
+/** `--time-zone`, checked against the IANA names this Node.js knows. */
+function timeZoneFlag(flags: Flags): string | undefined {
+	const value = flags.string("time-zone");
+	if (value === undefined) return undefined;
+	try {
+		new Intl.DateTimeFormat("en-US", { timeZone: value });
+	} catch {
+		throw usageError(
+			`--time-zone must be an IANA time zone name such as UTC or Europe/Rome; got "${value}".`,
+			{ flag: "time-zone", value },
+		);
+	}
+	return value;
+}
+
 /**
  * The renderer options every call shares (browser, timeout, logging, props), read from the
  * flags with the config as fallback. `rendererPort` is passed in because `motio dev` uses
@@ -245,6 +260,7 @@ export function buildSessionOptions(
 	const timeModel = flags.oneOf("time-model", ["frame", "virtual"] as const) ?? options.timeModel;
 	const raster = flags.oneOf("raster", ["cpu", "gpu"] as const) ?? browser.raster;
 	const canvas = flags.oneOf("canvas", ["software", "gpu"] as const) ?? browser.canvas;
+	const timeZone = timeZoneFlag(flags) ?? browser.timeZone;
 
 	return {
 		serveUrl,
@@ -259,6 +275,7 @@ export function buildSessionOptions(
 		...(timeModel ? { timeModel } : {}),
 		...(raster ? { raster } : {}),
 		...(canvas ? { canvas } : {}),
+		...(timeZone ? { timeZone } : {}),
 		chromiumOptions: {
 			...(gl ? { gl } : {}),
 			...(userAgent ? { userAgent } : {}),

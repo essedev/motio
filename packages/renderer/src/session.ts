@@ -20,6 +20,7 @@ import {
 	resolvePagesPerBrowser,
 	resolveRasterOption,
 	resolveTimeout,
+	resolveTimeZoneOption,
 } from "./options.js";
 import { type PageConfig, RenderPage } from "./render-page.js";
 import { openServeUrl, type StaticServer } from "./server.js";
@@ -102,6 +103,12 @@ export interface BrowserSessionOptions {
 	 * raster draw identical pixels either way. Hardware GL keeps Chrome's choice unless set.
 	 */
 	canvas?: CanvasMode | null;
+	/**
+	 * Motio extension: the time zone of the page, an IANA name such as `"Europe/Rome"`. Default
+	 * `"UTC"`, whatever the machine's zone, so `Date` and `Intl` give the same pixels on every
+	 * machine and in every chunk of a distributed render.
+	 */
+	timeZone?: string | null;
 }
 
 /** A Remotion-shaped composition description returned by `getCompositions` and `selectComposition`. */
@@ -146,6 +153,8 @@ export interface BrowserSession {
 	raster: RasterMode | null;
 	/** The `canvas` option as given (null: the default). */
 	canvas: CanvasMode | null;
+	/** The time zone of the pages (`"UTC"` unless the `timeZone` option names another). */
+	timeZone: string;
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
 	/**
 	 * Browsers shared by the session's pages (D-042), killed by `close()` unless they belong to a
@@ -185,6 +194,7 @@ export async function openSession(
 	const pagesPerBrowser = resolvePagesPerBrowser(options.pagesPerBrowser);
 	const raster = resolveRasterOption(options.raster);
 	const canvas = resolveCanvasOption(options.canvas);
+	const timeZone = resolveTimeZoneOption(options.timeZone);
 	const shared = options.puppeteerInstance ? sharedBrowsers(options.puppeteerInstance) : null;
 	const chromiumOptions = shared ? shared.chromiumOptions : (options.chromiumOptions ?? {});
 	const executablePath =
@@ -237,6 +247,7 @@ export async function openSession(
 		chromiumOptions,
 		raster,
 		canvas,
+		timeZone,
 		onBrowserLog,
 		browsers,
 		warnings,
@@ -247,6 +258,7 @@ export async function openSession(
 			chromiumOptions,
 			raster,
 			canvas,
+			timeZone,
 			inputProps,
 			envVariables,
 			timeoutInMilliseconds,

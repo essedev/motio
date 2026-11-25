@@ -398,3 +398,27 @@ export function resolveCanvasOption(value: unknown): CanvasMode | null {
 	}
 	return value as CanvasMode;
 }
+
+/** The time zone of render pages when the `timeZone` option is unset. */
+export const DEFAULT_TIME_ZONE = "UTC";
+
+/**
+ * Resolves the `timeZone` option: an IANA time zone name (`"Europe/Rome"`), `"UTC"` when unset.
+ * The page's `Date` and `Intl` use it on every machine, so a render does not depend on where it
+ * runs.
+ */
+export function resolveTimeZoneOption(value: unknown): string {
+	if (value === null || value === undefined) return DEFAULT_TIME_ZONE;
+	if (typeof value === "string" && value !== "") {
+		try {
+			return new Intl.DateTimeFormat("en-US", { timeZone: value }).resolvedOptions().timeZone;
+		} catch {
+			// Reported below with the option's name.
+		}
+	}
+	throw invalid(
+		`timeZone must be an IANA time zone name such as "UTC" or "Europe/Rome", got ${JSON.stringify(value)}`,
+		"timeZone",
+		{ value },
+	);
+}

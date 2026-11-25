@@ -226,6 +226,7 @@ export async function renderDistributed(
 			"timeModel",
 			"raster",
 			"canvas",
+			"timeZone",
 			"crf",
 			"imageFormat",
 			"jpegQuality",

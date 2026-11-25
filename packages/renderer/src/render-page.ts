@@ -49,6 +49,8 @@ export interface PageConfig {
 	raster?: RasterMode | null;
 	/** The `canvas` option of the render (see `ChromeArgsContext`). */
 	canvas?: CanvasMode | null;
+	/** IANA time zone of the page. Default: the machine's. */
+	timeZone?: string;
 	onBrowserLog: ((log: BrowserLog) => void) | undefined;
 	/** Base URL of the renderer's media service, passed to the page in the run context. */
 	mediaBaseUrl?: string;
@@ -670,6 +672,9 @@ export class RenderPage {
 		} else {
 			// Holds the page's animation-frame callbacks between seeks (frame-gate.ts in core).
 			await this.page.evaluateOnNewDocument(`if (window === window.top) ${FRAME_GATE_SCRIPT}`);
+		}
+		if (c.timeZone !== undefined) {
+			await this.cdp.send("Emulation.setTimezoneOverride", { timezoneId: c.timeZone });
 		}
 		// Set on the session that captures: emulation overrides are per CDP session, and a
 		// device scale factor set elsewhere would not reach Page.captureScreenshot.

@@ -8,6 +8,7 @@ import {
 	resolveInputProps,
 	resolveJpegQuality,
 	resolveTimeModel,
+	resolveTimeZoneOption,
 	scaledSize,
 } from "./options.js";
 
@@ -148,5 +149,19 @@ describe("time model", () => {
 		expect(() => resolveTimeModel("real", {})).toThrow(
 			expect.objectContaining({ code: "E_INVALID_OPTION" }),
 		);
+	});
+});
+
+describe("time zone", () => {
+	it("is UTC unless the option names another IANA zone", () => {
+		expect(resolveTimeZoneOption(undefined)).toBe("UTC");
+		expect(resolveTimeZoneOption(null)).toBe("UTC");
+		expect(resolveTimeZoneOption("Europe/Rome")).toBe("Europe/Rome");
+	});
+
+	it("rejects a name that is not a time zone", () => {
+		for (const value of ["", "Mars/Base", 2]) {
+			expect(() => resolveTimeZoneOption(value)).toThrow(code("E_INVALID_OPTION"));
+		}
 	});
 });

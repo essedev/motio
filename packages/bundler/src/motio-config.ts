@@ -34,6 +34,7 @@ type Rule =
 	| { kind: "concurrency" }
 	| { kind: "enum"; values: readonly string[] }
 	| { kind: "function" }
+	| { kind: "timeZone" }
 	| { kind: "group"; keys: Readonly<Record<string, Rule>> };
 
 const string: Rule = { kind: "string" };
@@ -45,6 +46,18 @@ const integer = (min?: number, max?: number): Rule => ({
 });
 const oneOf = (values: readonly string[]): Rule => ({ kind: "enum", values });
 const group = (keys: Record<string, Rule>): Rule => ({ kind: "group", keys });
+const timeZone: Rule = { kind: "timeZone" };
+
+/** Whether `value` names a time zone this Node.js knows (the IANA names Chrome knows too). */
+function isTimeZone(value: unknown): boolean {
+	if (typeof value !== "string" || value === "") return false;
+	try {
+		new Intl.DateTimeFormat("en-US", { timeZone: value });
+		return true;
+	} catch {
+		return false;
+	}
+}
 
 /**
  * Every key of `MotioConfig` with its rule. `SchemaOf` makes the compiler fail when a key of the
@@ -99,6 +112,7 @@ const BROWSER_SCHEMA = {
 	pagesPerBrowser: integer(1),
 	raster: oneOf(["cpu", "gpu"]),
 	canvas: oneOf(["software", "gpu"]),
+	timeZone,
 	chromiumOptions: group(CHROMIUM_SCHEMA),
 } as const satisfies SchemaOf<NonNullable<MotioConfig["browser"]>>;
 
@@ -177,6 +191,8 @@ function expected(rule: Rule): string {
 			return `one of ${rule.values.join(", ")}`;
 		case "function":
 			return "a function";
+		case "timeZone":
+			return 'an IANA time zone name such as "UTC" or "Europe/Rome"';
 		case "group":
 			return "an object";
 	}
@@ -205,6 +221,8 @@ function matches(rule: Rule, value: unknown): boolean {
 			return typeof value === "string" && rule.values.includes(value);
 		case "function":
 			return typeof value === "function";
+		case "timeZone":
+			return isTimeZone(value);
 		case "group":
 			return isPlainObject(value);
 	}
@@ -445,6 +463,7 @@ export interface ConfigSessionOptions {
 	pagesPerBrowser?: number;
 	raster?: "cpu" | "gpu";
 	canvas?: "software" | "gpu";
+	timeZone?: string;
 	chromiumOptions?: NonNullable<NonNullable<MotioConfig["browser"]>["chromiumOptions"]>;
 	logLevel?: NonNullable<MotioConfig["logLevel"]>;
 	ffmpegExecutable?: string;
@@ -487,6 +506,7 @@ function toNodeOptions(
 			pagesPerBrowser: config.browser?.pagesPerBrowser,
 			raster: config.browser?.raster,
 			canvas: config.browser?.canvas,
+			timeZone: config.browser?.timeZone,
 			chromiumOptions: config.browser?.chromiumOptions,
 			logLevel: config.logLevel,
 			ffmpegExecutable: config.ffmpeg?.executable,

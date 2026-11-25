@@ -172,6 +172,12 @@ export interface BrowserConfig {
 	 * or `gpu` (Remotion's canvas pixels). Default `software`.
 	 */
 	canvas?: "software" | "gpu";
+	/**
+	 * The time zone the page's `Date` and `Intl` use, an IANA name such as `"Europe/Rome"`.
+	 * Default `"UTC"`, so a render gives the same pixels on every machine. For the machine's own
+	 * zone: `Intl.DateTimeFormat().resolvedOptions().timeZone`.
+	 */
+	timeZone?: string;
 	/** Chrome switches. */
 	chromiumOptions?: ChromiumConfig;
 }

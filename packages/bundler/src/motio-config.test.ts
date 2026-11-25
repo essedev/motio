@@ -76,6 +76,12 @@ describe("validateConfig", () => {
 		expect(thrown(() => validateConfig({ render: "h264" })).message).toContain(
 			'render must be an object; got "h264".',
 		);
+		expect(
+			thrown(() => validateConfig({ browser: { timeZone: "Europe/Milano" } })).message,
+		).toContain(
+			'browser.timeZone must be an IANA time zone name such as "UTC" or "Europe/Rome"; got "Europe/Milano".',
+		);
+		expect(() => validateConfig({ browser: { timeZone: "Asia/Tokyo" } })).not.toThrow();
 	});
 
 	it("reports every problem at once", () => {

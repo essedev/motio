@@ -36,6 +36,7 @@ export const DEV_FLAGS = {
 	gl: PROJECT_FLAGS.gl,
 	raster: PROJECT_FLAGS.raster,
 	canvas: PROJECT_FLAGS.canvas,
+	"time-zone": PROJECT_FLAGS["time-zone"],
 	"ignore-certificate-errors": PROJECT_FLAGS["ignore-certificate-errors"],
 	"disable-web-security": PROJECT_FLAGS["disable-web-security"],
 	"user-agent": PROJECT_FLAGS["user-agent"],

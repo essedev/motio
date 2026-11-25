@@ -159,6 +159,21 @@ describe("motio.config.ts in the CLI", () => {
 		expect(env.calls.renderMedia?.[0]).toMatchObject({ raster: "gpu", canvas: "gpu" });
 	});
 
+	it("passes browser.timeZone, and --time-zone wins; an unknown zone exits with 2", async () => {
+		await writeConfig(
+			"motio.config.mjs",
+			"export default { browser: { timeZone: 'Asia/Tokyo' } };\n",
+		);
+		const fromFile = await run(["render", "Main"]);
+		expect(fromFile.code).toBe(0);
+		expect(fromFile.calls.renderMedia?.[0]).toMatchObject({ timeZone: "Asia/Tokyo" });
+		const fromFlag = await run(["render", "Main", "--time-zone=Europe/Rome"]);
+		expect(fromFlag.calls.renderMedia?.[0]).toMatchObject({ timeZone: "Europe/Rome" });
+		const invalid = await run(["render", "Main", "--time-zone=Mars/Base"]);
+		expect(invalid.code).toBe(2);
+		expect(invalid.io.err.join("\n")).toMatch(/--time-zone.*IANA/s);
+	});
+
 	it("leaves raster and canvas to the renderer when nothing sets them", async () => {
 		const { calls, code } = await run(["render", "Main", "--gl=swangle"]);
 		expect(code).toBe(0);
