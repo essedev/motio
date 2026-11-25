@@ -69,6 +69,8 @@ make check              # format, lint, build, site build, tests
 make test-integration   # real Chrome and FFmpeg
 ```
 
+How releases are published (a version tag, npm trusted publishing): [CONTRIBUTING.md](CONTRIBUTING.md#releases).
+
 ## Website
 
 `website/` holds the landing page and the docs (Astro and Starlight), not deployed yet. The docs are built from `docs/guide/` and from the CLI and package READMEs, with no copies. `make site` starts it on http://localhost:4321, `make site-build` builds it and checks every link. The brand kit (logo, palette, type, motion) is in [`brand/`](brand/README.md). The promotional material (this banner, the Open Graph card, the teaser videos) is a Motio project, [`promo/`](promo/README.md), rendered with `make promo`.
