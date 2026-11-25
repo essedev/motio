@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/animation-utils",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "CSS transform builders and style interpolation, mirroring @remotion/animation-utils",
 	"license": "Apache-2.0",
 	"repository": {

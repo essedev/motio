@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/video-frames",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Exact source-frame selection and extraction for embedded video, outside the browser",
 	"license": "Apache-2.0",
 	"repository": {

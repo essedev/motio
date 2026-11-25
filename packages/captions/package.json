@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/captions",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Caption parsing, serialization and paging (browser), compatible with @remotion/captions",
 	"license": "Apache-2.0",
 	"repository": {

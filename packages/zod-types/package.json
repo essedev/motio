@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/zod-types",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Zod schemas for colours, multi-line text and matrices, mirroring @remotion/zod-types",
 	"license": "Apache-2.0",
 	"repository": {

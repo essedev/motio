@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/ffmpeg",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Optional pinned FFmpeg and ffprobe for Motio: downloaded on first use, verified by SHA-256",
 	"license": "Apache-2.0",
 	"repository": {

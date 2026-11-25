@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/media",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Video and audio components: the media of remotion and @remotion/media, frame-exact in renders",
 	"license": "Apache-2.0",
 	"repository": {

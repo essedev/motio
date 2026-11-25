@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/bundler",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Vite bundler for Motio projects: entry discovery, public dir, env vars, Remotion compat alias",
 	"license": "Apache-2.0",
 	"repository": {

@@ -1,6 +1,6 @@
 {
 	"name": "create-motio",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Create a Motio project: npm create motio, pnpm create motio",
 	"license": "Apache-2.0",
 	"repository": {

@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/three",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "React Three Fiber scenes driven by Motio's timeline, mirroring @remotion/three",
 	"license": "Apache-2.0",
 	"repository": {

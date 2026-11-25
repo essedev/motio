@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/lottie",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Lottie animations driven by Motio's timeline, mirroring @remotion/lottie",
 	"license": "Apache-2.0",
 	"repository": {

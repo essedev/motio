@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/gif",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "GIFs shown frame by frame in sync with Motio's timeline, mirroring @remotion/gif",
 	"license": "Apache-2.0",
 	"repository": {

@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/distributed",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Chunked rendering: plan frame ranges, render chunks in parallel, assemble without re-encoding",
 	"license": "Apache-2.0",
 	"repository": {

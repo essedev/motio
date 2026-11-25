@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/preload",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Preload videos, audio, images and fonts so a Motio Player shows them without loading, mirroring @remotion/preload",
 	"license": "Apache-2.0",
 	"repository": {

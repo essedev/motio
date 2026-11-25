@@ -1,5 +1,5 @@
 /** Motio's own version, kept equal to the package version by a test. */
-export const VERSION = "0.0.0";
+export const VERSION = "0.1.0";
 
 /**
  * The Remotion API version Motio implements (its compatibility target). Projects that import

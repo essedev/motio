@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/transitions",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Transitions between scenes for Motio, mirroring @remotion/transitions",
 	"license": "Apache-2.0",
 	"repository": {

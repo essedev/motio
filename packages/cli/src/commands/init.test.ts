@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -19,6 +19,10 @@ import { Reporter } from "../io.js";
 import { runCli } from "../main.js";
 import { type TestIo, testIo, validator } from "../test-support/fakes.js";
 import { createInitCommand, type InitDeps, type InstallResult } from "./init.js";
+
+const cliPackage = JSON.parse(
+	readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
+) as { version: string };
 
 const validate = validator();
 let cwd: string;
@@ -144,9 +148,11 @@ describe("motio init", () => {
 			expect(pkg.scripts.render).toBe(
 				`motio render src/index.ts ${starter.render.composition} ${starter.render.output}`,
 			);
-			expect(pkg.dependencies["@motiojs/motio"]).toBe("^0.0.0");
-			expect(pkg.devDependencies["@motiojs/cli"]).toBe("^0.0.0");
-			for (const name of starter.packages) expect(pkg.dependencies[name]).toBe("^0.0.0");
+			// Every Motio package at the version of the CLI that wrote the project.
+			const range = `^${cliPackage.version}`;
+			expect(pkg.dependencies["@motiojs/motio"]).toBe(range);
+			expect(pkg.devDependencies["@motiojs/cli"]).toBe(range);
+			for (const name of starter.packages) expect(pkg.dependencies[name]).toBe(range);
 
 			const readme = await readFile(join(dir, "README.md"), "utf8");
 			expect(readme).toContain(`# ${starter.name}`);

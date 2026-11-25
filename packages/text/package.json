@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/text",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Text helpers for Motio videos: a background shape that follows the lines of a text block (TextBackground), with @remotion/rounded-text-box as a preset",
 	"license": "Apache-2.0",
 	"repository": {

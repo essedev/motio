@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/preview",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "The preview page served by motio dev: composition list, Player, props editor, render-still check",
 	"license": "Apache-2.0",
 	"repository": {

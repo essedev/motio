@@ -1,6 +1,6 @@
 {
 	"name": "@motiojs/light-leaks",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Light leak overlays drawn with WebGL for Motio, mirroring @remotion/light-leaks",
 	"license": "Apache-2.0",
 	"repository": {
