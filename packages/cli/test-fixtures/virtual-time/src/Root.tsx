@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AbsoluteFill, Composition, useCurrentFrame } from "remotion";
+import { CssTransition } from "./css-transition";
+import { TimeZone, timeZoneMetadata } from "./time-zone";
 import { Timeline } from "./tiny-timeline";
 
 // Third-party-style code that reads the clock instead of the frame: deterministic only in the
@@ -171,15 +173,35 @@ function ClockDriven({ canvas }: { canvas: boolean }) {
 
 export function Root() {
 	return (
-		<Composition
-			id="clock-driven"
-			component={ClockDriven}
-			width={320}
-			height={180}
-			fps={30}
-			durationInFrames={60}
-			defaultProps={{ canvas: true }}
-			timeModel="virtual"
-		/>
+		<>
+			<Composition
+				id="clock-driven"
+				component={ClockDriven}
+				width={320}
+				height={180}
+				fps={30}
+				durationInFrames={60}
+				defaultProps={{ canvas: true }}
+				timeModel="virtual"
+			/>
+			<Composition
+				id="css-transition"
+				component={CssTransition}
+				width={320}
+				height={180}
+				fps={30}
+				durationInFrames={60}
+			/>
+			<Composition
+				id="time-zone"
+				component={TimeZone}
+				width={320}
+				height={40}
+				fps={30}
+				durationInFrames={4}
+				defaultProps={{ zone: "", hour: -1, workerZone: "" }}
+				calculateMetadata={timeZoneMetadata}
+			/>
+		</>
 	);
 }

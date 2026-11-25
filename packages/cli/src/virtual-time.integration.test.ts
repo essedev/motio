@@ -122,3 +122,144 @@ describe("virtual time model", () => {
 		expect(code).toBe(0);
 	}, 300_000);
 });
+
+/** Decoded frames of a render of `id`, with the render's warning codes. */
+async function renderDecoded(
+	id: string,
+	options: Partial<
+		Pick<
+			RenderFramesOptions,
+			| "canvas"
+			| "concurrency"
+			| "frameOrder"
+			| "frameRange"
+			| "recycleEveryNFrames"
+			| "timeModel"
+			| "timeZone"
+		>
+	>,
+) {
+	const composition = await selectComposition({
+		serveUrl,
+		id,
+		...(options.timeZone ? { timeZone: options.timeZone } : {}),
+	});
+	const images = new Map<number, Buffer>();
+	const result = await renderFrames({
+		serveUrl,
+		composition,
+		outputDir: null,
+		imageFormat: "png",
+		onFrameBuffer: (buffer, frame) => void images.set(frame, buffer),
+		...options,
+	});
+	const frames = new Map<number, Awaited<ReturnType<typeof decodeImage>>>();
+	for (const [frame, image] of images) frames.set(frame, await decodeImage(image));
+	return { frames, warnings: result.warnings.map((w) => w.code) };
+}
+
+/** Column of the first white pixel on row `y`, the left edge of the box. */
+function leftEdge(image: { data: Uint8Array; width: number }, y: number): number {
+	let x = 0;
+	while (x < image.width && (image.data[(y * image.width + x) * 4] as number) < 128) x++;
+	return x;
+}
+
+/** Length of the white run that starts row `y`, the bar of the time-zone composition. */
+function barWidth(image: { data: Uint8Array; width: number }, y: number): number {
+	let x = 0;
+	while (x < image.width && (image.data[(y * image.width + x) * 4] as number) >= 128) x++;
+	return x;
+}
+
+describe("CSS transitions", () => {
+	// The box jumps to x = 200 at frame 10, with a linear 1 s transition (30 frames).
+	it("play from the frame that changed the style in the virtual time model, on every page", async () => {
+		const ascending = await renderDecoded("css-transition", {
+			timeModel: "virtual",
+			concurrency: 1,
+		});
+		const edges = [...ascending.frames].map(([frame, image]) => [frame, leftEdge(image, 90)]);
+		expect(edges).toEqual(
+			edges.map(([frame]) => [
+				frame,
+				Math.round((200 * Math.min(30, Math.max(0, (frame as number) - 10))) / 30),
+			]),
+		);
+		const hash = (frames: typeof ascending.frames) =>
+			[...frames]
+				.map(([frame, image]) => [frame, hashFrame(image.data)])
+				.sort((a, b) => (a[0] as number) - (b[0] as number));
+		for (const options of [
+			{ concurrency: 1, recycleEveryNFrames: 1 },
+			{ concurrency: high(4), frameOrder: (f: number[]) => shuffle(f, 5) },
+		]) {
+			const other = await renderDecoded("css-transition", { timeModel: "virtual", ...options });
+			expect(hash(other.frames)).toEqual(hash(ascending.frames));
+		}
+	}, 300_000);
+
+	it("show their end at once in the frame model, with a warning", async () => {
+		const { frames, warnings } = await renderDecoded("css-transition", {
+			concurrency: 1,
+			frameRange: [8, 20],
+		});
+		for (const [frame, image] of frames) expect(leftEdge(image, 90)).toBe(frame >= 10 ? 200 : 0);
+		expect(warnings).toContain("W_CSS_TRANSITION");
+	}, 120_000);
+});
+
+describe("time zone", () => {
+	it("is UTC on the page and in its workers unless the timeZone option names another", async () => {
+		const utc = await selectComposition({ serveUrl, id: "time-zone" });
+		expect(utc.props).toEqual({ zone: "UTC", hour: 12, workerZone: "UTC" });
+		const tokyo = await selectComposition({ serveUrl, id: "time-zone", timeZone: "Asia/Tokyo" });
+		expect(tokyo.props).toEqual({ zone: "Asia/Tokyo", hour: 21, workerZone: "Asia/Tokyo" });
+		// Every page of a render, also pages sharing a browser.
+		for (const [timeZone, width] of [
+			[undefined, 120],
+			["Asia/Tokyo", 210],
+		] as const) {
+			const { frames } = await renderDecoded("time-zone", {
+				concurrency: high(4),
+				...(timeZone ? { timeZone } : {}),
+			});
+			expect([...frames.values()].map((image) => barWidth(image, 5))).toEqual(
+				[...frames.keys()].map(() => width),
+			);
+		}
+	}, 120_000);
+});
+
+describe("a requestAnimationFrame loop in the frame model", () => {
+	// The fixture's ticker and canvas loop call back as fast as Chrome draws (renders lift the
+	// frame rate limit). Before the frame gate, a canvas drawn on the GPU made each screenshot
+	// wait about 10 s for its frame.
+	it("is held while frames are captured, and reported", async () => {
+		const { frames, warnings } = await renderDecoded("clock-driven", {
+			timeModel: "frame",
+			canvas: "gpu",
+			concurrency: 1,
+			frameRange: [0, 9],
+		});
+		expect(frames.size).toBe(10);
+		expect(warnings).toEqual(expect.arrayContaining(["W_ANIMATION_FRAME_LOOP", "W_MATH_RANDOM"]));
+	}, 60_000);
+
+	it("makes check determinism suggest the virtual time model", async () => {
+		const io = testIo(project);
+		const code = await runCli(
+			["check", "determinism", ID, "--frames=0-9", "--time-model=frame", "--json"],
+			io,
+			defaultDeps(process.env),
+		);
+		const result = JSON.parse(io.out.join("")) as Record<string, unknown>;
+		expect(result).toMatchObject({
+			deterministic: false,
+			diagnosis: {
+				timeModel: { suggested: "virtual", evidence: ["W_ANIMATION_FRAME_LOOP", "W_MATH_RANDOM"] },
+			},
+		});
+		expect(code).toBe(3);
+	}, 300_000);
+});
