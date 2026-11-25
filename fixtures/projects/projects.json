@@ -128,7 +128,10 @@
 				"previews": {
 					"file": "src/remotion/previews-entry.ts",
 					"script": "scripts/render-previews.mts",
-					"tailwind": true
+					"tailwind": true,
+					"knownNondeterminism": {
+						"orbit-gallery": "frames 147-149 differ by one level on 8-22 pixels with GPU compositing; reported as raster, cause inside Chrome not found (D-091)"
+					}
 				},
 				"split": {
 					"file": "src/remotion/split-entry.ts",
