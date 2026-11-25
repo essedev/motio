@@ -19,7 +19,7 @@ export const RELEASE_OWNER = "essedev";
  * `MOTIO_FFMPEG_BASE_URL` (or `baseUrl`); it turns true together with the digests of the
  * published archives (D-065).
  */
-export const RELEASE_PUBLISHED: boolean = false;
+export const RELEASE_PUBLISHED: boolean = true;
 
 /** Tag of the GitHub Release that holds the archives. */
 export const RELEASE_TAG = `ffmpeg-${FFMPEG_VERSION}-${FFMPEG_BUILD}`;
@@ -52,23 +52,23 @@ export interface FfmpegArchive {
 export const FFMPEG_ARCHIVES: Readonly<Record<FfmpegPlatform, FfmpegArchive | null>> = {
 	"darwin-arm64": {
 		file: `ffmpeg-${FFMPEG_VERSION}-${FFMPEG_BUILD}-darwin-arm64.tar.gz`,
-		sha256: "f8db3d0520742bbaad08d01309af58c468b18bde89b9344a3f6bafcfc090543b",
-		size: 35_367_156,
+		sha256: "1f43f428f24bdcbf5e3f33bec7753543a692b4bc3e05fb04cb1fba0cf8d4354f",
+		size: 34_218_748,
 	},
 	"darwin-x64": {
 		file: `ffmpeg-${FFMPEG_VERSION}-${FFMPEG_BUILD}-darwin-x64.tar.gz`,
-		sha256: "2f6a8bcfb515f152286700a2dd41da27631b6d1dd47309335e6d07d55ab6fff9",
-		size: 39_960_587,
+		sha256: "bc17d7b1e9cdfdfe4191c7052b96caa3e64c7fd621735342324556e8fd26f57c",
+		size: 39_219_429,
 	},
 	"linux-arm64": {
 		file: `ffmpeg-${FFMPEG_VERSION}-${FFMPEG_BUILD}-linux-arm64.tar.gz`,
-		sha256: "05dc0745846b8d489e0e8981bcb5f83cbc8973f27c912e76a1a35b87c35cd9cc",
-		size: 42_966_756,
+		sha256: "858d3009ee9ed8e3aad03b18d1cd454482b1e61974816a733892b0a04aebb98a",
+		size: 42_967_034,
 	},
 	"linux-x64": {
 		file: `ffmpeg-${FFMPEG_VERSION}-${FFMPEG_BUILD}-linux-x64.tar.gz`,
-		sha256: "126555c701b5e6fab26fe53be76a6e9d54f202acac17ab7d3f7b7e79cd1fa787",
-		size: 46_869_866,
+		sha256: "d1ee419e3f0d305e9f92ca666bf34e985a83dbed88c0daee34761a664ef56355",
+		size: 46_869_469,
 	},
 	"win32-x64": null,
 };

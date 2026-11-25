@@ -69,6 +69,8 @@ export interface InstallSource {
 	baseUrl: string;
 	/** True when `baseUrl` is the manifest's default (the release may not exist yet). */
 	defaultBaseUrl: boolean;
+	/** Whether the manifest's release is published (`RELEASE_PUBLISHED`). */
+	releasePublished: boolean;
 }
 
 /** Name of the file written last into a complete install. */
@@ -109,6 +111,7 @@ function sourceFor(options: EnsureFfmpegOptions): InstallSource {
 		platform,
 		baseUrl: (explicit ?? DEFAULT_BASE_URL).replace(/\/+$/, ""),
 		defaultBaseUrl: explicit === undefined,
+		releasePublished: RELEASE_PUBLISHED,
 	};
 }
 
@@ -280,7 +283,7 @@ export async function install(
 ): Promise<InstalledFfmpeg> {
 	const dir = installDir(cacheDir, source);
 	if (await complete(dir, source)) return installed(dir, source, false);
-	if (source.defaultBaseUrl && !archivesPublished()) {
+	if (source.defaultBaseUrl && !source.releasePublished) {
 		throw new FfmpegError(
 			"E_FFMPEG_DOWNLOAD",
 			`The FFmpeg ${source.version}-${source.build} archives of this @motiojs/ffmpeg version are not published yet. Renders use the FFmpeg on PATH when there is one; otherwise install FFmpeg 5.1 or later, set MOTIO_FFMPEG to an FFmpeg executable, or set MOTIO_FFMPEG_BASE_URL to a folder or server that holds ${source.archive.file}.`,
@@ -345,10 +348,11 @@ export async function install(
 /**
  * Whether the pinned archives can be downloaded without configuration: true once the release
  * that holds them is published, or when `MOTIO_FFMPEG_BASE_URL` names a mirror. Read at call
- * time, so it follows the environment. Never makes a request.
+ * time, so it follows the environment. Never makes a request. `published` stands for
+ * `RELEASE_PUBLISHED`, for tests.
  */
-export function archivesPublished(): boolean {
-	return RELEASE_PUBLISHED || process.env.MOTIO_FFMPEG_BASE_URL !== undefined;
+export function archivesPublished(published: boolean = RELEASE_PUBLISHED): boolean {
+	return published || process.env.MOTIO_FFMPEG_BASE_URL !== undefined;
 }
 
 const pending = new Map<string, Promise<InstalledFfmpeg>>();

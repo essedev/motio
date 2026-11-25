@@ -59,6 +59,7 @@ function source(file: string, archive = good.archive, over: Partial<InstallSourc
 		platform: "linux-x64" as const,
 		baseUrl: server.url,
 		defaultBaseUrl: false,
+		releasePublished: true,
 		...over,
 	};
 }
@@ -164,7 +165,10 @@ describe("install", () => {
 
 	it("refuses to download from the default release before it is published", async () => {
 		const err = await rejection(
-			install(cache(), source("good.tar.gz", good.archive, { defaultBaseUrl: true })),
+			install(
+				cache(),
+				source("good.tar.gz", good.archive, { defaultBaseUrl: true, releasePublished: false }),
+			),
 		);
 		expect(err.code).toBe("E_FFMPEG_DOWNLOAD");
 		expect(err.message).toContain("MOTIO_FFMPEG_BASE_URL");
@@ -177,10 +181,10 @@ describe("install", () => {
 		const previous = process.env.MOTIO_FFMPEG_BASE_URL;
 		try {
 			delete process.env.MOTIO_FFMPEG_BASE_URL;
-			// The release is not published yet in this version of the package.
-			expect(archivesPublished()).toBe(false);
+			expect(archivesPublished(false)).toBe(false);
+			expect(archivesPublished(true)).toBe(true);
 			process.env.MOTIO_FFMPEG_BASE_URL = "https://mirror.example.com";
-			expect(archivesPublished()).toBe(true);
+			expect(archivesPublished(false)).toBe(true);
 		} finally {
 			if (previous === undefined) delete process.env.MOTIO_FFMPEG_BASE_URL;
 			else process.env.MOTIO_FFMPEG_BASE_URL = previous;
