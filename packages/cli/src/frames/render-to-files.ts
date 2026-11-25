@@ -4,7 +4,7 @@ import { join } from "node:path";
 import type { Concurrency } from "@motiojs/compat/config";
 import type { CommandContext } from "../context.js";
 import type { Project } from "../project.js";
-import type { VideoConfig } from "../renderer-api.js";
+import type { CanvasRegion, VideoConfig } from "../renderer-api.js";
 
 export interface RenderToFilesOptions {
 	frames: number[];
@@ -15,6 +15,8 @@ export interface RenderToFilesOptions {
 	frameOrder?: (frames: number[]) => number[];
 	/** Replace a page after this many frames (Motio renderer extension); 1 renders without history. */
 	recycleEveryNFrames?: number;
+	/** Receives where each frame's canvases are (Motio renderer extension). */
+	onCanvasRegions?: (regions: CanvasRegion[], frame: number) => void;
 	label: string;
 }
 
@@ -48,6 +50,7 @@ export async function renderToFiles(
 			...(options.recycleEveryNFrames !== undefined
 				? { recycleEveryNFrames: options.recycleEveryNFrames }
 				: {}),
+			...(options.onCanvasRegions ? { onCanvasRegions: options.onCanvasRegions } : {}),
 			onFrameBuffer: async (buffer, frame) => {
 				const file = join(directory, `${frame}.${options.imageFormat}`);
 				await writeFile(file, buffer);

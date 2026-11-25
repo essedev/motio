@@ -119,6 +119,7 @@ export {
 	type RenderMediaResult,
 	renderMedia,
 } from "./render-media.js";
+export type { CanvasRegion } from "./render-page.js";
 export { type RenderStillOptions, type RenderStillResult, renderStill } from "./render-still.js";
 export type { BrowserSessionOptions, VideoConfig } from "./session.js";
 export { type StitchFramesToVideoOptions, stitchFramesToVideo } from "./stitch-frames-to-video.js";

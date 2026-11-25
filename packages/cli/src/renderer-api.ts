@@ -54,6 +54,14 @@ export interface DelayRenderPending {
 	timeoutMs: number;
 }
 
+/** A rectangle of a captured frame, in pixels. */
+export interface CanvasRegion {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
 /** Options shared by every call that opens the bundle. */
 export interface SessionOptions {
 	serveUrl: string;
@@ -199,6 +207,8 @@ export interface RenderFramesOptions extends SessionOptions {
 	frameOrder?: (frames: number[]) => number[];
 	/** Motio extension: replace a page with a new one after this many frames. */
 	recycleEveryNFrames?: number;
+	/** Motio extension: where each frame's canvases are, in captured pixels. */
+	onCanvasRegions?: (regions: CanvasRegion[], frame: number) => void;
 }
 
 export interface EnsuredBrowser {

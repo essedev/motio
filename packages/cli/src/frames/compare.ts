@@ -172,10 +172,17 @@ export interface DeterminismRunShape {
 }
 
 /** Why frames differ, read from which runs disagree and from how much of each frame differs. */
-export type DeterminismCause = "random" | "order" | "race" | "history" | "mixed" | "raster";
+export type DeterminismCause =
+	| "random"
+	| "order"
+	| "race"
+	| "history"
+	| "mixed"
+	| "raster"
+	| "canvas";
 
 /** What the pattern of disagreeing runs points to, whatever the size of the differences. */
-export type DeterminismPattern = Exclude<DeterminismCause, "raster">;
+export type DeterminismPattern = Exclude<DeterminismCause, "raster" | "canvas">;
 
 /**
  * Most differing pixels a frame may have, in lines of the longer side, for the differences to
@@ -222,12 +229,30 @@ export interface FrameSize {
 	height: number;
 }
 
-/** The likely cause of the mismatches, with the run pattern when the cause is `raster`. */
+/** The likely cause of the mismatches, with the run pattern when the cause is `raster` or `canvas`. */
 export interface DeterminismDiagnosis {
 	cause: DeterminismCause;
 	message: string;
-	/** What the disagreeing runs point to, when `cause` is `raster`. */
+	/** What the disagreeing runs point to, when `cause` is `raster` or `canvas`. */
 	pattern?: DeterminismPattern;
+}
+
+/**
+ * Canvases drawn on the GPU during the runs (`canvas: "gpu"`): where each frame's canvases were,
+ * in captured pixels. Differences that all lie inside them point to Chrome's GPU canvas.
+ */
+export interface GpuCanvases {
+	regions: ReadonlyMap<number, readonly Rect[]>;
+}
+
+/** Whether `inner` lies inside `outer`, allowing one pixel of antialiasing around it. */
+function within(inner: Rect, outer: Rect): boolean {
+	return (
+		inner.x >= outer.x - 1 &&
+		inner.y >= outer.y - 1 &&
+		inner.x + inner.width <= outer.x + outer.width + 1 &&
+		inner.y + inner.height <= outer.y + outer.height + 1
+	);
 }
 
 /**
@@ -242,10 +267,28 @@ export function diagnoseMismatches(
 	mismatches: readonly DeterminismMismatch[],
 	runs: readonly DeterminismRunShape[],
 	size?: FrameSize,
+	gpuCanvases?: GpuCanvases,
 ): DeterminismDiagnosis {
 	const causes = new Set(mismatches.map((m) => frameCause(m.hashes, runs)));
 	const pattern: DeterminismPattern =
 		causes.size === 1 ? ([...causes][0] as DeterminismPattern) : "mixed";
+	const inCanvases =
+		gpuCanvases !== undefined &&
+		mismatches.length > 0 &&
+		mismatches.every((m) => {
+			const region = m.region;
+			return (
+				region !== undefined &&
+				(gpuCanvases.regions.get(m.frame) ?? []).some((canvas) => within(region, canvas))
+			);
+		});
+	if (inCanvases) {
+		return {
+			cause: "canvas",
+			pattern,
+			message: `Every difference lies inside a <canvas>, and canvases were drawn on the GPU (canvas "gpu"): Chrome's GPU-accelerated 2D canvas can draw differently when the machine is loaded. Render with --canvas=software (browser.canvas in motio.config.ts), Motio's default, which measured deterministic under load; only transparent captures change. If the canvas content itself changes between runs, the pattern points to this: ${CAUSE_MESSAGES[pattern]}`,
+		};
+	}
 	const limit = size ? RASTER_LINES * Math.max(size.width, size.height) : 0;
 	const thin =
 		size !== undefined &&

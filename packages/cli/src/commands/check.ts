@@ -195,6 +195,18 @@ export async function checkDeterminismCommand(
 			Math.max(2, Math.min(4, Math.floor(availableParallelism() / 2))),
 		);
 	const runs = determinismRuns(high, reference);
+	// The captures are transparent, so Chrome composites on the GPU and the canvas mode decides
+	// how canvases are drawn: on the GPU with canvas "gpu", or when hardware GL is left to Chrome.
+	const session = project.session;
+	const gl = session.chromiumOptions?.gl;
+	const canvasOnGpu =
+		session.canvas === "gpu" ||
+		(session.canvas === undefined &&
+			gl !== undefined &&
+			gl !== null &&
+			gl !== "swangle" &&
+			gl !== "swiftshader");
+	const canvasRegions = new Map<number, Rect[]>();
 	const hashes: Array<Map<number, string>> = [];
 	const runFiles: Array<Map<number, string>> = [];
 	const { ffmpeg } = await commandFfmpeg(ctx, project.settings);
@@ -206,6 +218,9 @@ export async function checkDeterminismCommand(
 			scale,
 			frameOrder: run.frameOrder,
 			...(run.freshPage ? { recycleEveryNFrames: 1 } : {}),
+			...(canvasOnGpu && index === 0
+				? { onCanvasRegions: (regions: Rect[], frame: number) => canvasRegions.set(frame, regions) }
+				: {}),
 			label: run.freshPage
 				? `Run ${index + 1}/${runs.length} (a new page per frame)`
 				: `Run ${index + 1}/${runs.length} (${run.order}, concurrency ${run.concurrency})`,
@@ -222,7 +237,14 @@ export async function checkDeterminismCommand(
 	const mismatches = compareRuns(hashes);
 	const deterministic = mismatches.length === 0;
 	const size = deterministic ? undefined : await measureMismatches(ffmpeg, mismatches, runFiles);
-	const diagnosis = deterministic ? null : diagnoseMismatches(mismatches, runs, size);
+	const diagnosis = deterministic
+		? null
+		: diagnoseMismatches(
+				mismatches,
+				runs,
+				size,
+				canvasOnGpu ? { regions: canvasRegions } : undefined,
+			);
 	return {
 		json: {
 			composition: compositionJson(composition),

@@ -622,6 +622,30 @@ describe("check determinism", () => {
 		expect((result.diagnosis as { message: string }).message).toMatch(/at most 8 pixels/);
 	});
 
+	it("suggests --canvas=software when the differences lie inside a canvas drawn on the GPU", async () => {
+		const setup = {
+			// Frame 2 differs in every run across a canvas covering the frame.
+			pixel: (frame: number, run: number) => (frame === 2 ? 100 + run : frame * 10),
+			canvases: () => [{ x: 0, y: 0, width: 16, height: 8 }],
+		};
+		const gpu = await run(
+			["check", "determinism", "Main", "--frames=0-3", "--canvas=gpu", "--json"],
+			setup,
+		);
+		expect(gpu.code).toBe(3);
+		const result = parseJson(gpu.io);
+		expect(validate("check-determinism", result)).toBeNull();
+		expect(result.diagnosis).toMatchObject({ cause: "canvas", pattern: "random" });
+		expect((result.diagnosis as { message: string }).message).toMatch(/--canvas=software/);
+		// Only the first run reads where the canvases are.
+		const asked = (gpu.calls.renderFrames ?? []).map((o) => typeof o.onCanvasRegions);
+		expect(asked).toEqual(["function", "undefined", "undefined", "undefined"]);
+		// Canvases drawn in software (the default) are not the suspect.
+		const software = await run(["check", "determinism", "Main", "--frames=0-3", "--json"], setup);
+		expect(parseJson(software.io).diagnosis).toMatchObject({ cause: "random" });
+		expect(software.calls.renderFrames?.[0]?.onCanvasRegions).toBeUndefined();
+	});
+
 	it("prints the differing frames as ranges with the likely cause", async () => {
 		// Every run draws every frame differently, as with Math.random().
 		const { io, code } = await run(["check", "determinism", "Main", "--frames=0-9"], {

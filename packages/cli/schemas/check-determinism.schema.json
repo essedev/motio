@@ -104,12 +104,12 @@
 					"additionalProperties": false,
 					"properties": {
 						"cause": {
-							"enum": ["random", "order", "race", "history", "mixed", "raster"],
-							"description": "random: every run differs (Math.random(), a clock); order: ascending and descending differ (a frame depends on the previous one); race: one tab and several tabs differ; history: the runs agree but not with a new page per frame; mixed: more than one; raster: every frame differs in no more than a few lines of pixels, as when Chrome rasterises the same content differently (pattern has what the runs point to otherwise)."
+							"enum": ["random", "order", "race", "history", "mixed", "raster", "canvas"],
+							"description": "random: every run differs (Math.random(), a clock); order: ascending and descending differ (a frame depends on the previous one); race: one tab and several tabs differ; history: the runs agree but not with a new page per frame; mixed: more than one; raster: every frame differs in no more than a few lines of pixels, as when Chrome rasterises the same content differently; canvas: every difference lies inside a canvas drawn on the GPU (canvas gpu), where --canvas=software helps (pattern has what the runs point to otherwise, for raster and canvas)."
 						},
 						"pattern": {
 							"enum": ["random", "order", "race", "history", "mixed"],
-							"description": "With the raster cause: what the disagreeing runs point to if the composition is the cause."
+							"description": "With the raster or canvas cause: what the disagreeing runs point to if the composition is the cause."
 						},
 						"message": {
 							"type": "string"

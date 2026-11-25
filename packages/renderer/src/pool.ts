@@ -1,6 +1,6 @@
 import type { FrameReport, TimeModel } from "@motiojs/core/protocol";
 import { isMotioError, MotioError } from "./errors.js";
-import type { RenderPage } from "./render-page.js";
+import type { CanvasRegion, RenderPage } from "./render-page.js";
 
 /** Image format the pool captures. */
 export type CaptureFormat = "jpeg" | "png" | "webp";
@@ -12,6 +12,8 @@ export interface CapturedFrame {
 	report: FrameReport;
 	/** Seek plus capture time, in milliseconds. */
 	timeMs: number;
+	/** Where the frame's canvases are, when the job asked for `canvasRegions`. */
+	canvases?: CanvasRegion[];
 }
 
 /** One of the slowest frames of a render. */
@@ -31,6 +33,8 @@ export interface PoolJob {
 	quality: number;
 	/** False seeks without capturing (the audio pass); `image` is then empty. Default true. */
 	capture?: boolean;
+	/** Also reads where each captured frame's canvases are (`CapturedFrame.canvases`). */
+	canvasRegions?: boolean;
 	/** Replace a page with a fresh one after this many frames; 0 never. */
 	recycleEveryNFrames: number;
 	/** Times a frame is retried after a browser crash or a watchdog timeout. */
@@ -132,7 +136,10 @@ export async function runPool(job: PoolJob): Promise<SlowFrame[]> {
 							job.capture === false
 								? Buffer.alloc(0)
 								: await page.capture(job.format, job.quality, frame);
-						captured = { frame, image, report, timeMs: performance.now() - t0 };
+						const timeMs = performance.now() - t0;
+						const canvases =
+							job.canvasRegions && job.capture !== false ? await page.canvasRegions() : undefined;
+						captured = { frame, image, report, timeMs, ...(canvases ? { canvases } : {}) };
 					} catch (err) {
 						await close();
 						if (stopReason !== undefined) break;

@@ -15,6 +15,7 @@ import {
 } from "./options.js";
 import { compositionPageFactory } from "./page-factory.js";
 import { DEFAULT_CRASH_RETRIES, defaultRecycleEveryNFrames, runPool } from "./pool.js";
+import type { CanvasRegion } from "./render-page.js";
 import {
 	type BrowserSessionOptions,
 	openSession,
@@ -99,6 +100,12 @@ export interface RenderFramesOptions extends BrowserSessionOptions {
 	 * or random order to check determinism. Must return the same frames. Default: ascending.
 	 */
 	frameOrder?: (frames: number[]) => number[];
+	/**
+	 * Motio extension: receives, after each frame is captured, where the page's `<canvas>`
+	 * elements are, in captured pixels (`motio check determinism` uses it to tell differences
+	 * confined to canvases). Unset, nothing is read.
+	 */
+	onCanvasRegions?: (regions: CanvasRegion[], frame: number) => void;
 }
 
 /** Result of `renderFrames()`. */
@@ -208,8 +215,10 @@ export async function renderFrames(options: RenderFramesOptions): Promise<Render
 			recycleEveryNFrames,
 			crashRetries: DEFAULT_CRASH_RETRIES,
 			signal: controller.signal,
-			onFrame: async ({ frame, image, report, timeMs }) => {
+			...(options.onCanvasRegions ? { canvasRegions: true } : {}),
+			onFrame: async ({ frame, image, report, timeMs, canvases }) => {
 				if (!muted) intents.set(frame, report.audio);
+				if (canvases) options.onCanvasRegions?.(canvases, frame);
 				if (outputDir) {
 					const name = pattern
 						.replaceAll("[frame]", String(frame).padStart(padding, "0"))

@@ -72,6 +72,8 @@ export function fakeRenderer(
 		level?: (frame: number, run: number) => number;
 		/** Grey level of one pixel, instead of `level` for the whole frame. */
 		pixel?: (frame: number, run: number, x: number, y: number) => number;
+		/** Where a frame's canvases are, reported when the call asks for `onCanvasRegions`. */
+		canvases?: (frame: number) => Array<{ x: number; y: number; width: number; height: number }>;
 	} = {},
 ): { renderer: RendererApi; calls: RendererCalls; distributed: DistributedApi } {
 	const compositions = options.compositions ?? [COMPOSITION];
@@ -125,6 +127,7 @@ export function fakeRenderer(
 					}),
 					frame,
 				);
+				if (options.canvases) o.onCanvasRegions?.(options.canvases(frame), frame);
 			}
 			return { frameCount: frames.length };
 		},

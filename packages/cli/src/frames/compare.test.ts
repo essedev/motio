@@ -110,6 +110,29 @@ describe("determinism report", () => {
 		);
 		expect(diagnoseMismatches([seam], runs).cause).toBe("random");
 	});
+
+	it("suggests --canvas=software when every difference lies inside a GPU canvas", () => {
+		const size = { width: 640, height: 360 };
+		const canvas = { x: 100, y: 50, width: 200, height: 150 };
+		const gpuCanvases = { regions: new Map([[7, [canvas]]]) };
+		const inside = {
+			frame: 7,
+			hashes: ["a", "a", "b", "a"],
+			differingPixels: 9000,
+			region: { x: 99, y: 60, width: 150, height: 141 },
+		};
+		const result = diagnoseMismatches([inside], runs, size, gpuCanvases);
+		expect(result).toMatchObject({ cause: "canvas", pattern: "race" });
+		expect(result.message).toMatch(/--canvas=software/);
+		// A difference reaching outside the canvas is the composition's, or another cause.
+		const outside = { ...inside, region: { x: 90, y: 60, width: 150, height: 100 } };
+		expect(diagnoseMismatches([outside], runs, size, gpuCanvases).cause).toBe("race");
+		// A frame without canvases, or a run with software canvases, never points to the canvas.
+		expect(diagnoseMismatches([{ ...inside, frame: 8 }], runs, size, gpuCanvases).cause).toBe(
+			"race",
+		);
+		expect(diagnoseMismatches([inside], runs, size).cause).toBe("race");
+	});
 });
 
 describe("pixel difference", () => {

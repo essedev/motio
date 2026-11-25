@@ -23,6 +23,14 @@ import { MotioError, type MotioErrorCode } from "./errors.js";
 import type { StackMapper } from "./stack-map.js";
 import type { PendingDelayRender, RenderWarning } from "./warnings.js";
 
+/** A rectangle of a captured frame, in pixels. */
+export interface CanvasRegion {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
 /** Everything needed to open a page on a bundle. */
 export interface PageConfig {
 	executablePath: string;
@@ -942,6 +950,39 @@ export class RenderPage {
 			);
 		}
 		return report;
+	}
+
+	/**
+	 * Where the page's 2D and WebGL `<canvas>` elements are, in captured pixels (their bounding
+	 * boxes, transforms included, clipped to the viewport): `check determinism` reads them to tell
+	 * differences confined to canvases. Canvases inside iframes are not seen.
+	 */
+	async canvasRegions(): Promise<CanvasRegion[]> {
+		const scale = this.config.scale;
+		const rects = (await this.evaluateIsolated(`[...document.querySelectorAll("canvas")]
+			.map((c) => c.getBoundingClientRect())
+			.map((r) => ({
+				left: Math.max(0, r.left),
+				top: Math.max(0, r.top),
+				right: Math.min(innerWidth, r.right),
+				bottom: Math.min(innerHeight, r.bottom),
+			}))
+			.filter((r) => r.right > r.left && r.bottom > r.top)`)) as Array<{
+			left: number;
+			top: number;
+			right: number;
+			bottom: number;
+		}>;
+		return rects.map((r) => {
+			const x = Math.floor(r.left * scale);
+			const y = Math.floor(r.top * scale);
+			return {
+				x,
+				y,
+				width: Math.ceil(r.right * scale) - x,
+				height: Math.ceil(r.bottom * scale) - y,
+			};
+		});
 	}
 
 	/** Captures the viewport as JPEG, PNG or WebP. */
