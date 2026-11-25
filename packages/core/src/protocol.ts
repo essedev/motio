@@ -134,7 +134,9 @@ export type FrameWarningCode =
 	/** `staticFile()` named a file whose case differs from the file in `public/`. */
 	| "W_STATIC_FILE_CASE"
 	/** A timeline (`<TransitionSeries>`) ends before the composition: the last frames are empty. */
-	| "W_TIMELINE_SHORT";
+	| "W_TIMELINE_SHORT"
+	/** Frame model: a CSS transition started while a frame rendered; it is shown at its end. */
+	| "W_CSS_TRANSITION";
 
 export interface FrameWarning {
 	code: FrameWarningCode;

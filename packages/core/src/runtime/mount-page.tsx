@@ -421,7 +421,8 @@ class PageRuntime {
 				this.onError(err);
 			}
 		}
-		const warnings: FrameWarning[] = [...seekAnimations(frame, fps)];
+		const timeModel = clock ? "virtual" : "frame";
+		const warnings: FrameWarning[] = [...seekAnimations(frame, fps, timeModel)];
 		const renderMs = real.now() - t0;
 		let settled: Awaited<ReturnType<PageRuntime["settleOrThrow"]>>;
 		try {
@@ -430,13 +431,15 @@ class PageRuntime {
 			const random = this.random?.end();
 			if (random) pageWarnings.report(random);
 		}
+		// Elements mounted while settling may carry new animations, and a transition a warm-up step
+		// starts while settling must start on the same frame as on a page that captures that step.
+		const late = seekAnimations(frame, fps, timeModel);
 		// The page warning registry reports each warning once per page: those found while warming up
 		// stay pending and go out with the next reported frame.
 		if (warmUp) {
 			return { frame, warnings: [], audio: [], timings: { renderMs, settleMs: settled.settleMs } };
 		}
-		// Elements mounted while settling may carry new animations.
-		for (const w of seekAnimations(frame, fps)) {
+		for (const w of late) {
 			if (!warnings.some((x) => x.message === w.message)) warnings.push(w);
 		}
 		warnings.push(...settled.warnings, ...this.fonts.scan(this.canvas), ...pageWarnings.take());
