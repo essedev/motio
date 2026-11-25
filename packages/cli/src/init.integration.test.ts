@@ -318,6 +318,8 @@ describe("motio dev on a generated project", () => {
 				"1280×720 · 30 fps · 120 frames (4.00 s)",
 			);
 			expect(errors).toEqual([]);
+			// Packages ship dist/ only, so their source maps must carry the sources (inlineSources).
+			expect(stderr).not.toContain("points to missing source files");
 		} finally {
 			await browser.close();
 			child.kill("SIGINT");

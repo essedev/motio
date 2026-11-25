@@ -17,6 +17,9 @@
 
 		// Other Outputs
 		"sourceMap": true,
+		// Published packages ship dist/ only: the maps carry their sources, or they point to
+		// missing files (Vite warns once per module in motio dev).
+		"inlineSources": true,
 		"declaration": true,
 		"declarationMap": true,
 
