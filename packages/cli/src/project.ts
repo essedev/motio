@@ -1,7 +1,7 @@
 import { existsSync, statSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import type { BundleResult } from "@motiojs/bundler";
+import type { BundleResult, MotioConfig } from "@motiojs/bundler";
 import { MotioError } from "@motiojs/compat";
 import { type ConfigValues, GL_RENDERERS, LOG_LEVELS, type LogLevel } from "@motiojs/compat/config";
 import type { Flags } from "./args.js";
@@ -162,6 +162,7 @@ export async function openProject(
 		serveUrl,
 		rendererPort: flags.integer("port", { min: 1, max: 65535 }) ?? config.rendererPort ?? undefined,
 		timeModel: settings.motio.render?.timeModel,
+		browser: settings.motio.browser,
 	});
 	await ensureBrowserWithProgress(ctx, session);
 	return { config, settings, rootDir, serveUrl, session, bundle };
@@ -223,6 +224,8 @@ export function buildSessionOptions(
 		rendererPort: number | undefined;
 		/** `render.timeModel` of the config file; `--time-model` wins. */
 		timeModel?: "frame" | "virtual" | undefined;
+		/** The config file's `browser` group (with the `MOTIO_*` variables applied); flags win. */
+		browser?: MotioConfig["browser"] | undefined;
 	},
 ): SessionOptions {
 	const { config, serveUrl } = options;
@@ -236,8 +239,10 @@ export function buildSessionOptions(
 		flags.string("browser-executable") ?? config.browserExecutable ?? undefined;
 	const props = flags.string("props");
 	const logLevel = logLevelFrom(flags) ?? config.logLevel;
-	const captureMethod = flags.oneOf("capture-method", CAPTURE_METHODS);
-	const pagesPerBrowser = flags.integer("pages-per-browser", { min: 1 });
+	const browser = options.browser ?? {};
+	const captureMethod = flags.oneOf("capture-method", CAPTURE_METHODS) ?? browser.captureMethod;
+	const pagesPerBrowser =
+		flags.integer("pages-per-browser", { min: 1 }) ?? browser.pagesPerBrowser;
 	const timeModel = flags.oneOf("time-model", ["frame", "virtual"] as const) ?? options.timeModel;
 
 	return {

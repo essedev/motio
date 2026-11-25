@@ -119,6 +119,31 @@ describe("motio.config.ts in the CLI", () => {
 		expect(fromFlag.calls.renderMedia?.[0]).toMatchObject({ timeModel: "frame" });
 	});
 
+	it("passes browser.captureMethod and browser.pagesPerBrowser, and the flags win", async () => {
+		await writeConfig(
+			"motio.config.mjs",
+			"export default { browser: { captureMethod: 'screenshot', pagesPerBrowser: 3 } };\n",
+		);
+		const fromFile = await run(["render", "Main"]);
+		expect(fromFile.code).toBe(0);
+		expect(fromFile.calls.renderMedia?.[0]).toMatchObject({
+			captureMethod: "screenshot",
+			pagesPerBrowser: 3,
+		});
+		const fromEnv = await run(["render", "Main"], { MOTIO_PAGES_PER_BROWSER: "2" });
+		expect(fromEnv.calls.renderMedia?.[0]).toMatchObject({ pagesPerBrowser: 2 });
+		const fromFlags = await run([
+			"render",
+			"Main",
+			"--pages-per-browser=1",
+			"--capture-method=auto",
+		]);
+		expect(fromFlags.calls.renderMedia?.[0]).toMatchObject({
+			captureMethod: "auto",
+			pagesPerBrowser: 1,
+		});
+	});
+
 	it("gives still its own group", async () => {
 		await writeConfig(
 			"motio.config.mjs",
