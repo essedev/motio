@@ -195,6 +195,44 @@ const SlideSeam: React.FC = () => {
 	);
 };
 
+/**
+ * Lines of text on 3D-transformed layers that grow by less and less, as an entrance settles. A
+ * page that drew the larger frames first has larger tile textures to spare, and Chrome reuses a
+ * texture up to twice a tile's area: composited on SwiftShader, the text came out a level apart
+ * from a new page's.
+ */
+const SettlingText3d: React.FC = () => {
+	const frame = useCurrentFrame();
+	const settle = 1 - (1 - Math.min(1, frame / 36)) ** 3;
+	return (
+		<AbsoluteFill style={{ backgroundColor: "white" }}>
+			{[0, 1, 2, 3].map((i) => (
+				<div key={i} style={{ position: "absolute", left: 30, top: 30 + i * 80, height: 40 }}>
+					<div
+						style={{
+							transform: `scale(${0.9 + 0.1 * settle + i * 0.01}) rotateY(0.001deg)`,
+							transformOrigin: "0 50%",
+						}}
+					>
+						<span
+							style={{
+								display: "block",
+								whiteSpace: "pre",
+								color: "black",
+								fontFamily: "sans-serif",
+								fontSize: 16 + i * 4,
+								letterSpacing: "0.12em",
+							}}
+						>
+							Steady motion holds 0123
+						</span>
+					</div>
+				</div>
+			))}
+		</AbsoluteFill>
+	);
+};
+
 const size = { width: 640, height: 360, fps: 30, durationInFrames: 60 } as const;
 
 export const Root: React.FC = () => (
@@ -206,5 +244,6 @@ export const Root: React.FC = () => (
 		<Composition id="subpixel-translate" component={SubpixelTranslate} {...size} />
 		<Composition id="will-change" component={WillChange} {...size} />
 		<Composition id="slide-seam" component={SlideSeam} {...size} />
+		<Composition id="settling-text-3d" component={SettlingText3d} {...size} />
 	</>
 );

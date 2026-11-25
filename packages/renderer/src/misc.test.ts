@@ -61,6 +61,27 @@ describe("chrome flags", () => {
 			]);
 		});
 
+		it("turns zero-copy raster off where the CPU raster composites on SwiftShader", () => {
+			expect(chromeArgs({}, { transparent: true })).toContain("--disable-zero-copy");
+			expect(chromeArgs()).not.toContain("--disable-zero-copy");
+			expect(chromeArgs({}, { raster: "gpu", transparent: true })).not.toContain(
+				"--disable-zero-copy",
+			);
+			expect(chromeArgs({ gl: "angle" }, { transparent: true })).not.toContain(
+				"--disable-zero-copy",
+			);
+		});
+
+		it("reuses tile textures only at their exact size wherever Chrome composites on SwiftShader", () => {
+			const exact = "--disallow-non-exact-resource-reuse";
+			expect(chromeArgs({}, { transparent: true })).toContain(exact);
+			expect(chromeArgs({}, { raster: "gpu" })).toContain(exact);
+			expect(chromeArgs({}, { raster: "gpu", transparent: true })).toContain(exact);
+			// Software compositing draws from bitmaps, and hardware GL keeps Chrome's choice.
+			expect(chromeArgs()).not.toContain(exact);
+			expect(chromeArgs({ gl: "angle" }, { transparent: true })).not.toContain(exact);
+		});
+
 		it("rasterises on the GPU, compositing on SwiftShader for every capture", () => {
 			expect(graphics(chromeArgs({}, { raster: "gpu" }))).toEqual([
 				"--disable-accelerated-2d-canvas",

@@ -95,6 +95,19 @@ export function resolveRasterMode(
  * carry (D-031), which a transparent output shows. The GPU raster composites on SwiftShader
  * whatever the capture. The canvas flag only matters where Chrome composites on the GPU: under
  * software compositing both canvas modes draw identical pixels (measured), so it is left out there.
+ *
+ * The CPU raster composited on SwiftShader also turns zero-copy raster off. On macOS Chrome
+ * rasterises tiles straight into buffers SwiftShader reads while compositing, and a capture could
+ * show tiles holding another tile's content (another card of a scrolling rail, in 256 px blocks
+ * under the layer's transform), differently on every run, even on a new page per frame. One-copy
+ * raster, what Chrome uses on Linux anyway, rasterises into a staging buffer and copies it into
+ * the tile, and draws the same pixels on every run (D-091).
+ *
+ * Wherever Chrome composites on SwiftShader, tile textures are reused only at their exact size.
+ * By default a tile may take a texture up to twice its area left over from an earlier frame (a
+ * larger raster scale of a moving layer), and SwiftShader then samples the tile through other
+ * texture coordinates: text and photos of composited layers came out a level apart from a new
+ * page's, depending on what the page drew before (D-091).
  */
 export function softwareCompositingFlags(
 	transparent: boolean,
@@ -102,7 +115,8 @@ export function softwareCompositingFlags(
 	canvas: CanvasMode = "software",
 ): readonly string[] {
 	if (raster === "cpu" && !transparent) return ["--disable-gpu-compositing"];
-	const flags = raster === "cpu" ? ["--disable-gpu-rasterization"] : [];
+	const flags = raster === "cpu" ? ["--disable-gpu-rasterization", "--disable-zero-copy"] : [];
+	flags.push("--disallow-non-exact-resource-reuse");
 	if (canvas === "software") flags.push("--disable-accelerated-2d-canvas");
 	return flags;
 }

@@ -120,6 +120,8 @@ describe("the options of a render reach the browser", () => {
 		const line = await renderTransparent({});
 		expect(line).toContain("--disable-gpu-rasterization");
 		expect(line).toContain("--disable-accelerated-2d-canvas");
+		expect(line).toContain("--disable-zero-copy");
+		expect(line).toContain("--disallow-non-exact-resource-reuse");
 	});
 
 	it("passes raster gpu and canvas gpu", async () => {

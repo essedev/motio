@@ -153,6 +153,10 @@ const COMPOSITIONS = [
 	// clearing its tiles, and the seam column blends over stale tile memory. Only transparent
 	// captures show it: JPEG draws the opaque background below the seam.
 	"slide-seam",
+	// Text on 3D-transformed layers settling into place: a page that drew the larger frames first
+	// reused larger tile textures, which SwiftShader samples a level apart (D-091). Only the GPU
+	// compositing of transparent captures shows it.
+	"settling-text-3d",
 ];
 // JPEG composites in software and PNG with alpha on the CPU (D-041): both paths are checked on the
 // compositions below the tolerance.
