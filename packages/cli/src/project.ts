@@ -241,9 +241,10 @@ export function buildSessionOptions(
 	const logLevel = logLevelFrom(flags) ?? config.logLevel;
 	const browser = options.browser ?? {};
 	const captureMethod = flags.oneOf("capture-method", CAPTURE_METHODS) ?? browser.captureMethod;
-	const pagesPerBrowser =
-		flags.integer("pages-per-browser", { min: 1 }) ?? browser.pagesPerBrowser;
+	const pagesPerBrowser = flags.integer("pages-per-browser", { min: 1 }) ?? browser.pagesPerBrowser;
 	const timeModel = flags.oneOf("time-model", ["frame", "virtual"] as const) ?? options.timeModel;
+	const raster = flags.oneOf("raster", ["cpu", "gpu"] as const) ?? browser.raster;
+	const canvas = flags.oneOf("canvas", ["software", "gpu"] as const) ?? browser.canvas;
 
 	return {
 		serveUrl,
@@ -256,6 +257,8 @@ export function buildSessionOptions(
 		...(captureMethod ? { captureMethod } : {}),
 		...(pagesPerBrowser ? { pagesPerBrowser } : {}),
 		...(timeModel ? { timeModel } : {}),
+		...(raster ? { raster } : {}),
+		...(canvas ? { canvas } : {}),
 		chromiumOptions: {
 			...(gl ? { gl } : {}),
 			...(userAgent ? { userAgent } : {}),

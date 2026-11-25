@@ -144,6 +144,40 @@ describe("motio.config.ts in the CLI", () => {
 		});
 	});
 
+	it("passes browser.raster and browser.canvas, and --raster and --canvas win", async () => {
+		await writeConfig(
+			"motio.config.mjs",
+			"export default { browser: { raster: 'gpu', canvas: 'gpu' } };\n",
+		);
+		const fromFile = await run(["render", "Main"]);
+		expect(fromFile.code).toBe(0);
+		expect(fromFile.calls.renderMedia?.[0]).toMatchObject({ raster: "gpu", canvas: "gpu" });
+		const fromFlags = await run(["render", "Main", "--raster=cpu", "--canvas=software"]);
+		expect(fromFlags.calls.renderMedia?.[0]).toMatchObject({ raster: "cpu", canvas: "software" });
+		// Project choices, not machine settings: no MOTIO_ variable sets them.
+		const env = await run(["render", "Main"], { MOTIO_RASTER: "cpu", MOTIO_CANVAS: "software" });
+		expect(env.calls.renderMedia?.[0]).toMatchObject({ raster: "gpu", canvas: "gpu" });
+	});
+
+	it("leaves raster and canvas to the renderer when nothing sets them", async () => {
+		const { calls, code } = await run(["render", "Main", "--gl=swangle"]);
+		expect(code).toBe(0);
+		const options = calls.renderMedia?.[0] as Record<string, unknown>;
+		// The renderer picks the GPU raster for gl swangle itself.
+		expect(options.raster).toBeUndefined();
+		expect(options.canvas).toBeUndefined();
+	});
+
+	it("rejects an unknown --raster or browser.canvas with exit code 2", async () => {
+		const flag = await run(["render", "Main", "--raster=metal"]);
+		expect(flag.code).toBe(2);
+		expect(flag.io.err.join("\n")).toMatch(/--raster.*cpu.*gpu/s);
+		await writeConfig("motio.config.mjs", "export default { browser: { canvas: 'hardware' } };\n");
+		const file = await run(["render", "Main"]);
+		expect(file.code).toBe(2);
+		expect(file.io.err.join("\n")).toMatch(/browser\.canvas/);
+	});
+
 	it("gives still its own group", async () => {
 		await writeConfig(
 			"motio.config.mjs",

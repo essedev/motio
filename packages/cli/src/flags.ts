@@ -40,6 +40,16 @@ export const PROJECT_FLAGS = {
 		description:
 			"Motio: pages sharing one browser process (default: the pages spread over two browsers).",
 	},
+	raster: {
+		type: "string",
+		description:
+			"Motio: cpu (default; the pixels of Remotion's default setting) or gpu (the pixels of Remotion with --gl=swangle, which selects it; videos take about 2.5 times as long).",
+	},
+	canvas: {
+		type: "string",
+		description:
+			"Motio: how transparent captures draw 2D canvases: software (default; deterministic and faster) or gpu (Remotion's canvas pixels).",
+	},
 	"time-model": {
 		type: "string",
 		description:

@@ -161,6 +161,17 @@ export interface BrowserConfig {
 	captureMethod?: CaptureMethod;
 	/** Pages sharing one browser process. Default: the pages spread over two browsers. */
 	pagesPerBrowser?: number;
+	/**
+	 * How Chrome rasterises the page: `cpu` (the pixels of Remotion's default setting) or `gpu`
+	 * (the pixels of Remotion with `gl: "swangle"`; videos take about 2.5 times as long). Default
+	 * `cpu`, or `gpu` when `chromiumOptions.gl` is `"swangle"`.
+	 */
+	raster?: "cpu" | "gpu";
+	/**
+	 * How Chrome draws a 2D `<canvas>` in transparent captures: `software` (deterministic, faster)
+	 * or `gpu` (Remotion's canvas pixels). Default `software`.
+	 */
+	canvas?: "software" | "gpu";
 	/** Chrome switches. */
 	chromiumOptions?: ChromiumConfig;
 }

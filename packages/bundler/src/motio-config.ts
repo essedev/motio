@@ -97,6 +97,8 @@ const BROWSER_SCHEMA = {
 	timeoutMs: integer(1),
 	captureMethod: oneOf(["auto", "begin-frame", "screenshot"]),
 	pagesPerBrowser: integer(1),
+	raster: oneOf(["cpu", "gpu"]),
+	canvas: oneOf(["software", "gpu"]),
 	chromiumOptions: group(CHROMIUM_SCHEMA),
 } as const satisfies SchemaOf<NonNullable<MotioConfig["browser"]>>;
 
@@ -441,6 +443,8 @@ export interface ConfigSessionOptions {
 	timeoutInMilliseconds?: number;
 	captureMethod?: "auto" | "begin-frame" | "screenshot";
 	pagesPerBrowser?: number;
+	raster?: "cpu" | "gpu";
+	canvas?: "software" | "gpu";
 	chromiumOptions?: NonNullable<NonNullable<MotioConfig["browser"]>["chromiumOptions"]>;
 	logLevel?: NonNullable<MotioConfig["logLevel"]>;
 	ffmpegExecutable?: string;
@@ -481,6 +485,8 @@ function toNodeOptions(
 			timeoutInMilliseconds: config.browser?.timeoutMs,
 			captureMethod: config.browser?.captureMethod,
 			pagesPerBrowser: config.browser?.pagesPerBrowser,
+			raster: config.browser?.raster,
+			canvas: config.browser?.canvas,
 			chromiumOptions: config.browser?.chromiumOptions,
 			logLevel: config.logLevel,
 			ffmpegExecutable: config.ffmpeg?.executable,

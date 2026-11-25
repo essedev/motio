@@ -73,6 +73,8 @@ export interface SessionOptions {
 	captureMethod?: "auto" | "begin-frame" | "screenshot";
 	pagesPerBrowser?: number | null;
 	timeModel?: "frame" | "virtual" | null;
+	raster?: "cpu" | "gpu" | null;
+	canvas?: "software" | "gpu" | null;
 	ffmpegExecutable?: string | null;
 	ffprobeExecutable?: string | null;
 }
