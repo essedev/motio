@@ -112,7 +112,9 @@ jobs:
           first=$(ls release/ffmpeg-*-linux-amd64.tar.gz release/ffmpeg-*-linux-x64.tar.gz 2>/dev/null | head -1)
           mkdir -p licence && tar -xzf "$first" -C licence --strip-components 1
           tar -czf release/licenses.tar.gz -C licence LICENSE.md licenses
-          cp licence/LICENSE.md release/LICENSE.md
+          # The copy beside the archives speaks for all of them, not for the platform it was taken from.
+          sed -E 's/built for [a-z0-9-]+ by/built for each platform of this release by/' licence/LICENSE.md > release/LICENSE.md
+          grep -q 'built for each platform of this release' release/LICENSE.md
       - name: Create the draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -123,9 +125,9 @@ jobs:
           {
             echo "FFmpeg ${FFMPEG_VERSION} (build ${BUILD}) for @motiojs/ffmpeg."
             echo
-            echo "The binaries are GPL-3.0-or-later (see LICENSE.md and licenses.tar.gz). The exact sources are in sources/ with SOURCES-SHA256SUMS; ffmpeg-build-scripts.tar.gz holds the scripts that built the archives from them, at commit ${GITHUB_SHA}."
-            echo
-            echo "Before publishing: run node tools/ffmpeg-build/update-manifest.mjs on these archives and commit the manifest, so @motiojs/ffmpeg pins their digests."
+            echo "The binaries are GPL-3.0-or-later (see LICENSE.md and licenses.tar.gz). The complete corresponding source is attached to this release: the exact source tarball of every component, with their digests in SOURCES-SHA256SUMS, and ffmpeg-build-scripts.tar.gz, the scripts that built the archives from them, at commit ${GITHUB_SHA}. SHA256SUMS holds the digests of the archives."
           } > notes.md
+          # Maintainer step, kept out of the public notes.
+          echo "Before publishing the draft: run node tools/ffmpeg-build/update-manifest.mjs on these archives and commit the manifest, so @motiojs/ffmpeg pins their digests." >> "$GITHUB_STEP_SUMMARY"
           gh release create "$tag" --draft --title "$tag" --notes-file notes.md --target "$GITHUB_SHA" \
             release/*.tar.gz release/SHA256SUMS release/LICENSE.md release/sources/*
